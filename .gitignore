@@ -1,18 +1,32 @@
 # dependencies
 /node_modules
+/.pnpm-store
+
+# testing
+/coverage
+test_output*.log
 
 # next.js
 /.next/
 /out/
+/build
+/dist
+/.swc
 
-# logs
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
-.env*
+# local env files
+.env*.local
+.env
+env.local
 !.env.example
 
 # vercel
@@ -20,7 +34,15 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+next-env.d.ts
 
-# OS
+# editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
