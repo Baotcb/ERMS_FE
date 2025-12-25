@@ -66,23 +66,21 @@ export default function LoginPage() {
         router.push("/")
       }
     } catch (err) {
+      let errorMessage = "Đã xảy ra lỗi. Vui lòng thử lại."
+
       if (err instanceof ApiException) {
-        setError(err.message || "Đăng nhập thất bại")
+        errorMessage = err.message || "Đăng nhập thất bại"
 
         // Show validation errors if available
         if (err.errors) {
-          const errorMessages = Object.values(err.errors).flat().join(", ")
-          setError(errorMessages)
+          errorMessage = Object.values(err.errors).flat().join(", ")
         }
-      } else {
-        setError("Đã xảy ra lỗi. Vui lòng thử lại.")
       }
 
-      toast({
-        title: "Đăng nhập thất bại",
-        description: error || "Vui lòng kiểm tra lại thông tin đăng nhập.",
-        variant: "destructive",
-      })
+      setError(errorMessage)
+
+      setError(errorMessage)
+
     } finally {
       setIsLoading(false)
     }
