@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Navbar } from "@/components/layout/navbar"
-import { Footer } from "@/components/layout/footer"
+import { Navbar } from "@/components/common/navbar"
+import { Footer } from "@/components/common/footer"
 import { BrainCircuit, GraduationCap, FileCheck, Sparkles } from "lucide-react"
 
 export default function LandingPage() {

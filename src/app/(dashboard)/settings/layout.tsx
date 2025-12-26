@@ -3,7 +3,7 @@ import Image from "next/image"
 
 import { Separator } from "@/components/ui/separator"
 import { SidebarNav } from "@/components/settings/sidebar-nav"
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "@/components/common/navbar"
 
 export const metadata: Metadata = {
     title: "Cài đặt tài khoản",
