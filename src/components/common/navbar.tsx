@@ -22,7 +22,7 @@ interface NavbarProps {
 export function Navbar({ user: propUser }: NavbarProps) {
   const { user: authUser, logout } = useAuth()
   const router = useRouter()
-  
+
   // Use auth context user if available, otherwise use prop user
   const user = authUser || propUser
   const isGuest = !user || user.role === "guest"
@@ -122,7 +122,7 @@ export function Navbar({ user: propUser }: NavbarProps) {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center gap-2">
+                  <Link href="/settings/profile" className="flex items-center gap-2">
                     <User className="size-4" />
                     <span>Hồ sơ cá nhân</span>
                   </Link>
@@ -142,6 +142,17 @@ export function Navbar({ user: propUser }: NavbarProps) {
         <div className="flex gap-4 overflow-x-auto">
           {isGuest
             ? guestLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-1.5 whitespace-nowrap text-sm text-muted-foreground hover:text-foreground"
+              >
+                {link.icon}
+                {link.label}
+              </Link>
+            ))
+            : isEmployee
+              ? employeeLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -151,17 +162,6 @@ export function Navbar({ user: propUser }: NavbarProps) {
                   {link.label}
                 </Link>
               ))
-            : isEmployee
-              ? employeeLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center gap-1.5 whitespace-nowrap text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    {link.icon}
-                    {link.label}
-                  </Link>
-                ))
               : null}
         </div>
       </div>

@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
+import { Navbar } from "@/components/common/navbar"
+import { Footer } from "@/components/common/footer"
 import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react"
 import { authService } from "@/lib/auth"
 import { ApiException } from "@/lib/api"
@@ -35,13 +35,13 @@ export default function LoginPage() {
 
     try {
       const response = await authService.login({ email, password })
-      
+
       // Get user from localStorage (already parsed from JWT)
       const user = authService.getCurrentUser()
       if (user) {
         login(user)
       }
-      
+
       toast({
         title: "Đăng nhập thành công",
         description: "Chào mừng bạn quay trở lại!",
@@ -66,23 +66,21 @@ export default function LoginPage() {
         router.push("/")
       }
     } catch (err) {
+      let errorMessage = "Đã xảy ra lỗi. Vui lòng thử lại."
+
       if (err instanceof ApiException) {
-        setError(err.message || "Đăng nhập thất bại")
-        
+        errorMessage = err.message || "Đăng nhập thất bại"
+
         // Show validation errors if available
         if (err.errors) {
-          const errorMessages = Object.values(err.errors).flat().join(", ")
-          setError(errorMessages)
+          errorMessage = Object.values(err.errors).flat().join(", ")
         }
-      } else {
-        setError("Đã xảy ra lỗi. Vui lòng thử lại.")
       }
-      
-      toast({
-        title: "Đăng nhập thất bại",
-        description: error || "Vui lòng kiểm tra lại thông tin đăng nhập.",
-        variant: "destructive",
-      })
+
+      setError(errorMessage)
+
+      setError(errorMessage)
+
     } finally {
       setIsLoading(false)
     }

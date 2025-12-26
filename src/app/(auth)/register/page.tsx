@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
+import { Navbar } from "@/components/common/navbar"
+import { Footer } from "@/components/common/footer"
 import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { authService } from "@/lib/auth"
@@ -73,25 +73,23 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push("/login")
       }, 1500)
-      
+
     } catch (err) {
+      let errorMessage = "Đã xảy ra lỗi. Vui lòng thử lại."
+
       if (err instanceof ApiException) {
-        setError(err.message || "Đăng ký thất bại")
-        
+        errorMessage = err.message || "Đăng ký thất bại"
+
         // Show validation errors if available
         if (err.errors) {
-          const errorMessages = Object.values(err.errors).flat().join(", ")
-          setError(errorMessages)
+          errorMessage = Object.values(err.errors).flat().join(", ")
         }
-      } else {
-        setError("Đã xảy ra lỗi. Vui lòng thử lại.")
       }
-      
-      toast({
-        title: "Đăng ký thất bại",
-        description: error || "Vui lòng kiểm tra lại thông tin.",
-        variant: "destructive",
-      })
+
+      setError(errorMessage)
+
+      setError(errorMessage)
+
     } finally {
       setIsLoading(false)
     }
