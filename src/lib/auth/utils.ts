@@ -27,11 +27,19 @@ export function extractUserFromToken(token: string) {
     const payload = decodeJWT(token)
     if (!payload) return null
 
+
+    const role =
+        payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+        payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'] ||
+        payload['role'] ||
+        payload['Role'] ||
+        'guest';
+
     return {
-        id: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
-        name: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
-        email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
-        role: payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
-        fullName: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
+        id: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || payload['nameid'] || '',
+        name: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || payload['unique_name'] || '',
+        email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || payload['email'] || '',
+        role: role,
+        fullName: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || payload['unique_name'] || '',
     }
 }

@@ -27,6 +27,9 @@ export function Navbar({ user: propUser }: NavbarProps) {
   const user = authUser || propUser
   const isGuest = !user || user.role === "guest"
   const isEmployee = user?.role === "employee"
+  const isHR = user?.role === "hr" || user?.role === "HR" || user?.role === "HR Manager"
+
+  // Debug logs
 
   const guestLinks = [
     { label: "Trang chủ", href: "/", icon: <Home className="size-4" /> },
@@ -37,6 +40,10 @@ export function Navbar({ user: propUser }: NavbarProps) {
   const employeeLinks = [
     { label: "Học tập của tôi", href: "/my-learning", icon: <BookOpen className="size-4" /> },
     { label: "Lịch sử đào tạo", href: "/training-history", icon: <Award className="size-4" /> },
+  ]
+
+  const hrLinks = [
+    { label: "Tuyển dụng", href: "/recruitment/jobs", icon: <Briefcase className="size-4" /> },
   ]
 
   const handleLogout = () => {
@@ -73,6 +80,19 @@ export function Navbar({ user: propUser }: NavbarProps) {
           ) : isEmployee ? (
             <>
               {employeeLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {link.icon}
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          ) : isHR ? (
+            <>
+              {hrLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -165,6 +185,6 @@ export function Navbar({ user: propUser }: NavbarProps) {
               : null}
         </div>
       </div>
-    </nav>
+    </nav >
   )
 }

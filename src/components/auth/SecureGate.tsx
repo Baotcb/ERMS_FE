@@ -5,7 +5,7 @@ import { useEffect } from "react"
 export function SecureGate({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // Only run in production or when explicitly enabled
-        const isProduction = process.env.NODE_ENV === "production"
+        const isProduction = false // process.env.NODE_ENV === "production"
 
         if (isProduction) {
             // 1. Block Console
