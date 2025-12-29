@@ -6,6 +6,10 @@ export interface LoginRequest {
   password: string
 }
 
+export interface ForgotPasswordRequest {
+  email: string
+}
+
 export interface RegisterRequest {
   email: string
   password: string
@@ -101,6 +105,21 @@ export const authService = {
         throw error
       }
       throw new ApiException('Login failed', 0)
+    }
+  },
+
+  async forgotPassword(data: ForgotPasswordRequest): Promise<string> {
+    try {
+      const response = await api.post<string>(
+        '/api/Auth/forgot-password',
+        data
+      )
+      return response
+    } catch (error) {
+      if (error instanceof ApiException){
+        throw error
+      }
+      throw new ApiException('fail to execute', 0)
     }
   },
 
