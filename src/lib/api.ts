@@ -1,8 +1,4 @@
-// API Base Configuration
-// Use proxy in development to avoid CORS issues
-const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? '/api/proxy'
-  : (process.env.NEXT_PUBLIC_API_URL || 'https://ermsbe-dcbtdfezebashgb7.southeastasia-01.azurewebsites.net')
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export interface ApiError {
   message: string
@@ -28,7 +24,7 @@ async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`
-  
+
   const config: RequestInit = {
     ...options,
     headers: {
@@ -50,7 +46,7 @@ async function apiFetch<T>(
 
   try {
     const response = await fetch(url, config)
-    
+
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
@@ -78,36 +74,36 @@ async function apiFetch<T>(
     if (error instanceof ApiException) {
       throw error
     }
-    
+
     if (error instanceof Error) {
       throw new ApiException(
         error.message || 'Network error occurred',
         0
       )
     }
-    
+
     throw new ApiException('An unknown error occurred', 0)
   }
 }
 
 export const api = {
-  get: <T>(endpoint: string, options?: RequestInit) => 
+  get: <T>(endpoint: string, options?: RequestInit) =>
     apiFetch<T>(endpoint, { ...options, method: 'GET' }),
-  
+
   post: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     }),
-  
+
   put: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     }),
-  
+
   delete: <T>(endpoint: string, options?: RequestInit) =>
     apiFetch<T>(endpoint, { ...options, method: 'DELETE' }),
 }
