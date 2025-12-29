@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { JobPostingFormValues } from "../../schemas/job-posting.schema";
+import { JobPostingFormValues } from "@/features/recruitment/jobs/schemas/job-posting.schema";
 
 export function StepDetailed() {
     const { control } = useFormContext<JobPostingFormValues>();

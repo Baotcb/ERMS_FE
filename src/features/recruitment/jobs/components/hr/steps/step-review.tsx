@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { JobPostingFormValues } from "../../schemas/job-posting.schema";
+import { JobPostingFormValues } from "@/features/recruitment/jobs/schemas/job-posting.schema";
 
 export function StepReview() {
     const { getValues } = useFormContext<JobPostingFormValues>();

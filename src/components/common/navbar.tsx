@@ -43,7 +43,7 @@ export function Navbar({ user: propUser }: NavbarProps) {
   ]
 
   const hrLinks = [
-    { label: "Tuyển dụng", href: "/recruitment/jobs", icon: <Briefcase className="size-4" /> },
+    { label: "Tuyển dụng", href: "/recruitment/hr/jobs", icon: <Briefcase className="size-4" /> },
   ]
 
   const handleLogout = () => {

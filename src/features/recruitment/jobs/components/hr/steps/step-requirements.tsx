@@ -5,9 +5,8 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
-import { JobPostingFormValues } from "../../schemas/job-posting.schema";
+import { JobPostingFormValues } from "@/features/recruitment/jobs/schemas/job-posting.schema";
 
 export function StepRequirements() {
     const { control, register } = useFormContext<JobPostingFormValues>();
@@ -40,7 +39,7 @@ export function StepRequirements() {
                             <div className="w-[150px]">
                                 <Select
                                     defaultValue={field.level}
-                                    onValueChange={(val: any) => {
+                                    onValueChange={(val: string) => {
                                         // Creating a synthetic event or usingsetValue is cleaner, but for raw UI this works if we bind properly
                                         // React Hook Form Controller is better here, but register is used above.
                                         // Let's stick to Controller for Select

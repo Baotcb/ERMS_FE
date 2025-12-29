@@ -15,12 +15,10 @@ import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react"
 import { authService } from "@/lib/auth"
 import { ApiException } from "@/lib/api"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -41,11 +39,6 @@ export default function LoginPage() {
       if (user) {
         login(user)
       }
-
-      toast({
-        title: "Đăng nhập thành công",
-        description: "Chào mừng bạn quay trở lại!",
-      })
 
       // Redirect based on user role
       if (user) {

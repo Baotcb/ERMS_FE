@@ -1,4 +1,4 @@
-import { CreateJobWizard } from "@/features/recruitment/jobs/components/CreateJobWizard";
+import { CreateJobWizard } from "@/features/recruitment/jobs/components";
 
 export default function CreateJobPage() {
     return (

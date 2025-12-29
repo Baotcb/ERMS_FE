@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Search, LayoutGrid, List as ListIcon, SlidersHorizontal } from "lucide-react"
-import { JobStatus } from "../types"
+import { JobStatus } from "../../types"
 
 interface JobFiltersProps {
     searchTerm: string
@@ -32,7 +32,7 @@ export function JobFilters({
                         placeholder="Search jobs..."
                         className="pl-9 w-full bg-background/50 border-muted-foreground/20 focus:bg-background transition-colors"
                         value={searchTerm}
-                        onChange={(e) => onSearchChange(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
                     />
                 </div>
                 <Button variant="outline" size="icon" className="shrink-0">
@@ -42,13 +42,15 @@ export function JobFilters({
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Select value={statusFilter} onValueChange={onStatusChange}>
-                    <SelectTrigger className="w-[140px] border-muted-foreground/20">
-                        <SelectValue placeholder="Status" />
+                    <SelectTrigger className="w-[180px] border-muted-foreground/20">
+                        <SelectValue placeholder="Filter by Status" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="ALL">All Status</SelectItem>
+                        <SelectItem value="ALL">All Jobs</SelectItem>
                         {Object.values(JobStatus).map((status) => (
-                            <SelectItem key={status} value={status} className="capitalize">{status.toLowerCase()}</SelectItem>
+                            <SelectItem key={status} value={status} className="capitalize">
+                                {status.replace(/([A-Z])/g, ' $1').trim()}
+                            </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

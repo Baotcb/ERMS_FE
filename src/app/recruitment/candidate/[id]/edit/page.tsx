@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { CreateJobWizard } from "@/features/recruitment/jobs/components/CreateJobWizard"
+import { Button } from "@/components/ui/button"
+import { CreateJobWizard } from "@/features/recruitment/jobs/components/hr/create-job-wizard"
 import { MockJobService } from "@/features/recruitment/jobs/data/mock-jobs"
-import { JobPosting } from "@/features/recruitment/jobs/types"
-import { Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { Job } from "@/features/recruitment/jobs/types"
+import { Loader2, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface EditJobPageProps {
     params: {
@@ -15,10 +16,10 @@ interface EditJobPageProps {
 }
 
 export default function EditJobPage({ params }: EditJobPageProps) {
-    const [job, setJob] = useState<JobPosting | null>(null)
+    const [job, setJob] = useState<Job | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const router = useRouter()
-    const { toast } = useToast()
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -27,20 +28,11 @@ export default function EditJobPage({ params }: EditJobPageProps) {
                 if (data) {
                     setJob(data)
                 } else {
-                    toast({
-                        variant: "destructive",
-                        title: "Job not found",
-                        description: "The requested job posting could not be found.",
-                    })
-                    router.push("/recruitment/jobs")
+                    setError("The requested job posting could not be found.")
                 }
             } catch (error) {
                 console.error("Failed to fetch job", error)
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Failed to load job details.",
-                })
+                setError("Failed to load job details. Please try again later.")
             } finally {
                 setIsLoading(false)
             }
@@ -49,12 +41,27 @@ export default function EditJobPage({ params }: EditJobPageProps) {
         if (params.id) {
             fetchJob()
         }
-    }, [params.id, router, toast])
+    }, [params.id, router])
 
     if (isLoading) {
         return (
             <div className="flex h-[400px] items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-5xl mx-auto py-8 text-center">
+                <Alert variant="destructive" className="mb-6 mx-auto max-w-lg text-left">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+                <Button onClick={() => router.push('/recruitment/jobs')}>
+                    Back to Jobs
+                </Button>
             </div>
         )
     }

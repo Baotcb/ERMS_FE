@@ -1,16 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { JobPosting, JobStatus } from "../types"
+import { Job, JobStatus } from "../../types"
 import { Briefcase, FileText, CheckCircle, Users } from "lucide-react"
 
 interface JobStatsProps {
-    jobs: JobPosting[]
+    jobs: Job[]
 }
 
 export function JobStats({ jobs }: JobStatsProps) {
     const totalJobs = jobs.length
-    const activeJobs = jobs.filter(j => j.status === JobStatus.PUBLISHED).length
+    const activeJobs = jobs.filter(j => j.status === JobStatus.OPEN).length
     const draftJobs = jobs.filter(j => j.status === JobStatus.DRAFT).length
-    const totalApplicants = jobs.reduce((acc, curr) => acc + curr.applicantsCount, 0)
+    // Note: applicantsCount might be undefined in new Job interface, so fallback to 0
+    const totalApplicants = jobs.reduce((acc, curr) => acc + (curr.applicantsCount || 0), 0)
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
