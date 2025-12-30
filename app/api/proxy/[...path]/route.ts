@@ -40,17 +40,22 @@ async function proxyRequest(
   method: string
 ) {
   const path = pathArray.join('/')
-  const url = `${API_BASE_URL}/${path}`
-  
+  const apiPrefix = path.startsWith('api/') ? '' : 'api/'
+  const url = `${API_BASE_URL}/${apiPrefix}${path}`
+
   try {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     }
-    
-    // Forward authorization header if present
-    const authHeader = request.headers.get('authorization')
+
+    console.log('All request headers:', Object.fromEntries(request.headers.entries()))
+
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization')
+    console.log('Proxy request:', method, url)
+    console.log('Auth header present:', !!authHeader)
     if (authHeader) {
       headers['Authorization'] = authHeader
+      console.log('Auth header:', authHeader.substring(0, 50) + '...')
     }
     
     const body = method !== 'GET' && method !== 'DELETE' 
@@ -62,9 +67,13 @@ async function proxyRequest(
       headers,
       body,
     })
-    
+
+    console.log('API response status:', response.status)
+    console.log('API response headers:', Object.fromEntries(response.headers.entries()))
+
     const data = await response.text()
-    
+    console.log('API response data (first 200 chars):', data.substring(0, 200))
+
     return new NextResponse(data, {
       status: response.status,
       headers: {
