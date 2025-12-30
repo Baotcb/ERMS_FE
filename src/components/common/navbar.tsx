@@ -20,11 +20,28 @@ interface NavbarProps {
 }
 
 export function Navbar({ user: propUser }: NavbarProps) {
-  const { user: authUser, logout } = useAuth()
+  const { user: authUser, logout, isLoading } = useAuth()
   const router = useRouter()
 
   // Use auth context user if available, otherwise use prop user
   const user = authUser || propUser
+
+  // Don't render navbar links until auth check is complete to prevent flash
+  if (isLoading) {
+    return (
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          {/* Skeleton or just logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600">
+              <span className="font-bold text-white text-lg">E</span>
+            </div>
+            <span className="font-bold text-xl text-foreground">ERMS</span>
+          </Link>
+        </div>
+      </nav>
+    )
+  }
   const isGuest = !user || user.role === "guest"
   const isEmployee = user?.role === "employee"
   const isHR = user?.role === "hr" || user?.role === "HR" || user?.role === "HR Manager"

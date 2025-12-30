@@ -6,6 +6,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://ermsbe-dcbtdfezebashgb7.southeastasia-01.azurewebsites.net/api/:path*',
+      },
+    ]
+  },
   headers: async () => [
     {
       source: '/:path*',

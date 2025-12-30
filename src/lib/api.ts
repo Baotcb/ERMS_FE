@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+
+// Removed error log for undefined API_URL as we support relative paths via Proxy
 
 export interface ApiError {
   message: string
@@ -23,7 +25,9 @@ async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_URL}${endpoint}`
+  // Ensure we don't construct invalid URLs if API_URL is missing
+  const baseUrl = API_URL || ''
+  const url = `${baseUrl}${endpoint}`
 
   const config: RequestInit = {
     ...options,
@@ -45,12 +49,17 @@ async function apiFetch<T>(
   }
 
   try {
+    console.log(`[API Request] ${config.method || 'GET'} ${url}`)
     const response = await fetch(url, config)
+
+    console.log(`[API Response] ${response.status} ${url}`)
 
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
+        const text = await response.text()
+        console.error(`[API Error] Non-JSON response: ${text.slice(0, 200)}`)
         throw new ApiException(
           'Server error occurred',
           response.status
@@ -62,6 +71,7 @@ async function apiFetch<T>(
     const data = await response.json()
 
     if (!response.ok) {
+      console.error('[API Error Data]', data)
       throw new ApiException(
         data.message || data.title || 'An error occurred',
         response.status,
@@ -71,6 +81,7 @@ async function apiFetch<T>(
 
     return data
   } catch (error) {
+    console.error('[API Exception]', error)
     if (error instanceof ApiException) {
       throw error
     }

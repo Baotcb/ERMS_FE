@@ -138,5 +138,12 @@ export const authService = {
      */
     async updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
         return api.put<UserProfile>('/api/User/profile', data)
+    },
+
+    /**
+     * Request password reset
+     */
+    async forgotPassword(email: string): Promise<void> {
+        return api.post('/api/Auth/forgot-password', { email })
     }
 }
