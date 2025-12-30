@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,13 +15,12 @@ import { Eye, EyeOff, LogIn, AlertCircle } from "lucide-react"
 import { authService } from "@/lib/auth"
 import { ApiException } from "@/lib/api"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { toast } = useToast()
-  const { login } = useAuth()
+  const searchParams = useSearchParams()
+  const { refreshUser } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -36,28 +35,32 @@ export default function LoginPage() {
     try {
       const response = await authService.login({ email, password })
 
-      // Get user from localStorage (already parsed from JWT)
+      // Update global auth state with full profile
+      // We use refreshUser instead of login(user) to ensure we get the full profile data
+      // not just what's in the token/localStorage
+      await refreshUser()
+
       const user = authService.getCurrentUser()
-      if (user) {
-        login(user)
-      }
 
-      toast({
-        title: "Đăng nhập thành công",
-        description: "Chào mừng bạn quay trở lại!",
-      })
+      // Check if there's a redirect URL (e.g., from apply button)
+      const redirectUrl = searchParams.get("redirect")
 
-      // Redirect based on user role
-      if (user) {
+      if (redirectUrl) {
+        // Redirect to URL that user tried to access before login
+        router.push(redirectUrl)
+      } else if (user) {
+        // Otherwise, redirect based on user role
         switch (user.role?.toLowerCase()) {
           case "hr":
-            router.push("/recruitment-dashboard")
+          case "manager":
+            router.push("/recruitment/hr/jobs")
             break
           case "employee":
-            router.push("/my-learning")
+            // router.push("/my-learning") // Module not yet implemented
+            router.push("/")
             break
           case "candidate":
-            router.push("/careers")
+            router.push("/recruitment/candidate")
             break
           default:
             router.push("/")

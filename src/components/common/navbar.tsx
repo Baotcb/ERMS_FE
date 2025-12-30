@@ -20,23 +20,85 @@ interface NavbarProps {
 }
 
 export function Navbar({ user: propUser }: NavbarProps) {
-  const { user: authUser, logout } = useAuth()
+  const { user: authUser, logout, isLoading } = useAuth()
   const router = useRouter()
+
+  // Show loading skeleton during auth check
+  if (isLoading) {
+    return (
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          {/* Logo Skeleton */}
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-muted animate-pulse">
+              <span className="font-bold text-muted-foreground text-lg">E</span>
+            </div>
+            <div className="h-6 w-16 bg-muted animate-pulse rounded" />
+          </div>
+
+          {/* Navigation Links Skeleton */}
+          <div className="hidden md:flex items-center gap-6">
+            <div className="h-5 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+            <div className="h-5 w-20 bg-muted animate-pulse rounded" />
+          </div>
+
+          {/* Action Buttons Skeleton */}
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-9 w-20 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+
+        {/* Mobile Navigation Skeleton */}
+        <div className="md:hidden border-t border-border bg-background px-4 py-2">
+          <div className="flex gap-4">
+            <div className="h-5 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+          </div>
+        </div>
+      </nav>
+    )
+  }
 
   // Use auth context user if available, otherwise use prop user
   const user = authUser || propUser
+
+  // Don't render navbar links until auth check is complete to prevent flash
+  if (isLoading) {
+    return (
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          {/* Skeleton or just logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600">
+              <span className="font-bold text-white text-lg">E</span>
+            </div>
+            <span className="font-bold text-xl text-foreground">ERMS</span>
+          </Link>
+        </div>
+      </nav>
+    )
+  }
   const isGuest = !user || user.role === "guest"
   const isEmployee = user?.role === "employee"
+  const isHR = user?.role === "hr" || user?.role === "HR" || user?.role === "HR Manager"
+  const isCandidate = user?.role?.toLowerCase() === "candidate"
 
-  const guestLinks = [
+  // Common links for both guest and candidate
+  const commonLinks = [
     { label: "Trang chủ", href: "/", icon: <Home className="size-4" /> },
-    { label: "Cơ hội nghề nghiệp", href: "/careers", icon: <Briefcase className="size-4" /> },
+    { label: "Cơ hội nghề nghiệp", href: "/recruitment/candidate", icon: <Briefcase className="size-4" /> },
     { label: "Về chúng tôi", href: "/about" },
   ]
 
   const employeeLinks = [
     { label: "Học tập của tôi", href: "/my-learning", icon: <BookOpen className="size-4" /> },
     { label: "Lịch sử đào tạo", href: "/training-history", icon: <Award className="size-4" /> },
+  ]
+
+  const hrLinks = [
+    { label: "Tuyển dụng", href: "/recruitment/hr/jobs", icon: <Briefcase className="size-4" /> },
   ]
 
   const handleLogout = () => {
@@ -57,9 +119,9 @@ export function Navbar({ user: propUser }: NavbarProps) {
 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-6">
-          {isGuest ? (
+          {isGuest || isCandidate ? (
             <>
-              {guestLinks.map((link) => (
+              {commonLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -73,6 +135,19 @@ export function Navbar({ user: propUser }: NavbarProps) {
           ) : isEmployee ? (
             <>
               {employeeLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {link.icon}
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          ) : isHR ? (
+            <>
+              {hrLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -140,8 +215,8 @@ export function Navbar({ user: propUser }: NavbarProps) {
       {/* Mobile Navigation */}
       <div className="md:hidden border-t border-border bg-background px-4 py-2">
         <div className="flex gap-4 overflow-x-auto">
-          {isGuest
-            ? guestLinks.map((link) => (
+          {isGuest || isCandidate
+            ? commonLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -162,9 +237,20 @@ export function Navbar({ user: propUser }: NavbarProps) {
                   {link.label}
                 </Link>
               ))
-              : null}
+              : isHR
+                ? hrLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center gap-1.5 whitespace-nowrap text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {link.icon}
+                    {link.label}
+                  </Link>
+                ))
+                : null}
         </div>
       </div>
-    </nav>
+    </nav >
   )
 }

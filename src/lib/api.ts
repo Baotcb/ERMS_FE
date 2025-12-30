@@ -1,8 +1,6 @@
-// API Base Configuration
-// Use proxy in development to avoid CORS issues
-const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? '/api/proxy'
-  : (process.env.NEXT_PUBLIC_API_URL || 'https://ermsbe-dcbtdfezebashgb7.southeastasia-01.azurewebsites.net')
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+
+// Removed error log for undefined API_URL as we support relative paths via Proxy
 
 export interface ApiError {
   message: string
@@ -27,8 +25,10 @@ async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_URL}${endpoint}`
-  
+  // Ensure we don't construct invalid URLs if API_URL is missing
+  const baseUrl = API_URL || ''
+  const url = `${baseUrl}${endpoint}`
+
   const config: RequestInit = {
     ...options,
     headers: {
@@ -49,12 +49,17 @@ async function apiFetch<T>(
   }
 
   try {
+    console.log(`[API Request] ${config.method || 'GET'} ${url}`)
     const response = await fetch(url, config)
-    
+
+    console.log(`[API Response] ${response.status} ${url}`)
+
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
+        const text = await response.text()
+        console.error(`[API Error] Non-JSON response: ${text.slice(0, 200)}`)
         throw new ApiException(
           'Server error occurred',
           response.status
@@ -66,6 +71,7 @@ async function apiFetch<T>(
     const data = await response.json()
 
     if (!response.ok) {
+      console.error('[API Error Data]', data)
       throw new ApiException(
         data.message || data.title || 'An error occurred',
         response.status,
@@ -75,39 +81,40 @@ async function apiFetch<T>(
 
     return data
   } catch (error) {
+    console.error('[API Exception]', error)
     if (error instanceof ApiException) {
       throw error
     }
-    
+
     if (error instanceof Error) {
       throw new ApiException(
         error.message || 'Network error occurred',
         0
       )
     }
-    
+
     throw new ApiException('An unknown error occurred', 0)
   }
 }
 
 export const api = {
-  get: <T>(endpoint: string, options?: RequestInit) => 
+  get: <T>(endpoint: string, options?: RequestInit) =>
     apiFetch<T>(endpoint, { ...options, method: 'GET' }),
-  
+
   post: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     }),
-  
+
   put: <T>(endpoint: string, body?: unknown, options?: RequestInit) =>
     apiFetch<T>(endpoint, {
       ...options,
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     }),
-  
+
   delete: <T>(endpoint: string, options?: RequestInit) =>
     apiFetch<T>(endpoint, { ...options, method: 'DELETE' }),
 }

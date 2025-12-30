@@ -12,14 +12,12 @@ import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/common/navbar"
 import { Footer } from "@/components/common/footer"
 import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle2 } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { authService } from "@/lib/auth"
 import { ApiException } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,6 +28,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -42,6 +41,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setSuccess("")
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
@@ -64,10 +64,9 @@ export default function RegisterPage() {
         role: "candidate",
       })
 
-      toast({
-        title: "Đăng ký thành công",
-        description: "Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.",
-      })
+
+
+      setSuccess("Tài khoản của bạn đã được tạo thành công. Đang chuyển hướng...")
 
       // Redirect to login page
       setTimeout(() => {
@@ -114,6 +113,14 @@ export default function RegisterPage() {
                 <Alert variant="destructive">
                   <AlertCircle className="size-4" />
                   <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="border-green-500 text-green-600 bg-green-50">
+                  <CheckCircle2 className="size-4 text-green-600" />
+                  <AlertTitle>Thành công</AlertTitle>
+                  <AlertDescription>{success}</AlertDescription>
                 </Alert>
               )}
 
