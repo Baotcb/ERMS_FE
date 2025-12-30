@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -40,8 +41,14 @@ export default function LoginPage() {
         login(user)
       }
 
-      // Redirect based on user role
-      if (user) {
+      // Check if there's a redirect URL (e.g., from apply button)
+      const redirectUrl = searchParams.get("redirect")
+
+      if (redirectUrl) {
+        // Redirect to URL that user tried to access before login
+        router.push(redirectUrl)
+      } else if (user) {
+        // Otherwise, redirect based on user role
         switch (user.role?.toLowerCase()) {
           case "hr":
           case "manager":
