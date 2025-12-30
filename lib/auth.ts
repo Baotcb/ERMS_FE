@@ -1,4 +1,5 @@
 import { api, ApiException } from './api'
+import type { LoginCredentials, RegisterData, ApiAuthResponse } from '@/types'
 
 // Auth Types based on your API
 export interface LoginRequest {
@@ -10,24 +11,17 @@ export interface ForgotPasswordRequest {
   email: string
 }
 
+export interface ResetPasswordRequest {
+  email: string
+  token: string
+  newPassword: string
+}
+
 export interface RegisterRequest {
   email: string
   password: string
   fullName: string
   role?: string
-}
-
-export interface AuthResponse {
-  token?: string
-  user?: {
-    id: string
-    email: string
-    fullName: string
-    role: string
-  }
-  message?: string
-  success?: boolean
-  userId?: string
 }
 
 export interface JWTPayload {
@@ -81,9 +75,9 @@ export const authService = {
   /**
    * Login user
    */
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
+  async login(credentials: LoginRequest): Promise<ApiAuthResponse> {
     try {
-      const response = await api.post<AuthResponse>(
+      const response = await api.post<ApiAuthResponse>(
         '/api/Auth/login',
         credentials
       )
@@ -123,12 +117,27 @@ export const authService = {
     }
   },
 
+  async resetPassword(data: ResetPasswordRequest): Promise<string> {
+    try {
+      const response = await api.post<string>(
+        '/api/Auth/reset-password',
+        data
+      )
+      return response
+    } catch (error) {
+      if (error instanceof ApiException){
+        throw error
+      }
+      throw new ApiException('fail to execute', 0)
+    }
+  },
+
   /**
    * Register new user (candidate)
    */
-  async register(data: RegisterRequest): Promise<AuthResponse> {
+  async register(data: RegisterRequest): Promise<ApiAuthResponse> {
     try {
-      const response = await api.post<AuthResponse>(
+      const response = await api.post<ApiAuthResponse>(
         '/api/Auth/register',
         {
           ...data,

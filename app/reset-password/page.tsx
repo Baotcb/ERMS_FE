@@ -3,11 +3,11 @@
 import { FormProvider } from 'react-hook-form'
 import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
-import { ForgotPasswordForm } from '@/features/auth/components/forgot-password-form'
-import { useForgotPassword } from '@/features/auth/hooks/use-forgot-password'
+import { ResetPasswordForm } from '@/features/auth/components/reset-password-form'
+import { useResetPassword } from '@/features/auth/hooks/use-reset-password'
 
-export default function ForgotPasswordPage() {
-  const { form, isLoading, error, onSubmit } = useForgotPassword()
+export default function ResetPasswordPage() {
+  const { form, isLoading, error, email, token, onSubmit } = useResetPassword()
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -16,10 +16,12 @@ export default function ForgotPasswordPage() {
 
       <main className="flex flex-1 items-center justify-center bg-slate-50 px-4 py-12">
         <FormProvider {...form}>
-          <ForgotPasswordForm
+          <ResetPasswordForm
             onSubmit={onSubmit}
             isLoading={isLoading}
             error={error}
+            email={email}
+            token={token}
           />
         </FormProvider>
       </main>
