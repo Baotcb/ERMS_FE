@@ -15,24 +15,36 @@ export enum ApplicationStatus {
     WITHDRAWN = 'Withdrawn'
 }
 
+export interface JobSkill {
+    id: number;
+    name: string;
+    weight: number;
+    minProficiency: number;
+}
+
 export interface Job {
     id: string; // PK
-    title: string; // NVARCHAR
-    description: string; // TEXT
-    requirements: string; // TEXT
-    minSalary: number; // DECIMAL
-    maxSalary: number; // DECIMAL
-    currency: 'VND' | 'USD'; // VARCHAR
-    location: string; // NVARCHAR
-    departmentId: string; // FK -> Departments.Id
-    departmentName?: string; // Helper for display
-    creatorId: string; // FK -> Employees.UserId
-    creatorName?: string; // Helper for display
-    status: JobStatus; // ENUM
-    expiresAt: string; // DATETIME (ISO string)
-    createdAt: string;
-    updatedAt: string;
-    applicantsCount?: number; // Computed
+    title: string;
+    description: string;
+    requirements: string;
+    minSalary: number;
+    maxSalary: number;
+    currency: 'VND' | 'USD';
+    location: string;
+    departmentId: number; // Backend uses Int
+    departmentName?: string;
+    creatorId: string;
+    creatorName?: string;
+    status: JobStatus;
+    postingType: string;
+    publishDate?: string;
+    expiresAt?: string;
+    skills?: JobSkill[];
+
+    // Virtual/Computed fields not yet in DTO, make optional
+    createdAt?: string;
+    updatedAt?: string;
+    applicantsCount?: number;
 }
 
 export interface Application {

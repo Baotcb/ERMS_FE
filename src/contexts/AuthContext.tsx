@@ -29,16 +29,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Load user from localStorage on mount
-    const loadUser = () => {
-      const currentUser = authService.getCurrentUser()
-      if (currentUser) {
-        setUser(currentUser)
+    const initAuth = async () => {
+      const token = authService.getToken()
+      if (token) {
+        try {
+          const localUser = authService.getCurrentUser()
+          const profile = await authService.getProfile()
+
+          setUser({
+            id: localUser?.id || profile.userName,
+            name: profile.userName,
+            email: profile.email,
+            role: localUser?.role || 'user',
+            fullName: profile.fullName,
+            phoneNumber: profile.phones,
+            address: profile.hometown
+          })
+        } catch (error) {
+          console.error('Failed to load user profile', error)
+          // Fallback to local storage
+          const localUser = authService.getCurrentUser()
+          if (localUser) setUser(localUser)
+        }
       }
       setIsLoading(false)
     }
 
-    loadUser()
+    initAuth()
   }, [])
 
   const login = (userData: User) => {
@@ -50,9 +67,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }
 
-  const refreshUser = () => {
-    const currentUser = authService.getCurrentUser()
-    setUser(currentUser)
+  const refreshUser = async () => {
+    const token = authService.getToken()
+    if (!token) return
+
+    try {
+      const localUser = authService.getCurrentUser()
+      const profile = await authService.getProfile()
+
+      setUser({
+        id: localUser?.id || profile.userName,
+        name: profile.userName,
+        email: profile.email,
+        role: localUser?.role || 'user',
+        fullName: profile.fullName,
+        phoneNumber: profile.phones,
+        address: profile.hometown
+      })
+    } catch (error) {
+      console.error('Failed to refresh user', error)
+    }
   }
 
   return (

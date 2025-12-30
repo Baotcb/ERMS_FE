@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { JobStatus, Job } from "../../types"
-import { MockJobService } from "../../data/mock-jobs"
+import { JobService } from "../../api/jobs-service"
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -22,9 +22,16 @@ export function CreateJobWizard({ initialData, isEditMode = false }: CreateJobWi
     const router = useRouter()
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const REVERSE_DEPARTMENT_ID_MAPPING: Record<number, string> = {
+        1: "DEPT-ENG",
+        2: "DEPT-HR",
+        3: "DEPT-SALES",
+        4: "DEPT-MKT"
+    }
+
     const [formData, setFormData] = useState({
         title: initialData?.title || "",
-        departmentId: initialData?.departmentId || "",
+        departmentId: initialData?.departmentId ? REVERSE_DEPARTMENT_ID_MAPPING[initialData.departmentId] : "",
         location: initialData?.location || "",
         minSalary: initialData?.minSalary?.toString() || "",
         maxSalary: initialData?.maxSalary?.toString() || "",
@@ -48,38 +55,47 @@ export function CreateJobWizard({ initialData, isEditMode = false }: CreateJobWi
         return textMap[id] || "General"
     }
 
+    const DEPARTMENT_ID_MAPPING: Record<string, number> = {
+        "DEPT-ENG": 1,
+        "DEPT-HR": 2,
+        "DEPT-SALES": 3,
+        "DEPT-MKT": 4
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setError(null)
 
         try {
-            const commonData = {
+            // Map string ID to backend Int ID. Default to 1 (General/Eng) if not found.
+            const backendDeptId = DEPARTMENT_ID_MAPPING[formData.departmentId] || 1;
+
+            const payload = {
                 title: formData.title,
-                departmentId: formData.departmentId || "DEPT-GEN",
-                departmentName: getDepartmentName(formData.departmentId),
+                departmentId: backendDeptId,
                 location: formData.location || "Remote",
                 minSalary: Number(formData.minSalary) || 0,
                 maxSalary: Number(formData.maxSalary) || 0,
-                currency: formData.currency as "USD" | "VND",
+                currency: formData.currency,
                 description: formData.description,
                 requirements: formData.requirements,
+                postingType: "External", // Default
+                publishDate: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                // skillIds: [] // TODO: Add skill selection
             }
 
             if (isEditMode && initialData?.id) {
-                await MockJobService.update(initialData.id, commonData)
+                await JobService.update(initialData.id, payload)
             } else {
-                await MockJobService.create({
-                    ...commonData,
-                    status: JobStatus.OPEN,
-                    creatorId: "current-user",
-                    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                })
+                await JobService.create(payload)
             }
             router.push('/recruitment/hr/jobs')
-        } catch (err) {
+        } catch (err: any) {
             console.error(err)
-            setError(`Failed to ${isEditMode ? 'update' : 'create'} job.`)
+            const msg = err?.message || `Failed to ${isEditMode ? 'update' : 'create'} job.`
+            setError(msg)
         } finally {
             setIsLoading(false)
         }

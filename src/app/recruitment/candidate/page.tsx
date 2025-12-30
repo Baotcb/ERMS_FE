@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Sparkles, Briefcase } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Job, JobStatus } from "@/features/recruitment/jobs/types"
-import { MockJobService } from "@/features/recruitment/jobs/data/mock-jobs"
+import { JobService } from "@/features/recruitment/jobs/api/jobs-service"
 import { JobCard, JobFilters } from "@/features/recruitment/jobs/components"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
@@ -22,8 +22,8 @@ export default function JobListingPage() {
         const fetchJobs = async () => {
             setIsLoading(true)
             try {
-                // For candidate view, we typically only want OPEN jobs, but the filter component handles client-side filtering
-                const data = await MockJobService.getAll()
+                // For candidate view, we strictly fetch OPEN jobs
+                const data = await JobService.getAll({ status: 'Open' })
                 setJobs(data)
             } catch (error) {
                 console.error("Failed to fetch jobs", error)

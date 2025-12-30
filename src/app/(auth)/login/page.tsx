@@ -44,13 +44,15 @@ export default function LoginPage() {
       if (user) {
         switch (user.role?.toLowerCase()) {
           case "hr":
-            router.push("/recruitment-dashboard")
+          case "manager":
+            router.push("/recruitment/hr/jobs")
             break
           case "employee":
-            router.push("/my-learning")
+            // router.push("/my-learning") // Module not yet implemented
+            router.push("/")
             break
           case "candidate":
-            router.push("/careers")
+            router.push("/recruitment/candidate")
             break
           default:
             router.push("/")

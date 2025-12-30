@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { PlusCircle, Edit, MoreHorizontal, Search, Filter } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Job, JobStatus } from "@/features/recruitment/jobs/types"
-import { MockJobService } from "@/features/recruitment/jobs/data/mock-jobs"
+import { JobService } from "@/features/recruitment/jobs/api/jobs-service"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -24,7 +24,7 @@ export default function HRManageJobsPage() {
         const fetchJobs = async () => {
             setIsLoading(true)
             try {
-                const data = await MockJobService.getAll()
+                const data = await JobService.getAll()
                 setJobs(data)
             } catch (error) {
                 console.error(error)
@@ -133,7 +133,7 @@ export default function HRManageJobsPage() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>{job.applicantsCount || 0}</TableCell>
-                                    <TableCell>{format(new Date(job.createdAt), 'MMM d, yyyy')}</TableCell>
+                                    <TableCell>{job.publishDate ? format(new Date(job.publishDate), 'MMM d, yyyy') : 'N/A'}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>

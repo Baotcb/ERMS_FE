@@ -25,6 +25,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
+import { authService } from "@/lib/auth"
 import { useEffect } from "react"
 import { Loader2, Camera, User, Mail, Phone, MapPin } from "lucide-react"
 
@@ -45,7 +46,7 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 export function ProfileForm() {
-    const { user, isLoading } = useAuth()
+    const { user, isLoading, refreshUser } = useAuth()
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
@@ -70,12 +71,28 @@ export function ProfileForm() {
     }, [user, form])
 
     async function onSubmit(data: ProfileFormValues) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        try {
+            await authService.updateProfile({
+                fullName: data.fullName,
+                hometown: data.address || undefined,
+                phones: data.phoneNumber || undefined,
+            })
 
-        toast({
-            title: "Cập nhật thành công",
-            description: "Thông tin hồ sơ của bạn đã được thay đổi.",
-        })
+            // Refresh user data in context to update UI immediately
+            await refreshUser()
+
+            toast({
+                title: "Cập nhật thành công",
+                description: "Thông tin hồ sơ của bạn đã được thay đổi.",
+            })
+        } catch (error) {
+            console.error(error)
+            toast({
+                title: "Lỗi cập nhật",
+                description: "Không thể lưu thay đổi. Vui lòng thử lại sau.",
+                variant: "destructive",
+            })
+        }
     }
 
     if (isLoading) {
