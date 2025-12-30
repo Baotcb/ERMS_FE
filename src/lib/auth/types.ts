@@ -10,6 +10,12 @@ export interface RegisterRequest {
     role?: string
 }
 
+export interface ChangePasswordRequest {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+}
+
 export interface AuthResponse {
     token?: string
     user?: {

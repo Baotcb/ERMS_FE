@@ -4,12 +4,12 @@ import { useCallback } from 'react'
 import { useProfileStore } from '@/lib/stores/profile-store'
 import { updateProfileSchema, type UpdateProfileFormData } from '@/lib/validations/profile'
 import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/hooks/use-toast'
+
 
 export function useProfileForm() {
     const { profile, updateProfile, isUpdating } = useProfileStore()
     const { refreshUser } = useAuth()
-    const { toast } = useToast()
+
 
     const form = useForm<UpdateProfileFormData>({
         resolver: zodResolver(updateProfileSchema),
@@ -36,19 +36,12 @@ export function useProfileForm() {
             await updateProfile(submitData)
             await refreshUser() // Refresh user data in auth context
 
-            toast({
-                title: 'Thành công',
-                description: 'Cập nhật hồ sơ thành công',
-            })
-
-            return true
+            return { success: true }
         } catch (error) {
-            toast({
-                title: 'Lỗi',
-                description: 'Không thể cập nhật hồ sơ. Vui lòng thử lại.',
-                variant: 'destructive',
-            })
-            return false
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Không thể cập nhật hồ sơ. Vui lòng thử lại.'
+            }
         }
     }
 

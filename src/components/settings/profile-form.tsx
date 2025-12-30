@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -18,16 +17,25 @@ import { Input } from "@/components/ui/input"
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { authService } from "@/lib/auth"
-import { useEffect } from "react"
-import { Loader2, Camera, User, Mail, Phone, MapPin } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Loader2, Camera, User, Mail, Phone, MapPin, CheckCircle2, AlertCircle, Save } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const profileFormSchema = z.object({
     fullName: z
@@ -39,6 +47,7 @@ const profileFormSchema = z.object({
             message: "Tên không được quá 30 ký tự.",
         }),
     email: z.string().email(),
+    dateOfBirth: z.string().optional(),
     phoneNumber: z.string().min(10, { message: "Số điện thoại không hợp lệ" }).optional().or(z.literal("")),
     address: z.string().optional().or(z.literal("")),
 })
@@ -47,12 +56,22 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 export function ProfileForm() {
     const { user, isLoading, refreshUser } = useAuth()
+    const [isUpdating, setIsUpdating] = useState(false)
+    const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+
+    // Fetch fresh data when entering settings to ensure no staleness
+    useEffect(() => {
+        refreshUser()
+    }, [])
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+    const [pendingData, setPendingData] = useState<ProfileFormValues | null>(null)
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
         defaultValues: {
             fullName: "",
             email: "",
+            dateOfBirth: "",
             phoneNumber: "",
             address: "",
         },
@@ -64,34 +83,46 @@ export function ProfileForm() {
             form.reset({
                 fullName: user.fullName || user.name || "",
                 email: user.email || "",
+                dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
                 phoneNumber: user.phoneNumber || "",
                 address: user.address || "",
             })
         }
     }, [user, form])
 
-    async function onSubmit(data: ProfileFormValues) {
+    const handleSaveRequest = (data: ProfileFormValues) => {
+        setPendingData(data)
+        setShowConfirmDialog(true)
+    }
+
+    const confirmSave = async () => {
+        if (!pendingData) return
+
+        setShowConfirmDialog(false)
+        setFeedback(null)
+        setIsUpdating(true)
+
         try {
             await authService.updateProfile({
-                fullName: data.fullName,
-                hometown: data.address || undefined,
-                phones: data.phoneNumber || undefined,
+                fullName: pendingData.fullName,
+                dateOfBirth: pendingData.dateOfBirth || undefined,
+                hometown: pendingData.address || undefined,
+                phones: pendingData.phoneNumber || undefined,
             })
 
             // Refresh user data in context to update UI immediately
             await refreshUser()
 
-            toast({
-                title: "Cập nhật thành công",
-                description: "Thông tin hồ sơ của bạn đã được thay đổi.",
-            })
+            setFeedback({ type: 'success', message: 'Cập nhật hồ sơ thành công!' })
         } catch (error) {
             console.error(error)
-            toast({
-                title: "Lỗi cập nhật",
-                description: "Không thể lưu thay đổi. Vui lòng thử lại sau.",
-                variant: "destructive",
+            setFeedback({
+                type: 'error',
+                message: error instanceof Error ? error.message : "Không thể lưu thay đổi. Vui lòng thử lại sau."
             })
+        } finally {
+            setIsUpdating(false)
+            setPendingData(null)
         }
     }
 
@@ -103,6 +134,17 @@ export function ProfileForm() {
 
     return (
         <div className="grid gap-6">
+            {/* Feedback Alert */}
+            {feedback && (
+                <Alert variant={feedback.type === 'error' ? 'destructive' : 'default'} className={feedback.type === 'success' ? 'border-green-500 text-green-700 bg-green-50' : 'bg-red-50'}>
+                    {feedback.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                    <AlertTitle>{feedback.type === 'success' ? 'Thành công' : 'Lỗi'}</AlertTitle>
+                    <AlertDescription>
+                        {feedback.message}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Card className="border-t-4 border-t-primary shadow-md">
                 <CardHeader className="bg-muted/20">
                     <CardTitle className="text-primary flex items-center gap-2">
@@ -113,7 +155,7 @@ export function ProfileForm() {
                 </CardHeader>
                 <CardContent className="pt-6">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(handleSaveRequest)} className="space-y-6">
 
                             {/* Avatar Section */}
                             <div className="flex justify-center pb-6">
@@ -147,6 +189,21 @@ export function ProfileForm() {
                                                 </div>
                                             </FormControl>
 
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="dateOfBirth"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Ngày sinh</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <Input type="date" {...field} />
+                                                </div>
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -207,7 +264,12 @@ export function ProfileForm() {
                             </div>
 
                             <div className="flex justify-end pt-4 border-t">
-                                <Button type="submit" className="min-w-[120px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
+                                <Button
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="min-w-[120px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 duration-200"
+                                >
+                                    {isUpdating ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
                                     Lưu thay đổi
                                 </Button>
                             </div>
@@ -215,6 +277,25 @@ export function ProfileForm() {
                     </Form>
                 </CardContent>
             </Card>
+
+            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận thay đổi</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có chắc chắn muốn lưu các thay đổi này không?
+                            Hành động này sẽ cập nhật thông tin hồ sơ của bạn.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isUpdating}>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmSave} disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
+                            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Đồng ý
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

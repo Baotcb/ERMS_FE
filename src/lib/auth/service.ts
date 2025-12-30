@@ -145,5 +145,12 @@ export const authService = {
      */
     async forgotPassword(email: string): Promise<void> {
         return api.post('/api/Auth/forgot-password', { email })
+    },
+
+    /**
+     * Change password
+     */
+    async changePassword(data: import('./types').ChangePasswordRequest): Promise<void> {
+        return api.post('/api/Auth/change-password', data)
     }
 }

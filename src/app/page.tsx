@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Navbar } from "@/components/common/navbar"
 import { Footer } from "@/components/common/footer"
-import { BrainCircuit, GraduationCap, FileCheck, Sparkles, Loader2 } from "lucide-react"
+import { BrainCircuit, GraduationCap, FileCheck, Sparkles } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
@@ -36,22 +36,9 @@ export default function LandingPage() {
     }
   }, [isLoading, isAuthenticated, user, router])
 
-  // Show loading spinner during auth check
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-muted-foreground">Đang kiểm tra đăng nhập...</p>
-        </div>
-      </div>
-    )
-  }
 
-  // Only show landing page to guests
-  if (isAuthenticated && user) {
-    return null // Will redirect via useEffect
-  }
+
+
 
   // Landing page content for guest users
   return (

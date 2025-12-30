@@ -11,6 +11,7 @@ interface User {
   fullName?: string
   phoneNumber?: string
   address?: string
+  dateOfBirth?: string
 }
 
 interface AuthContextType {
@@ -57,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: localUser?.role || 'user',
             fullName: profile.fullName,
             phoneNumber: profile.phones,
-            address: profile.hometown
+            address: profile.hometown,
+            dateOfBirth: profile.dateOfBirth
           })
         } catch (error) {
           console.error('Failed to load user profile', error)
@@ -96,7 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: localUser?.role || 'user',
         fullName: profile.fullName,
         phoneNumber: profile.phones,
-        address: profile.hometown
+        address: profile.hometown,
+        dateOfBirth: profile.dateOfBirth
       })
     } catch (error) {
       console.error('Failed to refresh user', error)

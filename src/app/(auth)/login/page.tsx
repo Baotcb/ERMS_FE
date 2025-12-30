@@ -20,7 +20,7 @@ import { useAuth } from "@/contexts/AuthContext"
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { login } = useAuth()
+  const { refreshUser } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -35,11 +35,12 @@ export default function LoginPage() {
     try {
       const response = await authService.login({ email, password })
 
-      // Get user from localStorage (already parsed from JWT)
+      // Update global auth state with full profile
+      // We use refreshUser instead of login(user) to ensure we get the full profile data
+      // not just what's in the token/localStorage
+      await refreshUser()
+
       const user = authService.getCurrentUser()
-      if (user) {
-        login(user)
-      }
 
       // Check if there's a redirect URL (e.g., from apply button)
       const redirectUrl = searchParams.get("redirect")
