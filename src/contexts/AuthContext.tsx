@@ -32,8 +32,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       const token = authService.getToken()
       if (token) {
+        // Sync cookie if missing (for middleware compatibility)
+        if (typeof window !== 'undefined') {
+          const hasCookie = document.cookie.includes('token=')
+          if (!hasCookie) {
+            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Strict`
+          }
+        }
+
         try {
           const localUser = authService.getCurrentUser()
+
+          // Set user from localStorage first for instant UI (no flicker)
+          if (localUser) {
+            setUser(localUser)
+          }
+
           const profile = await authService.getProfile()
 
           setUser({
