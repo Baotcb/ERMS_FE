@@ -30,11 +30,39 @@ export interface RegisterData {
   confirmPassword?: string
 }
 
+export interface ForgotPasswordData {
+  email: string
+}
+
+export interface ResetPasswordData {
+  email: string
+  token: string
+  newPassword: string
+  confirmPassword: string
+}
+
 export interface AuthResponse {
   token?: string
   user?: User
   message?: string
   success?: boolean
+  userId?: string
+}
+
+// API-specific types (matching backend responses)
+export interface ApiUser {
+  id: string
+  email: string
+  fullName: string
+  role: string
+}
+
+export interface ApiAuthResponse {
+  token?: string
+  user?: ApiUser
+  message?: string
+  success?: boolean
+  userId?: string
 }
 
 // Profile related types
