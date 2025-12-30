@@ -36,24 +36,3 @@ export interface AuthResponse {
   message?: string
   success?: boolean
 }
-
-// Profile related types
-export interface UserProfile {
-  userName: string
-  email: string
-  fullName: string
-  dateOfBirth?: string
-  hometown?: string
-  phones?: string
-  departmentId?: string
-  departmentName?: string
-  status: number
-  dateJoined: string
-}
-
-export interface UpdateProfileData {
-  fullName: string
-  dateOfBirth?: string
-  hometown?: string
-  phones?: string
-}
