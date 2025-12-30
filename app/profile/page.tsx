@@ -40,11 +40,18 @@ export default function ProfilePage() {
   }, [isAuthenticated, router, fetchProfile])
 
   useEffect(() => {
-    // Reset form when profile data changes
+    // Reset form when profile data changes and not editing
     if (profile && !isEditing) {
-      resetForm()
+      form.reset({
+        fullName: profile.fullName || '',
+        dateOfBirth: profile.dateOfBirth
+          ? new Date(profile.dateOfBirth).toISOString().split('T')[0]
+          : '',
+        hometown: profile.hometown || '',
+        phones: profile.phones || '',
+      })
     }
-  }, [profile, isEditing, resetForm])
+  }, [profile, isEditing, form])
 
   const handleEdit = () => {
     setIsEditing(true)

@@ -1,5 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useCallback } from 'react'
 import { useProfileStore } from '@/lib/stores/profile-store'
 import { updateProfileSchema, type UpdateProfileFormData } from '@/lib/validations/profile'
 import { useAuth } from '@/contexts/AuthContext'
@@ -51,7 +52,7 @@ export function useProfileForm() {
     }
   }
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     if (profile) {
       form.reset({
         fullName: profile.fullName || '',
@@ -62,7 +63,7 @@ export function useProfileForm() {
         phones: profile.phones || '',
       })
     }
-  }
+  }, [profile, form])
 
   return {
     form,

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useMemo } from "react"
 import { BookOpen, Briefcase, User, Home, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,9 +25,10 @@ export function Navbar({ user: propUser }: NavbarProps) {
   const router = useRouter()
   
   // Use auth context user if available, otherwise use prop user
-  const user = authUser || propUser
-  const isGuest = !user || user.role === "guest"
-  const isEmployee = user?.role === "employee"
+  // Memoize to prevent unnecessary re-renders
+  const user = useMemo(() => authUser || propUser, [authUser, propUser])
+  const isGuest = useMemo(() => !user || user?.role === "guest", [user])
+  const isEmployee = useMemo(() => user?.role === "employee", [user])
 
   const guestLinks = [
     { label: "Trang chủ", href: "/", icon: <Home className="size-4" /> },
@@ -38,6 +40,9 @@ export function Navbar({ user: propUser }: NavbarProps) {
     { label: "Học tập của tôi", href: "/my-learning", icon: <BookOpen className="size-4" /> },
     { label: "Lịch sử đào tạo", href: "/training-history", icon: <Award className="size-4" /> },
   ]
+
+  // Memoize avatar initials to prevent re-renders
+  const avatarInitials = useMemo(() => user?.name?.charAt(0).toUpperCase() || "U", [user?.name])
 
   const handleLogout = () => {
     logout()
@@ -98,12 +103,12 @@ export function Navbar({ user: propUser }: NavbarProps) {
               </Button>
             </>
           ) : (
-            <DropdownMenu>
+            <DropdownMenu key={user?.id || 'user'}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative size-10 rounded-full p-0">
                   <Avatar>
                     <AvatarFallback className="bg-blue-600 text-white">
-                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                      {avatarInitials}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -112,7 +117,7 @@ export function Navbar({ user: propUser }: NavbarProps) {
                 <div className="flex items-center gap-2 p-2">
                   <Avatar className="size-8">
                     <AvatarFallback className="bg-blue-600 text-white text-xs">
-                      {user?.name?.charAt(0).toUpperCase() || "U"}
+                      {avatarInitials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
