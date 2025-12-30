@@ -63,26 +63,13 @@ async function apiFetch<T>(
       return {} as T
     }
 
-    let data: T
-    try {
-      data = await response.json()
-    } catch (parseError) {
-      // If response is not valid JSON, treat it as a server error
-      if (!response.ok) {
-        throw new ApiException(
-          'Server error occurred',
-          response.status
-        )
-      }
-      // For successful responses that are not JSON, return empty object
-      data = {} as T
-    }
+    const data = await response.json()
 
     if (!response.ok) {
       throw new ApiException(
-        (data as any)?.message || (data as any)?.title || 'An error occurred',
+        data.message || data.title || 'An error occurred',
         response.status,
-        (data as any)?.errors
+        data.errors
       )
     }
 
