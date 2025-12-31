@@ -59,9 +59,9 @@ async function apiFetch<T>(
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
         const text = await response.text()
-        console.error(`[API Error] Non-JSON response: ${text.slice(0, 200)}`)
+        console.error(`[API Error] Non-JSON response from ${url}: ${text.slice(0, 200)}`)
         throw new ApiException(
-          'Server error occurred',
+          `Server error occurred at ${url}`,
           response.status
         )
       }

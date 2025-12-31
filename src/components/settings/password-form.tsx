@@ -23,18 +23,7 @@ export function PasswordForm() {
                     Để bảo mật tài khoản, hãy thường xuyên cập nhật mật khẩu của bạn.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-                <div className="text-center py-4">
-                    <p className="mb-4 text-muted-foreground">
-                        Hệ thống hiện tại hỗ trợ đổi mật khẩu thông qua quy trình "Quên mật khẩu" xác thực qua email.
-                    </p>
-                    <Button asChild className="bg-orange-600 hover:bg-orange-700">
-                        <Link href="/forgot-password">
-                            Đến trang Quên mật khẩu
-                        </Link>
-                    </Button>
-                </div>
-            </CardContent>
+
         </Card>
     )
 }
