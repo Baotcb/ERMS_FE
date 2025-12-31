@@ -56,3 +56,10 @@ export interface UpdateProfileData {
   hometown?: string
   phones?: string
 }
+
+export interface ResetPasswordData {
+  email: string
+  token: string
+  newPassword: string
+  confirmPassword: string
+}

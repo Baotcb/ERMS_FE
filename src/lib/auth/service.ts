@@ -1,5 +1,5 @@
 import { api, ApiException } from '@/lib/api'
-import { LoginRequest, AuthResponse, RegisterRequest } from './types'
+import { LoginRequest, AuthResponse, RegisterRequest, ResetPasswordRequest } from './types'
 import { extractUserFromToken } from './utils'
 
 export interface UserProfile {
@@ -152,5 +152,12 @@ export const authService = {
      */
     async changePassword(data: import('./types').ChangePasswordRequest): Promise<void> {
         return api.post('/api/Auth/change-password', data)
+    },
+
+    /**
+     * Reset password using token
+     */
+    async resetPassword(data: ResetPasswordRequest): Promise<void> {
+        return api.post('/api/Auth/reset-password', data)
     }
 }

@@ -16,6 +16,12 @@ export interface ChangePasswordRequest {
     confirmPassword: string
 }
 
+export interface ResetPasswordRequest {
+    email: string
+    token: string
+    newPassword: string
+}
+
 export interface AuthResponse {
     token?: string
     user?: {
