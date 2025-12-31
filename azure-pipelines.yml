@@ -1,15 +1,15 @@
 trigger:
-  - main 
+  - main
 
 
-pr: none
+pr:
+  - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-- group: NetlifyVariables # Chứa: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
-- group: SONAR_PROJECT    # Chứa: SONAR_ORG, SONAR_PROJECT_KEY, SONAR_TOKEN
+- group: SONAR_PROJECT
 
 steps:
 
@@ -35,16 +35,3 @@ steps:
       -Dsonar.tests=. \
       -Dsonar.test.inclusions=**/*.test.ts,**/*.spec.ts,**/*.test.tsx,**/*.spec.tsx
   displayName: 'Run SonarCloud Scan'
-
-- script: |
-    npm run build
-  displayName: 'Build Next.js'
-
-
-- script: |
-    npm install -g netlify-cli
-    netlify deploy --dir=out --prod
-  env:
-    NETLIFY_AUTH_TOKEN: $(NETLIFY_AUTH_TOKEN)
-    NETLIFY_SITE_ID: $(NETLIFY_SITE_ID)
-  displayName: 'Deploy to Netlify Production'
