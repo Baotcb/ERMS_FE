@@ -49,17 +49,17 @@ async function apiFetch<T>(
   }
 
   try {
-    console.log(`[API Request] ${config.method || 'GET'} ${url}`)
+
     const response = await fetch(url, config)
 
-    console.log(`[API Response] ${response.status} ${url}`)
+
 
     // Handle non-JSON responses
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
       if (!response.ok) {
         const text = await response.text()
-        console.error(`[API Error] Non-JSON response from ${url}: ${text.slice(0, 200)}`)
+
         throw new ApiException(
           `Server error occurred at ${url}`,
           response.status
@@ -71,7 +71,7 @@ async function apiFetch<T>(
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('[API Error Data]', data)
+
       throw new ApiException(
         data.message || data.title || 'An error occurred',
         response.status,
@@ -81,7 +81,7 @@ async function apiFetch<T>(
 
     return data
   } catch (error) {
-    console.error('[API Exception]', error)
+
     if (error instanceof ApiException) {
       throw error
     }
