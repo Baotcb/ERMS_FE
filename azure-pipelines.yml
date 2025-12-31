@@ -1,15 +1,15 @@
+
 trigger:
   - main
 
-
-pr:
-  - main
+pr: none
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
 - group: SONAR_PROJECT
+- group: VercelVariables
 
 steps:
 
@@ -35,3 +35,13 @@ steps:
       -Dsonar.tests=. \
       -Dsonar.test.inclusions=**/*.test.ts,**/*.spec.ts,**/*.test.tsx,**/*.spec.tsx
   displayName: 'Run SonarCloud Scan'
+
+
+- script: |
+    npm install -g vercel
+    vercel deploy --prod --token=$(VERCEL_TOKEN) --yes
+  env:
+    VERCEL_ORG_ID: $(VERCEL_ORG_ID)
+    VERCEL_PROJECT_ID: $(VERCEL_PROJECT_ID)
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  displayName: 'Deploy to Vercel Production'
