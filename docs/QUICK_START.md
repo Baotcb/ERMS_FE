@@ -21,7 +21,6 @@ Tạo file `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
-NODE_ENV=development
 ```
 
 ### 4. Chạy Development Server
