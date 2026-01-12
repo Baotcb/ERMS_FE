@@ -92,7 +92,6 @@ Khi code thay đổi, update docs tương ứng:
 | Tài Liệu | Trạng Thái | Cập Nhật |
 |----------|-----------|----------|
 | Quick Start | ✅ Hoàn thành | 12/01/2026 |
-| Application Overview | ✅ Hoàn thành | 12/01/2026 |
 | Project Structure | ✅ Hoàn thành | 12/01/2026 |
 | Project Standards | ✅ Hoàn thành | 12/01/2026 |
 | Components & Styling | ✅ Hoàn thành | 12/01/2026 |
