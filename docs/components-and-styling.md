@@ -108,40 +108,6 @@ interface JobCardProps {
 </JobCard>
 ```
 
-### Trừu Tượng Hóa Shared Components
-
-Cho các dự án lớn như ERMS, xây dựng các abstractions xung quanh tất cả shared components. Điều này giúp ứng dụng nhất quán hơn và dễ bảo trì hơn.
-
-[Ví Dụ Component Library - Button](../src/components/ui/button.tsx)
-
-Wrap các components của bên thứ ba để thích ứng với nhu cầu của ứng dụng:
-
-```typescript
-// src/components/ui/link.tsx
-import NextLink from 'next/link'
-import { forwardRef } from 'react'
-
-export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
-  ({ href, children, ...props }, ref) => {
-    // Thêm logic đặc thù cho ứng dụng
-    const isExternal = href.startsWith('http')
-    
-    if (isExternal) {
-      return (
-        <a href={href} target="_blank" rel="noopener noreferrer" ref={ref} {...props}>
-          {children}
-        </a>
-      )
-    }
-    
-    return (
-      <NextLink href={href} ref={ref} {...props}>
-        {children}
-      </NextLink>
-    )
-  }
-)
-```
 
 ## Các Pattern Cho Component
 
@@ -503,11 +469,4 @@ export const Destructive: Story = {
 
 ---
 
-**Tóm Tắt Thực Hành Tốt Nhất:**
-- ✅ Đặt components cùng chỗ với features
-- ✅ Tách logic rendering thành components
-- ✅ Sử dụng memoization cho hiệu năng
-- ✅ Giới hạn props, dùng composition
-- ✅ Xây dựng thư viện component tái sử dụng
-- ✅ Sử dụng Tailwind cho styling
-- ✅ Kiểm thử components kỹ lưỡng
+
