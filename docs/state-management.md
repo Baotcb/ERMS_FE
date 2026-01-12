@@ -142,45 +142,12 @@ export function useTheme() {
 
 Dữ liệu lấy từ server nên được cache đúng cách. Thay vì lưu trong Redux, hãy sử dụng các thư viện chuyên biệt.
 
-### React Query (Khuyến Nghị)
-
-```typescript
-// features/domains/jobs/api/use-jobs.ts
-import { useQuery } from '@tanstack/react-query'
-import { getJobs } from './jobs-service'
-
-export function useJobs(filters: JobFilters) {
-  return useQuery({
-    queryKey: ['jobs', filters],
-    queryFn: () => getJobs(filters),
-    staleTime: 5 * 60 * 1000, // 5 phút
-  })
-}
-
-// Sử dụng
-function JobList() {
-  const { data, isLoading, error } = useJobs({ location: 'Hanoi' })
-  
-  if (isLoading) return <Spinner />
-  if (error) return <Error />
-  
-  return <div>{data.map(job => <JobCard key={job.id} {...job} />)}</div>
-}
-```
-
-### Lợi Ích
-
-- ✅ Tự động cache
-- ✅ Tự động refetch ở background
-- ✅ Loại bỏ trùng lặp
-- ✅ Cập nhật lạc quan
-- ✅ Hỗ trợ phân trang
 
 ## Form State
 
 Forms yêu cầu xử lý đặc biệt cho validation, submission, errors, v.v.
 
-### React Hook Form + Zod (ERMS Sử Dụng)
+### React Hook Form + Zod 
 
 ```typescript
 import { useForm } from 'react-hook-form'
@@ -339,12 +306,3 @@ function UserName() {
 ```
 
 ---
-
-**Tóm Tắt Quản Lý State:**
-- ✅ Component state với useState/useReducer
-- ✅ Application state với Zustand
-- ✅ Server state với React Query
-- ✅ Form state với React Hook Form
-- ✅ URL state với Next.js router
-- ✅ Bắt đầu cục bộ, di chuyển lên khi cần
-- ✅ Sử dụng selectors để tránh re-renders
