@@ -37,49 +37,7 @@ export default tseslint.config(
 
 [Cấu Hình ESLint - ERMS](../eslint.config.mjs)
 
-## Prettier (Khuyến Nghị)
 
-Prettier là công cụ hữu ích cho việc duy trì định dạng code nhất quán. Bật tính năng "format on save" trong IDE để code tự động được định dạng theo các rules trong file `.prettierrc`.
-
-### Cấu Hình
-
-```json
-{
-  "semi": false,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "es5",
-  "printWidth": 100,
-  "arrowParens": "avoid"
-}
-```
-
-**Lưu ý**: ERMS hiện không bắt buộc Prettier nhưng khuyến khích sử dụng để đảm bảo sự nhất quán trong team.
-
-## TypeScript
-
-TypeScript là thiết yếu cho dự án ERMS để tăng cường an toàn kiểu dữ liệu và phát hiện lỗi sớm. Khi refactor, ưu tiên cập nhật khai báo kiểu trước, sau đó giải quyết các lỗi TypeScript trong toàn bộ dự án.
-
-### Cấu Hình
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
-}
 ```
 
 [Cấu Hình TypeScript - ERMS](../tsconfig.json)
@@ -123,41 +81,6 @@ function isUser(obj: unknown): obj is User {
   )
 }
 ```
-
-## Husky (Khuyến Nghị)
-
-Husky được sử dụng để triển khai git hooks trong quy trình làm việc. Chạy kiểm tra code trước mỗi commit để đảm bảo chất lượng code và không có commit lỗi được push lên.
-
-### Cài Đặt
-
-```bash
-npm install --save-dev husky
-npx husky init
-```
-
-### Pre-commit Hook
-
-```bash
-# .husky/pre-commit
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npm run lint
-npm run type-check
-```
-
-### Pre-push Hook
-
-```bash
-# .husky/pre-push
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npm run test
-npm run build
-```
-
-**Lưu ý**: ERMS hiện chưa cài đặt Husky nhưng rất khuyến khích cho production.
 
 ## Absolute Imports
 
@@ -476,10 +399,3 @@ Closes #123
 - ✅ Thân thiện với screen reader
 
 ---
-
-**Tuân theo các chuẩn mực này đảm bảo:**
-- 🎯 Chất lượng code nhất quán
-- 🚀 Hiệu năng tốt hơn
-- 🔒 Bảo mật được tăng cường
-- 👥 Cộng tác dễ dàng hơn
-- 📈 Codebase có khả năng mở rộng
