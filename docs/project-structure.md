@@ -546,13 +546,6 @@ function JobForm() { /* creating/editing */ }
 
 ## Thích Ứng Với Các Frameworks Khác
 
-Cấu trúc này hoạt động với:
-
-- ✅ **Next.js App Router** (ERMS sử dụng cái này)
-- ✅ **Next.js Pages Router**
-- ✅ **Remix**
-- ✅ **React SPA (Vite, CRA)**
-- ✅ **React Native**
 
 Chỉ thư mục `app/` khác nhau dựa trên framework, cấu trúc features vẫn giữ nguyên!
 
