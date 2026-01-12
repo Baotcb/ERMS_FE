@@ -20,7 +20,7 @@ npm install
 Tạo file `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
+API_URL=http://localhost:5000
 ```
 
 ### 4. Chạy Development Server
