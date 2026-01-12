@@ -177,12 +177,5 @@ export async function getJobs(): Promise<Job[]> {
 - 🗃️ [State Management](./state-management.md) - Quản lý state
 - ⚙️ [Standards](./project-standards.md) - Coding standards
 
-## Cần Giúp Đỡ?
 
-- 📖 Xem docs trong thư mục `docs/`
-- 💬 Hỏi trên Slack channel
-- 🐛 Tạo issue trên GitHub
-
----
-
-**Chúc bạn coding vui vẻ! 🎉**
+**Happy vibing! 🎉**
