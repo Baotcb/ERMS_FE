@@ -38,31 +38,6 @@ export default tseslint.config(
 [Cấu Hình ESLint - ERMS](../eslint.config.mjs)
 
 
-
-## TypeScript
-
-TypeScript là thiết yếu cho dự án ERMS để tăng cường an toàn kiểu dữ liệu và phát hiện lỗi sớm. Khi refactor, ưu tiên cập nhật khai báo kiểu trước, sau đó giải quyết các lỗi TypeScript trong toàn bộ dự án.
-
-### Cấu Hình
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
-}
 ```
 
 [Cấu Hình TypeScript - ERMS](../tsconfig.json)
@@ -106,7 +81,6 @@ function isUser(obj: unknown): obj is User {
   )
 }
 ```
-
 
 ## Absolute Imports
 
@@ -406,4 +380,3 @@ feat(auth): thêm chức năng quên mật khẩu
 - ✅ Thân thiện với screen reader
 
 ---
-

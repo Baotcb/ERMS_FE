@@ -21,6 +21,7 @@ Tạo file `.env.local`:
 
 ```env
 API_URL=http://localhost:5000
+API_URL=http://localhost:5000
 ```
 
 ### 4. Chạy Development Server
