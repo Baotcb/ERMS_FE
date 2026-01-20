@@ -37,24 +37,7 @@ export default tseslint.config(
 
 [Cấu Hình ESLint - ERMS](../eslint.config.mjs)
 
-## Prettier (Khuyến Nghị)
 
-Prettier là công cụ hữu ích cho việc duy trì định dạng code nhất quán. Bật tính năng "format on save" trong IDE để code tự động được định dạng theo các rules trong file `.prettierrc`.
-
-### Cấu Hình
-
-```json
-{
-  "semi": false,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "es5",
-  "printWidth": 100,
-  "arrowParens": "avoid"
-}
-```
-
-**Lưu ý**: ERMS hiện không bắt buộc Prettier nhưng khuyến khích sử dụng để đảm bảo sự nhất quán trong team.
 
 ## TypeScript
 
@@ -124,40 +107,6 @@ function isUser(obj: unknown): obj is User {
 }
 ```
 
-## Husky (Khuyến Nghị)
-
-Husky được sử dụng để triển khai git hooks trong quy trình làm việc. Chạy kiểm tra code trước mỗi commit để đảm bảo chất lượng code và không có commit lỗi được push lên.
-
-### Cài Đặt
-
-```bash
-npm install --save-dev husky
-npx husky init
-```
-
-### Pre-commit Hook
-
-```bash
-# .husky/pre-commit
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npm run lint
-npm run type-check
-```
-
-### Pre-push Hook
-
-```bash
-# .husky/pre-push
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npm run test
-npm run build
-```
-
-**Lưu ý**: ERMS hiện chưa cài đặt Husky nhưng rất khuyến khích cho production.
 
 ## Absolute Imports
 
@@ -404,25 +353,12 @@ const debouncedSearch = useDebounce(search, 300)
 setLoading(true)
 ```
 
-## Hướng Dẫn Code Review
-
-### Trước Khi Submit PR
-
-- ✅ Chạy `npm run lint`
-- ✅ Chạy `npm run type-check`
-- ✅ Chạy `npm run test`
-- ✅ Test thủ công trong browser
-- ✅ Cập nhật documentation nếu cần
-- ✅ Thêm commit messages có ý nghĩa
 
 ### Định Dạng Commit Message
 
 ```
 type(scope): subject
 
-body (tùy chọn)
-
-footer (tùy chọn)
 ```
 
 **Các Types:**
@@ -438,12 +374,6 @@ footer (tùy chọn)
 **Ví dụ:**
 ```
 feat(auth): thêm chức năng quên mật khẩu
-
-- Thêm forgot password form
-- Triển khai gửi email
-- Thêm reset password page
-
-Closes #123
 ```
 
 ## Chuẩn Mực Hiệu Năng
@@ -477,9 +407,3 @@ Closes #123
 
 ---
 
-**Tuân theo các chuẩn mực này đảm bảo:**
-- 🎯 Chất lượng code nhất quán
-- 🚀 Hiệu năng tốt hơn
-- 🔒 Bảo mật được tăng cường
-- 👥 Cộng tác dễ dàng hơn
-- 📈 Codebase có khả năng mở rộng

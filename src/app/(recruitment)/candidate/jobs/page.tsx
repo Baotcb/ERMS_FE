@@ -3,18 +3,18 @@
  * Main page for candidates to search and browse jobs
  */
 
-import { JobHero } from '@/features/domains/jobs/components/job-hero'
-import { JobFilter } from '@/features/domains/jobs/components/job-filter'
-import { JobList } from '@/features/domains/jobs/components/job-list'
+import { HeroSection } from '@/features/domains/home/hero-section'
+import { BestJobsSection } from '@/features/domains/home/best-jobs-section'
+import { TopCompaniesSection } from '@/features/domains/home/top-companies-section'
 
 export default function JobSearchPage() {
   return (
     <>
-      <JobHero />
+      <HeroSection />
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 relative z-20 pb-20">
-        <JobFilter />
-        <JobList />
+      <div className="bg-[#F7F9FC]">
+        <BestJobsSection />
+        <TopCompaniesSection />
       </div>
     </>
   )

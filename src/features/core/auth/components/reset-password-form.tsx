@@ -57,7 +57,7 @@ export function ResetPasswordForm() {
             toast({
                 title: "Thành công",
                 description: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập.",
-                className: "bg-green-500 text-white"
+                className: "bg-[#0F4C75] text-white"
             })
             router.push("/login")
         } catch (error) {
@@ -93,7 +93,7 @@ export function ResetPasswordForm() {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 relative overflow-hidden">
             {/* Gradient top border */}
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-coral" />
-            
+
             <div className="flex flex-col space-y-2 text-center mb-6">
                 <div className="w-14 h-14 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
                     <KeyRound className="w-7 h-7 text-brand-primary" />
@@ -145,9 +145,9 @@ export function ResetPasswordForm() {
                     )}
                 </div>
 
-                <Button 
-                    className="w-full bg-brand-primary hover:bg-brand-primary/90" 
-                    type="submit" 
+                <Button
+                    className="w-full bg-brand-primary hover:bg-brand-primary/90"
+                    type="submit"
                     disabled={isLoading}
                 >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

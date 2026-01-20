@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { JOB_LOCATIONS, JOB_SALARY_RANGES, JOB_TYPES } from '../constants/job-mock-data'
 import { useDebounce } from '@/hooks/use-debounce'
+import { cn } from '@/lib/utils'
 
 interface JobFilters {
   keyword: string
@@ -37,6 +38,8 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
     salary: '',
     type: '',
   })
+
+  const [isFocused, setIsFocused] = useState(false)
 
   // Debounce keyword to reduce API calls
   const debouncedKeyword = useDebounce(filters.keyword, 300)
@@ -68,17 +71,20 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
   }, [])
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 -mt-20 relative z-30 border border-gray-100 dark:border-gray-700">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className={cn(
+      "bg-white rounded-xl shadow-xl p-6 -mt-20 relative z-30 transition-shadow duration-300 border border-slate-100",
+      isFocused ? "shadow-2xl ring-2 ring-primary/5" : "shadow-lg"
+    )}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}>
         {/* Keyword Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-hover:text-primary transition-colors z-10" />
           <Input
             type="text"
-            placeholder="Tìm kiếm vị trí, công ty..."
+            placeholder="Vị trí tuyển dụng, tên công ty..."
             value={filters.keyword}
             onChange={(e) => updateFilter('keyword')(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-12 border-slate-200 focus:border-brand-primary/50 focus:ring-brand-primary/20 transition-all"
           />
         </div>
 
@@ -86,10 +92,11 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10 pointer-events-none" />
           <Select value={filters.location} onValueChange={updateFilter('location')}>
-            <SelectTrigger className="pl-10">
-              <SelectValue placeholder="Địa điểm" />
+            <SelectTrigger className="pl-10 h-12 border-slate-200 hover:border-brand-primary/50 transition-colors">
+              <SelectValue placeholder="Tất cả địa điểm" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Tất cả địa điểm</SelectItem>
               {JOB_LOCATIONS.map((loc) => (
                 <SelectItem key={loc} value={loc}>
                   {loc}
@@ -103,10 +110,11 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
         <div className="relative">
           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10 pointer-events-none" />
           <Select value={filters.salary} onValueChange={updateFilter('salary')}>
-            <SelectTrigger className="pl-10">
-              <SelectValue placeholder="Mức lương" />
+            <SelectTrigger className="pl-10 h-12 border-slate-200 hover:border-brand-primary/50 transition-colors">
+              <SelectValue placeholder="Tất cả mức lương" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Tất cả mức lương</SelectItem>
               {JOB_SALARY_RANGES.map((range) => (
                 <SelectItem key={range} value={range}>
                   {range}
@@ -116,35 +124,12 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
           </Select>
         </div>
 
-        {/* Job Type Filter */}
-        <div className="relative">
-          <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10 pointer-events-none" />
-          <Select value={filters.type} onValueChange={updateFilter('type')}>
-            <SelectTrigger className="pl-10">
-              <SelectValue placeholder="Loại hình" />
-            </SelectTrigger>
-            <SelectContent>
-              {JOB_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Filter Actions */}
-      <div className="mt-4 flex gap-3">
-        <Button variant="default" className="flex-1">
-          Tìm kiếm
-        </Button>
+        {/* Filter Actions */}
         <Button
-          variant="outline"
-          onClick={resetFilters}
-          className="px-6"
+          className="h-12 bg-[#00b14f] hover:bg-[#009643] text-white font-bold text-base shadow-md hover:shadow-lg transition-all"
+          onClick={() => { }}
         >
-          Đặt lại
+          Tìm kiếm
         </Button>
       </div>
     </div>

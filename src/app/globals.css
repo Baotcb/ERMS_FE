@@ -17,14 +17,14 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
 
-  /* Brand Colors */
+  /* Brand Colors - Deep Blue / Coral Theme */
   --color-brand-primary: #0F4C75;
   --color-brand-secondary: #BBE1FA;
   --color-brand-coral: #FF7E67;
   --color-brand-dark: #0F4C75;
   --color-brand-light: #F7F9FC;
   --color-brand-white: #FFFFFF;
-  --color-brand-light: #F8FAFC;
+  --color-brand-bg: #F7F9FC;
 
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);

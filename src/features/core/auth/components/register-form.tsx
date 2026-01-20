@@ -279,7 +279,13 @@ export const RegisterForm = memo(function RegisterForm() {
                 </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center border-t border-gray-100 dark:border-gray-700 pt-4">
+                <p className="text-sm text-gray-600 mb-2">
+                    Bạn là nhà tuyển dụng?{' '}
+                    <Link href="/register/employer" className="text-brand-primary font-bold hover:underline">
+                        Đăng ký Doanh nghiệp
+                    </Link>
+                </p>
                 <p className="text-sm text-gray-600">
                     Đã có tài khoản?{' '}
                     <Link href="/login" className="text-brand-dark font-bold hover:underline">

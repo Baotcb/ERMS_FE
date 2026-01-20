@@ -116,7 +116,7 @@ features/domains/
 |   +-- constants/
 |   +-- index.ts
 |
-+-- training/          # Quản lý đào tạo (sắp ra mắt)
++-- training/         
     +-- api/
     +-- components/
     +-- index.ts
@@ -143,7 +143,6 @@ export type { LoginFormData, RegisterFormData } from './schemas/auth-schemas'
 - ✅ Refactor dễ dàng hơn
 - ✅ Ngăn chặn internal imports
 
-**⚠️ Quan trọng:** Trong quá khứ, barrel files được khuyến khích. Tuy nhiên, chúng có thể gây issues với Vite's tree shaking. Với ERMS dùng Next.js, chúng ta vẫn sử dụng barrel files nhưng cần lưu ý về potential bundle size impacts.
 
 ## Feature Isolation
 
@@ -169,30 +168,6 @@ export default function DashboardPage() {
 }
 ```
 
-### Enforcement Với ESLint
-
-```javascript
-// eslint.config.mjs
-'import/no-restricted-paths': [
-  'error',
-  {
-    zones: [
-      // Ngăn chặn cross-feature imports
-      {
-        target: './src/features/core/auth',
-        from: './src/features',
-        except: ['./core/auth'],
-      },
-      {
-        target: './src/features/domains/jobs',
-        from: './src/features',
-        except: ['./domains/jobs'],
-      },
-      // Thêm nếu cần
-    ],
-  },
-],
-```
 
 ## Codebase Một Chiều
 
@@ -202,12 +177,12 @@ Code phải flow theo một hướng: **shared → features → app**
 ┌─────────────────────────────────────┐
 │   Shared (components, lib, utils)   │ ← Lớp cơ sở
 └─────────────┬───────────────────────┘
-              │ có thể import từ
+              │ có thể được import từ
               ↓
 ┌─────────────────────────────────────┐
 │      Features (core, domains)       │ ← Business logic
 └─────────────┬───────────────────────┘
-              │ có thể import từ
+              │ có thể được import từ
               ↓
 ┌─────────────────────────────────────┐
 │       App (pages, layouts)          │ ← Composition
@@ -223,91 +198,9 @@ Code phải flow theo một hướng: **shared → features → app**
 - ❌ **Shared** KHÔNG THỂ import từ **features** hoặc **app**
 - ❌ **Features** KHÔNG THỂ import từ **features** khác
 
-### Enforcement Với ESLint
 
-```javascript
-'import/no-restricted-paths': [
-  'error',
-  {
-    zones: [
-      // Ngăn features import từ app
-      {
-        target: './src/features',
-        from: './src/app',
-      },
-      
-      // Ngăn shared import từ features/app
-      {
-        target: [
-          './src/components',
-          './src/hooks',
-          './src/lib',
-          './src/utils',
-        ],
-        from: ['./src/features', './src/app'],
-      },
-    ],
-  },
-],
 ```
 
-## Ví Dụ: Thêm Training Feature
-
-### 1. Tạo Cấu Trúc Feature
-
-```bash
-mkdir -p src/features/domains/training/{api,components,hooks,schemas,types}
-```
-
-### 2. Implement Feature
-
-```typescript
-// features/domains/training/api/training-service.ts
-export async function getTrainings(): Promise<Training[]> {
-  const response = await fetch(`${API_BASE}/api/trainings`)
-  return handleApiResponse<Training[]>(response)
-}
-
-// features/domains/training/components/training-list.tsx
-export const TrainingList = memo(function TrainingList() {
-  return <div>{/* UI */}</div>
-})
-
-// features/domains/training/hooks/use-trainings.ts
-export function useTrainings() {
-  const [trainings, setTrainings] = useState<Training[]>([])
-  // Logic
-  return { trainings, isLoading }
-}
-
-// features/domains/training/schemas/training-schemas.ts
-export const trainingSchema = z.object({
-  title: z.string().min(5),
-  duration: z.number().min(1),
-})
-
-// features/domains/training/index.ts
-export { TrainingList } from './components/training-list'
-export { useTrainings } from './hooks/use-trainings'
-export { getTrainings } from './api/training-service'
-export type { Training } from './types'
-```
-
-### 3. Sử Dụng Trong App
-
-```typescript
-// app/(dashboard)/training/page.tsx
-import { TrainingList } from '@/features/domains/training'
-
-export default function TrainingPage() {
-  return (
-    <div>
-      <h1>Khóa Đào Tạo</h1>
-      <TrainingList />
-    </div>
-  )
-}
-```
 
 ## Trách Nhiệm Của Các Thư Mục
 
@@ -437,34 +330,6 @@ export const useJobFiltersStore = create(...)
 ✅ Integration tests → Test feature như một đơn vị
 ```
 
-## So Sánh Với Các Cấu Trúc Khác
-
-### Flat Structure (❌ Không Có Khả Năng Mở Rộng)
-
-```
-src/
-├── components/
-│   ├── LoginForm.tsx
-│   ├── JobCard.tsx
-│   ├── DashboardStats.tsx
-│   └── ... (100+ files) ← Khó navigate
-├── utils/
-│   └── ... (50+ files)
-└── hooks/
-    └── ... (30+ files)
-```
-
-### Feature-Based (✅ ERMS Sử Dụng Cái Này)
-
-```
-src/
-├── features/
-│   ├── core/
-│   │   └── auth/          ← Mọi thứ liên quan đến auth
-│   └── domains/
-│       └── jobs/          ← Mọi thứ liên quan đến jobs
-└── components/            ← Chỉ shared UI
-```
 
 ## Anti-Patterns Cần Tránh
 
@@ -530,22 +395,8 @@ function JobForm() { /* creating/editing */ }
 
 ## Best Practices Tổ Chức File
 
-### 1. Nhóm Các Files Liên Quan
 
-```
-features/auth/
-├── api/
-│   ├── auth-service.ts
-│   └── auth-service.test.ts      ← Test cạnh implementation
-├── components/
-│   ├── login-form.tsx
-│   └── login-form.test.tsx
-└── schemas/
-    ├── auth-schemas.ts
-    └── auth-schemas.test.ts
-```
-
-### 2. Sử Dụng Index Files Một Cách Khôn Ngoan
+### 1. Sử Dụng Index Files Một Cách Khôn Ngoan
 
 ```typescript
 // ✅ Tốt - Chỉ export public API
@@ -560,7 +411,7 @@ export * from './api'
 export * from './utils'
 ```
 
-### 3. Naming Nhất Quán
+### 2. Naming Nhất Quán
 
 ```
 feature-name/
@@ -573,108 +424,6 @@ feature-name/
 └── schemas/
     └── feature-schemas.ts
 ```
-
-## Chiến Lược Migration
-
-Nếu bạn có code hiện tại không follow cấu trúc này:
-
-### Bước 1: Xác Định Features
-
-```
-Hiện tại:
-- LoginForm.tsx
-- RegisterForm.tsx  
-- ForgotPasswordForm.tsx
-
-→ Nhóm: Auth feature
-```
-
-### Bước 2: Tạo Feature Folder
-
-```bash
-mkdir -p src/features/core/auth/{api,components,hooks,schemas}
-```
-
-### Bước 3: Di Chuyển Files
-
-```bash
-mv src/components/LoginForm.tsx src/features/core/auth/components/login-form.tsx
-mv src/components/RegisterForm.tsx src/features/core/auth/components/register-form.tsx
-```
-
-### Bước 4: Update Imports
-
-```typescript
-// Trước
-import { LoginForm } from '@/components/LoginForm'
-
-// Sau
-import { LoginForm } from '@/features/core/auth'
-```
-
-### Bước 5: Export Public API
-
-```typescript
-// features/core/auth/index.ts
-export { LoginForm } from './components/login-form'
-export { RegisterForm } from './components/register-form'
-```
-
-## Ví Dụ Thực Tế
-
-### Trước Refactoring
-
-```
-src/
-├── components/
-│   ├── LoginForm.tsx
-│   ├── RegisterForm.tsx
-│   ├── JobCard.tsx
-│   ├── JobFilter.tsx
-│   ├── DashboardStats.tsx
-│   └── ... (50+ files)
-└── utils/
-    ├── auth-utils.ts
-    ├── job-utils.ts
-    └── ... (20+ files)
-```
-
-**Vấn đề:**
-- 😵 Khó tìm code liên quan
-- 🐌 Tất cả components load cùng lúc
-- 🔀 Ownership không rõ ràng
-- 🐛 Khó test riêng biệt
-
-### Sau Refactoring (ERMS)
-
-```
-src/
-├── features/
-│   ├── core/
-│   │   └── auth/
-│   │       ├── api/
-│   │       ├── components/
-│   │       │   ├── login-form.tsx
-│   │       │   └── register-form.tsx
-│   │       ├── utils/
-│   │       └── index.ts
-│   └── domains/
-│       └── jobs/
-│           ├── api/
-│           ├── components/
-│           │   ├── job-card.tsx
-│           │   └── job-filter.tsx
-│           ├── utils/
-│           └── index.ts
-└── components/
-    └── ui/         ← Chỉ shared UI
-```
-
-**Lợi ích:**
-- ✅ Dễ navigate
-- ✅ Code splitting tốt hơn
-- ✅ Ownership rõ ràng
-- ✅ Có thể test riêng biệt
 
 ## Khi Nào Tạo Feature Mới
 
@@ -692,23 +441,7 @@ src/
 - ❌ Chỉ là UI components (dùng `components/`)
 - ❌ Chỉ là utilities (dùng `lib/` hoặc `utils/`)
 
-## Thích Ứng Với Các Frameworks Khác
 
-Cấu trúc này hoạt động với:
-
-- ✅ **Next.js App Router** (ERMS sử dụng cái này)
-- ✅ **Next.js Pages Router**
-- ✅ **Remix**
-- ✅ **React SPA (Vite, CRA)**
-- ✅ **React Native**
-
-Chỉ thư mục `app/` khác nhau dựa trên framework, cấu trúc features vẫn giữ nguyên!
 
 ---
 
-**Bằng cách tuân theo cấu trúc này, bạn đảm bảo:**
-- 🎯 Codebase được tổ chức tốt
-- 📈 Khả năng mở rộng
-- 🔧 Khả năng bảo trì
-- 👥 Cộng tác tốt hơn
-- ⚡ Hiệu năng được cải thiện

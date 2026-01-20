@@ -27,6 +27,7 @@ import {
 import { memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BrandDecoration } from "@/components/layout/brand-decoration";
 import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import { NavItem } from "./nav-item";
 
@@ -34,25 +35,37 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
     const { isAuthenticated, user, logout } = useAuth();
 
     return (
-        <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-16">
+        <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-20 transition-all">
             <div className="w-full px-6 lg:px-10 h-full flex items-center justify-between">
                 {/* Left Side: Brand & Links */}
                 <div className="flex items-center gap-8 h-full">
-                    <Link href="/candidate/jobs" className="flex items-center gap-2">
-                        <div className="relative w-8 h-8 flex-shrink-0">
-                            <Image
-                                src="/logo.png"
-                                alt="ERMS Logo"
-                                fill
-                                className="object-contain"
-                            />
+                    <Link href="/candidate/jobs" className="flex items-center gap-4 group">
+                        {/* Logo Container */}
+                        <div className="flex items-center justify-center">
+                            {/* Logo */}
+                            <div className="relative w-16 h-16 flex-shrink-0 transition-transform group-hover:scale-105">
+                                <Image
+                                    src="/logo.png"
+                                    alt="ERMS Logo"
+                                    fill
+                                    className="object-contain"
+                                />
+                            </div>
                         </div>
-                        <span className="text-xl font-bold text-brand-dark tracking-tight">ERMS</span>
+
+                        {/* Brand Decoration Icon - 70px wide */}
+                        <div className="w-[70px] h-full flex items-center justify-center">
+                            <BrandDecoration className="w-full h-auto drop-shadow-sm" />
+                        </div>
                     </Link>
 
                     <div className="hidden md:flex items-center gap-6 h-full">
                         {/* VIỆC LÀM MEGA MENU */}
-                        <NavItem label="Việc làm" href="/candidate/jobs">
+                        <NavItem
+                            label="Việc làm"
+                            href="/candidate/jobs"
+                            className="text-[13px] font-bold min-w-[70px] justify-center"
+                        >
                             <div className="grid grid-cols-[200px_1fr] gap-5 w-[580px] p-4">
                                 {/* Column 1: Main Actions */}
                                 <div className="space-y-4">
@@ -61,18 +74,18 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Việc làm</h3>
                                         <div className="space-y-0.5">
                                             <Link href="/candidate/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors group">
-                                                <Search className="w-4 h-4 text-green-500" />
-                                                <span className="text-sm font-bold text-green-600 group-hover:text-green-700">Tìm việc làm</span>
+                                                <Search className="w-4 h-4 text-[#FF7E67]" />
+                                                <span className="text-sm font-bold text-[#FF7E67] group-hover:text-[#FF7E67]/80">Tìm việc làm</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-green-600">
+                                            <Link href="/candidate/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
                                                 <Bookmark className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm đã lưu</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-green-600">
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
                                                 <FileCheck className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm đã ứng tuyển</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-green-600">
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
                                                 <ThumbsUp className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm phù hợp</span>
                                             </Link>
@@ -83,11 +96,11 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div>
                                         <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Công ty</h3>
                                         <div className="space-y-0.5">
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-green-600">
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
                                                 <Building2 className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Danh sách công ty</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-green-600">
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
                                                 <BarChart3 className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Top công ty</span>
                                             </Link>
@@ -118,7 +131,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                             <Link
                                                 key={job}
                                                 href="/not-found"
-                                                className="text-sm text-slate-600 hover:text-green-600 hover:translate-x-1 transition-all"
+                                                className="text-sm text-slate-600 hover:text-[#0F4C75] hover:translate-x-1 transition-all"
                                             >
                                                 {job}
                                             </Link>
@@ -129,9 +142,9 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                         </NavItem>
 
                         {/* Other Simple Links or Menus */}
-                        <NavItem label="Hồ sơ & CV" href="/not-found" />
-                        <NavItem label="Công ty" href="/not-found" />
-                        <NavItem label="Cẩm nang" href="/not-found" />
+                        <NavItem label="Hồ sơ & CV" href="/not-found" className="text-[13px] font-bold min-w-[70px] justify-center" />
+                        <NavItem label="Công ty" href="/not-found" className="text-[13px] font-bold min-w-[70px] justify-center" />
+                        <NavItem label="Cẩm nang" href="/not-found" className="text-[13px] font-bold min-w-[70px] justify-center" />
                     </div>
                 </div>
 
@@ -174,7 +187,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                 <AvatarImage src="https://github.com/shadcn.png" />
                                                 <AvatarFallback>{user?.fullName?.charAt(0) || 'U'}</AvatarFallback>
                                             </Avatar>
-                                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+                                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#FF7E67] border-2 border-white rounded-full"></span>
                                         </div>
                                         <div className="flex-1 min-w-0 pt-1">
                                             <h4 className="text-base font-bold text-brand-dark truncate leading-tight">{user?.fullName || 'Tên người dùng'}</h4>
@@ -194,7 +207,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                 </div>
                                             </div>
                                             <div className="pl-8 space-y-2">
-                                                <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã lưu</Link>
+                                                <Link href="/candidate/jobs/saved" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã lưu</Link>
                                                 <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã ứng tuyển</Link>
                                                 <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm phù hợp</Link>
                                             </div>
@@ -231,15 +244,15 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                 <span>Cá nhân & Bảo mật</span>
                                             </div>
                                             <div className="pl-8 space-y-2">
-                                                <Link 
-                                                    href="/profile" 
+                                                <Link
+                                                    href="/profile"
                                                     className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
                                                 >
                                                     <User className="w-4 h-4" />
                                                     <span>Thông tin cá nhân</span>
                                                 </Link>
-                                                <Link 
-                                                    href="/security" 
+                                                <Link
+                                                    href="/security"
                                                     className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
                                                 >
                                                     <KeyRound className="w-4 h-4" />
@@ -290,4 +303,6 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
         </nav>
     );
 });
+
+
 

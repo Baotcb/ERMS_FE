@@ -121,3 +121,41 @@ export type RegisterFormData = z.infer<typeof registerSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+/**
+ * Employer Register form validation schema
+ */
+export const employerRegisterSchema = z
+  .object({
+    companyName: z
+      .string()
+      .min(1, 'Tên doanh nghiệp không được để trống')
+      .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự'),
+    taxCode: z
+      .string()
+      .min(10, 'Mã số thuế phải có ít nhất 10 ký tự')
+      .max(13, 'Mã số thuế không được quá 13 ký tự')
+      .regex(/^\d+$/, 'Mã số thuế chỉ được chứa số'),
+    contactName: z
+      .string()
+      .min(1, 'Người liên hệ không được để trống'),
+    phone: z
+      .string()
+      .min(10, 'Số điện thoại không hợp lệ')
+      .regex(/^(0|\+84)\d{9,10}$/, 'Số điện thoại không đúng định dạng'),
+    email: z
+      .string()
+      .min(1, 'Email không được để trống')
+      .email('Email không hợp lệ'),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Xác nhận mật khẩu không được để trống'),
+    agreeTerms: z
+      .boolean()
+      .refine((val) => val === true, 'Bạn phải đồng ý với điều khoản dịch vụ'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  })
+
+export type EmployerRegisterFormData = z.infer<typeof employerRegisterSchema>

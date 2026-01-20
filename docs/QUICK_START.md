@@ -20,8 +20,7 @@ npm install
 Tạo file `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-NODE_ENV=development
+API_URL=http://localhost:5000
 ```
 
 ### 4. Chạy Development Server
@@ -135,42 +134,6 @@ npm run type-check         # Kiểm tra TypeScript
    git commit -m "fix: sửa lỗi xyz"
    git push
    ```
-
-## Tips Hữu Ích
-
-### Import Paths
-
-```typescript
-// ✅ Tốt - Absolute imports
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/features/core/auth'
-
-// ❌ Tránh - Relative imports
-import { Button } from '../../../components/ui/button'
-```
-
-### Component Pattern
-
-```typescript
-'use client'
-
-import { memo } from 'react'
-
-export const MyComponent = memo(function MyComponent() {
-  return <div>Nội dung</div>
-})
-```
-
-### API Call Pattern
-
-```typescript
-// features/domains/jobs/api/jobs-service.ts
-export async function getJobs(): Promise<Job[]> {
-  const response = await fetch(`${API_BASE}/api/jobs`)
-  return handleApiResponse<Job[]>(response, 'Lỗi tải việc làm')
-}
-```
-
 ## Tài Liệu Chi Tiết
 
 - 📖 [Cấu Trúc Dự Án](./project-structure.md) - Chi tiết về cấu trúc
@@ -178,12 +141,4 @@ export async function getJobs(): Promise<Job[]> {
 - 🗃️ [State Management](./state-management.md) - Quản lý state
 - ⚙️ [Standards](./project-standards.md) - Coding standards
 
-## Cần Giúp Đỡ?
-
-- 📖 Xem docs trong thư mục `docs/`
-- 💬 Hỏi trên Slack channel
-- 🐛 Tạo issue trên GitHub
-
 ---
-
-**Chúc bạn coding vui vẻ! 🎉**
