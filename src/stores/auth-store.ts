@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { validateToken, isTokenNearExpiry } from '@/lib/security'
+import { parseJwt } from '@/utils/jwt'
 
 export interface User {
     id: string
@@ -85,6 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Clear auth cookie
         if (typeof document !== 'undefined') {
             document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
         }
 
         set({
@@ -126,6 +128,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 userData = sessionStorage.getItem(STORAGE_KEYS.USER)
             }
 
+            // Fall back to Cookie (Critical for Middleware-passed sessions)
+            if (!token && typeof document !== 'undefined') {
+                const match = document.cookie.match(new RegExp('(^| )auth_token=([^;]+)'));
+                if (match) {
+                    token = match[2];
+
+                    // Try to reconstruct user from token
+                    try {
+                        const decoded = parseJwt(token);
+                        if (decoded) {
+                            const role = String(decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '');
+                            const userId = String(decoded.nameid || decoded.sub || 'unknown');
+                            const email = String(decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || '');
+
+                            const user: User = {
+                                id: userId,
+                                email: email,
+                                fullName: email.split('@')[0], // Fallback name
+                                role: role || undefined
+                            };
+                            userData = JSON.stringify(user);
+                        }
+                    } catch (e) {
+                        console.error("Failed to restore user from cookie token", e);
+                    }
+                }
+            }
+
             if (token && userData) {
                 // Validate token
                 const validation = validateToken(token)
@@ -136,6 +166,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     localStorage.removeItem(STORAGE_KEYS.USER)
                     sessionStorage.removeItem(STORAGE_KEYS.TOKEN)
                     sessionStorage.removeItem(STORAGE_KEYS.USER)
+
+                    if (typeof document !== 'undefined') {
+                        document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                        document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                    }
 
                     set({
                         user: null,
@@ -192,8 +227,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         // Set up new interval
         const interval = setInterval(() => {
-            if (isTokenNearExpiry(token, 300)) {
-                // Token near expiry (5 minutes) or expired
+            if (isTokenNearExpiry(token, 30)) {
+                // Token near expiry (30 seconds) or expired
                 logout()
             }
         }, TOKEN_EXPIRY_CHECK_INTERVAL)

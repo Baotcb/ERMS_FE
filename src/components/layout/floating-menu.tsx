@@ -11,6 +11,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useAuth } from "@/features/core/auth/hooks/use-auth"
 
 interface FloatingMenuItemProps {
     href: string
@@ -48,11 +49,34 @@ const FloatingMenuItem = memo(({ href, icon, label, color, count }: FloatingMenu
 ))
 FloatingMenuItem.displayName = "FloatingMenuItem"
 
+// Pages where FloatingMenu should NOT appear (HR/Admin areas)
+const EXCLUDED_PATHS = [
+    '/campaigns',
+    '/candidates', 
+    '/interviews',
+    '/offers',
+    '/dashboard',
+    '/settings',
+    '/admin',
+]
+
 export function FloatingMenu() {
     const pathname = usePathname()
+    const { user } = useAuth()
 
     // Hide on auth pages
     if (pathname?.match(/^\/(login|register|forgot-password|reset-password)/)) {
+        return null
+    }
+
+    // Hide on HR/Admin pages (regardless of auth state)
+    // This prevents showing menu when session expires on these pages
+    if (pathname && EXCLUDED_PATHS.some(path => pathname.startsWith(path))) {
+        return null
+    }
+
+    // Hide if logged in as HR/Admin
+    if (user?.role && user.role !== 'Candidate') {
         return null
     }
 

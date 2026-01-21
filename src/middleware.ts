@@ -92,6 +92,26 @@ function getSecurityHeaders(): HeadersInit {
   }
 }
 
+/**
+ * Check if a JWT token is expired
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = atob(base64)
+    const payload = JSON.parse(jsonPayload)
+
+    if (!payload.exp) return false
+
+    // Add 10s leeway for clock skew
+    const currentTime = Math.floor(Date.now() / 1000)
+    return payload.exp < currentTime - 10
+  } catch {
+    return true
+  }
+}
+
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
@@ -105,24 +125,36 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Get auth token from cookies (httpOnly is preferred, but we also check localStorage via client)
+  // Get auth token from cookies
   const token = request.cookies.get('auth_token')?.value
+  const isExpired = token ? isTokenExpired(token) : true
 
   // Route protection
-  if (requiresAuth(pathname) && !token) {
+  if (requiresAuth(pathname) && (!token || isExpired)) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    
+    const response = NextResponse.redirect(loginUrl)
+    
+    // Clear cookies if token is expired
+    if (token && isExpired) {
+      response.cookies.delete('auth_token')
+      response.cookies.delete('user_role')
+    }
+    
+    return response
   }
 
   // Prevent authenticated users from accessing auth pages
-  if (isPublicRoute(pathname) && token) {
-    // If logged in, redirect to dashboard or candidate jobs
-    const isCandidate = pathname.includes('candidate') || pathname.includes('jobs')
-    if (isCandidate) {
+  if (isPublicRoute(pathname) && token && !isExpired) {
+    // If logged in and NOT expired, redirect based on role
+    const role = request.cookies.get('user_role')?.value
+
+    if (role === 'Candidate') {
       return NextResponse.redirect(new URL('/candidate/jobs', request.url))
     } else {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      // HR Manager / Admin -> New HR Dashboard
+      return NextResponse.redirect(new URL('/offers', request.url))
     }
   }
 

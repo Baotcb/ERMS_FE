@@ -1,3 +1,4 @@
+"use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,16 +16,13 @@ export default function NotFound() {
                 Rất tiếc, trang bạn đang tìm kiếm có thể đã bị xóa, đổi tên hoặc tạm thời không khả dụng.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/candidate/jobs">
-                    <Button className="bg-brand-primary hover:bg-blue-700 h-11 px-8 rounded-xl font-bold">
-                        Về trang Việc làm
-                    </Button>
-                </Link>
-                <Link href="/candidate/profile/edit">
-                    <Button variant="outline" className="h-11 px-8 rounded-xl">
-                        Về Hồ sơ cá nhân
-                    </Button>
-                </Link>
+                <Button
+                    onClick={() => window.history.back()}
+                    className="bg-brand-primary hover:bg-blue-700 h-11 px-8 rounded-xl font-bold"
+                >
+                    Quay lại
+                </Button>
+
             </div>
         </div>
     );

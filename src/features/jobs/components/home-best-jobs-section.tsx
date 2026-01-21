@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { JobCard } from "@/features/domains/jobs/components/job-card"
-import { MOCK_JOBS } from "@/features/domains/jobs/constants/job-mock-data"
+import { JobCard } from "./job-card"
+import { MOCK_JOBS } from "../data/job-mock-data"
 import {
     Select,
     SelectContent,

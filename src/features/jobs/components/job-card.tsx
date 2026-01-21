@@ -10,7 +10,7 @@ import Image from 'next/image'
 import { MapPin, DollarSign, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import type { Job } from '../constants/job-mock-data'
+import type { Job } from '../data/job-mock-data'
 import { cn } from '@/lib/utils'
 
 interface JobCardProps extends Job {

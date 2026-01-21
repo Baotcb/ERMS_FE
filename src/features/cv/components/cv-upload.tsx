@@ -1,21 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Upload, FileText, CheckCircle2, Trash2, Eye, Download, Info } from 'lucide-react'
+import { Upload, FileText, CheckCircle2, Trash2, Eye, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
-export default function CVManagePage() {
+export function CVUpload() {
     const [isUploading, setIsUploading] = useState(false)
     const [uploadedCV, setUploadedCV] = useState<{ name: string; date: string } | null>(null)
     const { toast } = useToast()
 
     const handleUpload = () => {
-        // UI/UX Pro Max Rule: "Loading Buttons - Disable and show loading state"
         setIsUploading(true)
-
-        // Mock upload delay
         setTimeout(() => {
             setUploadedCV({
                 name: 'Nguyen-Van-A-CV-Fullstack.pdf',
@@ -30,8 +27,7 @@ export default function CVManagePage() {
     }
 
     const handleDelete = () => {
-        // UI/UX Pro Max Rule: "Confirmation Dialogs - Confirm before destructive actions"
-        if (confirm('Bạn có chắc chắn muốn xóa CV này không? Hành động này không thể hoàn tác.')) {
+        if (confirm('Bạn có chắc chắn muốn xóa CV này không?')) {
             setUploadedCV(null)
             toast({
                 title: "Đã xóa CV",
@@ -54,9 +50,7 @@ export default function CVManagePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Upload Section */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* CV Upload Card */}
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                             <div>
@@ -103,11 +97,11 @@ export default function CVManagePage() {
                                         isUploading ? "opacity-70 cursor-wait bg-slate-50" : "cursor-pointer hover:border-brand-primary hover:bg-brand-primary/5 hover:scale-[1.01]"
                                     )}
                                 >
-                                    <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 shadow-inner group-hover:scale-110 transition-transform">
+                                    <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-6 shadow-inner">
                                         {isUploading ? (
                                             <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
                                         ) : (
-                                            <Upload className="w-10 h-10 text-slate-400 group-hover:text-brand-primary" />
+                                            <Upload className="w-10 h-10 text-slate-400" />
                                         )}
                                     </div>
                                     <h3 className="text-xl font-bold text-slate-700 mb-2">
@@ -115,11 +109,9 @@ export default function CVManagePage() {
                                     </h3>
                                     <p className="text-slate-500 max-w-sm mx-auto mb-6 leading-relaxed">
                                         Hỗ trợ định dạng PDF, DOC, DOCX. Dung lượng tối đa 5MB.
-                                        <br />
-                                        <span className="text-xs text-slate-400">Chúng tôi bảo mật tuyệt đối hồ sơ của bạn.</span>
                                     </p>
                                     <Button
-                                        className="bg-brand-primary hover:bg-brand-primary/90 font-bold text-lg h-12 px-8 shadow-lg shadow-brand-primary/20"
+                                        className="bg-brand-primary hover:bg-brand-primary/90 font-bold text-lg h-12 px-8"
                                         disabled={isUploading}
                                     >
                                         Chọn file từ máy tính
@@ -130,7 +122,6 @@ export default function CVManagePage() {
                     </div>
                 </div>
 
-                {/* Right Column: Tips & Info */}
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -158,16 +149,16 @@ export default function CVManagePage() {
                         <h3 className="font-bold text-brand-dark mb-4">Mẹo CV ấn tượng</h3>
                         <ul className="space-y-3 text-sm text-slate-700">
                             <li className="flex gap-2 items-start">
-                                <span className="text-brand-primary font-bold text-lg leading-none">•</span>
-                                <div>Chỉ nên dài từ <span className="font-bold">1-2 trang</span> là đủ.</div>
+                                <span className="text-brand-primary font-bold">•</span>
+                                <div>Chỉ nên dài từ <span className="font-bold">1-2 trang</span></div>
                             </li>
                             <li className="flex gap-2 items-start">
-                                <span className="text-brand-primary font-bold text-lg leading-none">•</span>
-                                <div>Tập trung vào <span className="font-bold">số liệu</span> cụ thể (KPIs).</div>
+                                <span className="text-brand-primary font-bold">•</span>
+                                <div>Tập trung vào <span className="font-bold">số liệu</span> cụ thể</div>
                             </li>
                             <li className="flex gap-2 items-start">
-                                <span className="text-brand-primary font-bold text-lg leading-none">•</span>
-                                <div>Dùng định dạng <span className="font-bold">PDF</span> chuẩn.</div>
+                                <span className="text-brand-primary font-bold">•</span>
+                                <div>Dùng định dạng <span className="font-bold">PDF</span> chuẩn</div>
                             </li>
                         </ul>
                     </div>
