@@ -1,6 +1,7 @@
-// Auth components barrel file
 export { LoginForm } from './login-form'
-export { RegisterForm } from './register-form'
-export { ForgotPasswordForm } from './forgot-password-form'
 export { LoginHero } from './login-hero'
+export { RegisterForm } from './register-form'
 export { RegisterHero } from './register-hero'
+export { ForgotPasswordForm } from './forgot-password-form'
+export { ResetPasswordForm } from './reset-password-form'
+export { EmployerRegisterForm } from './employer-register-form'

@@ -40,6 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# agent and shared folders
+
+
+
+# HR / Recruitment Features
+src/features/recruitment
+src/app/(hr-manager)
+
+# Agent & Shared Resources
 .agent
-.shared
+.shared/ui-ux-pro-max

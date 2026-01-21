@@ -1,5 +1,4 @@
-import { RegisterForm } from '@/features/core/auth'
-import { RegisterHero } from '@/features/core/auth/components/register-hero'
+import { RegisterForm, RegisterHero } from '@/features/core/auth'
 
 export default function RegisterPage() {
   return (

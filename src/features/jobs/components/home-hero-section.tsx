@@ -11,7 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { HERO_CATEGORIES } from "./constants/hero-data"
+import { HERO_CATEGORIES } from "../data/hero-categories"
 
 export function HeroSection() {
     const [activeCategory, setActiveCategory] = useState<string>("marketing")

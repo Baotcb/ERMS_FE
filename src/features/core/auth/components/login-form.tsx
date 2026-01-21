@@ -75,6 +75,7 @@ export const LoginForm = memo(function LoginForm() {
                 // Set cookie for middleware authentication
                 const maxAge = data.rememberMe ? 7 * 24 * 60 * 60 : undefined // 7 days if remember me
                 document.cookie = `auth_token=${response.token}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
+                document.cookie = `user_role=${role}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 
@@ -83,7 +84,8 @@ export const LoginForm = memo(function LoginForm() {
                     if (role === 'Candidate') {
                         router.push('/candidate/jobs')
                     } else {
-                        router.push('/dashboard')
+                        // Redirect HR/Managers to the new HR dashboard (Offers page)
+                        router.push('/offers')
                     }
                 }, 500)
             } catch (err) {
@@ -109,15 +111,15 @@ export const LoginForm = memo(function LoginForm() {
                             ERMS
                         </span>
                         <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                            Recruiting & Training
+                            Tuyển dụng & Đào tạo
                         </span>
                     </div>
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                    Welcome back
+                    Chào mừng trở lại
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400">
-                    Please enter your details to access your dashboard.
+                    Vui lòng nhập thông tin để truy cập tài khoản của bạn.
                 </p>
             </div>
 
@@ -127,7 +129,7 @@ export const LoginForm = memo(function LoginForm() {
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 <div>
                     <Label htmlFor="email" className="mb-2">
-                        Email or Username
+                        Email hoặc Tên đăng nhập
                     </Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -151,7 +153,7 @@ export const LoginForm = memo(function LoginForm() {
 
                 <div>
                     <Label htmlFor="password" className="mb-2">
-                        Password
+                        Mật khẩu
                     </Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -170,7 +172,7 @@ export const LoginForm = memo(function LoginForm() {
                             className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 transition-colors"
                             onClick={togglePasswordVisibility}
                             disabled={isLoading}
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                         >
                             {showPassword ? (
                                 <EyeOff className="h-5 w-5" />
@@ -196,14 +198,14 @@ export const LoginForm = memo(function LoginForm() {
                             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <Label htmlFor="remember-me" className="text-sm cursor-pointer">
-                            Remember me
+                            Ghi nhớ đăng nhập
                         </Label>
                     </div>
                     <Link
                         href="/forgot-password"
                         className="text-sm font-medium text-brand-dark hover:text-brand-primary transition-colors"
                     >
-                        Forgot password?
+                        Quên mật khẩu?
                     </Link>
                 </div>
 
@@ -215,10 +217,10 @@ export const LoginForm = memo(function LoginForm() {
                     {isLoading ? (
                         <>
                             <LoadingSpinner size="sm" className="mr-2" />
-                            Logging in...
+                            Đang đăng nhập...
                         </>
                     ) : (
-                        'Log in to ERMS'
+                        'Đăng nhập vào ERMS'
                     )}
                 </Button>
 
@@ -228,7 +230,7 @@ export const LoginForm = memo(function LoginForm() {
                     </div>
                     <div className="relative flex justify-center text-sm">
                         <span className="px-2 bg-white dark:bg-slate-800 text-gray-500">
-                            Or
+                            Hoặc
                         </span>
                     </div>
                 </div>
@@ -239,15 +241,15 @@ export const LoginForm = memo(function LoginForm() {
                     className="w-full h-12 text-base font-bold"
                     disabled={isLoading}
                 >
-                    Login with Google
+                    Đăng nhập với Google
                 </Button>
             </form>
 
             <div className="mt-8">
                 <p className="text-center text-sm text-gray-600">
-                    Don&apos;t have an account?{' '}
+                    Chưa có tài khoản?{' '}
                     <Link href="/register" className="text-brand-coral font-bold hover:underline">
-                        Register New Account →
+                        Đăng ký tài khoản mới →
                     </Link>
                 </p>
             </div>

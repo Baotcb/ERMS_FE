@@ -23,7 +23,10 @@ src
 |
 +-- features          # Feature-based modules (business logic)
 |   +-- core          # Cross-cutting features (auth, user-profile)
-|   +-- domains       # Business domain features (dashboard, jobs)
+|   +-- dashboard     # Dashboard và statistics
+|   +-- home          # Trang chủ components
+|   +-- jobs          # Quản lý việc làm
+|   +-- recruitment   # Quản lý tuyển dụng HR
 |
 +-- hooks             # Shared hooks dùng chung trong toàn bộ ứng dụng
 |
@@ -72,13 +75,13 @@ src/features/awesome-feature
 
 **LƯU Ý:** Bạn không cần tất cả các folders cho mỗi feature. Chỉ include những cái cần thiết.
 
-## Core vs Domains
+## Tổ Chức Features
 
-ERMS tổ chức features thành hai loại:
+ERMS tổ chức features theo cấu trúc phẳng (flat structure) trong thư mục `features/`:
 
 ### `features/core/` - Cross-cutting Features
 
-Các features được sử dụng across nhiều domains:
+Các features được sử dụng xuyên suốt ứng dụng:
 
 ```sh
 features/core/
@@ -99,30 +102,34 @@ features/core/
 
 **Ví dụ:** auth, user-profile, notifications, settings
 
-### `features/domains/` - Business Domain Features
+### Business Domain Features
 
-Các features đặc thù cho business domains:
+Các features đặc thù cho business domains nằm trực tiếp trong `features/`:
 
 ```sh
-features/domains/
+features/
 |
-+-- dashboard/         # Analytics và statistics
++-- dashboard/         # Tổng quan và thống kê
 |   +-- components/
 |   +-- index.ts
 |
++-- home/              # Trang chủ ứng viên
+|   +-- constants/
+|   +-- index.ts
+|
 +-- jobs/              # Quản lý việc làm
-|   +-- api/
 |   +-- components/
 |   +-- constants/
 |   +-- index.ts
 |
-+-- training/         
-    +-- api/
++-- recruitment/       # Quản lý tuyển dụng HR
     +-- components/
+    +-- data/
+    +-- types/
     +-- index.ts
 ```
 
-**Ví dụ:** dashboard, jobs, training, recruitment
+**Ví dụ:** dashboard, home, jobs, recruitment
 
 ## Pattern Public API
 
@@ -150,13 +157,13 @@ export type { LoginFormData, RegisterFormData } from './schemas/auth-schemas'
 
 ```typescript
 // ❌ TỆ - Import từ feature khác
-// features/domains/dashboard/components/stats.tsx
-import { JobCard } from '@/features/domains/jobs/components/job-card'
+// features/dashboard/components/stats.tsx
+import { JobCard } from '@/features/jobs/components/job-card'
 
 // ✅ TỐT - Compose ở app level
 // app/(dashboard)/page.tsx
-import { DashboardStats } from '@/features/domains/dashboard'
-import { JobList } from '@/features/domains/jobs'
+import { DashboardStats } from '@/features/dashboard'
+import { JobList } from '@/features/jobs'
 
 export default function DashboardPage() {
   return (
@@ -180,7 +187,7 @@ Code phải flow theo một hướng: **shared → features → app**
               │ có thể được import từ
               ↓
 ┌─────────────────────────────────────┐
-│      Features (core, domains)       │ ← Business logic
+│           Features                  │ ← Business logic
 └─────────────┬───────────────────────┘
               │ có thể được import từ
               ↓
@@ -293,7 +300,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 // ❌ KHÔNG NÊN: Feature-specific state
 export const useJobFiltersStore = create(...)
-// Cái này nên nằm trong features/domains/jobs/
+// Cái này nên nằm trong features/jobs/
 ```
 
 ## Lợi Ích Của Cấu Trúc Này
@@ -310,7 +317,7 @@ export const useJobFiltersStore = create(...)
 
 ```
 ✅ Bug trong auth? → Kiểm tra features/core/auth/
-✅ Update job card? → Kiểm tra features/domains/jobs/components/
+✅ Update job card? → Kiểm tra features/jobs/components/
 ✅ Thêm API mới? → Kiểm tra thư mục api/ của feature
 ```
 

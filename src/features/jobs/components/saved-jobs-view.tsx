@@ -1,13 +1,7 @@
-import { Metadata } from 'next'
-import { SavedJobList } from '@/features/domains/jobs/components/saved-job-list'
 import { Bookmark } from 'lucide-react'
+import { SavedJobList } from './saved-job-list'
 
-export const metadata: Metadata = {
-    title: 'Việc làm đã lưu | ERMS',
-    description: 'Danh sách các công việc bạn đã lưu',
-}
-
-export default function SavedJobsPage() {
+export function SavedJobsView() {
     return (
         <div className="container mx-auto px-4 py-8 max-w-7xl">
             <div className="mb-8 border-b border-gray-200 pb-4">

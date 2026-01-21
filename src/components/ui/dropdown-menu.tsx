@@ -60,19 +60,21 @@ DropdownMenuTrigger.displayName = "DropdownMenuTrigger"
 
 const DropdownMenuContent = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & { align?: "start" | "end" | "center" }
->(({ className, align = "center", ...props }, ref) => {
+    React.HTMLAttributes<HTMLDivElement> & { align?: "start" | "end" | "center"; side?: "top" | "bottom" }
+>(({ className, align = "center", side = "bottom", ...props }, ref) => {
     const { open } = React.useContext(DropdownContext);
     if (!open) return null;
 
     const alignClass = align === "start" ? "left-0" : align === "end" ? "right-0" : "left-1/2 -translate-x-1/2";
+    const sideClass = side === "top" ? "bottom-full mb-2 origin-bottom" : "top-full mt-2 origin-top";
 
     return (
         <div
             ref={ref}
             className={cn(
-                "absolute z-50 mt-2 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in data-[side=bottom]:slide-in-from-top-2",
+                "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
                 alignClass,
+                sideClass,
                 className
             )}
             {...props}

@@ -1,5 +1,4 @@
-import { LoginForm } from '@/features/core/auth'
-import { LoginHero } from '@/features/core/auth/components/login-hero'
+import { LoginForm, LoginHero } from '@/features/core/auth'
 
 export default function LoginPage() {
   return (
