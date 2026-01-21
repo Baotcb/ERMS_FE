@@ -99,6 +99,6 @@ Khi code thay đổi, update docs tương ứng:
 
 
 
-**Happy viving! 🚀**
+**Happy vibing! 🚀**
 
 Được xây dựng với ❤️ bởi ERMS Team
