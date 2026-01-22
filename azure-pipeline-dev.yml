@@ -23,6 +23,7 @@ steps:
 
 
 - script: |
+    echo "Backend URL: $(DEV)"
     npm install -g vercel
     vercel deploy --prod --token=$(VERCEL_TOKEN) --yes -e NEXT_PUBLIC_API_URL=$(DEV)
   env:
