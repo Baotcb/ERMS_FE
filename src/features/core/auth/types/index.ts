@@ -48,3 +48,12 @@ export interface ChangePasswordRequest {
     currentPassword: string
     newPassword: string
 }
+
+export interface GoogleLoginRequest {
+    Email: string
+    FullName: string
+}
+
+export interface GoogleLoginResponse {
+    token: string
+}

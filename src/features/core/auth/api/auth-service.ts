@@ -16,6 +16,8 @@ import type {
     ResetPasswordRequest,
     ResetPasswordResponse,
     ChangePasswordRequest,
+    GoogleLoginRequest,
+    GoogleLoginResponse,
 } from '../types'
 
 interface ApiResponse<T> {
@@ -170,6 +172,24 @@ export async function changePassword(
         'Đổi mật khẩu thất bại'
     )
     return result;
+}
+
+export async function loginByGoogle(
+    data: GoogleLoginRequest
+): Promise<GoogleLoginResponse> {
+
+   const response = await fetch(`${API_BASE}/api/Auth/google-login`,
+    {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+        throw new ApiError('Đăng nhập thất bại')
+    }
+
+   return await response.json() as Promise<GoogleLoginResponse>
 }
 
 // Default export for backward compatibility if needed, but preferable to use named exports

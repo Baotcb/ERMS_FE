@@ -4,6 +4,8 @@ import "./globals.css";
 import ErrorBoundary from "@/components/common/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { FloatingMenu } from "@/components/layout/floating-menu";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { config } from "@/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +36,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+      <GoogleOAuthProvider clientId={config.googleClientId}>
         {children}
         <FloatingMenu />
         <Toaster />
+      </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -15,9 +15,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, LoadingSpinner } from '@/components/common'
-import { login } from '../api/auth-service'
+import { login, loginByGoogle } from '../api/auth-service'
 import { loginSchema } from '../schemas/auth-schemas'
 import { parseJwt } from '@/utils/jwt'
+import { useGoogleLogin } from '@react-oauth/google'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
@@ -30,6 +31,53 @@ export const LoginForm = memo(function LoginForm() {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (credentialResponse) => {
+            const credential = (credentialResponse as any).credential;
+            const decoded = parseJwt(credential);
+            const data = {
+                Email: String(decoded?.email || ''),
+                FullName: String(decoded?.name || '')
+            };
+            try {
+                const response = await loginByGoogle(data);
+
+                // Parse token to get user role and info
+                const decodedToken = parseJwt(response.token);
+                const role = String(decodedToken?.role || decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '');
+                const userId = String(decodedToken?.nameid || decodedToken?.sub || 'unknown');
+
+                // Construct user object
+                const user: User = {
+                    id: userId,
+                    email: data.Email,
+                    fullName: data.FullName,
+                    role: role || undefined
+                };
+
+                // Update global auth state
+                authLogin(response.token, user, false); // Google login doesn't have remember me
+
+                // Set cookie for middleware authentication
+                document.cookie = `auth_token=${response.token}; path=/; SameSite=Lax`;
+                document.cookie = `user_role=${role}; path=/; SameSite=Lax`;
+
+                setSuccess('Đăng nhập thành công! Đang chuyển hướng...');
+
+                // Redirect after short delay for UX
+                setTimeout(() => {
+                    if (role === 'Candidate') {
+                        router.push('/candidate/jobs');
+                    } else {
+                        router.push('/offers');
+                    }
+                }, 500);
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Đăng nhập Google thất bại';
+                setError(errorMessage);
+            }
+        }
+    });
 
     const form = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
@@ -240,6 +288,7 @@ export const LoginForm = memo(function LoginForm() {
                     variant="outline"
                     className="w-full h-12 text-base font-bold"
                     disabled={isLoading}
+                    onClick={() => googleLogin()}
                 >
                     Đăng nhập với Google
                 </Button>
