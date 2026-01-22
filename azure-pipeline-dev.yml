@@ -1,5 +1,5 @@
 trigger:
-- DEV
+- dev
 
 pr: none
 
@@ -27,5 +27,4 @@ steps:
   env:
     VERCEL_ORG_ID: $(VERCEL_ORG_ID)
     VERCEL_PROJECT_ID: $(VERCEL_PROJECT_ID)
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-  displayName: 'Deploy to Vercel Production'
+  displayName: 'Deploy to Vercel DEV'
