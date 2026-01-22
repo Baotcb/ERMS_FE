@@ -24,9 +24,8 @@ steps:
 
 - script: |
     npm install -g vercel
-    vercel deploy --prod --token=$(VERCEL_TOKEN) --yes
+    vercel deploy --prod --token=$(VERCEL_TOKEN) --yes -e NEXT_PUBLIC_API_URL=$(DEV)
   env:
     VERCEL_ORG_ID: $(VERCEL_ORG_ID)
     VERCEL_PROJECT_ID: $(VERCEL_PROJECT_ID)
-    NEXT_PUBLIC_API_URL: $(DEV)
   displayName: 'Deploy to Vercel DEV'
