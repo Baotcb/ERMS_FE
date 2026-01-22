@@ -8,6 +8,7 @@ pool:
 
 variables:
 - group: VercelVariables-main
+- group: BACKEND_API_URL
 
 steps:
 
@@ -27,5 +28,6 @@ steps:
   env:
     VERCEL_ORG_ID: $(VERCEL_ORG_ID)
     VERCEL_PROJECT_ID: $(VERCEL_PROJECT_ID)
+    NEXT_PUBLIC_API_URL: $(main)
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   displayName: 'Deploy to Vercel Production'

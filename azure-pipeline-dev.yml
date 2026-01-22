@@ -8,6 +8,7 @@ pool:
 
 variables:
 - group: VercelVariables-DEV
+- group: BACKEND_API_URL
 
 steps:
 
@@ -27,4 +28,5 @@ steps:
   env:
     VERCEL_ORG_ID: $(VERCEL_ORG_ID)
     VERCEL_PROJECT_ID: $(VERCEL_PROJECT_ID)
+    NEXT_PUBLIC_API_URL: $(DEV)
   displayName: 'Deploy to Vercel DEV'
