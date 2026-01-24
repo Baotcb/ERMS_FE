@@ -49,11 +49,5 @@ export interface ChangePasswordRequest {
     newPassword: string
 }
 
-export interface GoogleLoginRequest {
-    Email: string
-    FullName: string
-}
-
-export interface GoogleLoginResponse {
-    token: string
-}
+// Google login uses OAuth redirect flow, no direct API request types needed
+// Backend communicates via URL parameters and postMessage instead

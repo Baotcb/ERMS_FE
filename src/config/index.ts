@@ -6,11 +6,10 @@
 export const config = {
     /**
      * Base API URL
-     * Empty = use relative path, Next.js rewrites will proxy to actual backend
-     * This hides the real backend URL from browser DevTools
+     * Uses NEXT_PUBLIC_API_URL environment variable
      */
-    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-    apiUrl: '',
+    googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || '',
 } as const
 
 export type AppConfig = typeof config

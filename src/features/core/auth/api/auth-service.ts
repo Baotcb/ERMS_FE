@@ -16,8 +16,6 @@ import type {
     ResetPasswordRequest,
     ResetPasswordResponse,
     ChangePasswordRequest,
-    GoogleLoginRequest,
-    GoogleLoginResponse,
 } from '../types'
 
 interface ApiResponse<T> {
@@ -174,23 +172,8 @@ export async function changePassword(
     return result;
 }
 
-export async function loginByGoogle(
-    data: GoogleLoginRequest
-): Promise<GoogleLoginResponse> {
-
-   const response = await fetch(`${API_BASE}/api/Auth/google-login`,
-    {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json'},
-        body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-        throw new ApiError('Đăng nhập thất bại')
-    }
-
-   return await response.json() as Promise<GoogleLoginResponse>
-}
+// Google login is handled via OAuth redirect flow in popup window
+// No direct API call needed - backend handles OAuth callback and returns token via postMessage
 
 // Default export for backward compatibility if needed, but preferable to use named exports
 export const authService = {
