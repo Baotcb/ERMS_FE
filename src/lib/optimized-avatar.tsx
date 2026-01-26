@@ -6,7 +6,7 @@
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
-interface OptimizedAvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+type OptimizedAvatarImageProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> & {
   src: string
   alt?: string
   className?: string
@@ -18,6 +18,8 @@ export function OptimizedAvatarImage({
   alt = 'Avatar',
   className,
   size = 40,
+  width,
+  height,
   ...props
 }: OptimizedAvatarImageProps) {
   // Use Next.js Image for external URLs with optimization
@@ -25,13 +27,13 @@ export function OptimizedAvatarImage({
     return (
       <div className="relative h-full w-full">
         <Image
-          src={src}
+          {...props}
+          src={src as string}
           alt={alt}
           fill
           className={cn('object-cover', className)}
           sizes={`${size}px`}
           priority={false}
-          {...props as any}
         />
       </div>
     )
@@ -42,6 +44,8 @@ export function OptimizedAvatarImage({
     <img
       src={src}
       alt={alt}
+      width={width}
+      height={height}
       className={cn('aspect-square h-full w-full object-cover', className)}
       {...props}
     />

@@ -4,7 +4,7 @@
  */
 
 import { config } from '@/config'
-import { handleApiResponse, ApiError } from '@/utils/error-handler'
+import { handleApiResponse } from '@/utils/error-handler'
 import { sanitizeEmail } from '@/utils/sanitization'
 import type {
     LoginRequest,

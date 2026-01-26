@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Explicitly set to server-side rendering (SSR) mode
+  output: 'standalone',
+
+  // Enable experimental features for better SSR performance
   images: {
     remotePatterns: [
       {

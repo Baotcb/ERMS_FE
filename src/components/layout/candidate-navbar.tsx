@@ -1,6 +1,3 @@
-
-"use client";
-
 "use client";
 
 import Link from "next/link";
@@ -21,7 +18,6 @@ import {
     Mail,
     Shield,
     User,
-    ChevronDown,
     KeyRound,
 } from "lucide-react";
 import { memo } from 'react';
@@ -32,7 +28,7 @@ import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import { NavItem } from "./nav-item";
 
 export const CandidateNavbar = memo(function CandidateNavbar() {
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, user, logout, isLoading } = useAuth();
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-20 transition-all">
@@ -150,7 +146,13 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
 
                 {/* Right Side: Actions & Profile */}
                 <div className="flex items-center gap-4 h-full">
-                    {isAuthenticated ? (
+                    {/* Show skeleton while loading to prevent flash */}
+                    {isLoading ? (
+                        <div className="flex items-center gap-2 animate-pulse">
+                            <div className="w-9 h-9 rounded-full bg-slate-200" />
+                            <div className="w-20 h-4 rounded bg-slate-200 hidden sm:block" />
+                        </div>
+                    ) : isAuthenticated ? (
                         <>
                             {/* Notifications */}
                             <div className="hidden sm:flex items-center gap-2">
