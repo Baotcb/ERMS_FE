@@ -11,7 +11,7 @@ import { useRef, useCallback, useEffect } from 'react'
  * @param delay - Delay in milliseconds (default: 300ms)
  * @param immediate - Execute immediately on first call (default: false)
  */
-export function useOptimizedDebounce<T extends (...args: any[]) => any>(
+export function useOptimizedDebounce<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number = 300,
   immediate: boolean = false

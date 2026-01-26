@@ -1,25 +1,16 @@
 /**
  * Authentication Hook
  * Wrapper around global auth store
+ *
+ * NOTE: Auth state is hydrated by AuthProvider from server session.
+ * This hook simply returns the store state without re-initializing
+ * to prevent overwriting server-hydrated data.
  */
 
 'use client'
 
-import { useEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
 
 export function useAuth() {
-    const store = useAuthStore()
-
-    // Initialize on mount
-    const initialized = useRef(false)
-
-    useEffect(() => {
-        if (!initialized.current) {
-            store.initialize()
-            initialized.current = true
-        }
-    }, [store])
-
-    return store
+    return useAuthStore()
 }

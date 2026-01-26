@@ -1,0 +1,171 @@
+import { cookies } from 'next/headers';
+import { config } from '@/config';
+
+export interface ServerFetchOptions extends RequestInit {
+  requireAuth?: boolean;
+}
+
+export interface ServerErrorResponse {
+  message: string;
+  code?: string;
+  field?: string;
+  details?: unknown;
+}
+
+/**
+ * Make authenticated API requests from server
+ */
+export async function serverFetch<T>(
+  url: string,
+  options: ServerFetchOptions = {}
+): Promise<T> {
+  const { requireAuth = false, ...fetchOptions } = options;
+
+  // Build full URL
+  const baseUrl = process.env.API_URL || config.apiUrl || '';
+  const fullUrl = baseUrl ? `${baseUrl}${url}` : url;
+
+  // Prepare headers
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...fetchOptions.headers,
+  };
+
+  // Add authorization header if required
+  if (requireAuth) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+
+    if (!token) {
+      throw new Error('Unauthorized: No token found');
+    }
+
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(fullUrl, {
+      ...fetchOptions,
+      headers,
+      cache: 'no-store', // Disable caching for dynamic content
+    });
+
+    // Handle 204 No Content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    const contentType = response.headers.get('content-type');
+    const isJson = contentType?.includes('application/json');
+
+    if (!isJson) {
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(text || response.statusText || 'Request failed');
+      }
+      return text as unknown as T;
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorData = data as ServerErrorResponse;
+      throw new Error(errorData.message || 'Request failed');
+    }
+
+    return data as T;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unexpected error occurred');
+  }
+}
+
+/**
+ * Get's current user's session from cookies
+ */
+export async function getServerSession() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  const userRole = cookieStore.get('user_role')?.value;
+  const userName = cookieStore.get('user_name')?.value;
+
+  if (!token) {
+    return { token: null, user: null, role: null };
+  }
+
+  // Basic token validation
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return { token: null, user: null, role: null };
+    }
+
+    const payload = JSON.parse(atob(parts[1]));
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    if (payload.exp && payload.exp < currentTime) {
+      return { token: null, user: null, role: null };
+    }
+
+    const email =
+      payload.email ||
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
+      '';
+
+    // Priority: cookie > email prefix
+    const fullName = userName
+      ? decodeURIComponent(userName)
+      : email
+        ? email.split('@')[0]
+        : '';
+
+    return {
+      token,
+      user: {
+        id: payload.nameid || payload.sub || '',
+        email,
+        fullName,
+        role:
+          payload.role ||
+          payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+          userRole ||
+          '',
+      },
+      role:
+        payload.role ||
+        payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+        userRole ||
+        '',
+    };
+  } catch {
+    return { token: null, user: null, role: null };
+  }
+}
+
+/**
+ * Check if user is authenticated on the server
+ */
+export async function isAuthenticated() {
+  const session = await getServerSession();
+  return session.token !== null;
+}
+
+/**
+ * Get's current user's role from cookies
+ */
+export async function getUserRole() {
+  const cookieStore = await cookies();
+  return cookieStore.get('user_role')?.value || null;
+}
+
+/**
+ * Server-side redirect helper
+ */
+export function redirect(url: string) {
+  return new Response(null, {
+    status: 302,
+    headers: { Location: url },
+  });
+}

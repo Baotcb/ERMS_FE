@@ -83,10 +83,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         sessionStorage.removeItem(STORAGE_KEYS.TOKEN)
         sessionStorage.removeItem(STORAGE_KEYS.USER)
 
-        // Clear auth cookie
+        // Clear auth cookies
         if (typeof document !== 'undefined') {
             document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
             document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            document.cookie = 'user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
         }
 
         set({
@@ -170,6 +171,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                     if (typeof document !== 'undefined') {
                         document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
                         document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                        document.cookie = 'user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
                     }
 
                     set({

@@ -7,7 +7,6 @@
 
 import { useState, useCallback, memo } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Building2, User, Phone, Briefcase } from 'lucide-react'
@@ -19,7 +18,6 @@ import { Alert, LoadingSpinner } from '@/components/common'
 import { employerRegisterSchema, type EmployerRegisterFormData } from '../schemas/auth-schemas'
 
 export const EmployerRegisterForm = memo(function EmployerRegisterForm() {
-    const router = useRouter()
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)

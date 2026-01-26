@@ -99,7 +99,7 @@ export function TopCompaniesSection() {
     )
 }
 
-function BriefcaseIcon(props: any) {
+function BriefcaseIcon(props: React.SVGAttributes<SVGElement>) {
     return (
         <svg
             {...props}

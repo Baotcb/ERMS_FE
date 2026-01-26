@@ -19,6 +19,7 @@ import { login } from '../api/auth-service'
 import { loginSchema } from '../schemas/auth-schemas'
 import { parseJwt } from '@/utils/jwt'
 import { config } from '@/config'
+import { getProfile } from '@/features/core/user-profile/api/profile-service'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
@@ -69,21 +70,33 @@ export const LoginForm = memo(function LoginForm() {
                 const role = String(decodedToken?.role || decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '')
                 const userId = String(decodedToken?.nameid || decodedToken?.sub || 'unknown')
 
+                // Fetch full profile to get correct display name
+                let fullName = data.email.split('@')[0];
+                try {
+                    const profile = await getProfile(response.token);
+                    if (profile && profile.fullName) {
+                        fullName = profile.fullName;
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch profile on login', e);
+                }
+
                 // Construct user object
                 const user: User = {
                     id: userId,
                     email: data.email,
-                    fullName: data.email.split('@')[0], // Simplified name generation
+                    fullName: fullName,
                     role: role || undefined
                 }
 
                 // Update global auth state
                 authLogin(response.token, user, data.rememberMe)
 
-                // Set cookie for middleware authentication
+                // Set cookies for middleware authentication and SSR
                 const maxAge = data.rememberMe ? 7 * 24 * 60 * 60 : undefined // 7 days if remember me
                 document.cookie = `auth_token=${response.token}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
                 document.cookie = `user_role=${role}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
+                document.cookie = `user_name=${encodeURIComponent(fullName)}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 

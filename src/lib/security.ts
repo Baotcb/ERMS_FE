@@ -6,7 +6,7 @@
 /**
  * Validate JWT token format and expiration
  */
-export function validateToken(token: string): { valid: boolean; expired: boolean; payload?: any } {
+export function validateToken(token: string): { valid: boolean; expired: boolean; payload?: Record<string, unknown> } {
   if (!token || typeof token !== 'string') {
     return { valid: false, expired: false }
   }
