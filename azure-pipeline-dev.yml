@@ -23,6 +23,7 @@ steps:
 
 - script: |
     npm install -g vercel
+    rm -rf .git
     vercel deploy --prod --token=$(VERCEL_TOKEN) --yes
   env:
     VERCEL_ORG_ID: $(VERCEL_ORG_ID)
