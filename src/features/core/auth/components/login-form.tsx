@@ -18,6 +18,7 @@ import { Alert, LoadingSpinner } from '@/components/common'
 import { login } from '../api/auth-service'
 import { loginSchema } from '../schemas/auth-schemas'
 import { parseJwt } from '@/utils/jwt'
+import { config } from '@/config'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
@@ -42,6 +43,13 @@ export const LoginForm = memo(function LoginForm() {
 
     const togglePasswordVisibility = useCallback(() => {
         setShowPassword((prev) => !prev)
+    }, [])
+
+    const handleGoogleLogin = useCallback(() => {
+        setError(null)
+        // Redirect to backend OAuth flow
+        const backendUrl = config.apiUrl || window.location.origin
+        window.location.href = `${backendUrl}/api/Auth/google-login-redirect`
     }, [])
 
     const handleSubmit = useCallback(
@@ -240,6 +248,7 @@ export const LoginForm = memo(function LoginForm() {
                     variant="outline"
                     className="w-full h-12 text-base font-bold"
                     disabled={isLoading}
+                    onClick={handleGoogleLogin}
                 >
                     Đăng nhập với Google
                 </Button>
