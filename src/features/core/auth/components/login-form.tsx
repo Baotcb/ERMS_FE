@@ -154,7 +154,7 @@ export const LoginForm = memo(function LoginForm() {
                     </Label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                            <Mail className="h-5 w-5" />
+                            <Mail className="h-5 w-5" aria-hidden="true" />
                         </div>
                         <Input
                             id="email"
@@ -163,10 +163,11 @@ export const LoginForm = memo(function LoginForm() {
                             {...form.register('email')}
                             className="pl-10"
                             disabled={isLoading}
+                            aria-describedby={form.formState.errors.email ? "email-error" : undefined}
                         />
                     </div>
                     {form.formState.errors.email && (
-                        <p className="text-sm text-red-500 mt-1">
+                        <p id="email-error" className="text-sm text-red-500 mt-1" role="alert">
                             {form.formState.errors.email.message}
                         </p>
                     )}
@@ -176,32 +177,32 @@ export const LoginForm = memo(function LoginForm() {
                     <Label htmlFor="password" className="mb-2">
                         Mật khẩu
                     </Label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                            <Lock className="h-5 w-5" />
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <Lock className="h-5 w-5" />
+                            </div>
+                            <Input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="•••••••"
+                                {...form.register('password')}
+                                className="pl-10"
+                                disabled={isLoading}
+                            />
+                            <button
+                                type="button"
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 transition-colors"
+                                onClick={togglePasswordVisibility}
+                                disabled={isLoading}
+                                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-5 w-5" />
+                                ) : (
+                                    <Eye className="h-5 w-5" />
+                                )}
+                            </button>
                         </div>
-                        <Input
-                            id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="•••••••"
-                            {...form.register('password')}
-                            className="pl-10 pr-10"
-                            disabled={isLoading}
-                        />
-                        <button
-                            type="button"
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 transition-colors"
-                            onClick={togglePasswordVisibility}
-                            disabled={isLoading}
-                            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                        >
-                            {showPassword ? (
-                                <EyeOff className="h-5 w-5" />
-                            ) : (
-                                <Eye className="h-5 w-5" />
-                            )}
-                        </button>
-                    </div>
                     {form.formState.errors.password && (
                         <p className="text-sm text-red-500 mt-1">
                             {form.formState.errors.password.message}

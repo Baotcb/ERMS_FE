@@ -149,6 +149,7 @@ export const RegisterForm = memo(function RegisterForm() {
                                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                                 onClick={togglePasswordVisibility}
                                 disabled={isLoading}
+                                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                             >
                                 {showPassword ? (
                                     <EyeOff className="h-4 w-4" />
@@ -177,6 +178,7 @@ export const RegisterForm = memo(function RegisterForm() {
                                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                                 onClick={toggleConfirmPasswordVisibility}
                                 disabled={isLoading}
+                                aria-label={showConfirmPassword ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
                             >
                                 {showConfirmPassword ? (
                                     <EyeOff className="h-4 w-4" />
