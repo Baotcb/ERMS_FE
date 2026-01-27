@@ -21,9 +21,13 @@ export function setAuthCookies({
   displayName,
   maxAge = DEFAULT_MAX_AGE,
 }: SetAuthCookiesOptions): void {
-  document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  document.cookie = `user_role=${role}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  document.cookie = `user_name=${encodeURIComponent(displayName)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  // Use secure flags for production
+  const isSecure = window.location.protocol === 'https:';
+  const secureFlag = isSecure ? '; Secure' : '';
+  
+  document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}${secureFlag}; HttpOnly; SameSite=Strict`;
+  document.cookie = `user_role=${role}; path=/; max-age=${maxAge}${secureFlag}; SameSite=Strict`;
+  document.cookie = `user_name=${encodeURIComponent(displayName)}; path=/; max-age=${maxAge}${secureFlag}; SameSite=Strict`;
 }
 
 /**
