@@ -3,7 +3,7 @@
  * Separated UI component for better maintainability
  */
 
-import { Award } from 'lucide-react'
+import Image from 'next/image'
 
 export function LoginHero() {
   return (

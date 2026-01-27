@@ -47,16 +47,16 @@ export function parseOAuthCallback(): OAuthCallbackResponse {
 
     const role = String(
       decodedToken?.role ||
-        decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
-        'Candidate'
+      decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+      'Candidate'
     );
 
     const userId = String(decodedToken?.nameid || decodedToken?.sub || 'unknown');
 
     const email = String(
       decodedToken?.email ||
-        decodedToken?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
-        ''
+      decodedToken?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
+      ''
     );
 
     const fullName = String(decodedToken?.name || email.split('@')[0] || '');
@@ -86,5 +86,5 @@ export function parseOAuthCallback(): OAuthCallbackResponse {
  * Get redirect URL based on user role
  */
 export function getRedirectUrlForRole(role: string): string {
-  return role === 'Candidate' ? '/candidate/jobs' : '/offers';
+  return role === 'Candidate' ? '/jobs' : '/enterprise/dashboard';
 }

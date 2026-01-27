@@ -41,13 +41,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
-
-
-# HR / Recruitment Features
-src/features/recruitment
-src/app/(hr-manager)
-
-# Agent & Shared Resources
-.agent
-.shared/ui-ux-pro-max
+# AI agent config
+.agent/

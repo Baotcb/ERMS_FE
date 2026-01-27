@@ -133,4 +133,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Hide browser native password reveal button (fixes duplicate eye icons) */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear,
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-clear-button {
+    display: none !important;
+  }
 }

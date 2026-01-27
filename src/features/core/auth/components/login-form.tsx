@@ -103,10 +103,18 @@ export const LoginForm = memo(function LoginForm() {
                 // Redirect after short delay for UX
                 setTimeout(() => {
                     if (role === 'Candidate') {
-                        router.push('/candidate/jobs')
+                        router.push('/jobs')
                     } else {
-                        // Redirect HR/Managers to the new HR dashboard (Offers page)
-                        router.push('/offers')
+                        // Route to role-specific dashboard
+                        const roleRoutes: Record<string, string> = {
+                            'HRManager': '/enterprise/dashboard',
+                            'Employee': '/enterprise/dashboard', // Will show coming soon
+                            'Trainer': '/enterprise/dashboard',   // Will show coming soon
+                            'Director': '/enterprise/dashboard',  // Will show coming soon
+                            'DepartmentHead': '/enterprise/dashboard', // Will show coming soon
+                        }
+                        const redirectPath = roleRoutes[role] || '/enterprise/dashboard'
+                        router.push(redirectPath)
                     }
                 }, 500)
             } catch (err) {

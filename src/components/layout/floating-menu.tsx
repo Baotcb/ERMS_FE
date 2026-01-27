@@ -52,7 +52,7 @@ FloatingMenuItem.displayName = "FloatingMenuItem"
 // Pages where FloatingMenu should NOT appear (HR/Admin areas)
 const EXCLUDED_PATHS = [
     '/campaigns',
-    '/candidates', 
+    '/candidates',
     '/interviews',
     '/offers',
     '/dashboard',
@@ -84,7 +84,7 @@ export function FloatingMenu() {
         <div className="fixed bottom-24 right-4 z-50 flex flex-col gap-[5px] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500 items-end">
             {/* Saved Jobs */}
             <FloatingMenuItem
-                href="/candidate/jobs/saved"
+                href="/jobs/saved"
                 icon={<Bookmark className="w-4 h-4 group-hover:fill-current" />}
                 label="Công việc đã lưu"
                 color="group-hover:text-brand-coral"

@@ -19,6 +19,8 @@ const PUBLIC_ROUTES = [
 // Route patterns that require authentication
 const PROTECTED_ROUTE_PATTERNS = [
   '/dashboard',
+  '/departments',
+  '/employees',
   '/profile',
   '/security',
   '/candidate',
@@ -55,9 +57,9 @@ function getSecurityHeaders(): HeadersInit {
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://*.githubusercontent.com https://images.unsplash.com",
+      "img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.azurewebsites.net https://*.google-analytics.com",
+      "connect-src 'self' http://localhost:* https://*.azurewebsites.net https://*.google-analytics.com https://api.cloudinary.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -133,15 +135,15 @@ export function middleware(request: NextRequest) {
   if (requiresAuth(pathname) && (!token || isExpired)) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    
+
     const response = NextResponse.redirect(loginUrl)
-    
+
     // Clear cookies if token is expired
     if (token && isExpired) {
       response.cookies.delete('auth_token')
       response.cookies.delete('user_role')
     }
-    
+
     return response
   }
 
@@ -151,10 +153,10 @@ export function middleware(request: NextRequest) {
     const role = request.cookies.get('user_role')?.value
 
     if (role === 'Candidate') {
-      return NextResponse.redirect(new URL('/candidate/jobs', request.url))
+      return NextResponse.redirect(new URL('/jobs', request.url))
     } else {
-      // HR Manager / Admin -> New HR Dashboard
-      return NextResponse.redirect(new URL('/offers', request.url))
+      // HR Manager / Admin / Employee -> Enterprise Dashboard
+      return NextResponse.redirect(new URL('/enterprise/dashboard', request.url))
     }
   }
 
