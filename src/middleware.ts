@@ -59,7 +59,7 @@ function getSecurityHeaders(): HeadersInit {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com",
       "font-src 'self' data:",
-      "connect-src 'self' http://localhost:* https://*.azurewebsites.net https://*.google-analytics.com https://api.cloudinary.com",
+      "connect-src 'self' https://*.azurewebsites.net https://*.google-analytics.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
