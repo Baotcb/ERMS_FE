@@ -57,7 +57,7 @@ function getSecurityHeaders(): HeadersInit {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://*.githubusercontent.com https://images.unsplash.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.azurewebsites.net https://*.google-analytics.com",
+      "connect-src 'self' http://localhost:* https://localhost:* https://*.azurewebsites.net https://*.google-analytics.com",
       "frame-src 'none'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -133,15 +133,15 @@ export function middleware(request: NextRequest) {
   if (requiresAuth(pathname) && (!token || isExpired)) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    
+
     const response = NextResponse.redirect(loginUrl)
-    
+
     // Clear cookies if token is expired
     if (token && isExpired) {
       response.cookies.delete('auth_token')
       response.cookies.delete('user_role')
     }
-    
+
     return response
   }
 
