@@ -6,6 +6,7 @@
 import { config } from '@/config'
 import { handleApiResponse } from '@/utils/error-handler'
 import { sanitizeEmail } from '@/utils/sanitization'
+import { getCookie } from '../utils/auth-cookies'
 import type {
     LoginRequest,
     LoginResponse,
@@ -151,7 +152,11 @@ export async function resetPassword(
 export async function changePassword(
     data: ChangePasswordRequest
 ): Promise<ApiResponse<string>> {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const token = getCookie('auth_token');
+
+    if (!token) {
+        throw new Error('Không tìm thấy token xác thực');
+    }
 
     const response = await fetch(`${API_BASE}/api/Auth/change-password`, {
         method: 'PUT',
@@ -160,8 +165,8 @@ export async function changePassword(
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-            currentPassword: data.currentPassword,
-            newPassword: data.newPassword
+            currentPassword: data.currentPassword.trim(),
+            newPassword: data.newPassword.trim()
         }),
     })
 
