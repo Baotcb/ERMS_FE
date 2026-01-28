@@ -1,4 +1,4 @@
-"use client"
+
 
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
