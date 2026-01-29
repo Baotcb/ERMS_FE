@@ -47,7 +47,7 @@ export const EmployerRegisterForm = memo(function EmployerRegisterForm() {
     }, [])
 
     const handleSubmit = useCallback(
-        async (data: EmployerRegisterFormData) => {
+        async (_data: EmployerRegisterFormData) => {
             setSuccess(null)
             setIsLoading(true)
 

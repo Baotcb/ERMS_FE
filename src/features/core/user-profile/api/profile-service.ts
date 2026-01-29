@@ -5,6 +5,7 @@
 
 import { config } from '@/config'
 import { handleApiResponse } from '@/utils/error-handler'
+import { apiClient } from '@/lib/api-client'
 
 export interface UserProfileDto {
   userName: string
@@ -26,20 +27,13 @@ export interface ChangeProfileRequest {
   phones?: string
 }
 
-const API_BASE = config.apiUrl
+
 
 /**
  * Get user profile
  */
-export async function getProfile(token: string): Promise<UserProfileDto> {
-  const response = await fetch(`${API_BASE}/api/User/profile`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
+export async function getProfile(): Promise<UserProfileDto> {
+  const response = await apiClient.get('/api/User/profile')
   return handleApiResponse<UserProfileDto>(response, 'Failed to fetch profile')
 }
 
@@ -47,7 +41,6 @@ export async function getProfile(token: string): Promise<UserProfileDto> {
  * Update user profile
  */
 export async function updateProfile(
-  token: string,
   data: ChangeProfileRequest
 ): Promise<UserProfileDto> {
   // Sanitize input data - only send necessary fields
@@ -58,14 +51,7 @@ export async function updateProfile(
     phones: data.phones?.trim(),
   }
 
-  const response = await fetch(`${API_BASE}/api/User/profile`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(sanitizedData),
-  })
+  const response = await apiClient.put('/api/User/profile', sanitizedData)
 
   return handleApiResponse<UserProfileDto>(
     response,

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { Job } from '../data/job-mock-data'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 interface JobCardProps extends Job {
   compact?: boolean
@@ -26,9 +27,14 @@ export const JobCard = memo(function JobCard({
   isHot,
   compact = false,
 }: JobCardProps) {
+  const { toast } = useToast()
+
   const handleSaveJob = (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation if wrapped in link
-    // TODO: Implement save job functionality
+    toast({
+      title: "Tính năng đang phát triển",
+      description: "Chức năng lưu việc làm sẽ sớm ra mắt.",
+    })
   }
 
   return (

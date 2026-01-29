@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Facebook, Linkedin, Youtube, Mail, Phone, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { siteConfig } from "@/config/site"
 
 export function Footer() {
     return (
@@ -27,15 +28,15 @@ export function Footer() {
                         </Link>
                         <div className="flex items-start gap-3 text-brand-secondary/80 text-sm">
                             <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                            <p>Tầng 5, Tòa nhà Diamond Time, 35 Thái Phiên, Quận Hải Châu, TP Đà Nẵng</p>
+                            <p>{siteConfig.contact.address}</p>
                         </div>
                         <div className="flex items-center gap-3 text-brand-secondary/80 text-sm">
                             <Phone className="w-5 h-5 flex-shrink-0" />
-                            <p>(0236) 3888 999</p>
+                            <p>{siteConfig.contact.phone}</p>
                         </div>
                         <div className="flex items-center gap-3 text-brand-secondary/80 text-sm">
                             <Mail className="w-5 h-5 flex-shrink-0" />
-                            <p>contact@erms.vn</p>
+                            <p>{siteConfig.contact.email}</p>
                         </div>
 
                         <div className="flex gap-3 pt-2">

@@ -29,6 +29,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash'],
+  },
   async rewrites() {
     // Use API_URL (server-side only) to hide backend URL from client
     const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL

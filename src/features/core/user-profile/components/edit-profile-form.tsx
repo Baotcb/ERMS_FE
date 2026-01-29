@@ -4,10 +4,8 @@ import { useEffect, useState, useRef, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Check, X, AlertCircle } from "lucide-react";
+import { Camera, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/features/core/auth";
 import { getProfile, updateProfile, UserProfileDto } from "@/features/core/user-profile/api/profile-service";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +16,7 @@ const MIN_AGE = 18;
 const VIETNAM_PHONE_REGEX = /^(0|\+84)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$/;
 
 export const EditProfileForm = memo(function EditProfileForm() {
-    const { user, token, updateUser } = useAuth();
+    const { user, updateUser } = useAuth();
     const [profile, setProfile] = useState<UserProfileDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -118,15 +116,15 @@ export const EditProfileForm = memo(function EditProfileForm() {
 
     const isFormValid = useCallback(() => {
         return !errors.fullName && !errors.phone && !errors.hometown && !errors.dob &&
-               fullName.trim().length >= 2;
+            fullName.trim().length >= 2;
     }, [errors.fullName, errors.phone, errors.hometown, errors.dob, fullName]);
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                if (!token) return;
+                // if (!user) return; // Optional check
 
-                const data = await getProfile(token);
+                const data = await getProfile();
                 setProfile(data);
                 setFullName(data.fullName || "");
                 setPhone(data.phones || "");
@@ -147,12 +145,12 @@ export const EditProfileForm = memo(function EditProfileForm() {
             }
         };
 
-        // Only fetch once when token is available and not yet fetched
-        if (token && !fetchedRef.current) {
+        // Only fetch once when user is available and not yet fetched
+        if (user && !fetchedRef.current) {
             fetchedRef.current = true;
             fetchProfile();
         }
-    }, [toast, token]);
+    }, [toast, user]);
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -183,15 +181,7 @@ export const EditProfileForm = memo(function EditProfileForm() {
 
         setUpdating(true);
         try {
-            if (!token) {
-                toast({
-                    title: "Lỗi",
-                    description: "Bạn chưa đăng nhập",
-                    variant: "destructive"
-                });
-                return;
-            }
-            const updatedProfile = await updateProfile(token, {
+            const updatedProfile = await updateProfile({
                 fullName,
                 phones: phone,
                 hometown,
@@ -218,7 +208,7 @@ export const EditProfileForm = memo(function EditProfileForm() {
                 description: "Đã cập nhật hồ sơ thành công",
                 className: "bg-green-500 text-white"
             });
-        } catch (error) {
+        } catch {
             toast({
                 title: "Lỗi",
                 description: "Cập nhật hồ sơ thất bại",

@@ -15,15 +15,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, LoadingSpinner } from '@/components/common'
-import { login } from '../api/auth-service'
-import { loginSchema } from '../schemas/auth-schemas'
-import { parseJwt } from '@/utils/jwt'
 import { config } from '@/config'
-import { getProfile } from '@/features/core/user-profile/api/profile-service'
+import { loginSchema } from '../schemas/auth-schemas'
+import { loginAction } from '../actions/auth'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
-import { User } from '@/stores/auth-store'
 
 export const LoginForm = memo(function LoginForm() {
     const router = useRouter()
@@ -60,60 +57,44 @@ export const LoginForm = memo(function LoginForm() {
             setIsLoading(true)
 
             try {
-                const response = await login({
-                    email: data.email,
-                    password: data.password,
-                })
+                // Call Server Action
+                const result = await loginAction(data)
 
-                // Parse token to get user role and info
-                const decodedToken = parseJwt(response.token)
-                const role = String(decodedToken?.role || decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '')
-                const userId = String(decodedToken?.nameid || decodedToken?.sub || 'unknown')
-
-                // Fetch full profile to get correct display name
-                let fullName = data.email.split('@')[0];
-                try {
-                    const profile = await getProfile(response.token);
-                    if (profile && profile.fullName) {
-                        fullName = profile.fullName;
-                    }
-                } catch (e) {
-                    console.error('Failed to fetch profile on login', e);
+                if (!result.success || !result.user) {
+                    throw new Error(result.error || 'Đăng nhập thất bại')
                 }
 
-                // Construct user object
-                const user: User = {
-                    id: userId,
-                    email: data.email,
-                    fullName: fullName,
-                    role: role || undefined
-                }
+                const { user } = result
 
-                // Update global auth state
-                authLogin(response.token, user, data.rememberMe)
-
-                // Set cookies for middleware authentication and SSR
-                const maxAge = data.rememberMe ? 7 * 24 * 60 * 60 : undefined // 7 days if remember me
-                document.cookie = `auth_token=${response.token}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
-                document.cookie = `user_role=${role}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
-                document.cookie = `user_name=${encodeURIComponent(fullName)}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
+                // Update global auth state (client store)
+                // Note: The token is now HttpOnly cookie, so we don't pass it to the store's "token" field 
+                // OR we pass a dummy/flag, because the store might expect a token string for API calls.
+                // WE NEED TO UPDATE AUTH STORE TO NOT REQUIRE TOKEN STRING OR HANDLE COOKIE-BASED AUTH.
+                // For now, we update the user info.
+                authLogin('COOKIE_AUTH', {
+                    id: user.id || 'unknown',
+                    email: user.email || data.email,
+                    fullName: user.fullName,
+                    role: user.role
+                }, data.rememberMe)
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 
                 // Redirect after short delay for UX
                 setTimeout(() => {
+                    const role = user.role
                     if (role === 'Candidate') {
                         router.push('/jobs')
                     } else {
                         // Route to role-specific dashboard
                         const roleRoutes: Record<string, string> = {
                             'HRManager': '/enterprise/dashboard',
-                            'Employee': '/enterprise/dashboard', // Will show coming soon
-                            'Trainer': '/enterprise/dashboard',   // Will show coming soon
-                            'Director': '/enterprise/dashboard',  // Will show coming soon
-                            'DepartmentHead': '/enterprise/dashboard', // Will show coming soon
+                            'Employee': '/enterprise/dashboard',
+                            'Trainer': '/enterprise/dashboard',
+                            'Director': '/enterprise/dashboard',
+                            'DepartmentHead': '/enterprise/dashboard',
                         }
-                        const redirectPath = roleRoutes[role] || '/enterprise/dashboard'
+                        const redirectPath = role && roleRoutes[role] ? roleRoutes[role] : '/enterprise/dashboard'
                         router.push(redirectPath)
                     }
                 }, 500)
@@ -185,32 +166,32 @@ export const LoginForm = memo(function LoginForm() {
                     <Label htmlFor="password" className="mb-2">
                         Mật khẩu
                     </Label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <Lock className="h-5 w-5" />
-                            </div>
-                            <Input
-                                id="password"
-                                type={showPassword ? 'text' : 'password'}
-                                placeholder="•••••••"
-                                {...form.register('password')}
-                                className="pl-10"
-                                disabled={isLoading}
-                            />
-                            <button
-                                type="button"
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 transition-colors"
-                                onClick={togglePasswordVisibility}
-                                disabled={isLoading}
-                                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-5 w-5" />
-                                ) : (
-                                    <Eye className="h-5 w-5" />
-                                )}
-                            </button>
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <Lock className="h-5 w-5" />
                         </div>
+                        <Input
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="•••••••"
+                            {...form.register('password')}
+                            className="pl-10"
+                            disabled={isLoading}
+                        />
+                        <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 transition-colors"
+                            onClick={togglePasswordVisibility}
+                            disabled={isLoading}
+                            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                            ) : (
+                                <Eye className="h-5 w-5" />
+                            )}
+                        </button>
+                    </div>
                     {form.formState.errors.password && (
                         <p className="text-sm text-red-500 mt-1">
                             {form.formState.errors.password.message}

@@ -35,31 +35,20 @@ export function AuthProvider({
     if (hasHydrated.current) return;
     hasHydrated.current = true;
 
-    const token = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('auth_token='))
-      ?.split('=')[1];
-
-    if (serverAuthData.user && serverAuthData.isAuthenticated && token) {
-      // Server says authenticated - use server data (has correct fullName from JWT)
+    if (serverAuthData.user && serverAuthData.isAuthenticated) {
+      // Server says authenticated - use server data
       useAuthStore.setState({
         user: serverAuthData.user,
-        token,
         isAuthenticated: true,
         isLoading: false,
       });
-    } else if (!token) {
-      // No token cookie - ensure logged out state
+    } else {
+      // No server session - ensure logged out state
       useAuthStore.setState({
         user: null,
-        token: null,
         isAuthenticated: false,
         isLoading: false,
       });
-    } else {
-      // Has token but server didn't return user (edge case)
-      // Mark as not loading so UI can proceed
-      useAuthStore.setState({ isLoading: false });
     }
   }, [serverAuthData]);
 

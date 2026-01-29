@@ -3,7 +3,7 @@
  * Separated UI component for better maintainability
  */
 
-import { Award, Zap, Users } from 'lucide-react'
+import { Award, Zap } from 'lucide-react'
 
 export function RegisterHero() {
   return (
@@ -11,7 +11,7 @@ export function RegisterHero() {
       <div className="inline-flex items-center px-3 py-1 rounded-full bg-accent/30 text-primary dark:text-accent text-xs font-semibold uppercase tracking-wide">
         New Recruitment Drive
       </div>
-      
+
       <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
         Start your career journey with{' '}
         <span className="text-primary dark:text-accent">ERMS</span>
@@ -33,7 +33,7 @@ export function RegisterHero() {
             Industry recognized certifications.
           </p>
         </div>
-        
+
         <div className="flex flex-col gap-2">
           <div className="h-10 w-10 rounded-lg bg-coral/10 flex items-center justify-center text-coral">
             <Zap className="w-6 h-6" />

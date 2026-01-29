@@ -55,8 +55,8 @@ function getSecurityHeaders(): HeadersInit {
     // Content Security Policy - Mitigate XSS and clickjacking attacks
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
-      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' https://www.googletagmanager.com 'unsafe-inline'", // Note: 'unsafe-inline' required for Next.js hydration scripts without strict Nonce setup
+      "style-src 'self' 'unsafe-inline'", // Required for many UI libraries/Tailwind
       "img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com",
       "font-src 'self' data:",
       "connect-src 'self' https://*.azurewebsites.net https://*.google-analytics.com",
@@ -160,8 +160,20 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Inject Authorization header for API requests
+  // This allows the client to make requests without handling the token explicitly
+  const requestHeaders = new Headers(request.headers)
+  if (pathname.startsWith('/api/') && token) {
+    requestHeaders.set('Authorization', `Bearer ${token}`)
+  }
+
   // Add security headers
-  const response = NextResponse.next()
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
   Object.entries(getSecurityHeaders()).forEach(([key, value]) => {
     response.headers.set(key, value)
   })

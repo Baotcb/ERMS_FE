@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import Image from 'next/image'

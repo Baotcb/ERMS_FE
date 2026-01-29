@@ -40,7 +40,12 @@ class Logger {
 
   error(message: string, error?: unknown, context?: LogContext): void {
     if (this.shouldLog('error')) {
-      console.error(this.formatMessage('error', message), error || '', context || '');
+      // In production, limit logging to message and error stack/message to prevent PII leaks from context
+      if (!this.isDevelopment) {
+        console.error(this.formatMessage('error', message), error instanceof Error ? error.message : error)
+      } else {
+        console.error(this.formatMessage('error', message), error || '', context || '')
+      }
     }
   }
 
