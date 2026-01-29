@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { FileQuestion, Search, Trash2 } from 'lucide-react'
 import { JobCard } from './job-card'
 import { Button } from '@/components/ui/button'
-import { MOCK_JOBS } from '../data/job-mock-data'
+import { MOCK_JOBS } from '../../../__tests__/fixtures/job-mock-data'
 import { useToast } from "@/hooks/use-toast"
 
 export function SavedJobList() {

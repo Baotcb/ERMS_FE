@@ -30,6 +30,7 @@ async function fetchWithRetry(url: string, options: RequestOptions = {}): Promis
         try {
             const response = await fetch(fullUrl, {
                 ...fetchOptions,
+                credentials: 'include', // Ensure cookies are sent with requests
                 signal: controller.signal,
             })
             clearTimeout(id)

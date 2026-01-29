@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { JOB_LOCATIONS, JOB_SALARY_RANGES } from '../data/job-mock-data'
+import { JOB_LOCATIONS, JOB_SALARY_RANGES } from '../constants'
 import { useDebounce } from '@/hooks/use-debounce'
 import { cn } from '@/lib/utils'
 

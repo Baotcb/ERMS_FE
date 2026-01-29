@@ -10,7 +10,7 @@ import Image from 'next/image'
 import { MapPin, DollarSign, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import type { Job } from '../data/job-mock-data'
+import type { Job } from '../types'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
@@ -96,6 +96,7 @@ export const JobCard = memo(function JobCard({
         variant="ghost"
         size="icon"
         className="absolute top-2 right-2 h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500 text-slate-300 transition-colors opacity-0 group-hover:opacity-100"
+        // TODO: Implement "Save Job" feature with API integration
         onClick={handleSaveJob}
         aria-label="Save job"
       >

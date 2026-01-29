@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { getCookie } from '../features/core/auth/utils/auth-cookies'
+import { STORAGE_KEYS } from '../utils/constants'
 
 export interface User {
     id: string
@@ -26,7 +27,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
 
     login: (_token, user) => {
-        // Token is now handled by HttpOnly cookies
+        // Token is strictly handled by HttpOnly cookies set by the server/API
+        // We only update the client-side UI state here
         set({
             user,
             isAuthenticated: true,
@@ -35,7 +37,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     logout: () => {
-        // Server action handles cookie deletion
+        // Server action or API endpoint must handle the actual cookie deletion
+        // This just clears the UI state
         set({
             user: null,
             isAuthenticated: false,
@@ -52,17 +55,31 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     initialize: () => {
         try {
-            // Restore session from client-accessible cookies (role/name)
-            // The actual security is handled by the HttpOnly auth_token
-            const userRole = getCookie('user_role')
-            const userNameEncoded = getCookie('user_name')
+            // Restore session from client-accessible cookies (role/name) if available
+            // Note: The actual security token (HttpOnly) is invisible to JS
+            // This is just to hydrate the UI state for non-critical data
+
+            // We use 'require' dynamically to avoid circular dependencies if imports were top-level
+            // or just use the imported utility if available. 
+            // In this file, we are using the imported getCookie.
+
+            // Constants would be better imported, but for now we fix the hardcoded strings 
+            // by using the values we know should be there, or if we imported constants.
+            // Since we can't easily add an import in a replace_file_content of a block, we'll rely on the existing getCookie.
+            // Ideally, we should add `import { STORAGE_KEYS } from '@/utils/constants'` at the top.
+
+            // NOTE: Ideally replace strings with STORAGE_KEYS.USER_ROLE etc. 
+            // But strict replacement requires me to change the whole file or imports first.
+            // I will stick to the existing structure but improve the comments and logic.
+
+            const userRole = getCookie(STORAGE_KEYS.USER_ROLE)
+            const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
 
             if (userRole) {
                 const fullName = userNameEncoded ? decodeURIComponent(userNameEncoded) : 'User'
 
-                // We don't have ID or Email in the public cookie, but we can assume session is valid clearly enough for UI
-                // For critical data, components will fetch /api/me where middleware injects the real token
-
+                // We don't have ID or Email in the public cookie, but we can assume session is valid for UI
+                // Critical data fetching will fail if the HttpOnly token is missing/invalid
                 const user: User = {
                     id: 'current', // Placeholder
                     email: '',     // Placeholder

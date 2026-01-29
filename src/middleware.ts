@@ -167,6 +167,10 @@ export function middleware(request: NextRequest) {
     requestHeaders.set('Authorization', `Bearer ${token}`)
   }
 
+  // Generate a nonce for CSP
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64')
+  requestHeaders.set('x-nonce', nonce)
+
   // Add security headers
   const response = NextResponse.next({
     request: {
@@ -174,9 +178,33 @@ export function middleware(request: NextRequest) {
     },
   })
 
-  Object.entries(getSecurityHeaders()).forEach(([key, value]) => {
-    response.headers.set(key, value)
-  })
+  // Content Security Policy
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http:;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com https://lh3.googleusercontent.com;
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+  `.replace(/\s{2,}/g, ' ').trim()
+
+  response.headers.set('Content-Security-Policy', cspHeader)
+  response.headers.set('x-nonce', nonce) // Expose nonce for client-side use if needed
+
+  // Other Security Headers
+  response.headers.set('X-DNS-Prefetch-Control', 'on')
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin')
 
   return response
 }

@@ -38,7 +38,7 @@ export function useFormHandler<TFieldValues extends FieldValues>({
   const [success, setSuccess] = useState<string | null>(null)
 
   const form = useForm<TFieldValues>({
-    // Cast required due to Zod v4 / @hookform/resolvers compatibility
+    // Library incompatibility between currently installed zod/hookform versions requires this cast
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema as any) as Resolver<TFieldValues>,
     defaultValues,
