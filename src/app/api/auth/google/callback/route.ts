@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginByGoogle, exchangeCodeForTokens } from '@/features/core/auth/api/auth-service';
+import { getProfile } from '@/features/core/user-profile/api/profile-service';
 import { parseJwt } from '@/utils/jwt';
 
 /**
@@ -32,7 +33,24 @@ export async function GET(request: NextRequest) {
         // 3. Prepare response and set cookies
         const decodedToken = parseJwt(authResult.token);
         const role = String(decodedToken?.role || decodedToken?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'Candidate');
-        const fullName = String(decodedToken?.name || 'User');
+
+        // Try to get name from multiple possible claims
+        let fullName = String(
+            decodedToken?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+            decodedToken?.name ||
+            decodedToken?.unique_name ||
+            'User'
+        );
+
+        // Fetch full profile to get correct display name (consistent with regular login)
+        try {
+            const profile = await getProfile(authResult.token);
+            if (profile && profile.fullName) {
+                fullName = profile.fullName;
+            }
+        } catch (e) {
+            console.error('Failed to fetch profile in Google callback', e);
+        }
 
         const response = NextResponse.redirect(new URL(role === 'Candidate' ? '/candidate/jobs' : '/offers', origin));
 
