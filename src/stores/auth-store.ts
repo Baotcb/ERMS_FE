@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     isLoading: true,
     tokenExpiryCheckInterval: null,
 
-    login: (token, user, rememberMe = false) => {
+    login: (token, user, rememberMe = true) => {
         // Validate token before storing
         const validation = validateToken(token)
         if (!validation.valid || validation.expired) {
@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Store in memory only (more secure than localStorage/sessionStorage)
         // In production, use httpOnly cookies via server actions
         const storage = rememberMe ? localStorage : sessionStorage
-        
+
         // Only store non-sensitive user info in client storage
         const safeUserInfo = {
             id: user.id,
@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             fullName: user.fullName,
             role: user.role
         }
-        
+
         storage.setItem(STORAGE_KEYS.USER, JSON.stringify(safeUserInfo))
 
         set({

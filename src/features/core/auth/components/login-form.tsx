@@ -24,6 +24,7 @@ import { getProfile } from '@/features/core/user-profile/api/profile-service'
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
 import { User } from '@/stores/auth-store'
+import { setAuthCookies } from '../utils/auth-cookies'
 
 export const LoginForm = memo(function LoginForm() {
     const router = useRouter()
@@ -38,7 +39,7 @@ export const LoginForm = memo(function LoginForm() {
         defaultValues: {
             email: '',
             password: '',
-            rememberMe: false,
+            rememberMe: true,
         },
     })
 
@@ -91,13 +92,14 @@ export const LoginForm = memo(function LoginForm() {
                 // Update global auth state
                 authLogin(response.token, user, data.rememberMe)
 
-                // Set cookies for middleware authentication and SSR
-                const maxAge = data.rememberMe ? 7 * 24 * 60 * 60 : undefined // 7 days if remember me
-                document.cookie = `auth_token=${response.token}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
-                document.cookie = `user_role=${role}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
-                document.cookie = `user_name=${encodeURIComponent(fullName)}; path=/; ${maxAge ? `max-age=${maxAge};` : ''} SameSite=Lax`
-
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
+
+                // Set auth cookies for middleware authentication and SSR (defaulting to 7 days)
+                setAuthCookies({
+                    token: response.token,
+                    role: role,
+                    displayName: fullName
+                })
 
                 // Redirect after short delay for UX
                 setTimeout(() => {
@@ -211,16 +213,6 @@ export const LoginForm = memo(function LoginForm() {
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <input
-                            id="remember-me"
-                            type="checkbox"
-                            {...form.register('rememberMe')}
-                            disabled={isLoading}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <Label htmlFor="remember-me" className="text-sm cursor-pointer">
-                            Ghi nhớ đăng nhập
-                        </Label>
                     </div>
                     <Link
                         href="/forgot-password"
