@@ -48,8 +48,8 @@ export const LoginForm = memo(function LoginForm() {
 
     const handleGoogleLogin = useCallback(() => {
         setError(null)
-        // Redirect to internal Page route handle logic Google OAuth2.0
-        window.location.href = '/google-login'
+        // Redirect to internal API route handle logic Google OAuth2.0
+        window.location.href = '/api/auth/google'
     }, [])
 
     const handleSubmit = useCallback(

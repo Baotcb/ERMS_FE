@@ -1,17 +1,17 @@
-import { redirect } from 'next/navigation';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Google Login Initiation Page
- * This is a Server Component that handles the redirect to Google OAuth.
- * It replaces the previous /api/auth/google API route to align with project standards.
+ * Google Login Initiation API Route
+ * Re-implemented as a Route Handler to ensure technical compatibility with redirects.
  */
-export default async function GoogleLoginPage() {
+export async function GET(request: NextRequest) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI;
+    const origin = request.nextUrl.origin;
 
     if (!clientId || !redirectUri) {
         console.error('Missing Google configuration');
-        redirect('/login?error=Configuration+Error');
+        return NextResponse.redirect(new URL('/login?error=Configuration+Error', origin));
     }
 
     const scope = 'openid email profile';
@@ -25,5 +25,5 @@ export default async function GoogleLoginPage() {
     googleAuthUrl.searchParams.append('access_type', 'offline');
     googleAuthUrl.searchParams.append('prompt', 'consent');
 
-    redirect(googleAuthUrl.toString());
+    return NextResponse.redirect(googleAuthUrl.toString());
 }
