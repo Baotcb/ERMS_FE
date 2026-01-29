@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
 
 export async function POST(request: Request) {
     try {
@@ -16,20 +17,17 @@ export async function POST(request: Request) {
 
         // Cookie options
         const cookieOptions = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict' as const,
-            path: '/',
+            ...COOKIE_OPTIONS,
             maxAge: 7 * 24 * 60 * 60, // 7 days
         }
 
         // Set HttpOnly Cookies
-        response.cookies.set('auth_token', token, cookieOptions)
+        response.cookies.set(STORAGE_KEYS.AUTH_TOKEN, token, { ...cookieOptions, httpOnly: true })
 
         // Set Public Cookies
-        response.cookies.set('user_role', role, { ...cookieOptions, httpOnly: false })
+        response.cookies.set(STORAGE_KEYS.USER_ROLE, role, { ...cookieOptions, httpOnly: false })
         const displayName = user.fullName || user.email?.split('@')[0] || 'User'
-        response.cookies.set('user_name', encodeURIComponent(displayName), { ...cookieOptions, httpOnly: false })
+        response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(displayName), { ...cookieOptions, httpOnly: false })
 
         return response
 

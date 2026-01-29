@@ -47,52 +47,7 @@ function requiresAuth(pathname: string): boolean {
   )
 }
 
-/**
- * Generate security headers
- */
-function getSecurityHeaders(): HeadersInit {
-  return {
-    // Content Security Policy - Mitigate XSS and clickjacking attacks
-    'Content-Security-Policy': [
-      "default-src 'self'",
-      "script-src 'self' https://www.googletagmanager.com 'unsafe-inline'", // Note: 'unsafe-inline' required for Next.js hydration scripts without strict Nonce setup
-      "style-src 'self' 'unsafe-inline'", // Required for many UI libraries/Tailwind
-      "img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com",
-      "font-src 'self' data:",
-      "connect-src 'self' https://*.azurewebsites.net https://*.google-analytics.com",
-      "frame-src 'none'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-      "upgrade-insecure-requests",
-    ].join('; '),
 
-    // HTTP Strict Transport Security - Force HTTPS in production
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-
-    // X-Content-Type-Options - Prevent MIME type sniffing
-    'X-Content-Type-Options': 'nosniff',
-
-    // X-Frame-Options - Prevent clickjacking
-    'X-Frame-Options': 'DENY',
-
-    // X-XSS-Protection - Enable XSS filtering
-    'X-XSS-Protection': '1; mode=block',
-
-    // Referrer Policy - Control referrer information
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-
-    // Permissions Policy - Control browser features
-    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-
-    // Cross-Origin-Opener-Policy - Control cross-origin windows
-    'Cross-Origin-Opener-Policy': 'same-origin',
-
-    // Cross-Origin-Resource-Policy - Control resource access
-    'Cross-Origin-Resource-Policy': 'same-origin',
-  }
-}
 
 /**
  * Check if a JWT token is expired

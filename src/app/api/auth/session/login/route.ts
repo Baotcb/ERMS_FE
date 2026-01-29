@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { config } from '@/config'
+import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
 
 export async function POST(request: Request) {
     try {
@@ -42,20 +43,17 @@ export async function POST(request: Request) {
 
         // Cookie options
         const cookieOptions = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict' as const,
-            path: '/',
-            maxAge: 7 * 24 * 60 * 60, // 7 days
+            ...COOKIE_OPTIONS,
+            maxAge: 7 * 24 * 60 * 60, // 7 days (or import explicitly if defined)
         }
 
         // 1. Auth Token (HttpOnly, Secure) - The sensitive one
-        response.cookies.set('auth_token', token, cookieOptions)
+        response.cookies.set(STORAGE_KEYS.AUTH_TOKEN, token, { ...cookieOptions, httpOnly: true })
 
         // 2. Public Cookies (For UI hydration, NOT HttpOnly)
         // allowing JS to read these to know user role/name without making an API call immediately
-        response.cookies.set('user_role', userRole, { ...cookieOptions, httpOnly: false })
-        response.cookies.set('user_name', encodeURIComponent(userName), { ...cookieOptions, httpOnly: false })
+        response.cookies.set(STORAGE_KEYS.USER_ROLE, userRole, { ...cookieOptions, httpOnly: false })
+        response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(userName), { ...cookieOptions, httpOnly: false })
 
         return response
 
