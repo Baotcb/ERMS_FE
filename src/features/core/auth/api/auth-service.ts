@@ -66,7 +66,8 @@ function sanitizeForgotPasswordRequest(
  */
 export async function login(data: LoginRequest): Promise<LoginResponse> {
     const sanitizedData = sanitizeLoginRequest(data)
-    const response = await apiClient.post('/api/Auth/login', sanitizedData)
+    // Use local proxy route to handle HttpOnly cookies
+    const response = await apiClient.post('/api/auth/session/login', sanitizedData)
     return handleApiResponse<LoginResponse>(response, 'Đăng nhập thất bại')
 }
 

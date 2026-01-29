@@ -14,30 +14,18 @@ interface SetAuthCookiesOptions {
 
 /**
  * Set all authentication cookies
+ * @deprecated Use /api/auth/session/login API route instead for HttpOnly cookies
  */
-export function setAuthCookies({
-  token,
-  role,
-  displayName,
-  maxAge = DEFAULT_MAX_AGE,
-}: SetAuthCookiesOptions): void {
-  // Use secure flags for production
-  const isSecure = window.location.protocol === 'https:';
-  const secureFlag = isSecure ? '; Secure' : '';
-  
-  document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}${secureFlag}; HttpOnly; SameSite=Strict`;
-  document.cookie = `user_role=${role}; path=/; max-age=${maxAge}${secureFlag}; SameSite=Strict`;
-  document.cookie = `user_name=${encodeURIComponent(displayName)}; path=/; max-age=${maxAge}${secureFlag}; SameSite=Strict`;
+export function setAuthCookies(): void {
+  console.warn('setAuthCookies is deprecated. Use API route for HttpOnly cookies.')
 }
 
 /**
  * Clear all authentication cookies
+ * @deprecated Use /api/auth/session/logout API route instead
  */
 export function clearAuthCookies(): void {
-  const expiredDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
-  document.cookie = `auth_token=; path=/; expires=${expiredDate}`;
-  document.cookie = `user_role=; path=/; expires=${expiredDate}`;
-  document.cookie = `user_name=; path=/; expires=${expiredDate}`;
+  console.warn('clearAuthCookies is deprecated. Use API route.')
 }
 
 /**

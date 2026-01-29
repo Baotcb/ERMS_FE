@@ -21,8 +21,19 @@ export function useGoogleCallback() {
     }
 
     const { token, user, role } = result;
-    authLogin(token, user, false);
-    setAuthCookies({ token, role, displayName: user.fullName || user.email.split('@')[0] });
-    router.push(getRedirectUrlForRole(role));
+
+    // Call server to set HttpOnly cookies
+    fetch('/api/auth/session/external', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, user, role })
+    }).then(() => {
+      authLogin(token, user, false);
+      // Deprecated: setAuthCookies({ token, role, displayName: user.fullName || user.email.split('@')[0] });
+      router.push(getRedirectUrlForRole(role));
+    }).catch(err => {
+      console.error('Failed to set session', err)
+      router.push('/login?error=session_failed')
+    })
   }, [router, authLogin]);
 }

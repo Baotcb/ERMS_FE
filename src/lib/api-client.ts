@@ -16,9 +16,28 @@ const DEFAULT_RETRIES = 1
 async function fetchWithRetry(url: string, options: RequestOptions = {}): Promise<Response> {
     const { timeout = DEFAULT_TIMEOUT, retries = DEFAULT_RETRIES, ...fetchOptions } = options
 
-    // Ensure we use the configured base URL if the URL is relative
     const baseUrl = config.apiUrl
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+
+    // Get CSRF token from cookie if available
+    const csrfToken = typeof document !== 'undefined'
+        ? document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1]
+        : undefined
+
+    const headers = new Headers(fetchOptions.headers || {})
+    if (csrfToken) {
+        headers.set('x-csrf-token', csrfToken)
+    }
+
+    // Explicitly set headers in fetchOptions to override/merge
+    // We need to convert Headers back to object or pass as Headers object
+    // fetch supports Headers object
+
+    // Merge existing headers
+    if (!headers.has('Content-Type') && !(fetchOptions.body instanceof FormData)) {
+        // Default content type if not FormData
+        // But let methods handle it
+    }
 
     let attempt = 0
     let lastError: unknown
@@ -30,6 +49,7 @@ async function fetchWithRetry(url: string, options: RequestOptions = {}): Promis
         try {
             const response = await fetch(fullUrl, {
                 ...fetchOptions,
+                headers, // Use our headers with CSRF token
                 credentials: 'include', // Ensure cookies are sent with requests
                 signal: controller.signal,
             })
