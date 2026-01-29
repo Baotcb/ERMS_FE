@@ -55,7 +55,7 @@ function getSecurityHeaders(): HeadersInit {
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://*.githubusercontent.com https://images.unsplash.com",
+      "img-src 'self' data: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://*.googleusercontent.com",
       "font-src 'self' data:",
       "connect-src 'self' http://localhost:* https://localhost:* https://*.azurewebsites.net https://*.google-analytics.com",
       "frame-src 'none'",
