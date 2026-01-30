@@ -173,7 +173,7 @@ export async function resendConfirmation(email: string): Promise<{ message: stri
  * Login with Google
  */
 export async function loginByGoogle(data: GoogleLoginRequest): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/api/Auth/google-login`, {
+    const response = await fetch(`${config.apiUrl}/api/Auth/google-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

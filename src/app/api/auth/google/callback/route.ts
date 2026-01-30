@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginByGoogle, exchangeCodeForTokens } from '@/features/core/auth/api/auth-service';
-import { getProfile } from '@/features/core/user-profile/api/profile-service';
+import { config } from '@/config';
 import { parseJwt } from '@/utils/jwt';
 
 /**
@@ -44,9 +44,14 @@ export async function GET(request: NextRequest) {
 
         // Fetch full profile to get correct display name (consistent with regular login)
         try {
-            const profile = await getProfile(authResult.token);
-            if (profile && profile.fullName) {
-                fullName = profile.fullName;
+            const res = await fetch(`${config.apiUrl}/api/User/profile`, {
+                headers: { Authorization: `Bearer ${authResult.token}` },
+            });
+            if (res.ok) {
+                const profile = await res.json();
+                if (profile?.fullName) {
+                    fullName = profile.fullName;
+                }
             }
         } catch (e) {
             console.error('Failed to fetch profile in Google callback', e);

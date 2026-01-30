@@ -77,7 +77,7 @@ export function LoginForm() {
                     email: user.email || data.email,
                     fullName: user.fullName,
                     role: user.role
-                }, data.rememberMe)
+                })
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 

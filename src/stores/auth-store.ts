@@ -15,7 +15,7 @@ interface AuthState {
     isLoading: boolean
 
     // Actions
-    login: (token: string, user: User, rememberMe?: boolean) => void
+    login: (token: string, user: User) => void
     logout: () => void
     updateUser: (userData: Partial<User>) => void
     initialize: () => void
@@ -26,33 +26,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     isAuthenticated: false,
     isLoading: true,
 
-    login: (token, user, rememberMe = true) => {
-        // Validate token before storing
-        const validation = validateToken(token)
-        if (!validation.valid || validation.expired) {
-            console.error('Invalid or expired token provided')
-            return
-        }
-
-        // Clear other storage first to avoid duplicates/conflicts
-        localStorage.removeItem(STORAGE_KEYS.TOKEN)
-        localStorage.removeItem(STORAGE_KEYS.USER)
-        sessionStorage.removeItem(STORAGE_KEYS.TOKEN)
-        sessionStorage.removeItem(STORAGE_KEYS.USER)
-
-        // Store in memory only (more secure than localStorage/sessionStorage)
-        // In production, use httpOnly cookies via server actions
-        const storage = rememberMe ? localStorage : sessionStorage
-
-        // Only store non-sensitive user info in client storage
-        const safeUserInfo = {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            role: user.role
-        }
-
-        storage.setItem(STORAGE_KEYS.USER, JSON.stringify(safeUserInfo))
+    login: (_token, user) => {
+        // Token is now managed via HttpOnly cookies - no client-side validation needed
+        // Store only tracks UI state
 
         set({
             user,
