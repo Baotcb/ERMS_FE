@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { LoginFormData } from '../schemas/auth-schemas'
+import { LoginFormData, EmployerRegisterFormData } from '../schemas/auth-schemas'
 
 interface LoginResult {
     success: boolean
@@ -25,21 +25,42 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
     }
 
     try {
+        console.log('Login attempt for:', email)
+        console.log('Using API URL:', API_URL)
         const res = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         })
 
-        const resData = await res.json()
+        // Handle empty response body gracefully (backend may return empty body on error)
+        const resText = await res.text()
+        console.log('Login response status:', res.status)
+        console.log('Login response body:', resText)
+
+        let resData: { message?: string; token?: string; user?: { role?: string; fullName?: string; id?: string; email?: string } } = {}
+        if (resText) {
+            try {
+                resData = JSON.parse(resText)
+            } catch {
+                console.error('Failed to parse login response JSON')
+                return { success: false, error: 'Phản hồi từ server không hợp lệ' }
+            }
+        }
 
         if (!res.ok) {
-            return { success: false, error: resData.message || 'Đăng nhập thất bại' }
+            console.error('Login failed with status:', res.status, 'Message:', resData.message)
+            return { success: false, error: (resData.message as string) || 'Đăng nhập thất bại' }
         }
 
         // Set HttpOnly Cookie
         const cookieStore = await cookies()
         const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days or 1 day
+
+        if (!resData.token) {
+            console.error('No token in response:', resData)
+            return { success: false, error: 'Không nhận được token từ server' }
+        }
 
         // Store Auth Token
         cookieStore.set('auth_token', resData.token, {
@@ -51,14 +72,6 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         })
 
         // Parse token or use returned user data to get role/name
-        // Assuming backend returns user object, if not we might need to decode token (but simple decode here is flaky without library or polyfill, 
-        // better if backend returns it. The login-form used to decode.
-        // Let's assume resData.user exists or valid parsing logic.
-        // Actually, looking at login-form, it decoded the token.
-        // We can decode the token on the server side easily enough if needed, but let's see if we can get user info.
-        // If backend doesn't return user, we decode.
-
-        // Simple base64 decode for server side
         let role = ''
         let fullName = email.split('@')[0]
         let userId = ''
@@ -70,8 +83,6 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
                     const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
                     role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || ''
                     userId = payload.nameid || payload.sub || ''
-                    // We might fetch profile here if we want exact fullName, but let's stick to basic or what Client passed?
-                    // Client fetched profile. We can do that here too to be secure/consistent.
                 }
             } catch (e) {
                 console.error('Token decode error', e)
@@ -89,7 +100,6 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         }
 
         // Check if we need to fetch profile for full name
-        // Fetching profile requires the token we just got
         try {
             const profileRes = await fetch(`${API_URL}/api/UserProfile/me`, {
                 headers: { 'Authorization': `Bearer ${resData.token}` }
@@ -130,4 +140,27 @@ export async function logoutAction() {
     cookieStore.delete('user_role')
     cookieStore.delete('user_name')
     redirect('/login')
+}
+
+export async function registerEmployerAction(data: EmployerRegisterFormData): Promise<{ success: boolean; error?: string }> {
+    try {
+        const response = await fetch(`${API_URL}/api/Auth/register-enterprise`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+
+        const resData = await response.json()
+
+        if (!response.ok) {
+            return { success: false, error: resData.message || 'Đăng ký thất bại' }
+        }
+
+        return { success: true }
+    } catch (error) {
+        console.error('Register employer error:', error)
+        return { success: false, error: 'Không thể kết nối đến máy chủ' }
+    }
 }

@@ -65,7 +65,7 @@ export function FloatingMenu() {
     const { user } = useAuth()
 
     // Hide on auth pages
-    if (pathname?.match(/^\/(login|register|forgot-password|reset-password)/)) {
+    if (pathname?.match(/^\/(login|register|forgot-password|reset-password|verify-email|confirm-email)/)) {
         return null
     }
 

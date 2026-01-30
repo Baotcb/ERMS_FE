@@ -7,19 +7,27 @@ import { Button } from '@/components/ui/button'
 import { Alert, LoadingSpinner } from '@/components/common'
 import { resendConfirmation } from '../api/auth-service'
 
-export const VerifyEmailCard = memo(function VerifyEmailCard() {
-    const [email, setEmail] = useState<string | null>(null)
+interface VerifyEmailCardProps {
+    email: string | null
+}
+
+export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEmailCardProps) {
     const [isResending, setIsResending] = useState(false)
     const [resendSuccess, setResendSuccess] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [autoSent, setAutoSent] = useState(false)
 
-    // Get email from sessionStorage on client-side
+    // Auto-send verification email on first mount
     useEffect(() => {
-        const storedEmail = sessionStorage.getItem('verify_email')
-        if (storedEmail) {
-            setEmail(storedEmail)
+        if (email && !autoSent) {
+            setAutoSent(true)
+            setIsResending(true)
+            resendConfirmation(email)
+                .then(() => setResendSuccess(true))
+                .catch((err) => setError(err instanceof Error ? err.message : 'Gửi email xác thực thất bại'))
+                .finally(() => setIsResending(false))
         }
-    }, [])
+    }, [email, autoSent])
 
     const handleResend = useCallback(async () => {
         if (!email) return

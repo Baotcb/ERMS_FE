@@ -3,63 +3,46 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
-import * as XLSX from 'xlsx'
+import { cn } from '@/lib/utils'
 import {
     Upload,
     FileSpreadsheet,
     AlertCircle,
     X,
-    Loader2
+    Loader2,
+    CheckCircle,
+    AlertTriangle,
+    XCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { bulkCreateEmployees, type EmployeeImportItem } from '@/features/hr/api/employee-service'
+import { importEmployeesFromFile } from '@/features/hr/api/employee-service'
 import { useToast } from '@/hooks/use-toast'
+import type { ImportEmployeesResult } from '@/features/hr/types/import-types'
 
-export function EmployeeImport() {
+interface EmployeeImportProps {
+    onSuccess?: () => void
+    onCancel?: () => void
+}
+
+export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
     const router = useRouter()
     const { toast } = useToast()
-    const [isUploading, setIsUploading] = useState(false)
-    const [parsedData, setParsedData] = useState<EmployeeImportItem[]>([])
+
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [fileName, setFileName] = useState<string | null>(null)
+    const [importResult, setImportResult] = useState<ImportEmployeesResult | null>(null)
+    const [isParsing, setIsParsing] = useState(false)
+    const [step, setStep] = useState<'upload' | 'review' | 'importing'>('upload')
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         const file = acceptedFiles[0]
         if (!file) return
 
+        setSelectedFile(file)
         setFileName(file.name)
-        const reader = new FileReader()
-
-        reader.onload = (e) => {
-            const data = e.target?.result
-            const workbook = XLSX.read(data, { type: 'binary' })
-            const sheetName = workbook.SheetNames[0]
-            const sheet = workbook.Sheets[sheetName]
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const jsonData = XLSX.utils.sheet_to_json(sheet) as any[]
-
-            // Debug: Log the raw data to see actual column names
-            console.log('Raw Excel data:', jsonData)
-            if (jsonData.length > 0) {
-                console.log('Column names in Excel:', Object.keys(jsonData[0]))
-            }
-
-            // Map and validate keys (basic mapping) - support various column name formats
-            const mappedData: EmployeeImportItem[] = jsonData.map(row => ({
-                fullName: row['Full Name'] || row['Họ và tên'] || row['FullName'] || row['Ho va ten'] || row['Họ tên'] || '',
-                email: row['Email'] || row['email'] || '',
-                phone: row['Phone'] || row['Số điện thoại'] || row['SĐT'] || row['SDT'] || '',
-                departmentCode: (row['Department Code'] || row['Mã phòng ban'] || row['DepartmentCode'] || row['Phòng ban'] || row['Ma phong ban'] || '').toUpperCase(),
-                position: row['Position'] || row['Chức vụ'] || row['Chuc vu'] || '',
-                password: row['Password'] || row['Mật khẩu'] || '', // Empty = will generate random password
-                role: row['Role'] || row['Vai trò'] || row['Chức danh'] || '', // Optional: Employee, Trainer, Director, DepartmentHead
-            })).filter(item => item.email && item.fullName && item.departmentCode)
-
-            console.log('Mapped data to send:', mappedData)
-            setParsedData(mappedData)
-        }
-
-        reader.readAsBinaryString(file)
+        setImportResult(null)
+        setStep('upload')
     }, [])
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -72,61 +55,95 @@ export function EmployeeImport() {
         multiple: false
     })
 
-    const handleImport = async () => {
-        console.log('=== handleImport called ===')
-        console.log('parsedData:', parsedData)
-        if (parsedData.length === 0) {
-            console.log('parsedData is empty, returning early')
-            return
-        }
+    const handleAnalyze = async () => {
+        if (!selectedFile) return
 
-        setIsUploading(true)
+        setIsParsing(true)
         try {
-            console.log('Calling bulkCreateEmployees with:', parsedData)
-            const result = await bulkCreateEmployees(parsedData)
-            console.log('bulkCreateEmployees result:', result)
+            // Step 1: Analyze (commit=false)
+            const result = await importEmployeesFromFile(selectedFile, false)
+            setImportResult(result)
+            setStep('review')
 
             if (result.failedCount > 0) {
-                console.log('Import had failures - FULL DETAILS:', JSON.stringify(result.errors, null, 2))
                 toast({
-                    title: 'Import hoàn tất với lỗi',
-                    description: `Thành công: ${result.successCount}, Lỗi: ${result.failedCount}`,
+                    title: 'Phát hiện lỗi dữ liệu',
+                    description: `Có ${result.failedCount} dòng lỗi. Vui lòng kiểm tra và sửa lại file.`,
                     variant: 'destructive',
                 })
-                // Could show specific errors here
+            } else if (result.successCount === 0) {
+                toast({
+                    title: 'File không có dữ liệu hợp lệ',
+                    description: `Không tìm thấy dòng dữ liệu nào hợp lệ để import.`,
+                    variant: 'destructive',
+                })
             } else {
+                toast({
+                    title: 'Phân tích hoàn tất',
+                    description: `File hợp lệ. ${result.successCount} nhân viên sẵn sàng import.`,
+                })
+            }
+        } catch (error) {
+            toast({
+                title: 'Lỗi phân tích',
+                description: error instanceof Error ? error.message : 'Có lỗi xảy ra',
+                variant: 'destructive',
+            })
+        } finally {
+            setIsParsing(false)
+        }
+    }
+
+    const handleConfirmImport = async () => {
+        if (!selectedFile) return
+
+        setIsParsing(true)
+        setStep('importing')
+        try {
+            // Step 2: Import (commit=true)
+            const result = await importEmployeesFromFile(selectedFile, true)
+            setImportResult(result) // Update result with actual execution status
+
+            if (result.successCount > 0 && result.failedCount === 0) {
                 toast({
                     title: 'Thành công',
                     description: `Đã import ${result.successCount} nhân viên`,
                 })
-                router.push('/employees')
+                router.refresh()
+                onSuccess?.()
+            } else {
+                // Partial failure or full failure (shouldn't happen with strict check but safety first)
+                toast({
+                    title: 'Import hoàn tất với cảnh báo',
+                    description: `Thành công: ${result.successCount}, Lỗi: ${result.failedCount}`,
+                    variant: result.failedCount > 0 ? 'destructive' : 'default',
+                })
+                router.refresh()
             }
         } catch (error) {
-            console.error('bulkCreateEmployees error:', error)
             toast({
-                title: 'Lỗi',
-                description: error instanceof Error ? error.message : 'Có lỗi xảy ra khi import',
+                title: 'Lỗi Import',
+                description: error instanceof Error ? error.message : 'Có lỗi xảy ra',
                 variant: 'destructive',
             })
+            setStep('review') // Go back to review on error
         } finally {
-            setIsUploading(false)
+            setIsParsing(false)
         }
     }
 
     const reset = () => {
-        setParsedData([])
+        setSelectedFile(null)
         setFileName(null)
+        setImportResult(null)
+        setIsParsing(false)
+        setStep('upload')
     }
 
-    return (
-        <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-[#0F4C75]">Import Nhân viên</h1>
-                <Button variant="outline" onClick={() => router.back()}>
-                    Quay lại
-                </Button>
-            </div>
+    const canImport = importResult && importResult.successCount > 0 && importResult.failedCount === 0;
 
+    return (
+        <div className="space-y-6">
             {!fileName ? (
                 <div
                     {...getRootProps()}
@@ -158,55 +175,124 @@ export function EmployeeImport() {
                             </div>
                             <div>
                                 <p className="font-medium text-gray-700">{fileName}</p>
-                                <p className="text-xs text-gray-500">{parsedData.length} dòng dữ liệu hợp lệ</p>
+                                <p className="text-xs text-gray-500">
+                                    {isParsing ? 'Đang xử lý...' : (step === 'upload' ? 'Sẵn sàng phân tích' : 'Đã phân tích')}
+                                </p>
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={reset}>
+                        <Button variant="ghost" size="icon" onClick={reset} disabled={isParsing}>
                             <X className="w-4 h-4 text-gray-400" />
                         </Button>
                     </div>
 
-                    <div className="max-h-[400px] overflow-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-50 text-gray-600 font-medium sticky top-0">
-                                <tr>
-                                    <th className="px-4 py-3">Họ và tên</th>
-                                    <th className="px-4 py-3">Email</th>
-                                    <th className="px-4 py-3">Phòng ban (Code)</th>
-                                    <th className="px-4 py-3">Chức vụ</th>
-                                    <th className="px-4 py-3">SĐT</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {parsedData.slice(0, 100).map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3">{row.fullName}</td>
-                                        <td className="px-4 py-3">{row.email}</td>
-                                        <td className="px-4 py-3 font-mono text-xs">{row.departmentCode}</td>
-                                        <td className="px-4 py-3">{row.position}</td>
-                                        <td className="px-4 py-3">{row.phone}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {parsedData.length > 100 && (
-                            <div className="p-3 text-center text-xs text-gray-400 border-t border-gray-100">
-                                ... và {parsedData.length - 100} dòng khác
-                            </div>
+                    <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                        <Button variant="outline" onClick={reset} disabled={isParsing}>Hủy bỏ</Button>
+
+                        {step === 'upload' && (
+                            <Button
+                                className="bg-[#0F4C75] hover:bg-[#0F4C75]/90"
+                                onClick={handleAnalyze}
+                                disabled={isParsing}
+                            >
+                                {isParsing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Phân tích file
+                            </Button>
+                        )}
+
+                        {step === 'review' && (
+                            <Button
+                                className={canImport ? "bg-green-600 hover:bg-green-700" : "bg-gray-400 cursor-not-allowed"}
+                                onClick={handleConfirmImport}
+                                disabled={isParsing || !canImport}
+                            >
+                                {isParsing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Xác nhận Import
+                            </Button>
+                        )}
+
+                        {step === 'importing' && (
+                            <Button disabled className="bg-[#0F4C75]">
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Đang thực hiện Import...
+                            </Button>
                         )}
                     </div>
+                </div>
+            )}
 
-                    <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                        <Button variant="outline" onClick={reset}>Hủy bỏ</Button>
-                        <Button
-                            className="bg-[#0F4C75] hover:bg-[#0F4C75]/90"
-                            onClick={handleImport}
-                            disabled={isUploading || parsedData.length === 0}
-                        >
-                            {isUploading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            Tiến hành Import
-                        </Button>
+            {/* Analysis Results */}
+            {importResult && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Summary */}
+                    <div className={cn(
+                        "border rounded-lg p-4",
+                        importResult.failedCount > 0 ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"
+                    )}>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2 font-semibold">
+                                {importResult.failedCount > 0
+                                    ? <><XCircle className="w-5 h-5 text-red-600" /> <span className="text-red-800">File có lỗi - Vui lòng sửa lại</span></>
+                                    : <><CheckCircle className="w-5 h-5 text-green-600" /> <span className="text-green-800">Dữ liệu hợp lệ - Sẵn sàng Import</span></>
+                                }
+                            </div>
+                            <div className="flex items-center gap-6 text-sm mt-1 ml-7">
+                                <span>Tổng: <strong>{importResult.totalRows}</strong> dòng</span>
+                                <span className={importResult.successCount > 0 ? "text-green-700" : ""}>✓ Hợp lệ: <strong>{importResult.successCount}</strong></span>
+                                <span className={importResult.failedCount > 0 ? "text-red-700" : ""}>✗ Lỗi: <strong>{importResult.failedCount}</strong></span>
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Rest of the UI (Errors, Mappings) */}
+
+                    {/* Columns Mapped */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 className="font-medium text-green-800 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Cột đã nhận diện ({importResult.columnMappings.filter(c => c.mappedKey).length})
+                        </h3>
+                        <ul className="mt-2 text-sm text-green-700 space-y-1">
+                            {importResult.columnMappings
+                                .filter(c => c.mappedKey)
+                                .map((col, i) => (
+                                    <li key={i}>• &quot;{col.originalHeader}&quot; → {col.mappedKey}</li>
+                                ))}
+                        </ul>
+                    </div>
+
+                    {/* Unknown Columns (Warnings) */}
+                    {importResult.unknownColumns.length > 0 && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h3 className="font-medium text-yellow-800 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                Cột không được sử dụng ({importResult.unknownColumns.length})
+                            </h3>
+                            <ul className="mt-2 text-sm text-yellow-700 space-y-1">
+                                {importResult.unknownColumns.map((col, i) => (
+                                    <li key={i}>• &quot;{col}&quot; - sẽ bị bỏ qua</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Errors */}
+                    {importResult.errors.length > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h3 className="font-medium text-red-800 flex items-center gap-2">
+                                <XCircle className="w-4 h-4" />
+                                Lỗi ({importResult.errors.length})
+                            </h3>
+                            <ul className="mt-2 text-sm text-red-700 space-y-1 max-h-64 overflow-auto scrollbar-thin">
+                                {importResult.errors.map((err, i) => (
+                                    <li key={i}>
+                                        • <strong>Dòng {err.rowNumber}</strong>
+                                        {err.email && <span className="text-red-600"> ({err.email})</span>}
+                                        : {err.message}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -215,7 +301,7 @@ export function EmployeeImport() {
                 <AlertTitle>Lưu ý về định dạng file</AlertTitle>
                 <AlertDescription>
                     File Excel cần có các cột: <strong>Full Name, Email, Department Code</strong> (bắt buộc).
-                    Các cột tùy chọn: Phone, Position, Password.
+                    Các cột tùy chọn: Phone, Position, Password, Role.
                 </AlertDescription>
             </Alert>
         </div>

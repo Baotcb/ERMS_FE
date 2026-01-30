@@ -13,7 +13,10 @@ const PUBLIC_ROUTES = [
   '/register',
   '/forgot-password',
   '/reset-password',
+  '/verify-email',
+  '/confirm-email',
   '/not-found',
+  '/unauthorized'
 ] as const
 
 // Route patterns that require authentication
@@ -123,6 +126,7 @@ export function middleware(request: NextRequest) {
   // 3. CSP Headers
   const cspHeader = `
     default-src 'self';
+    connect-src 'self' https://api.cloudinary.com;
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http:;
     style-src 'self' 'unsafe-inline';
     img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com https://lh3.googleusercontent.com;
@@ -214,6 +218,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

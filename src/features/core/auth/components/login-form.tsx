@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -22,7 +22,7 @@ import { loginAction } from '../actions/auth'
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
 
-export const LoginForm = memo(function LoginForm() {
+export function LoginForm() {
     const router = useRouter()
     const { login: authLogin } = useAuth()
     const [showPassword, setShowPassword] = useState(false)
@@ -109,8 +109,13 @@ export const LoginForm = memo(function LoginForm() {
         [router, authLogin]
     )
 
+    const onSubmit = useCallback(async (data: LoginFormData) => {
+        await handleSubmit(data)
+    }, [handleSubmit])
+
     return (
         <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center">
+            {/* Headers are fine */}
             <div className="mb-10">
                 <div className="flex items-center gap-3 mb-8">
                     <div className="w-12 h-12 rounded-lg bg-brand-dark shadow-lg flex items-center justify-center text-white">
@@ -136,7 +141,8 @@ export const LoginForm = memo(function LoginForm() {
             {error && <Alert type="error" message={error} className="mb-6" />}
             {success && <Alert type="success" message={success} className="mb-6" />}
 
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Inputs exist ... */}
                 <div>
                     <Label htmlFor="email" className="mb-2">
                         Email hoặc Tên đăng nhập
@@ -267,4 +273,4 @@ export const LoginForm = memo(function LoginForm() {
             </div>
         </div>
     )
-})
+}

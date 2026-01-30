@@ -16,25 +16,17 @@ interface ConfirmEmailCardProps {
     email?: string
 }
 
-export const ConfirmEmailCard = memo(function ConfirmEmailCard({ status, message, email: emailProp }: ConfirmEmailCardProps) {
+export const ConfirmEmailCard = memo(function ConfirmEmailCard({ status, message, email }: ConfirmEmailCardProps) {
     const router = useRouter()
-    const [email, setEmail] = useState<string | undefined>(emailProp)
     const [isResending, setIsResending] = useState(false)
     const [resendMessage, setResendMessage] = useState<string | null>(null)
 
-    // Also try to get email from sessionStorage if not provided via props
+    // Clear verify_email cookie on successful verification
     useEffect(() => {
-        if (!email) {
-            const storedEmail = sessionStorage.getItem('verify_email')
-            if (storedEmail) {
-                setEmail(storedEmail)
-            }
-        }
-        // Clear sessionStorage on successful verification
         if (status === 'success') {
-            sessionStorage.removeItem('verify_email')
+            fetch('/api/auth/session/verify-email', { method: 'DELETE' })
         }
-    }, [email, status])
+    }, [status])
 
     const handleResend = useCallback(async () => {
         if (!email) return

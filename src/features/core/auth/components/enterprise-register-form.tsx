@@ -37,7 +37,7 @@ export function EnterpriseRegisterForm() {
         setError(null)
         try {
             const result = await registerEnterprise(data)
-            router.push(`/register/role?enterpriseId=${result.enterpriseId}`)
+            router.push(`/register/hr?enterpriseId=${result.enterpriseId}`)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Đăng ký thất bại')
         } finally {
@@ -161,7 +161,7 @@ export function EnterpriseRegisterForm() {
                             Đang xử lý...
                         </>
                     ) : (
-                        'Tiếp tục: Chọn vai trò'
+                        'Tiếp tục: Tạo tài khoản HR'
                     )}
                 </Button>
             </form>

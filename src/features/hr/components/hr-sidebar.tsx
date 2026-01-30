@@ -13,11 +13,13 @@ import {
     LogOut,
     Menu,
     X,
-    User
+    User,
+    CalendarRange
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { logoutAction } from '@/features/core/auth/actions/auth'
 
 interface NavItem {
     label: string
@@ -36,22 +38,20 @@ const NAV_ITEMS: NavItem[] = [
         roles: [] // All roles
     },
     {
-        label: 'Phòng ban',
-        icon: <Building2 className="w-5 h-5" />,
-        roles: ['HRManager', 'Director'], // Only HR and Director
+        label: 'Nhân sự',
+        icon: <Users className="w-5 h-5" />,
+        roles: ['HRManager', 'Director', 'DepartmentHead'],
         children: [
-            { label: 'Danh sách', href: '/enterprise/departments' },
-            { label: 'Thêm mới', href: '/enterprise/departments/create' }
+            { label: 'Phòng ban', href: '/enterprise/departments' },
+            { label: 'Nhân viên', href: '/enterprise/employees' }
         ]
     },
     {
-        label: 'Nhân viên',
-        icon: <Users className="w-5 h-5" />,
-        roles: ['HRManager', 'Director', 'DepartmentHead'], // HR, Director, Department Head
+        label: 'Tuyển dụng',
+        icon: <CalendarRange className="w-5 h-5" />,
+        roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Danh sách', href: '/enterprise/employees' },
-            { label: 'Thêm mới', href: '/enterprise/employees/create' },
-            { label: 'Import Excel', href: '/enterprise/employees/import' }
+            { label: 'Kế hoạch tuyển dụng', href: '/enterprise/recruitment-plans' }
         ]
     }
 ]
@@ -154,10 +154,10 @@ const AvatarDropdown = memo(function AvatarDropdown() {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [isOpen])
 
-    const handleLogout = useCallback(() => {
+    const handleLogout = useCallback(async () => {
+        await logoutAction()
         logout()
-        router.push('/login')
-    }, [logout, router])
+    }, [logout])
 
     const initials = user?.fullName
         ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -221,7 +221,7 @@ const AvatarDropdown = memo(function AvatarDropdown() {
 export const HRSidebar = memo(function HRSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Phòng ban', 'Nhân viên'])
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
 
     // Get user role for filtering navigation

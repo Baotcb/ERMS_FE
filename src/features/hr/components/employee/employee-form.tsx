@@ -44,9 +44,11 @@ type EmployeeFormValues = z.infer<typeof employeeSchema>
 interface EmployeeFormProps {
     initialData?: Employee
     isEdit?: boolean
+    onSuccess?: () => void
+    onCancel?: () => void
 }
 
-export function EmployeeForm({ initialData, isEdit = false }: EmployeeFormProps) {
+export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel }: EmployeeFormProps) {
     const router = useRouter()
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState(false)
@@ -65,7 +67,7 @@ export function EmployeeForm({ initialData, isEdit = false }: EmployeeFormProps)
             position: initialData?.position || '',
             employmentType: initialData?.employmentType || 'FullTime',
             hireDate: initialData?.hireDate ? new Date(initialData.hireDate) : new Date(),
-            managerId: '',
+            managerId: initialData?.managerId?.toString() || '',
             status: initialData?.status || 'Active',
         },
     })
@@ -129,8 +131,13 @@ export function EmployeeForm({ initialData, isEdit = false }: EmployeeFormProps)
                     description: 'Thêm nhân viên thành công',
                 })
             }
-            router.push('/hr/employees')
+
             router.refresh()
+            if (onSuccess) {
+                onSuccess()
+            } else {
+                router.back()
+            }
         } catch (error) {
             toast({
                 title: 'Lỗi',
@@ -143,11 +150,8 @@ export function EmployeeForm({ initialData, isEdit = false }: EmployeeFormProps)
     }
 
     return (
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="w-4 h-4" />
-                </Button>
                 <h1 className="text-2xl font-bold text-[#0F4C75]">
                     {isEdit ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'}
                 </h1>
@@ -330,7 +334,7 @@ export function EmployeeForm({ initialData, isEdit = false }: EmployeeFormProps)
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <Button type="button" variant="outline" onClick={() => router.back()}>
+                    <Button type="button" variant="outline" onClick={onCancel || (() => router.back())}>
                         Hủy
                     </Button>
                     <Button type="submit" className="bg-[#0F4C75] hover:bg-[#0F4C75]/90" disabled={isLoading}>

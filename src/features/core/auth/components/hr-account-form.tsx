@@ -42,8 +42,12 @@ export function HRAccountForm() {
         setError(null)
         try {
             await createHRAccount({ ...data, enterpriseId })
-            // Store email in sessionStorage to hide it from URL
-            sessionStorage.setItem('verify_email', data.email)
+            // Store email in HttpOnly cookie for verify page via API route
+            await fetch('/api/auth/session/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: data.email }),
+            })
             // Redirect to verify email page (route group (auth) doesn't add /auth to URL)
             router.push('/verify-email')
         } catch (err) {
@@ -57,7 +61,7 @@ export function HRAccountForm() {
         <div className="space-y-6">
             <div className="text-center mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Tạo tài khoản HR</h1>
-                <p className="text-gray-500 dark:text-gray-400">Bước 3: Thiết lập tài khoản quản lý</p>
+                <p className="text-gray-500 dark:text-gray-400">Bước 2: Thiết lập tài khoản quản trị</p>
             </div>
 
             {error && <Alert type="error" message={error} className="mb-6" />}

@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+import { isCompanyNameBlocked } from '@/utils/blocked-companies'
 
 // Constants for password length
 const PASSWORD_MIN_LENGTH = 8
@@ -130,7 +131,10 @@ export const employerRegisterSchema = z
     companyName: z
       .string()
       .min(1, 'Tên doanh nghiệp không được để trống')
-      .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự'),
+      .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự')
+      .refine((val) => !isCompanyNameBlocked(val), {
+        message: 'Tên doanh nghiệp này không được phép sử dụng. Vui lòng chọn tên khác.',
+      }),
     taxCode: z
       .string()
       .min(10, 'Mã số thuế phải có ít nhất 10 ký tự')
@@ -163,7 +167,12 @@ export const employerRegisterSchema = z
  * Step 1: Enterprise Registration Schema
  */
 export const registerEnterpriseSchema = z.object({
-  enterpriseName: z.string().min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự'),
+  enterpriseName: z
+    .string()
+    .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự')
+    .refine((val) => !isCompanyNameBlocked(val), {
+      message: 'Tên doanh nghiệp này không được phép sử dụng. Vui lòng chọn tên khác.',
+    }),
   taxCode: z.string().min(10, 'Mã số thuế phải có ít nhất 10 ký tự').max(13).optional().or(z.literal('')),
   address: z.string().optional(),
   phone: z.string().regex(/^(0|\+84)\d{9,10}$/, 'Số điện thoại không hợp lệ').optional().or(z.literal('')),

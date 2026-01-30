@@ -2,10 +2,19 @@
 
 import { memo, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, RefreshCw, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { EmployeeTable } from '@/features/hr/components/employee/employee-table'
+import { EmployeeForm } from '@/features/hr/components/employee/employee-form'
+import { EmployeeImport } from '@/features/hr/components/employee/employee-import'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import type { Employee } from '@/features/hr/api/employee-service'
 
 interface EmployeeListProps {
@@ -21,16 +30,42 @@ export const EmployeeList = memo(function EmployeeList({
     currentPage,
     totalPages
 }: EmployeeListProps) {
+    const router = useRouter()
     const [employees] = useState(initialEmployees)
     const [searchQuery, setSearchQuery] = useState('')
 
+    // Modal states
+    const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [isImportOpen, setIsImportOpen] = useState(false)
+    const [selectedEmployee, setSelectedEmployee] = useState<Employee | undefined>(undefined)
+
+    const handleCreate = useCallback(() => {
+        setSelectedEmployee(undefined)
+        setIsCreateOpen(true)
+    }, [])
+
     const handleEdit = useCallback((emp: Employee) => {
-        console.log('Edit', emp)
+        setSelectedEmployee(emp)
+        setIsCreateOpen(true)
+    }, [])
+
+    const handleImport = useCallback(() => {
+        setIsImportOpen(true)
     }, [])
 
     const handleDelete = useCallback((emp: Employee) => {
         console.log('Delete', emp)
     }, [])
+
+    const handleSuccess = useCallback(() => {
+        setIsCreateOpen(false)
+        router.refresh()
+    }, [router])
+
+    const handleImportSuccess = useCallback(() => {
+        setIsImportOpen(false)
+        router.refresh()
+    }, [router])
 
     return (
         <div className="space-y-6">
@@ -41,18 +76,14 @@ export const EmployeeList = memo(function EmployeeList({
                     <p className="text-gray-500 mt-1">Quản lý {totalCount} nhân viên</p>
                 </div>
                 <div className="flex gap-3">
-                    <Link href="/hr/employees/import">
-                        <Button variant="outline">
-                            <Upload className="w-4 h-4 mr-2" />
-                            Import Excel
-                        </Button>
-                    </Link>
-                    <Link href="/hr/employees/create">
-                        <Button className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Thêm nhân viên
-                        </Button>
-                    </Link>
+                    <Button variant="outline" onClick={handleImport}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Import Excel
+                    </Button>
+                    <Button onClick={handleCreate} className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Thêm nhân viên
+                    </Button>
                 </div>
             </div>
 
@@ -75,7 +106,7 @@ export const EmployeeList = memo(function EmployeeList({
 
             {/* Table */}
             <EmployeeTable
-                employees={employees}
+                employees={initialEmployees}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
             />
@@ -86,7 +117,7 @@ export const EmployeeList = memo(function EmployeeList({
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Link
                             key={page}
-                            href={`/hr/employees?page=${page}`}
+                            href={`/enterprise/employees?page=${page}`}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${page === currentPage
                                 ? 'bg-[#0F4C75] text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -97,6 +128,34 @@ export const EmployeeList = memo(function EmployeeList({
                     ))}
                 </div>
             )}
+
+            {/* Create/Edit Modal */}
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>{selectedEmployee ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'}</DialogTitle>
+                    </DialogHeader>
+                    <EmployeeForm
+                        initialData={selectedEmployee}
+                        isEdit={!!selectedEmployee}
+                        onSuccess={handleSuccess}
+                        onCancel={() => setIsCreateOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Import Modal */}
+            <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Import Nhân viên</DialogTitle>
+                    </DialogHeader>
+                    <EmployeeImport
+                        onSuccess={handleImportSuccess}
+                        onCancel={() => setIsImportOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     )
 })

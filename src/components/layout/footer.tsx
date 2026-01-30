@@ -20,6 +20,7 @@ export function Footer() {
                                         src="/logo.png"
                                         alt="ERMS Logo"
                                         fill
+                                        sizes="40px"
                                         className="object-contain"
                                     />
                                 </div>

@@ -25,10 +25,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BrandDecoration } from "@/components/layout/brand-decoration";
 import { useAuth } from "@/features/core/auth/hooks/use-auth";
+import { logoutAction } from "@/features/core/auth/actions/auth";
 import { NavItem } from "./nav-item";
 
 export const CandidateNavbar = memo(function CandidateNavbar() {
-    const { isAuthenticated, user, logout, isLoading } = useAuth();
+    const { isAuthenticated, user, isLoading } = useAuth();
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-20 transition-all">
@@ -44,6 +45,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     src="/logo.png"
                                     alt="ERMS Logo"
                                     fill
+                                    sizes="64px"
                                     className="object-contain"
                                 />
                             </div>
@@ -269,10 +271,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <Button
                                             variant="destructive"
                                             className="w-full bg-brand-coral hover:bg-brand-coral/90 text-white font-bold h-10 rounded-lg flex items-center justify-center gap-2"
-                                            onClick={() => {
-                                                logout();
-                                                window.location.href = '/login';
-                                            }}
+                                            onClick={logoutAction}
                                         >
                                             <LogOut className="w-4 h-4" />
                                             Đăng xuất

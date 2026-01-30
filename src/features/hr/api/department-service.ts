@@ -64,11 +64,28 @@ export async function getDepartments(params: GetDepartmentsParams, token?: strin
     })
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể tải danh sách phòng ban')
+        const text = await response.text()
+        console.error('getDepartments error response:', { status: response.status, text })
+        let errorMsg = 'Không thể tải danh sách phòng ban'
+        try {
+            const json = JSON.parse(text)
+            errorMsg = json.message || errorMsg
+        } catch {
+            // ignore JSON parse error
+        }
+        throw new Error(errorMsg)
     }
 
-    return response.json()
+    // Handle empty response
+    const text = await response.text()
+    if (!text) return { items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0 }
+
+    try {
+        return JSON.parse(text)
+    } catch (e) {
+        console.error('getDepartments JSON parse error:', e, 'Response text:', text)
+        throw e
+    }
 }
 
 export async function getDepartmentById(id: number): Promise<Department> {

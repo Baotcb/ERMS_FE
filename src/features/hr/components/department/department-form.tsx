@@ -37,9 +37,11 @@ type DepartmentFormValues = z.infer<typeof departmentSchema>
 interface DepartmentFormProps {
     initialData?: Department
     isEdit?: boolean
+    onSuccess?: () => void
+    onCancel?: () => void
 }
 
-export function DepartmentForm({ initialData, isEdit = false }: DepartmentFormProps) {
+export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCancel }: DepartmentFormProps) {
     const router = useRouter()
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState(false)
@@ -99,8 +101,14 @@ export function DepartmentForm({ initialData, isEdit = false }: DepartmentFormPr
                     description: 'Tạo phòng ban thành công',
                 })
             }
-            router.push('/hr/departments')
+
             router.refresh()
+            if (onSuccess) {
+                onSuccess()
+            } else {
+                // Fallback for standalone page usage if any
+                router.back()
+            }
         } catch (error) {
             toast({
                 title: 'Lỗi',
@@ -113,11 +121,8 @@ export function DepartmentForm({ initialData, isEdit = false }: DepartmentFormPr
     }
 
     return (
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="w-4 h-4" />
-                </Button>
                 <h1 className="text-2xl font-bold text-[#0F4C75]">
                     {isEdit ? 'Chỉnh sửa phòng ban' : 'Thêm phòng ban mới'}
                 </h1>
@@ -200,7 +205,7 @@ export function DepartmentForm({ initialData, isEdit = false }: DepartmentFormPr
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <Button type="button" variant="outline" onClick={() => router.back()}>
+                    <Button type="button" variant="outline" onClick={onCancel || (() => router.back())}>
                         Hủy
                     </Button>
                     <Button type="submit" className="bg-[#0F4C75] hover:bg-[#0F4C75]/90" disabled={isLoading}>

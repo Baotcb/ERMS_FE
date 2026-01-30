@@ -16,6 +16,7 @@ export interface Employee {
     hireDate: string | null
     status: string
     createdAt: string
+    managerId?: number | null
 }
 
 export interface GetEmployeesParams {
@@ -67,8 +68,19 @@ export async function getEmployees(params: GetEmployeesParams, token?: string): 
     })
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể tải danh sách nhân viên')
+        let errorMessage = 'Không thể tải danh sách nhân viên'
+        try {
+            const errorText = await response.text()
+            try {
+                const errorJson = JSON.parse(errorText)
+                errorMessage = errorJson.message || errorMessage
+            } catch {
+                errorMessage = errorText || errorMessage
+            }
+        } catch {
+            // Ignore parsing errors
+        }
+        throw new Error(errorMessage)
     }
 
     return response.json()
@@ -80,8 +92,19 @@ export async function getEmployeeById(id: string): Promise<Employee> {
     })
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể tải thông tin nhân viên')
+        let errorMessage = 'Không thể tải thông tin nhân viên'
+        try {
+            const errorText = await response.text()
+            try {
+                const errorJson = JSON.parse(errorText)
+                errorMessage = errorJson.message || errorMessage
+            } catch {
+                errorMessage = errorText || errorMessage
+            }
+        } catch {
+            // Ignore parsing errors
+        }
+        throw new Error(errorMessage)
     }
 
     return response.json()
@@ -184,3 +207,45 @@ export async function bulkCreateEmployees(items: EmployeeImportItem[]): Promise<
 // Fetch wrapper with error handling (for SSR pages)
 // fetchEmployeeList moved to a server utility to avoid next/headers in client bundle
 
+// Helper function mới - không có Content-Type header
+async function getAuthHeadersWithoutContentType(): Promise<HeadersInit> {
+    let authToken = ''
+    if (typeof window !== 'undefined') {
+        authToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('auth_token='))
+            ?.split('=')[1] || ''
+    }
+    return authToken ? { Authorization: `Bearer ${authToken}` } : {}
+}
+
+import type { ImportEmployeesResult } from '../types/import-types'
+
+// Function mới cho file upload
+export async function importEmployeesFromFile(file: File, commit: boolean = false): Promise<ImportEmployeesResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('commit', commit.toString())
+
+    const response = await fetch(`${API_BASE}/api/Employees/import`, {
+        method: 'POST',
+        headers: await getAuthHeadersWithoutContentType(),
+        body: formData,
+    })
+
+    // Nếu Backend trả về lỗi 400 cùng với cấu trúc ImportEmployeesResult (ví dụ lỗi validate)
+    if (!response.ok) {
+        try {
+            const errorResult = await response.json()
+            // Nếu response có cấu trúc lỗi chuẩn của import, trả về để hiển thị
+            if (errorResult.errors || errorResult.failedCount) {
+                return errorResult;
+            }
+            throw new Error(errorResult.message || 'Không thể import nhân viên')
+        } catch {
+            throw new Error('Lỗi server không xác định')
+        }
+    }
+
+    return response.json()
+}

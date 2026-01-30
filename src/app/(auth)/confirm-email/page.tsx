@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { ConfirmEmailCard } from '@/features/core/auth'
-import { config } from '@/config'
 
 export const metadata: Metadata = {
     title: 'Xác thực Email - ERMS',
@@ -13,24 +13,45 @@ interface PageProps {
 
 async function verifyEmail(userId: string, token: string): Promise<{ success: boolean; message: string }> {
     try {
-        const response = await fetch(`${config.apiUrl}/api/Auth/confirm-email`, {
+        const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5129'
+        // Remove trailing slash to avoid double-slash in URL
+        const apiUrl = rawApiUrl.replace(/\/+$/, '')
+
+        const response = await fetch(`${apiUrl}/api/Auth/confirm-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, token }),
             cache: 'no-store',
         })
-        const data = await response.json()
+
+        // Handle empty response body gracefully
+        const text = await response.text()
+        let data: { message?: string } = {}
+        if (text) {
+            try {
+                data = JSON.parse(text)
+            } catch {
+                // Response is not JSON
+            }
+        }
+
         if (!response.ok) {
-            return { success: false, message: data.message || 'Xác thực email thất bại' }
+            return { success: false, message: data.message || `Xác thực email thất bại (${response.status})` }
         }
         return { success: true, message: data.message || 'Xác thực email thành công!' }
-    } catch {
+    } catch (err) {
+        console.error('Verify email error:', err)
         return { success: false, message: 'Không thể kết nối đến server' }
     }
 }
 
 export default async function ConfirmEmailPage({ searchParams }: PageProps) {
-    const { userId, token, email } = await searchParams
+    const { userId, token: rawToken, email: emailParam } = await searchParams
+    const token = rawToken ? decodeURIComponent(rawToken) : undefined
+
+    // Fallback to cookie if email not in search params
+    const cookieStore = await cookies()
+    const email = emailParam || cookieStore.get('verify_email')?.value
 
     if (!userId || !token) {
         return <ConfirmEmailCard status="invalid" message="Link xác thực không hợp lệ." email={email} />

@@ -2,10 +2,18 @@
 
 import { memo, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DepartmentTable } from '@/features/hr/components/department/department-table'
+import { DepartmentForm } from '@/features/hr/components/department/department-form'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import type { Department } from '@/features/hr/api/department-service'
 
 interface DepartmentListProps {
@@ -21,18 +29,33 @@ export const DepartmentList = memo(function DepartmentList({
     currentPage,
     totalPages
 }: DepartmentListProps) {
+    const router = useRouter()
     const [departments] = useState(initialDepartments)
     const [searchQuery, setSearchQuery] = useState('')
 
+    // Modal state
+    const [isOpen, setIsOpen] = useState(false)
+    const [selectedDepartment, setSelectedDepartment] = useState<Department | undefined>(undefined)
+
+    const handleCreate = useCallback(() => {
+        setSelectedDepartment(undefined)
+        setIsOpen(true)
+    }, [])
+
     const handleEdit = useCallback((dept: Department) => {
-        // TODO: Open edit modal
-        console.log('Edit', dept)
+        setSelectedDepartment(dept)
+        setIsOpen(true)
     }, [])
 
     const handleDelete = useCallback((dept: Department) => {
         // TODO: Confirm and delete
         console.log('Delete', dept)
     }, [])
+
+    const handleSuccess = useCallback(() => {
+        setIsOpen(false)
+        router.refresh()
+    }, [router])
 
     return (
         <div className="space-y-6">
@@ -42,12 +65,10 @@ export const DepartmentList = memo(function DepartmentList({
                     <h1 className="text-3xl font-bold text-[#0F4C75]">Phòng ban</h1>
                     <p className="text-gray-500 mt-1">Quản lý {totalCount} phòng ban</p>
                 </div>
-                <Link href="/hr/departments/create">
-                    <Button className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Thêm phòng ban
-                    </Button>
-                </Link>
+                <Button onClick={handleCreate} className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Thêm phòng ban
+                </Button>
             </div>
 
             {/* Filters */}
@@ -69,7 +90,7 @@ export const DepartmentList = memo(function DepartmentList({
 
             {/* Table */}
             <DepartmentTable
-                departments={departments}
+                departments={initialDepartments} // Use initialDepartments directly as it comes from server
                 onEdit={handleEdit}
                 onDelete={handleDelete}
             />
@@ -80,7 +101,7 @@ export const DepartmentList = memo(function DepartmentList({
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <Link
                             key={page}
-                            href={`/hr/departments?page=${page}`}
+                            href={`/enterprise/departments?page=${page}`} // Fix href to be correct
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${page === currentPage
                                 ? 'bg-[#0F4C75] text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -91,6 +112,21 @@ export const DepartmentList = memo(function DepartmentList({
                     ))}
                 </div>
             )}
+
+            {/* Create/Edit Modal */}
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>{selectedDepartment ? 'Chỉnh sửa phòng ban' : 'Thêm phòng ban mới'}</DialogTitle>
+                    </DialogHeader>
+                    <DepartmentForm
+                        initialData={selectedDepartment}
+                        isEdit={!!selectedDepartment}
+                        onSuccess={handleSuccess}
+                        onCancel={() => setIsOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     )
 })

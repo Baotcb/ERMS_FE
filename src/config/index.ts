@@ -6,10 +6,12 @@
 export const config = {
     /**
      * Base API URL
-     * Force empty string to use relative path, ensuring Next.js rewrites and middleware
-     * can intercept requests to inject HttpOnly cookies.
+     * Server-side: Use absolute URL from env
+     * Client-side: Force empty string to use relative path (Next.js rewrites/middleware)
      */
-    apiUrl: '',
+    apiUrl: typeof window === 'undefined'
+        ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || '')
+        : '',
 } as const
 
 export type AppConfig = typeof config
