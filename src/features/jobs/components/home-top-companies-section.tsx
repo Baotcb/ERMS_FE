@@ -50,6 +50,7 @@ export function TopCompaniesSection() {
                                     width={96}
                                     height={96}
                                     className="object-contain"
+                                    unoptimized
                                 />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">Công Ty Cổ Phần Bột Thực Phẩm Tài Ký</h3>
@@ -82,6 +83,7 @@ export function TopCompaniesSection() {
                                             width={48}
                                             height={48}
                                             className="object-contain w-full h-full"
+                                            unoptimized
                                         />
                                     </div>
                                     <h4 className="text-sm font-bold text-[#0F4C75] line-clamp-3 group-hover:text-[#00b14f] transition-colors">

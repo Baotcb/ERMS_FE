@@ -21,6 +21,8 @@ import { loginAction } from '../actions/auth'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
+import { User } from '@/stores/auth-store'
+import { setAuthCookies } from '../utils/auth-cookies'
 
 export function LoginForm() {
     const router = useRouter()
@@ -35,7 +37,7 @@ export function LoginForm() {
         defaultValues: {
             email: '',
             password: '',
-            rememberMe: false,
+            rememberMe: true,
         },
     })
 
@@ -45,9 +47,8 @@ export function LoginForm() {
 
     const handleGoogleLogin = useCallback(() => {
         setError(null)
-        // Redirect to backend OAuth flow
-        const backendUrl = config.apiUrl || window.location.origin
-        window.location.href = `${backendUrl}/api/Auth/google-login-redirect`
+        // Redirect to internal API route handle logic Google OAuth2.0
+        window.location.href = '/api/auth/google'
     }, [])
 
     const handleSubmit = useCallback(
@@ -79,6 +80,8 @@ export function LoginForm() {
                 }, data.rememberMe)
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
+
+
 
                 // Redirect after short delay for UX
                 setTimeout(() => {
@@ -207,16 +210,6 @@ export function LoginForm() {
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                        <input
-                            id="remember-me"
-                            type="checkbox"
-                            {...form.register('rememberMe')}
-                            disabled={isLoading}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <Label htmlFor="remember-me" className="text-sm cursor-pointer">
-                            Ghi nhớ đăng nhập
-                        </Label>
                     </div>
                     <Link
                         href="/forgot-password"
