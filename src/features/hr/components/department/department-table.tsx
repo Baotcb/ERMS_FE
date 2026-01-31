@@ -11,6 +11,12 @@ import {
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import type { Department } from '@/features/hr/api/department-service'
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 
 interface DepartmentTableProps {
     departments: Department[]
@@ -23,12 +29,6 @@ export const DepartmentTable = memo(function DepartmentTable({
     onEdit,
     onDelete
 }: DepartmentTableProps) {
-    const [activeMenu, setActiveMenu] = useState<number | null>(null)
-
-    const toggleMenu = useCallback((id: number) => {
-        setActiveMenu(prev => prev === id ? null : id)
-    }, [])
-
     if (departments.length === 0) {
         return (
             <div className="bg-white rounded-2xl p-12 text-center">
@@ -92,40 +92,33 @@ export const DepartmentTable = memo(function DepartmentTable({
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <div className="relative">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => toggleMenu(dept.id)}
-                                        >
-                                            <MoreHorizontal className="w-4 h-4" />
-                                        </Button>
-
-                                        {activeMenu === dept.id && (
-                                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-10">
-                                                <button
-                                                    onClick={() => {
-                                                        onEdit?.(dept)
-                                                        setActiveMenu(null)
-                                                    }}
-                                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                    Chỉnh sửa
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        onDelete?.(dept)
-                                                        setActiveMenu(null)
-                                                    }}
-                                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                    Xóa
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0"
+                                            >
+                                                <MoreHorizontal className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-40">
+                                            <DropdownMenuItem
+                                                onClick={() => onEdit?.(dept)}
+                                                className="cursor-pointer"
+                                            >
+                                                <Edit2 className="mr-2 h-4 w-4" />
+                                                <span>Chỉnh sửa</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => onDelete?.(dept)}
+                                                className="cursor-pointer text-red-600 focus:text-red-600"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Xóa</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </td>
                             </tr>
                         ))}
