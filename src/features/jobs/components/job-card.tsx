@@ -10,8 +10,9 @@ import Image from 'next/image'
 import { MapPin, DollarSign, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import type { Job } from '../data/job-mock-data'
+import type { Job } from '../types'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 interface JobCardProps extends Job {
   compact?: boolean
@@ -26,9 +27,14 @@ export const JobCard = memo(function JobCard({
   isHot,
   compact = false,
 }: JobCardProps) {
+  const { toast } = useToast()
+
   const handleSaveJob = (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation if wrapped in link
-    // TODO: Implement save job functionality
+    toast({
+      title: "Tính năng đang phát triển",
+      description: "Chức năng lưu việc làm sẽ sớm ra mắt.",
+    })
   }
 
   return (
@@ -47,6 +53,7 @@ export const JobCard = memo(function JobCard({
             fill
             sizes={compact ? "60px" : "80px"}
             className="object-contain p-1"
+            unoptimized
           />
         </div>
         <div className="flex-1 min-w-0">
@@ -90,6 +97,7 @@ export const JobCard = memo(function JobCard({
         variant="ghost"
         size="icon"
         className="absolute top-2 right-2 h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500 text-slate-300 transition-colors opacity-0 group-hover:opacity-100"
+        // TODO: Implement "Save Job" feature with API integration
         onClick={handleSaveJob}
         aria-label="Save job"
       >

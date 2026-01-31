@@ -78,6 +78,12 @@ export const RegisterForm = memo(function RegisterForm() {
         [router]
     )
 
+    const handleGoogleLogin = useCallback(() => {
+        setError(null)
+        // Redirect to internal API route handle logic Google OAuth2.0
+        window.location.href = '/api/auth/google'
+    }, [])
+
     return (
         <div className="bg-white dark:bg-slate-800 shadow-xl rounded-2xl p-8 border border-gray-100 dark:border-gray-700 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-coral" />
@@ -258,6 +264,7 @@ export const RegisterForm = memo(function RegisterForm() {
                     variant="outline"
                     className="w-full h-12 font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
                     disabled={isLoading}
+                    onClick={handleGoogleLogin}
                 >
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                         <path

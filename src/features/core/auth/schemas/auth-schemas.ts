@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+import { isCompanyNameBlocked } from '@/utils/blocked-companies'
 
 // Constants for password length
 const PASSWORD_MIN_LENGTH = 8
@@ -130,7 +131,10 @@ export const employerRegisterSchema = z
     companyName: z
       .string()
       .min(1, 'Tên doanh nghiệp không được để trống')
-      .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự'),
+      .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự')
+      .refine((val) => !isCompanyNameBlocked(val), {
+        message: 'Tên doanh nghiệp này không được phép sử dụng. Vui lòng chọn tên khác.',
+      }),
     taxCode: z
       .string()
       .min(10, 'Mã số thuế phải có ít nhất 10 ký tự')
@@ -158,4 +162,41 @@ export const employerRegisterSchema = z
     path: ['confirmPassword'],
   })
 
+
+/**
+ * Step 1: Enterprise Registration Schema
+ */
+export const registerEnterpriseSchema = z.object({
+  enterpriseName: z
+    .string()
+    .min(2, 'Tên doanh nghiệp phải có ít nhất 2 ký tự')
+    .refine((val) => !isCompanyNameBlocked(val), {
+      message: 'Tên doanh nghiệp này không được phép sử dụng. Vui lòng chọn tên khác.',
+    }),
+  taxCode: z.string().min(10, 'Mã số thuế phải có ít nhất 10 ký tự').max(13).optional().or(z.literal('')),
+  address: z.string().optional(),
+  phone: z.string().regex(/^(0|\+84)\d{9,10}$/, 'Số điện thoại không hợp lệ').optional().or(z.literal('')),
+  email: z.string().email('Email công ty không hợp lệ').optional().or(z.literal('')),
+  website: z.string().url('Website không hợp lệ').optional().or(z.literal('')),
+  logoUrl: z.string().url().optional().or(z.literal('')),
+})
+
+/**
+ * Step 3: HR Account Schema
+ */
+export const createHRAccountSchema = z
+  .object({
+    fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự'),
+    email: z.string().email('Email không hợp lệ'),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Xác nhận mật khẩu không được để trống'),
+    phone: z.string().regex(/^(0|\+84)\d{9,10}$/, 'Số điện thoại không hợp lệ').optional().or(z.literal('')),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  })
+
+export type RegisterEnterpriseData = z.infer<typeof registerEnterpriseSchema>
+export type CreateHRAccountData = z.infer<typeof createHRAccountSchema>
 export type EmployerRegisterFormData = z.infer<typeof employerRegisterSchema>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthStore } from '@/stores/auth-store';
 import { updateProfile } from '../api/profile-service';
 import type { UserProfileDto } from '../api/profile-service';
 import {
@@ -22,7 +21,7 @@ interface UseProfileFormOptions {
 
 export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions) {
   const { toast } = useToast();
-  const token = useAuthStore((state) => state.token);
+  // Token removed - managed by cookies/apiClient
 
   // Form state
   const [fullName, setFullName] = useState(initialData?.fullName || '');
@@ -105,18 +104,9 @@ export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions
         return;
       }
 
-      if (!token) {
-        toast({
-          title: 'Lỗi',
-          description: 'Bạn chưa đăng nhập',
-          variant: 'destructive',
-        });
-        return;
-      }
-
       setUpdating(true);
       try {
-        await updateProfile(token, {
+        await updateProfile({
           fullName,
           phones: phone,
           hometown,
@@ -142,7 +132,7 @@ export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions
         setUpdating(false);
       }
     },
-    [fullName, phone, hometown, dob, token, toast, onSuccess]
+    [fullName, phone, hometown, dob, toast, onSuccess]
   );
 
   return {
