@@ -6,12 +6,33 @@ import { Upload, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import Image from 'next/image'
+import { useToast } from '@/hooks/use-toast'
 
 interface ImageUploadProps {
     onUploadComplete: (url: string) => void
     defaultImage?: string
     className?: string
     disabled?: boolean
+}
+
+const checkFileSignature = async (file: File): Promise<boolean> => {
+    const buffer = await file.slice(0, 8).arrayBuffer()
+    const bytes = new Uint8Array(buffer)
+    
+    // Convert bytes to hex string for easier comparison
+    const header = Array.from(bytes).map(byte => byte.toString(16).toUpperCase().padStart(2, '0')).join(' ')
+
+    // JPEG/JPG: FF D8 FF
+    if (header.startsWith('FF D8 FF')) {
+        return true
+    }
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (header.startsWith('89 50 4E 47 0D 0A 1A 0A')) {
+        return true
+    }
+
+    return false
 }
 
 export function ImageUpload({
@@ -22,10 +43,22 @@ export function ImageUpload({
 }: ImageUploadProps) {
     const [preview, setPreview] = useState<string | null>(defaultImage || null)
     const { uploadImage, isUploading } = useCloudinaryUpload()
+    const { toast } = useToast()
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const file = acceptedFiles[0]
         if (!file) return
+
+        // Check magic bytes
+        const isValidSignature = await checkFileSignature(file)
+        if (!isValidSignature) {
+            toast({
+                variant: 'destructive',
+                title: 'Lỗi định dạng',
+                description: 'File không hợp lệ hoặc đã bị thay đổi (Magic Bytes check failed). Chỉ chấp nhận JPG, JPEG, PNG gốc.',
+            })
+            return
+        }
 
         // Create local preview
         const objectUrl = URL.createObjectURL(file)
@@ -37,13 +70,19 @@ export function ImageUpload({
         } catch (error) {
             console.error('Upload failed:', error)
             setPreview(null) // Revert on error
+            toast({
+                variant: 'destructive',
+                title: 'Tải lên thất bại',
+                description: 'Đã xảy ra lỗi khi tải ảnh lên.',
+            })
         }
-    }, [uploadImage, onUploadComplete])
+    }, [uploadImage, onUploadComplete, toast])
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.png', '.jpg', '.jpeg', '.webp']
+            'image/jpeg': ['.jpg', '.jpeg'],
+            'image/png': ['.png']
         },
         maxFiles: 1,
         disabled: disabled || isUploading,
