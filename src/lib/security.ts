@@ -3,10 +3,18 @@
  * Provides security-related functions for token management, validation, and protection
  */
 
+interface JWTPayload {
+  exp?: number
+  iat?: number
+  sub?: string
+  role?: string
+  [key: string]: unknown
+}
+
 /**
  * Validate JWT token format and expiration
  */
-export function validateToken(token: string): { valid: boolean; expired: boolean; payload?: Record<string, unknown> } {
+export function validateToken(token: string): { valid: boolean; expired: boolean; payload?: JWTPayload } {
   if (!token || typeof token !== 'string') {
     return { valid: false, expired: false }
   }
@@ -19,11 +27,13 @@ export function validateToken(token: string): { valid: boolean; expired: boolean
     }
 
     // Decode payload without verification (verification should happen server-side)
-    const payload = JSON.parse(atob(parts[1]))
+    const base64Url = parts[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64)) as JWTPayload
 
     // Check expiration
     const currentTime = Math.floor(Date.now() / 1000)
-    const isExpired = payload.exp && payload.exp < currentTime
+    const isExpired = !!(payload.exp && payload.exp < currentTime)
 
     return {
       valid: true,

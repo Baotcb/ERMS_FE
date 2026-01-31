@@ -10,7 +10,7 @@ import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { JobCard } from './job-card'
-import { MOCK_JOBS } from '../data/job-mock-data'
+import { MOCK_JOBS } from '../../../__tests__/fixtures/job-mock-data'
 import { motion } from 'framer-motion'
 
 const container = {

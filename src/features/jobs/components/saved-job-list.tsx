@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { FileQuestion, Search, Trash2 } from 'lucide-react'
 import { JobCard } from './job-card'
 import { Button } from '@/components/ui/button'
-import { MOCK_JOBS } from '../data/job-mock-data'
+import { MOCK_JOBS } from '../../../__tests__/fixtures/job-mock-data'
 import { useToast } from "@/hooks/use-toast"
 
 export function SavedJobList() {
@@ -31,7 +31,7 @@ export function SavedJobList() {
                 <p className="text-slate-500 mb-8 max-w-md mx-auto text-lg">
                     Đừng bỏ lỡ cơ hội! Lưu các công việc bạn quan tâm để xem lại và ứng tuyển bất cứ lúc nào.
                 </p>
-                <Link href="/candidate/jobs">
+                <Link href="/jobs">
                     <Button className="bg-brand-primary hover:bg-brand-primary/90 font-bold text-lg h-12 px-8 shadow-lg shadow-brand-primary/20 transition-transform active:scale-95">
                         <Search className="w-5 h-5 mr-2" />
                         Tìm việc làm ngay

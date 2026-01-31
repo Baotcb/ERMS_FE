@@ -1,23 +1,19 @@
-import { Metadata } from 'next'
-import { EmployerRegisterForm } from '@/features/core/auth/components/employer-register-form'
+import { EnterpriseRegisterForm } from '@/features/core/auth/components/enterprise-register-form'
 import { RegisterHero } from '@/features/core/auth/components/register-hero'
+import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Đăng ký Doanh nghiệp | ERMS',
-    description: 'Đăng ký tài khoản doanh nghiệp để tuyển dụng nhân tài',
+    title: 'Đăng ký Doanh nghiệp - ERMS',
+    description: 'Đăng ký tài khoản doanh nghiệp mới',
 }
 
 export default function EmployerRegisterPage() {
     return (
         <div className="w-full max-w-5xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                {/* Left Side - Reuse Hero but maybe we can customize it later if needed */}
+                {/* Reuse Hero for consistent look */}
                 <RegisterHero />
-
-                {/* Right Side - Employer Form */}
-                <div className="w-full">
-                    <EmployerRegisterForm />
-                </div>
+                <EnterpriseRegisterForm />
             </div>
         </div>
     )

@@ -3,7 +3,7 @@
  * Separated UI component for better maintainability
  */
 
-import { Award } from 'lucide-react'
+import Image from 'next/image'
 
 export function LoginHero() {
   return (
@@ -43,9 +43,9 @@ export function LoginHero() {
         <div className="mt-12 bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/10 max-w-sm mx-auto shadow-lg w-full">
           <div className="flex items-center gap-4 mb-4">
             <div className="flex -space-x-3 overflow-hidden">
-              <img src="https://github.com/shadcn.png" alt="User" className="w-10 h-10 rounded-full border-2 border-brand-dark" />
-              <img src="https://github.com/shadcn.png" alt="User" className="w-10 h-10 rounded-full border-2 border-brand-dark" />
-              <img src="https://github.com/shadcn.png" alt="User" className="w-10 h-10 rounded-full border-2 border-brand-dark" />
+              <Image src="https://github.com/shadcn.png" alt="User" width={40} height={40} className="w-10 h-10 rounded-full border-2 border-brand-dark" />
+              <Image src="https://github.com/shadcn.png" alt="User" width={40} height={40} className="w-10 h-10 rounded-full border-2 border-brand-dark" />
+              <Image src="https://github.com/shadcn.png" alt="User" width={40} height={40} className="w-10 h-10 rounded-full border-2 border-brand-dark" />
             </div>
             <span className="text-sm font-medium text-white">
               500+ Ứng viên mới

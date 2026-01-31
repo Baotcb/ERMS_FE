@@ -25,17 +25,18 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BrandDecoration } from "@/components/layout/brand-decoration";
 import { useAuth } from "@/features/core/auth/hooks/use-auth";
+import { logoutAction } from "@/features/core/auth/actions/auth";
 import { NavItem } from "./nav-item";
 
 export const CandidateNavbar = memo(function CandidateNavbar() {
-    const { isAuthenticated, user, logout, isLoading } = useAuth();
+    const { isAuthenticated, user, isLoading } = useAuth();
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-20 transition-all">
             <div className="w-full px-6 lg:px-10 h-full flex items-center justify-between">
                 {/* Left Side: Brand & Links */}
                 <div className="flex items-center gap-8 h-full">
-                    <Link href="/candidate/jobs" className="flex items-center gap-4 group">
+                    <Link href="/jobs" className="flex items-center gap-4 group">
                         {/* Logo Container */}
                         <div className="flex items-center justify-center">
                             {/* Logo */}
@@ -44,6 +45,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     src="/logo.png"
                                     alt="ERMS Logo"
                                     fill
+                                    sizes="64px"
                                     className="object-contain"
                                 />
                             </div>
@@ -59,7 +61,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                         {/* VIỆC LÀM MEGA MENU */}
                         <NavItem
                             label="Việc làm"
-                            href="/candidate/jobs"
+                            href="/jobs"
                             className="text-[13px] font-bold min-w-[70px] justify-center"
                         >
                             <div className="grid grid-cols-[200px_1fr] gap-5 w-[580px] p-4">
@@ -69,11 +71,11 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div>
                                         <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Việc làm</h3>
                                         <div className="space-y-0.5">
-                                            <Link href="/candidate/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors group">
+                                            <Link href="/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors group">
                                                 <Search className="w-4 h-4 text-[#FF7E67]" />
                                                 <span className="text-sm font-bold text-[#FF7E67] group-hover:text-[#FF7E67]/80">Tìm việc làm</span>
                                             </Link>
-                                            <Link href="/candidate/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
+                                            <Link href="/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
                                                 <Bookmark className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm đã lưu</span>
                                             </Link>
@@ -209,7 +211,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                 </div>
                                             </div>
                                             <div className="pl-8 space-y-2">
-                                                <Link href="/candidate/jobs/saved" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã lưu</Link>
+                                                <Link href="/jobs/saved" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã lưu</Link>
                                                 <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã ứng tuyển</Link>
                                                 <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm phù hợp</Link>
                                             </div>
@@ -224,7 +226,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                 </div>
                                             </div>
                                             <div className="pl-8">
-                                                <Link href="/candidate/profile/cv" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">
+                                                <Link href="/profile/cv" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">
                                                     CV của tôi
                                                 </Link>
                                             </div>
@@ -254,7 +256,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                     <span>Thông tin cá nhân</span>
                                                 </Link>
                                                 <Link
-                                                    href="/security"
+                                                    href="/settings/security"
                                                     className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
                                                 >
                                                     <KeyRound className="w-4 h-4" />
@@ -269,10 +271,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <Button
                                             variant="destructive"
                                             className="w-full bg-brand-coral hover:bg-brand-coral/90 text-white font-bold h-10 rounded-lg flex items-center justify-center gap-2"
-                                            onClick={() => {
-                                                logout();
-                                                window.location.href = '/login';
-                                            }}
+                                            onClick={logoutAction}
                                         >
                                             <LogOut className="w-4 h-4" />
                                             Đăng xuất

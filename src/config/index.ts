@@ -6,10 +6,12 @@
 export const config = {
     /**
      * Base API URL
-     * Empty = use relative path, Next.js rewrites will proxy to actual backend
-     * This hides the real backend URL from browser DevTools
+     * Server-side: Use absolute URL from env
+     * Client-side: Force empty string to use relative path (Next.js rewrites/middleware)
      */
-    apiUrl: process.env.NEXT_PUBLIC_API_URL || '',
+    apiUrl: typeof window === 'undefined'
+        ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || '')
+        : '',
 } as const
 
 export type AppConfig = typeof config

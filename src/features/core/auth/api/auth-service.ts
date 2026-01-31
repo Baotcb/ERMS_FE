@@ -6,7 +6,7 @@
 import { config } from '@/config'
 import { handleApiResponse } from '@/utils/error-handler'
 import { sanitizeEmail } from '@/utils/sanitization'
-import { getCookie } from '../utils/auth-cookies'
+import { apiClient } from '@/lib/api-client'
 import type {
     LoginRequest,
     LoginResponse,
@@ -19,6 +19,7 @@ import type {
     ChangePasswordRequest,
     GoogleLoginRequest,
 } from '../types'
+import { RegisterEnterpriseData, CreateHRAccountData } from '../schemas/auth-schemas'
 
 interface ApiResponse<T> {
     message: string;
@@ -37,7 +38,7 @@ interface GoogleTokenResponse {
     error_description?: string;
 }
 
-const API_BASE = config.apiUrl
+
 
 /**
  * Sanitize login request data
@@ -77,17 +78,9 @@ function sanitizeForgotPasswordRequest(
  */
 export async function login(data: LoginRequest): Promise<LoginResponse> {
     const sanitizedData = sanitizeLoginRequest(data)
-
-    const response = await fetch(`${API_BASE}/api/Auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sanitizedData),
-    })
-
-    return handleApiResponse<LoginResponse>(
-        response,
-        'Đăng nhập thất bại'
-    )
+    // Use local proxy route to handle HttpOnly cookies
+    const response = await apiClient.post('/api/auth/session/login', sanitizedData)
+    return handleApiResponse<LoginResponse>(response, 'Đăng nhập thất bại')
 }
 
 /**
@@ -95,22 +88,13 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
  */
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
     const sanitizedData = sanitizeRegisterRequest(data)
-
-    const response = await fetch(`${API_BASE}/api/Auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: sanitizedData.email,
-            password: sanitizedData.password,
-            fullName: sanitizedData.fullName,
-            role: sanitizedData.role,
-        }),
+    const response = await apiClient.post('/api/Auth/register', {
+        email: sanitizedData.email,
+        password: sanitizedData.password,
+        fullName: sanitizedData.fullName,
+        role: sanitizedData.role,
     })
-
-    return handleApiResponse<RegisterResponse>(
-        response,
-        'Đăng ký thất bại'
-    )
+    return handleApiResponse<RegisterResponse>(response, 'Đăng ký thất bại')
 }
 
 /**
@@ -120,17 +104,8 @@ export async function forgotPassword(
     data: ForgotPasswordRequest
 ): Promise<ForgotPasswordResponse> {
     const sanitizedData = sanitizeForgotPasswordRequest(data)
-
-    const response = await fetch(`${API_BASE}/api/Auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sanitizedData),
-    })
-
-    return handleApiResponse<ForgotPasswordResponse>(
-        response,
-        'Không thể gửi email đặt lại mật khẩu'
-    )
+    const response = await apiClient.post('/api/Auth/forgot-password', sanitizedData)
+    return handleApiResponse<ForgotPasswordResponse>(response, 'Không thể gửi email đặt lại mật khẩu')
 }
 
 /**
@@ -139,23 +114,13 @@ export async function forgotPassword(
 export async function resetPassword(
     data: ResetPasswordRequest
 ): Promise<ResetPasswordResponse> {
-    // Basic sanitization if needed, mostly passing through
     const payload = {
         email: sanitizeEmail(data.email),
         token: data.token,
         newPassword: data.newPassword.trim(),
     }
-
-    const response = await fetch(`${API_BASE}/api/Auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    })
-
-    return handleApiResponse<ResetPasswordResponse>(
-        response,
-        'Đặt lại mật khẩu thất bại'
-    )
+    const response = await apiClient.post('/api/Auth/reset-password', payload)
+    return handleApiResponse<ResetPasswordResponse>(response, 'Đặt lại mật khẩu thất bại')
 }
 
 /**
@@ -164,36 +129,51 @@ export async function resetPassword(
 export async function changePassword(
     data: ChangePasswordRequest
 ): Promise<ApiResponse<string>> {
-    const token = getCookie('auth_token');
-
-    if (!token) {
-        throw new Error('Không tìm thấy token xác thực');
-    }
-
-    const response = await fetch(`${API_BASE}/api/Auth/change-password`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            currentPassword: data.currentPassword.trim(),
-            newPassword: data.newPassword.trim()
-        }),
+    const response = await apiClient.put('/api/Auth/change-password', {
+        currentPassword: data.currentPassword.trim(),
+        newPassword: data.newPassword.trim()
     })
 
-    const result = await handleApiResponse<ApiResponse<string>>(
-        response,
-        'Đổi mật khẩu thất bại'
-    )
-    return result;
+    return handleApiResponse<ApiResponse<string>>(response, 'Đổi mật khẩu thất bại')
+}
+
+/**
+ * Register Enterprise (Step 1)
+ */
+export async function registerEnterprise(data: RegisterEnterpriseData): Promise<{ enterpriseId: string }> {
+    const response = await apiClient.post('/api/Auth/register-enterprise', data)
+    return handleApiResponse<{ enterpriseId: string }>(response, 'Đăng ký doanh nghiệp thất bại')
+}
+
+/**
+ * Create HR Account (Step 3)
+ */
+export async function createHRAccount(data: CreateHRAccountData & { enterpriseId: string }): Promise<{ userId: string }> {
+    const response = await apiClient.post('/api/Auth/create-hr-account', data)
+    return handleApiResponse<{ userId: string }>(response, 'Tạo tài khoản HR thất bại')
+}
+
+/**
+ * Confirm Email (from email link)
+ */
+export async function confirmEmail(userId: string, token: string): Promise<{ message: string; token?: string }> {
+    const response = await apiClient.post('/api/Auth/confirm-email', { userId, token })
+    return handleApiResponse<{ message: string; token?: string }>(response, 'Xác thực email thất bại')
+}
+
+/**
+ * Resend Confirmation Email
+ */
+export async function resendConfirmation(email: string): Promise<{ message: string }> {
+    const response = await apiClient.post('/api/Auth/resend-confirmation', { email: sanitizeEmail(email) })
+    return handleApiResponse<{ message: string }>(response, 'Gửi lại email xác thực thất bại')
 }
 
 /**
  * Login with Google
  */
 export async function loginByGoogle(data: GoogleLoginRequest): Promise<LoginResponse> {
-    const response = await fetch(`${API_BASE}/api/Auth/google-login`, {
+    const response = await fetch(`${config.apiUrl}/api/Auth/google-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -239,6 +219,10 @@ export const authService = {
     forgotPassword,
     resetPassword,
     changePassword,
+    registerEnterprise,
+    createHRAccount,
+    confirmEmail,
+    resendConfirmation,
     loginByGoogle,
     exchangeCodeForTokens
 }

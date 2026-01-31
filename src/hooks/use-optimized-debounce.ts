@@ -20,6 +20,18 @@ export function useOptimizedDebounce<T extends (...args: unknown[]) => unknown>(
   const rafRef = useRef<number | null>(null)
   const lastCallTime = useRef<number>(0)
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current)
+      }
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [])
+
   return useCallback(
     (...args: Parameters<T>) => {
       const now = Date.now()
@@ -56,11 +68,4 @@ export function useOptimizedDebounce<T extends (...args: unknown[]) => unknown>(
 /**
  * Cleanup function to clear pending debounces
  */
-export function useDebounceCleanup() {
-  useEffect(() => {
-    return () => {
-      // Clear all pending timeouts when component unmounts
-      // This is handled automatically by React's cleanup
-    }
-  }, [])
-}
+

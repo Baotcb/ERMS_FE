@@ -6,7 +6,7 @@
 'use client'
 
 import { useState, useCallback, memo, useEffect } from 'react'
-import { Search, MapPin, Briefcase, DollarSign } from 'lucide-react'
+import { Search, MapPin, DollarSign } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { JOB_LOCATIONS, JOB_SALARY_RANGES, JOB_TYPES } from '../data/job-mock-data'
+import { JOB_LOCATIONS, JOB_SALARY_RANGES } from '../constants'
 import { useDebounce } from '@/hooks/use-debounce'
 import { cn } from '@/lib/utils'
 
@@ -52,7 +52,7 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
         keyword: debouncedKeyword
       })
     }
-  }, [debouncedKeyword, filters.location, filters.salary, filters.type, onFilterChange])
+  }, [debouncedKeyword, filters, onFilterChange])
 
   const updateFilter = useCallback(
     (key: keyof JobFilters) => (value: string) => {
@@ -61,14 +61,7 @@ export const JobFilter = memo(function JobFilter({ onFilterChange }: JobFilterPr
     []
   )
 
-  const resetFilters = useCallback(() => {
-    setFilters({
-      keyword: '',
-      location: '',
-      salary: '',
-      type: '',
-    })
-  }, [])
+
 
   return (
     <div className={cn(
