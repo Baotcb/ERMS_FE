@@ -29,6 +29,34 @@ const PROTECTED_ROUTE_PATTERNS = [
   '/candidate',
 ] as const
 
+// Constant CSP header template (nonce will be injected dynamically)
+const CSP_TEMPLATE = `
+  default-src 'self';
+  connect-src 'self' https://api.cloudinary.com;
+  script-src 'self' 'nonce-{nonce}' 'strict-dynamic' https: http:;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com https://lh3.googleusercontent.com;
+  font-src 'self' data:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  upgrade-insecure-requests;
+`.replace(/\s{2,}/g, ' ').trim()
+
+// Constant security headers (set once, not per request)
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-DNS-Prefetch-Control': 'on',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+}
+
 /**
  * Check if a route is public
  */
@@ -75,96 +103,30 @@ function isTokenExpired(token: string): boolean {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Skip middleware for static files, API routes (except strictly protected ones?), and Next.js internals
-  // We MUST run middleware for API routes to inject headers/Authorization if needed
-  // But standard Next.js optimized skipping:
+  // Skip middleware for static files and Next.js internals
   if (
     pathname.startsWith('/_next') ||
-    // pathname.startsWith('/api') || // Don't skip API if we want to inject headers!
     pathname.includes('.') ||
     pathname.startsWith('/static')
   ) {
     return NextResponse.next()
   }
 
-  // Middleware logic
-  const response = NextResponse.next()
-
-  // 1. NONCE for CSP
+  // Generate nonce and CSRF token (these are lightweight operations)
   const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64')
-
-  // 2. CSRF Protection
-  // Generate CSRF token if missing
   const csrfToken = request.cookies.get('csrf_token')?.value || crypto.randomUUID()
 
-  // Validate CSRF on mutations (POST, PUT, DELETE, PATCH)
-  // Skip validation for Login/Register proxies if they don't have token yet (initial login)
-  // But Login page SHOULD have received a CSRF token on load.
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
-    // Skip CSRF for specific public APIs if needed, but Login shouldn't be skipped ideally
-    // However, for simplicity in this migration, we ensure headers are present
-    const headerToken = request.headers.get('x-csrf-token')
-
-    // Check if it's a mutation. If header token mismatch cookie token -> Block
-    // Relax for now if header is missing during dev/migration, or enforce STRICT?
-    // User requested "Add CSRF protection", implying strict.
-
-    if (headerToken !== csrfToken && !pathname.startsWith('/api/auth/session')) {
-      // Allow session endpoints initially if client hasn't set header yet? 
-      // No, client MUST set header.
-      // But we need to ensure client HAS the cookie first.
-    }
-  }
-
-  // Set CSRF Cookie (Not HttpOnly so JS can read and send in Header)
-  response.cookies.set('csrf_token', csrfToken, {
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  })
-
-  // 3. CSP Headers
-  const cspHeader = `
-    default-src 'self';
-    connect-src 'self' https://api.cloudinary.com;
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http:;
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com https://lh3.googleusercontent.com;
-    font-src 'self' data:;
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-ancestors 'none';
-    upgrade-insecure-requests;
-  `.replace(/\s{2,}/g, ' ').trim()
-
-  response.headers.set('Content-Security-Policy', cspHeader)
-  response.headers.set('x-nonce', nonce)
-  response.headers.set('x-csrf-token', csrfToken) // Convenient header return
-
-  // 4. Other Security Headers
-  response.headers.set('X-DNS-Prefetch-Control', 'on')
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
-  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin')
-
-  // 5. Auth Logic (Route Protection)
+  // Auth Logic (Route Protection) - Check early to avoid unnecessary processing
   const authCookie = request.cookies.get('auth_token')?.value
   const isExpired = authCookie ? isTokenExpired(authCookie) : true
 
-  // Redirect logic...
+  // Redirect logic - return early on redirects
   if (requiresAuth(pathname) && (!authCookie || isExpired)) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Public route redirects
   if (isPublicRoute(pathname) && authCookie && !isExpired) {
     const role = request.cookies.get('user_role')?.value
     if (role === 'Candidate') {
@@ -174,7 +136,19 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Inject Headers for API (Authorization)
+  // CSRF Validation on mutations
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+    // Skip CSRF check for Server Actions
+    if (!request.headers.has('next-action')) {
+      const headerToken = request.headers.get('x-csrf-token')
+      if (headerToken !== csrfToken && !pathname.startsWith('/api/auth/session')) {
+        // Block request if CSRF tokens don't match
+        return new NextResponse('Invalid CSRF token', { status: 403 })
+      }
+    }
+  }
+
+  // Prepare request headers (only if needed for API routes)
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
   requestHeaders.set('x-csrf-token', csrfToken)
@@ -183,30 +157,32 @@ export function middleware(request: NextRequest) {
     requestHeaders.set('Authorization', `Bearer ${authCookie}`)
   }
 
-  // Return final response with all headers
-  // We need to merge response headers with request headers update?
-  // NextResponse.next({ request: { headers: requestHeaders } }) creates a NEW response
-  // We already created 'response' above via NextResponse.next() ?? No, initialized at top.
-  // Wait, I can't modify 'response' object and THEN call next(). 
-  // I must pass request headers to next().
-
-  const finalResponse = NextResponse.next({
+  // Create final response with request headers
+  const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     }
   })
 
-  // Copy headers we set on 'response' to 'finalResponse'
-  response.headers.forEach((value, key) => {
-    finalResponse.headers.set(key, value)
+  // Set CSRF cookie
+  response.cookies.set('csrf_token', csrfToken, {
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
   })
 
-  // Copy cookies
-  response.cookies.getAll().forEach(cookie => {
-    finalResponse.cookies.set(cookie)
+  // Set CSP header with nonce (replace template placeholder)
+  const cspHeader = CSP_TEMPLATE.replace('{nonce}', nonce)
+  response.headers.set('Content-Security-Policy', cspHeader)
+  response.headers.set('x-nonce', nonce)
+  response.headers.set('x-csrf-token', csrfToken)
+
+  // Set all security headers in one loop
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value)
   })
 
-  return finalResponse
+  return response
 }
 
 export const config = {

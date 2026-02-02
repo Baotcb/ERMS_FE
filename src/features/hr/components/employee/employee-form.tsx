@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Loader2, ArrowLeft, CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
+import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -132,7 +133,8 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                 })
             }
 
-            router.refresh()
+            // Revalidate SWR cache instead of full page refresh
+            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {

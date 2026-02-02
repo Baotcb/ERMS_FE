@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
-import { DepartmentList } from '@/features/hr/components/department'
-import { fetchDepartmentList } from '@/features/hr'
+import { Suspense } from 'react'
+import { DepartmentListContainer } from '@/features/hr/components/department/department-container'
+import { ListSkeleton } from '@/components/common/skeletons/list-skeleton'
 
 export const metadata: Metadata = {
     title: 'Phòng ban - HR Management',
@@ -15,14 +16,9 @@ export default async function DepartmentsPage({ searchParams }: Props) {
     const params = await searchParams
     const page = parseInt(params.page || '1', 10)
 
-    const data = await fetchDepartmentList(page)
-
     return (
-        <DepartmentList
-            initialDepartments={data.items}
-            totalCount={data.totalCount}
-            currentPage={data.page}
-            totalPages={data.totalPages}
-        />
+        <Suspense fallback={<ListSkeleton />}>
+            <DepartmentListContainer page={page} searchParams={params} />
+        </Suspense>
     )
 }

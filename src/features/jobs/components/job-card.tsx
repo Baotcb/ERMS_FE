@@ -53,7 +53,6 @@ export const JobCard = memo(function JobCard({
             fill
             sizes={compact ? "60px" : "80px"}
             className="object-contain p-1"
-            unoptimized
           />
         </div>
         <div className="flex-1 min-w-0">
