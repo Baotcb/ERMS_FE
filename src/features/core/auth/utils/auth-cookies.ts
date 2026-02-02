@@ -3,14 +3,7 @@
  * Centralized cookie management for authentication
  */
 
-const DEFAULT_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
-
-interface SetAuthCookiesOptions {
-  token: string;
-  role: string;
-  displayName: string;
-  maxAge?: number;
-}
+// Max age constants kept for reference
 
 /**
  * Set all authentication cookies

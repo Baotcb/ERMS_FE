@@ -4,7 +4,6 @@
  */
 
 import { memo } from 'react'
-import { motion } from 'framer-motion'
 
 export const JobHero = memo(function JobHero() {
   return (

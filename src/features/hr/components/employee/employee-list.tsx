@@ -14,8 +14,10 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog"
 import type { Employee } from '@/features/hr/api/employee-service'
+import { useEmployees } from '@/features/hr/hooks/use-employees'
 
 interface EmployeeListProps {
     initialEmployees: Employee[]
@@ -30,8 +32,19 @@ export const EmployeeList = memo(function EmployeeList({
     currentPage,
     totalPages
 }: EmployeeListProps) {
-    const [employees] = useState(initialEmployees)
+    const [page, setPage] = useState(currentPage)
     const [searchQuery, setSearchQuery] = useState('')
+
+    // Use SWR hook for data fetching
+    const { data, employees, totalCount: hookedTotalCount, totalPages: hookedTotalPages, isLoading } = useEmployees({
+        page: page,
+        pageSize: 20,
+        search: searchQuery || undefined
+    })
+
+    const displayEmployees = data ? employees : initialEmployees
+    const displayTotalCount = data ? hookedTotalCount : totalCount
+    const displayTotalPages = data ? hookedTotalPages : totalPages
 
     // Modal states
     const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -58,15 +71,19 @@ export const EmployeeList = memo(function EmployeeList({
 
     const handleSuccess = useCallback(() => {
         setIsCreateOpen(false)
-        // Revalidate SWR cache instead of full page refresh
+        // Revalidate SWR cache - handled by hook's mutate/SWR
         mutate(() => true, undefined, { revalidate: true })
     }, [])
 
     const handleImportSuccess = useCallback(() => {
         setIsImportOpen(false)
-        // Revalidate SWR cache instead of full page refresh
+        // Revalidate SWR cache
         mutate(() => true, undefined, { revalidate: true })
     }, [])
+
+    const handleRefresh = () => {
+        mutate(() => true, undefined, { revalidate: true })
+    }
 
     return (
         <div className="space-y-6">
@@ -74,7 +91,7 @@ export const EmployeeList = memo(function EmployeeList({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-[#0F4C75]">Nhân viên</h1>
-                    <p className="text-gray-500 mt-1">Quản lý {totalCount} nhân viên</p>
+                    <p className="text-gray-500 mt-1">Quản lý {displayTotalCount} nhân viên</p>
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline" onClick={handleImport}>
@@ -95,37 +112,38 @@ export const EmployeeList = memo(function EmployeeList({
                     <Input
                         placeholder="Tìm kiếm nhân viên..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value)
+                            setPage(1)
+                        }}
                         className="pl-10"
                     />
                 </div>
-                <Button variant="outline">
-                    <RefreshCw className="w-4 h-4 mr-2" />
+                <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+                    <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                     Làm mới
                 </Button>
             </div>
 
             {/* Table */}
             <EmployeeTable
-                employees={initialEmployees}
+                employees={displayEmployees}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
             />
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {displayTotalPages > 1 && (
                 <div className="flex justify-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Link
-                            key={page}
-                            href={`/enterprise/employees?page=${page}`}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${page === currentPage
-                                ? 'bg-[#0F4C75] text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                    {Array.from({ length: displayTotalPages }, (_, i) => i + 1).map((p) => (
+                        <Button
+                            key={p}
+                            variant={p === page ? "default" : "outline"}
+                            className={p === page ? "bg-[#0F4C75]" : ""}
+                            onClick={() => setPage(p)}
                         >
-                            {page}
-                        </Link>
+                            {p}
+                        </Button>
                     ))}
                 </div>
             )}
@@ -135,6 +153,9 @@ export const EmployeeList = memo(function EmployeeList({
                 <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>{selectedEmployee ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'}</DialogTitle>
+                        <DialogDescription className="hidden">
+                            {selectedEmployee ? 'Cập nhật thông tin nhân viên' : 'Nhập thông tin nhân viên mới'}
+                        </DialogDescription>
                     </DialogHeader>
                     <EmployeeForm
                         initialData={selectedEmployee}
@@ -150,6 +171,9 @@ export const EmployeeList = memo(function EmployeeList({
                 <DialogContent className="max-h-[90vh] overflow-y-auto max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>Import Nhân viên</DialogTitle>
+                        <DialogDescription className="hidden">
+                            Tải lên file Excel để import nhân viên
+                        </DialogDescription>
                     </DialogHeader>
                     <EmployeeImport
                         onSuccess={handleImportSuccess}

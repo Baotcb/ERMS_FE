@@ -27,6 +27,8 @@ const PROTECTED_ROUTE_PATTERNS = [
   '/profile',
   '/security',
   '/candidate',
+  '/enterprise',
+  '/hr',
 ] as const
 
 // Constant CSP header template (nonce will be injected dynamically)

@@ -18,7 +18,7 @@ export interface DashboardStats {
 export async function getDashboardStatsServer(): Promise<DashboardStats> {
   try {
     return serverFetch<DashboardStats>('/api/Dashboard/stats', { requireAuth: true });
-  } catch (_) {
+  } catch {
     // Return default stats if API fails
     return {
       totalEmployees: 0,

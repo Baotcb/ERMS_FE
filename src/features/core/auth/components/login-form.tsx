@@ -15,14 +15,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, LoadingSpinner } from '@/components/common'
-import { config } from '@/config'
 import { loginSchema } from '../schemas/auth-schemas'
 import { loginAction } from '../actions/auth'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
-import { User } from '@/stores/auth-store'
-import { setAuthCookies } from '../utils/auth-cookies'
 
 export function LoginForm() {
     const router = useRouter()

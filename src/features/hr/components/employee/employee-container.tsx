@@ -4,7 +4,7 @@ import { EmployeeList } from './employee-list'
 
 interface EmployeeListContainerProps {
     page: number
-    searchParams?: any
+    searchParams?: Record<string, unknown>
 }
 
 export async function EmployeeListContainer({ page, searchParams }: EmployeeListContainerProps) {

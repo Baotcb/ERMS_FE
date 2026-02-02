@@ -4,7 +4,7 @@ import { DepartmentList } from './department-list'
 
 interface DepartmentListContainerProps {
     page: number
-    searchParams?: any
+    searchParams?: Record<string, unknown>
 }
 
 export async function DepartmentListContainer({ page, searchParams }: DepartmentListContainerProps) {

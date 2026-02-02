@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { mutate } from 'swr'
@@ -18,7 +18,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { getDepartments, createDepartment, updateDepartment } from '@/features/hr/api/department-service'
+import { getDepartments } from '@/features/hr/api/department-service'
+import { useCreateDepartment, useUpdateDepartment } from '@/features/hr/hooks/use-departments'
 import { getEmployees } from '@/features/hr/api/employee-service'
 import type { Department } from '@/features/hr/api/department-service'
 import type { Employee } from '@/features/hr/api/employee-service'
@@ -51,7 +52,7 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
 
     const form = useForm<DepartmentFormValues>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(departmentSchema) as any,
+        resolver: zodResolver(departmentSchema) as unknown as Resolver<DepartmentFormValues>,
         defaultValues: {
             departmentName: initialData?.departmentName || '',
             departmentCode: initialData?.departmentCode || '',
@@ -80,6 +81,9 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
         loadOptions()
     }, [initialData?.id])
 
+    const { trigger: createDepartmentFn } = useCreateDepartment()
+    const { trigger: updateDepartmentFn } = useUpdateDepartment()
+
     const onSubmit = async (data: DepartmentFormValues) => {
         setIsLoading(true)
         try {
@@ -90,21 +94,19 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
             }
 
             if (isEdit && initialData) {
-                await updateDepartment(initialData.id, { ...payload, id: initialData.id })
+                await updateDepartmentFn({ id: initialData.id, data: { ...payload, id: initialData.id } })
                 toast({
                     title: 'Thành công',
                     description: 'Cập nhật phòng ban thành công',
                 })
             } else {
-                await createDepartment(payload)
+                await createDepartmentFn(payload)
                 toast({
                     title: 'Thành công',
                     description: 'Tạo phòng ban thành công',
                 })
             }
 
-            // Revalidate SWR cache instead of full page refresh
-            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {

@@ -1,4 +1,4 @@
-import { config } from '@/config'
+import { apiClient } from '@/lib/api-client'
 import {
     RecruitmentPlan,
     GetRecruitmentPlansParams,
@@ -7,23 +7,7 @@ import {
     UpdateRecruitmentPlanRequest
 } from '../types/recruitment-plan-types'
 
-const API_BASE = config.apiUrl
-
-async function getAuthHeaders(token?: string): Promise<HeadersInit> {
-    let authToken = token || ''
-
-    if (!authToken && typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-
-    return {
-        'Content-Type': 'application/json',
-        ...(authToken && { Authorization: `Bearer ${authToken}` })
-    }
-}
+// Types (re-exported or imported)
 
 export async function getRecruitmentPlans(params: GetRecruitmentPlansParams, token?: string): Promise<PaginatedResult<RecruitmentPlan>> {
     const searchParams = new URLSearchParams({
@@ -34,9 +18,13 @@ export async function getRecruitmentPlans(params: GetRecruitmentPlansParams, tok
     if (params.search) searchParams.set('search', params.search)
     if (params.status) searchParams.set('status', params.status)
 
-    const response = await fetch(`${API_BASE}/api/RecruitmentPlans?${searchParams}`, {
-        headers: await getAuthHeaders(token),
-        cache: 'no-store'
+    const headers: HeadersInit = {}
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+    }
+
+    const response = await apiClient.get(`/api/RecruitmentPlans?${searchParams}`, {
+        headers,
     })
 
     if (!response.ok) {
@@ -50,8 +38,9 @@ export async function getRecruitmentPlans(params: GetRecruitmentPlansParams, tok
 }
 
 export async function getRecruitmentPlanById(id: string): Promise<RecruitmentPlan> {
-    const response = await fetch(`${API_BASE}/api/RecruitmentPlans/${id}`, {
-        headers: await getAuthHeaders(),
+    const response = await apiClient.get(`/api/RecruitmentPlans/${id}`, {
+        // cache: 'no-store' is handled by Next.js fetch defaults usually, or passing request init
+        // apiClient passes options to fetch, so cache: 'no-store' works if passed
         cache: 'no-store'
     })
 
@@ -63,11 +52,7 @@ export async function getRecruitmentPlanById(id: string): Promise<RecruitmentPla
 }
 
 export async function createRecruitmentPlan(data: CreateRecruitmentPlanRequest): Promise<{ recruitmentPlanId: string }> {
-    const response = await fetch(`${API_BASE}/api/RecruitmentPlans`, {
-        method: 'POST',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(data),
-    })
+    const response = await apiClient.post(`/api/RecruitmentPlans`, data)
 
     if (!response.ok) {
         const error = await response.json()
@@ -78,11 +63,7 @@ export async function createRecruitmentPlan(data: CreateRecruitmentPlanRequest):
 }
 
 export async function updateRecruitmentPlan(id: string, data: UpdateRecruitmentPlanRequest): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/RecruitmentPlans/${id}`, {
-        method: 'PUT',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(data),
-    })
+    const response = await apiClient.put(`/api/RecruitmentPlans/${id}`, data)
 
     if (!response.ok) {
         const error = await response.json()
@@ -91,10 +72,7 @@ export async function updateRecruitmentPlan(id: string, data: UpdateRecruitmentP
 }
 
 export async function deleteRecruitmentPlan(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/RecruitmentPlans/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.delete(`/api/RecruitmentPlans/${id}`)
 
     if (!response.ok) {
         const error = await response.json()

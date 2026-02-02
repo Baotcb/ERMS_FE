@@ -5,13 +5,6 @@ import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { JobCard } from "./job-card"
 import { MOCK_JOBS } from '../../../__tests__/fixtures/job-mock-data'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 
 export function BestJobsSection() {
     const [filter, setFilter] = useState("random")

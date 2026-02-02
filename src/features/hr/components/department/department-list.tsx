@@ -2,7 +2,7 @@
 
 import { memo, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Plus, Search, RefreshCw } from 'lucide-react'
+import { Plus, Search, RefreshCw, Loader2 } from 'lucide-react'
 import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,8 +13,10 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog"
 import type { Department } from '@/features/hr/api/department-service'
+import { useDepartments } from '@/features/hr/hooks/use-departments'
 
 interface DepartmentListProps {
     initialDepartments: Department[]
@@ -25,12 +27,30 @@ interface DepartmentListProps {
 
 export const DepartmentList = memo(function DepartmentList({
     initialDepartments,
-    totalCount,
-    currentPage,
-    totalPages
+    totalCount: initialTotalCount,
+    currentPage: initialPage,
+    totalPages: initialTotalPages
 }: DepartmentListProps) {
-    const [departments] = useState(initialDepartments)
+    const [page, setPage] = useState(initialPage)
     const [searchQuery, setSearchQuery] = useState('')
+
+    // Use SWR hook for data fetching and caching
+    // We don't pass fallbackData here because useData in the hook handles it differently,
+    // but the hook will fetch fresh data on mount/update. 
+    // To make it instant on first load we could use fallbackData but the hook interface might need tweak.
+    // For now, let's just use the hook.
+
+    // Note: To properly support SSR hydration with SWR, we'd typically pass fallbackData to SWRConfig or useData options.
+    // However, given the current hook structure, we'll try to use the hook's return values which fallback to empty, 
+    // effectively doing a client-side fetch. 
+    // To prevent layout shift, we can initialize state with props, but SWR is better source of truth.
+
+    // Better approach: Since we have initial data, we can just fetch.
+    const { data, departments, totalCount, totalPages, isLoading } = useDepartments({
+        page: page,
+        pageSize: 20,
+        search: searchQuery || undefined
+    })
 
     // Modal state
     const [isOpen, setIsOpen] = useState(false)
@@ -53,9 +73,18 @@ export const DepartmentList = memo(function DepartmentList({
 
     const handleSuccess = useCallback(() => {
         setIsOpen(false)
-        // Revalidate SWR cache instead of full page refresh
+        // Revalidate SWR cache - handled by hook's mutate/SWR
         mutate(() => true, undefined, { revalidate: true })
     }, [])
+
+    const handleRefresh = () => {
+        mutate(() => true, undefined, { revalidate: true })
+    }
+
+    // Determine which departments to display
+    // If SWR has fetched data (data is not undefined), use it (even if empty)
+    // Otherwise, fallback to initialDepartments (SSR data)
+    const displayDepartments = data ? departments : initialDepartments
 
     return (
         <div className="space-y-6">
@@ -63,7 +92,7 @@ export const DepartmentList = memo(function DepartmentList({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-[#0F4C75]">Phòng ban</h1>
-                    <p className="text-gray-500 mt-1">Quản lý {totalCount} phòng ban</p>
+                    <p className="text-gray-500 mt-1">Quản lý {totalCount ?? initialTotalCount} phòng ban</p>
                 </div>
                 <Button onClick={handleCreate} className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
                     <Plus className="w-4 h-4 mr-2" />
@@ -78,37 +107,45 @@ export const DepartmentList = memo(function DepartmentList({
                     <Input
                         placeholder="Tìm kiếm phòng ban..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value)
+                            setPage(1) // Reset to page 1 on search
+                        }}
                         className="pl-10"
                     />
                 </div>
-                <Button variant="outline">
-                    <RefreshCw className="w-4 h-4 mr-2" />
+                <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+                    {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                     Làm mới
                 </Button>
             </div>
 
             {/* Table */}
-            <DepartmentTable
-                departments={initialDepartments} // Use initialDepartments directly as it comes from server
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-            />
+            <div className="relative">
+                {isLoading && !data && (
+                    <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#0F4C75]" />
+                    </div>
+                )}
+                <DepartmentTable
+                    departments={displayDepartments}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex justify-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Link
-                            key={page}
-                            href={`/enterprise/departments?page=${page}`} // Fix href to be correct
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${page === currentPage
-                                ? 'bg-[#0F4C75] text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <Button
+                            key={p}
+                            variant={p === page ? "default" : "outline"}
+                            className={p === page ? "bg-[#0F4C75]" : ""}
+                            onClick={() => setPage(p)}
                         >
-                            {page}
-                        </Link>
+                            {p}
+                        </Button>
                     ))}
                 </div>
             )}
@@ -118,6 +155,9 @@ export const DepartmentList = memo(function DepartmentList({
                 <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>{selectedDepartment ? 'Chỉnh sửa phòng ban' : 'Thêm phòng ban mới'}</DialogTitle>
+                        <DialogDescription className="hidden">
+                            {selectedDepartment ? 'Chỉnh sửa thông tin phòng ban' : 'Điền thông tin để tạo phòng ban mới'}
+                        </DialogDescription>
                     </DialogHeader>
                     <DepartmentForm
                         initialData={selectedDepartment}

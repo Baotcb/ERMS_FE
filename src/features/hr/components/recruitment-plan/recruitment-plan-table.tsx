@@ -1,7 +1,6 @@
 'use client'
 
 import { format } from 'date-fns'
-import { vi } from 'date-fns/locale' // Import Vietnamese locale if available, or just use format string
 import {
     Edit2,
     Trash2,

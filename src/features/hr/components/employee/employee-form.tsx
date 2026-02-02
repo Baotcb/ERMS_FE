@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Loader2, ArrowLeft, CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
-import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,7 +21,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
 import { getDepartments } from '@/features/hr/api/department-service'
-import { getEmployees, createEmployee, updateEmployee } from '@/features/hr/api/employee-service'
+import { getEmployees, CreateEmployeeData } from '@/features/hr/api/employee-service'
+import { useCreateEmployee, useUpdateEmployee } from '@/features/hr/hooks/use-employees'
 import type { Department } from '@/features/hr/api/department-service'
 import type { Employee } from '@/features/hr/api/employee-service'
 import { useToast } from '@/hooks/use-toast'
@@ -91,6 +91,9 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
         loadOptions()
     }, [initialData?.id])
 
+    const { trigger: createEmployeeFn, isMutating: isCreating } = useCreateEmployee()
+    const { trigger: updateEmployeeFn, isMutating: isUpdating } = useUpdateEmployee()
+
     const onSubmit = async (data: EmployeeFormValues) => {
         setIsLoading(true)
         try {
@@ -101,40 +104,43 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                 return
             }
 
-            const payload = {
-                ...data,
+            // Clean payload - convert empty strings to undefined
+            const cleanData = {
+                fullName: data.fullName,
+                email: data.email,
+                phone: data.phone || undefined,
                 departmentId: parseInt(data.departmentId),
+                position: data.position || undefined,
+                employmentType: data.employmentType,
                 hireDate: data.hireDate ? data.hireDate.toISOString() : undefined,
                 managerId: data.managerId || undefined,
+                // Only include password if provided
+                ...(data.password ? { password: data.password } : {}),
             }
 
             if (isEdit && initialData) {
-                await updateEmployee(initialData.id, {
+                await updateEmployeeFn({
                     id: initialData.id,
-                    departmentId: payload.departmentId,
-                    position: payload.position,
-                    employmentType: payload.employmentType,
-                    managerId: payload.managerId,
-                    status: payload.status
+                    data: {
+                        ...cleanData,
+                        id: initialData.id,
+                        status: data.status, // Status is allowed in update
+                    }
                 })
                 toast({
                     title: 'Thành công',
                     description: 'Cập nhật nhân viên thành công',
                 })
             } else {
-                if (!data.password) throw new Error("Mật khẩu là bắt buộc")
-                await createEmployee({
-                    ...payload,
-                    password: data.password
-                })
+                if (!cleanData.password) throw new Error("Mật khẩu là bắt buộc")
+                // Explicitly cast to CreateEmployeeData to ensure we only send what's expected
+                await createEmployeeFn(cleanData as CreateEmployeeData)
                 toast({
                     title: 'Thành công',
                     description: 'Thêm nhân viên thành công',
                 })
             }
 
-            // Revalidate SWR cache instead of full page refresh
-            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {
