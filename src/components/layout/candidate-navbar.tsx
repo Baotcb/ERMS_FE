@@ -20,7 +20,7 @@ import {
     User,
     KeyRound,
 } from "lucide-react";
-import { memo } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BrandDecoration } from "@/components/layout/brand-decoration";
@@ -28,8 +28,34 @@ import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import { logoutAction } from "@/features/core/auth/actions/auth";
 import { NavItem } from "./nav-item";
 
+const JOB_POSITIONS = [
+    "Việc làm Nhân viên kinh doanh",
+    "Việc làm Kế toán",
+    "Việc làm Marketing",
+    "Việc làm Hành chính nhân sự",
+    "Việc làm Chăm sóc khách hàng",
+    "Việc làm Ngân hàng",
+    "Việc làm IT",
+    "Việc làm Lao động phổ thông",
+    "Việc làm Senior",
+    "Việc làm Kỹ sư xây dựng",
+    "Việc làm Thiết kế đồ họa",
+    "Việc làm Bất động sản",
+    "Việc làm Giáo dục",
+    "Việc làm Telesales",
+] as const;
+
 export const CandidateNavbar = memo(function CandidateNavbar() {
     const { isAuthenticated, user, isLoading } = useAuth();
+
+    const handleLogout = useCallback(() => {
+        logoutAction();
+    }, []);
+
+    const userInitial = useMemo(() => user?.fullName?.charAt(0) || 'U', [user?.fullName]);
+    const displayName = useMemo(() => user?.fullName || 'Ứng viên', [user?.fullName]);
+    const userEmail = useMemo(() => user?.email || 'email@example.com', [user?.email]);
+    const userId = useMemo(() => user?.id || 'N/A', [user?.id]);
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-20 transition-all">
@@ -110,22 +136,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                 <div>
                                     <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Việc làm theo vị trí</h3>
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                                        {[
-                                            "Việc làm Nhân viên kinh doanh",
-                                            "Việc làm Kế toán",
-                                            "Việc làm Marketing",
-                                            "Việc làm Hành chính nhân sự",
-                                            "Việc làm Chăm sóc khách hàng",
-                                            "Việc làm Ngân hàng",
-                                            "Việc làm IT",
-                                            "Việc làm Lao động phổ thông",
-                                            "Việc làm Senior",
-                                            "Việc làm Kỹ sư xây dựng",
-                                            "Việc làm Thiết kế đồ họa",
-                                            "Việc làm Bất động sản",
-                                            "Việc làm Giáo dục",
-                                            "Việc làm Telesales",
-                                        ].map((job) => (
+                                        {JOB_POSITIONS.map((job) => (
                                             <Link
                                                 key={job}
                                                 href="/not-found"
@@ -175,10 +186,10 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div className="flex items-center gap-2">
                                         <Avatar className="w-9 h-9 border border-slate-200">
                                             <AvatarImage src="https://github.com/shadcn.png" />
-                                            <AvatarFallback>{user?.fullName?.charAt(0) || 'U'}</AvatarFallback>
+                                            <AvatarFallback>{userInitial}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm font-medium text-slate-700 hidden sm:block">
-                                            {user?.fullName || 'Ứng viên'}
+                                            {displayName}
                                         </span>
                                     </div>
                                 }
@@ -189,14 +200,14 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <div className="relative">
                                             <Avatar className="w-14 h-14 border-2 border-white shadow-sm">
                                                 <AvatarImage src="https://github.com/shadcn.png" />
-                                                <AvatarFallback>{user?.fullName?.charAt(0) || 'U'}</AvatarFallback>
+                                                <AvatarFallback>{userInitial}</AvatarFallback>
                                             </Avatar>
                                             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#FF7E67] border-2 border-white rounded-full"></span>
                                         </div>
                                         <div className="flex-1 min-w-0 pt-1">
-                                            <h4 className="text-base font-bold text-brand-dark truncate leading-tight">{user?.fullName || 'Tên người dùng'}</h4>
-                                            <p className="text-xs text-gray-500 font-medium mt-1">ID: {user?.id || 'N/A'}</p>
-                                            <p className="text-xs text-gray-400 truncate mt-0.5">{user?.email || 'email@example.com'}</p>
+                                            <h4 className="text-base font-bold text-brand-dark truncate leading-tight">{displayName}</h4>
+                                            <p className="text-xs text-gray-500 font-medium mt-1">ID: {userId}</p>
+                                            <p className="text-xs text-gray-400 truncate mt-0.5">{userEmail}</p>
                                         </div>
                                     </div>
 
@@ -271,7 +282,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <Button
                                             variant="destructive"
                                             className="w-full bg-brand-coral hover:bg-brand-coral/90 text-white font-bold h-10 rounded-lg flex items-center justify-center gap-2"
-                                            onClick={logoutAction}
+                                            onClick={handleLogout}
                                         >
                                             <LogOut className="w-4 h-4" />
                                             Đăng xuất

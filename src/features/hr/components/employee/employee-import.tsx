@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
+import { mutate } from 'swr'
 import { cn } from '@/lib/utils'
 import {
     Upload,
@@ -26,7 +26,6 @@ interface EmployeeImportProps {
 }
 
 export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
-    const router = useRouter()
     const { toast } = useToast()
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -109,7 +108,8 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                     title: 'Thành công',
                     description: `Đã import ${result.successCount} nhân viên`,
                 })
-                router.refresh()
+                // Revalidate SWR cache instead of full page refresh
+                mutate(() => true, undefined, { revalidate: true })
                 onSuccess?.()
             } else {
                 // Partial failure or full failure (shouldn't happen with strict check but safety first)
@@ -118,7 +118,8 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                     description: `Thành công: ${result.successCount}, Lỗi: ${result.failedCount}`,
                     variant: result.failedCount > 0 ? 'destructive' : 'default',
                 })
-                router.refresh()
+                // Revalidate SWR cache instead of full page refresh
+                mutate(() => true, undefined, { revalidate: true })
             }
         } catch (error) {
             toast({

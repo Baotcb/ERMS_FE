@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { mutate } from 'swr'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -102,7 +103,8 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
                 })
             }
 
-            router.refresh()
+            // Revalidate SWR cache instead of full page refresh
+            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {

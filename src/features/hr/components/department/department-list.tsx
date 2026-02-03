@@ -2,8 +2,8 @@
 
 import { memo, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Plus, Search, RefreshCw } from 'lucide-react'
+import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DepartmentTable } from '@/features/hr/components/department/department-table'
@@ -29,7 +29,6 @@ export const DepartmentList = memo(function DepartmentList({
     currentPage,
     totalPages
 }: DepartmentListProps) {
-    const router = useRouter()
     const [departments] = useState(initialDepartments)
     const [searchQuery, setSearchQuery] = useState('')
 
@@ -54,8 +53,9 @@ export const DepartmentList = memo(function DepartmentList({
 
     const handleSuccess = useCallback(() => {
         setIsOpen(false)
-        router.refresh()
-    }, [router])
+        // Revalidate SWR cache instead of full page refresh
+        mutate(() => true, undefined, { revalidate: true })
+    }, [])
 
     return (
         <div className="space-y-6">

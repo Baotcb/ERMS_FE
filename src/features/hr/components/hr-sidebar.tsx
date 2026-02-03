@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, memo, useRef, useEffect } from 'react'
+import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -159,9 +159,10 @@ const AvatarDropdown = memo(function AvatarDropdown() {
         logout()
     }, [logout])
 
-    const initials = user?.fullName
+    const initials = useMemo(() => user?.fullName
         ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-        : 'U'
+        : 'U',
+    [user?.fullName])
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -224,14 +225,16 @@ export const HRSidebar = memo(function HRSidebar() {
     const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
 
-    // Get user role for filtering navigation
-    const userRole = user?.role || ''
+    // Get user role for filtering navigation (memoized)
+    const userRole = useMemo(() => user?.role || '', [user?.role])
 
-    // Filter navigation items based on user role
-    const visibleNavItems = NAV_ITEMS.filter(item => {
-        if (!item.roles || item.roles.length === 0) return true // Empty = visible to all
-        return item.roles.includes(userRole)
-    })
+    // Filter navigation items based on user role (memoized)
+    const visibleNavItems = useMemo(() => {
+        return NAV_ITEMS.filter(item => {
+            if (!item.roles || item.roles.length === 0) return true // Empty = visible to all
+            return item.roles.includes(userRole)
+        })
+    }, [userRole])
 
     const toggleExpand = useCallback((label: string) => {
         setExpandedItems((prev) =>
@@ -241,12 +244,13 @@ export const HRSidebar = memo(function HRSidebar() {
         )
     }, [])
 
-    const isItemActive = (item: NavItem): boolean => {
+    // Memoize isItemActive function to prevent recreation
+    const isItemActive = useCallback((item: NavItem): boolean => {
         if (item.href) {
             return pathname === item.href
         }
         return item.children?.some((child) => pathname === child.href) ?? false
-    }
+    }, [pathname])
 
     const sidebarContent = (
         <div className="h-full flex flex-col bg-white border-r border-gray-200">

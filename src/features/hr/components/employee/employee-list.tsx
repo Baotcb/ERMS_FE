@@ -2,13 +2,13 @@
 
 import { memo, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Plus, Search, RefreshCw, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { EmployeeTable } from '@/features/hr/components/employee/employee-table'
 import { EmployeeForm } from '@/features/hr/components/employee/employee-form'
 import { EmployeeImport } from '@/features/hr/components/employee/employee-import'
+import { mutate } from 'swr'
 import {
     Dialog,
     DialogContent,
@@ -30,7 +30,6 @@ export const EmployeeList = memo(function EmployeeList({
     currentPage,
     totalPages
 }: EmployeeListProps) {
-    const router = useRouter()
     const [employees] = useState(initialEmployees)
     const [searchQuery, setSearchQuery] = useState('')
 
@@ -59,13 +58,15 @@ export const EmployeeList = memo(function EmployeeList({
 
     const handleSuccess = useCallback(() => {
         setIsCreateOpen(false)
-        router.refresh()
-    }, [router])
+        // Revalidate SWR cache instead of full page refresh
+        mutate(() => true, undefined, { revalidate: true })
+    }, [])
 
     const handleImportSuccess = useCallback(() => {
         setIsImportOpen(false)
-        router.refresh()
-    }, [router])
+        // Revalidate SWR cache instead of full page refresh
+        mutate(() => true, undefined, { revalidate: true })
+    }, [])
 
     return (
         <div className="space-y-6">

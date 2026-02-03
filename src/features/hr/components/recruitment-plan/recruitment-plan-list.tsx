@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { mutate } from 'swr'
 import { Plus, Search, RefreshCw, Filter } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -73,7 +74,8 @@ export function RecruitmentPlanList({
     }
 
     const handleRefresh = () => {
-        router.refresh()
+        // Revalidate SWR cache instead of full page refresh
+        mutate(() => true, undefined, { revalidate: true })
         toast({
             description: 'Đã làm mới dữ liệu',
         })
@@ -99,7 +101,8 @@ export function RecruitmentPlanList({
                     title: 'Thành công',
                     description: 'Đã xóa kế hoạch tuyển dụng',
                 })
-                router.refresh()
+                // Revalidate SWR cache instead of full page refresh
+                mutate(() => true, undefined, { revalidate: true })
             } catch (error) {
                 console.error(error)
                 toast({
@@ -111,10 +114,11 @@ export function RecruitmentPlanList({
                 setIsLoading(false)
             }
         }
-    }, [router, toast])
+    }, [toast])
 
     const handleSuccess = () => {
-        router.refresh()
+        // Revalidate SWR cache instead of full page refresh
+        mutate(() => true, undefined, { revalidate: true })
         setIsDialogOpen(false)
     }
 
