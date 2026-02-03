@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
             console.error('Failed to fetch profile in Google callback', e);
         }
 
-        const response = NextResponse.redirect(new URL(role === 'Candidate' ? '/candidate/jobs' : '/offers', origin));
+        const response = NextResponse.redirect(new URL(role === 'Candidate' ? '/jobs' : '/offers', origin));
 
         const cookieOptions = {
             path: '/',
