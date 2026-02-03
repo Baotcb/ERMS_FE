@@ -48,7 +48,7 @@ export const DepartmentList = memo(function DepartmentList({
     // Better approach: Since we have initial data, we can just fetch.
     const { data, departments, totalCount, totalPages, isLoading } = useDepartments({
         page: page,
-        pageSize: 20,
+        pageSize: 7,
         search: searchQuery || undefined
     })
 
@@ -87,12 +87,12 @@ export const DepartmentList = memo(function DepartmentList({
     const displayDepartments = data ? departments : initialDepartments
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#0F4C75]">Phòng ban</h1>
-                    <p className="text-gray-500 mt-1">Quản lý {totalCount ?? initialTotalCount} phòng ban</p>
+                    <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Phòng ban</h1>
+                    <p className="text-gray-500 text-sm">Quản lý {totalCount ?? initialTotalCount} phòng ban</p>
                 </div>
                 <Button onClick={handleCreate} className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
                     <Plus className="w-4 h-4 mr-2" />
@@ -121,7 +121,7 @@ export const DepartmentList = memo(function DepartmentList({
             </div>
 
             {/* Table */}
-            <div className="relative">
+            <div className="relative min-h-[500px]">
                 {isLoading && !data && (
                     <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
                         <Loader2 className="w-8 h-8 animate-spin text-[#0F4C75]" />

@@ -181,7 +181,7 @@ const AvatarDropdown = memo(function AvatarDropdown() {
                     {/* Menu Items */}
                     <div className="py-1">
                         <Link
-                            href="/enterprise/layout/profile"
+                            href="/enterprise/profile"
                             onClick={() => setIsOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
                         >

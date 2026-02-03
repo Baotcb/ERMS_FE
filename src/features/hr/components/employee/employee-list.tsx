@@ -38,7 +38,7 @@ export const EmployeeList = memo(function EmployeeList({
     // Use SWR hook for data fetching
     const { data, employees, totalCount: hookedTotalCount, totalPages: hookedTotalPages, isLoading } = useEmployees({
         page: page,
-        pageSize: 20,
+        pageSize: 7,
         search: searchQuery || undefined
     })
 
@@ -86,12 +86,12 @@ export const EmployeeList = memo(function EmployeeList({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#0F4C75]">Nhân viên</h1>
-                    <p className="text-gray-500 mt-1">Quản lý {displayTotalCount} nhân viên</p>
+                    <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Nhân viên</h1>
+                    <p className="text-gray-500 text-sm">Quản lý {displayTotalCount} nhân viên</p>
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline" onClick={handleImport}>
@@ -126,11 +126,13 @@ export const EmployeeList = memo(function EmployeeList({
             </div>
 
             {/* Table */}
-            <EmployeeTable
-                employees={displayEmployees}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-            />
+            <div className="min-h-[500px]">
+                <EmployeeTable
+                    employees={displayEmployees}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            </div>
 
             {/* Pagination */}
             {displayTotalPages > 1 && (

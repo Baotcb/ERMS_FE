@@ -88,13 +88,13 @@ export function LoginForm() {
                     } else {
                         // Route to role-specific dashboard
                         const roleRoutes: Record<string, string> = {
-                            'HRManager': '/enterprise/dashboard',
-                            'Employee': '/enterprise/dashboard',
-                            'Trainer': '/enterprise/dashboard',
-                            'Director': '/enterprise/dashboard',
-                            'DepartmentHead': '/enterprise/dashboard',
+                            'HRManager': '/enterprise/hr/dashboard',
+                            'DepartmentHead': '/enterprise/dept-head/dashboard',
+                            'Employee': '/enterprise/profile',
+                            'Trainer': '/enterprise/dept-head/training', // Assuming training module
+                            'Director': '/enterprise/hr/dashboard',
                         }
-                        const redirectPath = role && roleRoutes[role] ? roleRoutes[role] : '/enterprise/dashboard'
+                        const redirectPath = role && roleRoutes[role] ? roleRoutes[role] : '/enterprise/hr/dashboard'
                         router.push(redirectPath)
                     }
                 }, 500)

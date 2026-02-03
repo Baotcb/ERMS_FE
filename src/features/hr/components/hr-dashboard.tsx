@@ -47,15 +47,16 @@ export const HRDashboard = memo(function HRDashboard() {
     }, [])
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-[#0F4C75]">Dashboard</h1>
-                <p className="text-gray-500 mt-1">Tổng quan hoạt động HR</p>
+                <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Dashboard</h1>
+                <p className="text-gray-500 text-sm">Tổng quan hoạt động HR</p>
             </div>
 
             {/* Top Row: 3 Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
+            {/* Top Row: 3 Lists */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[300px]">
                 <DashboardListWidget
                     title="Danh sách Yêu cầu Tuyển dụng & Đào tạo"
                     subtitle="Phòng ban: Tất cả &bull; Chờ duyệt"
@@ -98,7 +99,7 @@ export const HRDashboard = memo(function HRDashboard() {
             </div>
 
             {/* Bottom Row: 2 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[280px]">
                 <DashboardChartWidget
                     title="Hiệu suất Tuyển dụng (Theo phòng ban)"
                     subtitle="Tỷ lệ đạt mục tiêu tuyển dụng (%)"

@@ -109,15 +109,15 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
     }, [])
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-[#0F4C75]">Dashboard</h1>
-                <p className="text-gray-500 mt-1">Quản lý Phòng ban</p>
+                <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Dashboard</h1>
+                <p className="text-gray-500 text-sm">Quản lý Phòng ban</p>
             </div>
 
             {/* Top Row: 3 Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[300px]">
                 <DashboardListWidget
                     title="Đề xuất nhân sự"
                     subtitle="Trạng thái: Đang xử lý"
@@ -141,7 +141,7 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
             </div>
 
             {/* Bottom Row: 2 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[400px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[280px]">
                 <DashboardChartWidget
                     title="Tiến độ Tuyển dụng"
                     subtitle="Phễu ứng viên (Funnel)"

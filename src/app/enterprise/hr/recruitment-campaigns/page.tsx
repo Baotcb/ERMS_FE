@@ -1,11 +1,11 @@
 import { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import { getRecruitmentPlans } from '@/features/hr/api/recruitment-plan-service'
-import { RecruitmentPlanList } from '@/features/hr/components/recruitment-plan/recruitment-plan-list'
+import { getRecruitmentCampaigns } from '@/features/hr/api/recruitment-campaign-service'
+import { RecruitmentCampaignList } from '@/features/hr/components/recruitment-campaign/recruitment-campaign-list'
 
 export const metadata: Metadata = {
-    title: 'Kế hoạch tuyển dụng | ERMS',
-    description: 'Quản lý kế hoạch tuyển dụng nhân sự',
+    title: 'Chiến dịch tuyển dụng | ERMS',
+    description: 'Quản lý chiến dịch tuyển dụng nhân sự',
 }
 
 interface PageProps {
@@ -16,7 +16,7 @@ interface PageProps {
     }>
 }
 
-export default async function RecruitmentPlansPage(props: PageProps) {
+export default async function RecruitmentCampaignsPage(props: PageProps) {
     const searchParams = await props.searchParams
     const page = Number(searchParams?.page) || 1
     const search = searchParams?.search || ''
@@ -25,16 +25,16 @@ export default async function RecruitmentPlansPage(props: PageProps) {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
 
-    const result = await getRecruitmentPlans({
+    const result = await getRecruitmentCampaigns({
         page,
-        pageSize: 10,
+        pageSize: 7,
         search,
         status
     }, token)
 
     return (
         <div className="container mx-auto py-6">
-            <RecruitmentPlanList
+            <RecruitmentCampaignList
                 data={result.items}
                 totalCount={result.totalCount}
                 page={result.page}

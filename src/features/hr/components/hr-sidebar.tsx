@@ -32,7 +32,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
     {
         label: 'Dashboard',
-        href: '/enterprise/dashboard',
+        href: '/enterprise/hr/dashboard',
         icon: <LayoutDashboard className="w-5 h-5" />,
         roles: [] // All roles
     },
@@ -41,8 +41,8 @@ const NAV_ITEMS: NavItem[] = [
         icon: <Users className="w-5 h-5" />,
         roles: ['HRManager', 'Director', 'DepartmentHead'],
         children: [
-            { label: 'Phòng ban', href: '/enterprise/departments' },
-            { label: 'Nhân viên', href: '/enterprise/employees' }
+            { label: 'Phòng ban', href: '/enterprise/hr/departments' },
+            { label: 'Nhân viên', href: '/enterprise/hr/employees' }
         ]
     },
     {
@@ -50,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <CalendarRange className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Kế hoạch tuyển dụng', href: '/enterprise/recruitment-plans' }
+            { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
         ]
     }
 ]
@@ -254,7 +254,7 @@ export const HRSidebar = memo(function HRSidebar() {
         <div className="h-full flex flex-col bg-white border-r border-gray-200">
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
-                <Link href="/enterprise/dashboard" className="flex items-center gap-3">
+                <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
                         <span className="text-white font-bold text-lg">HR</span>
                     </div>
