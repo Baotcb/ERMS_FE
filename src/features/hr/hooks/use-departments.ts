@@ -1,11 +1,9 @@
-import { config } from '@/config'
-import { useData, useMutation } from '@/lib/swr/hooks'
+import { useData, useMutation, mutate, type Fetcher } from '@/lib/swr/hooks'
+import { apiClient } from '@/lib/api-client'
 import type { Department, GetDepartmentsParams, CreateDepartmentData, UpdateDepartmentData, PaginatedResult } from '../api/department-service'
 
-const API_BASE = config.apiUrl
-
 // Helper to serialize params to a string for SWR key
-function serializeParams(params: any): string {
+function serializeParams(params: GetDepartmentsParams): string {
     return JSON.stringify(params)
 }
 
@@ -18,27 +16,8 @@ export const departmentsKeys = {
     detail: (id: number) => [...departmentsKeys.details(), id] as const,
 }
 
-// Helper: Get auth token
-async function getAuthHeaders(): Promise<HeadersInit> {
-    let authToken = ''
-    if (typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-
-    return {
-        'Content-Type': 'application/json',
-        ...(authToken && { Authorization: `Bearer ${authToken}` })
-    }
-}
-
 // Fetcher for departments list
-async function fetchDepartments(key: string): Promise<PaginatedResult<Department>> {
-    // Key format: ['departments', 'list', 'params_json_string']
-    const parts = key.split('["departments","list",')
-    const paramsString = parts[1]?.replace(/"$/, '') || '{}'
+async function fetchDepartments([, , paramsString]: readonly [string, string, string]): Promise<PaginatedResult<Department>> {
     const params = JSON.parse(paramsString) as GetDepartmentsParams
 
     const searchParams = new URLSearchParams({
@@ -49,40 +28,23 @@ async function fetchDepartments(key: string): Promise<PaginatedResult<Department
     if (params.search) searchParams.set('search', params.search)
     if (params.isActive !== undefined) searchParams.set('isActive', String(params.isActive))
 
-    const response = await fetch(`${API_BASE}/api/Departments?${searchParams}`, {
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.get(`/api/Departments?${searchParams}`)
 
     if (!response.ok) {
-        const text = await response.text()
-        let errorMsg = 'Không thể tải danh sách phòng ban'
-        try {
-            const json = JSON.parse(text)
-            errorMsg = json.message || errorMsg
-        } catch {
-            // ignore JSON parse error
-        }
-        throw new Error(errorMsg)
+        throw new Error('Không thể tải danh sách phòng ban')
     }
 
-    const text = await response.text()
-    if (!text) return { items: [], totalCount: 0, page: 1, pageSize: 20, totalPages: 0 }
-
-    try {
-        return JSON.parse(text)
-    } catch (e) {
-        console.error('fetchDepartments JSON parse error:', e)
-        throw e
-    }
+    return response.json()
 }
 
 // Hook: Get departments list with pagination and caching
 export function useDepartments(params: GetDepartmentsParams = {}) {
-    const key = params.page !== undefined || params.search !== undefined
-        ? departmentsKeys.list(params).join('/')
-        : null
+    // Use array key for SWR to support arguments in fetcher
+    const key = departmentsKeys.list(params)
 
-    const swr = useData<PaginatedResult<Department>>(key)
+    const swr = useData<PaginatedResult<Department>>(key, {
+        fetcher: fetchDepartments as unknown as Fetcher<PaginatedResult<Department>>
+    })
 
     return {
         ...swr,
@@ -90,14 +52,16 @@ export function useDepartments(params: GetDepartmentsParams = {}) {
         totalCount: swr.data?.totalCount ?? 0,
         currentPage: swr.data?.page ?? 1,
         totalPages: swr.data?.totalPages ?? 1,
-        isLoading: !swr.error && !swr.data && key !== null,
+        isLoading: !swr.error && !swr.data,
     }
 }
 
 // Hook: Get departments for dropdown (with cache)
 export function useDepartmentOptions() {
-    const key = departmentsKeys.list({ page: 1, pageSize: 100, isActive: true }).join('/')
-    const swr = useData<PaginatedResult<Department>>(key)
+    const key = departmentsKeys.list({ page: 1, pageSize: 100, isActive: true })
+    const swr = useData<PaginatedResult<Department>>(key, {
+        fetcher: fetchDepartments as unknown as Fetcher<PaginatedResult<Department>>
+    })
 
     return {
         ...swr,
@@ -110,7 +74,13 @@ export function useDepartmentOptions() {
 export function useDepartment(id: number | null) {
     const key = id ? departmentsKeys.detail(id).join('/') : null
 
-    const swr = useData<Department>(key)
+    const swr = useData<Department>(key, {
+        fetcher: async () => {
+            const response = await apiClient.get(`/api/Departments/${id}`)
+            if (!response.ok) throw new Error('Không thể tải thông tin phòng ban')
+            return response.json()
+        }
+    })
 
     return {
         ...swr,
@@ -123,12 +93,8 @@ export function useDepartment(id: number | null) {
 export function useCreateDepartment() {
     return useMutation<{ departmentId: number }, CreateDepartmentData>(
         departmentsKeys.lists().join('/'),
-        async (data) => {
-            const response = await fetch(`${API_BASE}/api/Departments`, {
-                method: 'POST',
-                headers: await getAuthHeaders(),
-                body: JSON.stringify(data),
-            })
+        async (data: CreateDepartmentData) => {
+            const response = await apiClient.post(`/api/Departments`, data)
 
             if (!response.ok) {
                 const error = await response.json()
@@ -140,8 +106,12 @@ export function useCreateDepartment() {
         {
             onSuccess: () => {
                 // Revalidate departments list
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(() => true, undefined, { revalidate: true })
+                // Using match mutator to invalidate all lists
+                mutate(
+                    (key: unknown) => Array.isArray(key) && key[0] === 'departments' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )
@@ -152,11 +122,7 @@ export function useUpdateDepartment() {
     return useMutation<void, { id: number; data: UpdateDepartmentData }>(
         departmentsKeys.lists().join('/'),
         async ({ id, data }) => {
-            const response = await fetch(`${API_BASE}/api/Departments/${id}`, {
-                method: 'PUT',
-                headers: await getAuthHeaders(),
-                body: JSON.stringify(data),
-            })
+            const response = await apiClient.put(`/api/Departments/${id}`, data)
 
             if (!response.ok) {
                 const error = await response.json()
@@ -167,9 +133,11 @@ export function useUpdateDepartment() {
         },
         {
             onSuccess: () => {
-                // Revalidate departments list
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(() => true, undefined, { revalidate: true })
+                mutate(
+                    (key: unknown) => Array.isArray(key) && key[0] === 'departments' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )
@@ -179,11 +147,8 @@ export function useUpdateDepartment() {
 export function useDeleteDepartment() {
     return useMutation<void, number>(
         departmentsKeys.lists().join('/'),
-        async (id) => {
-            const response = await fetch(`${API_BASE}/api/Departments/${id}`, {
-                method: 'DELETE',
-                headers: await getAuthHeaders(),
-            })
+        async (id: number) => {
+            const response = await apiClient.delete(`/api/Departments/${id}`)
 
             if (!response.ok) {
                 const error = await response.json()
@@ -194,8 +159,11 @@ export function useDeleteDepartment() {
         },
         {
             onSuccess: () => {
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(() => true, undefined, { revalidate: true })
+                mutate(
+                    (key: unknown) => Array.isArray(key) && key[0] === 'departments' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )

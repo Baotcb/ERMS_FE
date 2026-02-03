@@ -88,8 +88,41 @@ async function fetchWithRetry(url: string, options: RequestOptions = {}): Promis
 
 export const apiClient = {
     get: (url: string, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'GET' }),
-    post: (url: string, body: unknown, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json', ...options?.headers } }),
-    put: (url: string, body: unknown, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json', ...options?.headers } }),
+    post: (url: string, body: unknown, options?: RequestOptions) => {
+        const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+        return fetchWithRetry(url, {
+            ...options,
+            method: 'POST',
+            body: isFormData ? (body as BodyInit) : JSON.stringify(body),
+            headers: {
+                ...(!isFormData && { 'Content-Type': 'application/json' }),
+                ...options?.headers
+            }
+        })
+    },
+    put: (url: string, body: unknown, options?: RequestOptions) => {
+        const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+        return fetchWithRetry(url, {
+            ...options,
+            method: 'PUT',
+            body: isFormData ? (body as BodyInit) : JSON.stringify(body),
+            headers: {
+                ...(!isFormData && { 'Content-Type': 'application/json' }),
+                ...options?.headers
+            }
+        })
+    },
     delete: (url: string, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'DELETE' }),
-    patch: (url: string, body: unknown, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'PATCH', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json', ...options?.headers } }),
+    patch: (url: string, body: unknown, options?: RequestOptions) => {
+        const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+        return fetchWithRetry(url, {
+            ...options,
+            method: 'PATCH',
+            body: isFormData ? (body as BodyInit) : JSON.stringify(body),
+            headers: {
+                ...(!isFormData && { 'Content-Type': 'application/json' }),
+                ...options?.headers
+            }
+        })
+    },
 }

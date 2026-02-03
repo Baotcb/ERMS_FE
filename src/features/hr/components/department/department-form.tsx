@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { mutate } from 'swr'
@@ -18,7 +18,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { getDepartments, createDepartment, updateDepartment } from '@/features/hr/api/department-service'
+import { getDepartments } from '@/features/hr/api/department-service'
+import { useCreateDepartment, useUpdateDepartment } from '@/features/hr/hooks/use-departments'
 import { getEmployees } from '@/features/hr/api/employee-service'
 import type { Department } from '@/features/hr/api/department-service'
 import type { Employee } from '@/features/hr/api/employee-service'
@@ -51,7 +52,7 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
 
     const form = useForm<DepartmentFormValues>({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(departmentSchema) as any,
+        resolver: zodResolver(departmentSchema) as unknown as Resolver<DepartmentFormValues>,
         defaultValues: {
             departmentName: initialData?.departmentName || '',
             departmentCode: initialData?.departmentCode || '',
@@ -72,13 +73,72 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
                     getEmployees({ pageSize: 100 }) // Fetch employees for manager selection
                 ])
                 setDepartments(deptRes.items.filter(d => d.id !== initialData?.id)) // Exclude self from parent options
-                setManagers(empRes.items)
+
+                let loadedManagers = empRes.items
+
+                // If we have a managerId and it's not in the loaded list, fetch specifically
+                if (initialData?.managerId && !loadedManagers.find(m => m.id === initialData.managerId)) {
+                    try {
+                        // Check if we have the name available to fallback first (avoid flash)
+                        // Then fetch real data
+                        const fetchedManager = await getEmployees({ search: initialData.managerId, pageSize: 1 })
+                            .then(res => res.items[0]);
+
+                        if (fetchedManager) {
+                            // Remove if exists to avoid duplicates (though find check should prevent this)
+                            loadedManagers = [fetchedManager, ...loadedManagers.filter(m => m.id !== fetchedManager.id)]
+                        } else if (initialData.managerName) {
+                            // Absolute fallback if fetch fails but we have name
+                            const placeholderManager = {
+                                id: initialData.managerId,
+                                fullName: initialData.managerName,
+                                // ...required fields
+                                employeeCode: '',
+                                email: '',
+                                phone: null,
+                                departmentId: 0,
+                                departmentName: '',
+                                position: null,
+                                employmentType: '',
+                                hireDate: null,
+                                status: 'Active',
+                                createdAt: ''
+                            } as Employee
+                            loadedManagers = [placeholderManager, ...loadedManagers]
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch specific manager info", e)
+                        // Fallback to name if available
+                        if (initialData.managerName) {
+                            const placeholderManager = {
+                                id: initialData.managerId,
+                                fullName: initialData.managerName,
+                                // ...required fields
+                                employeeCode: '',
+                                email: '',
+                                phone: null,
+                                departmentId: 0,
+                                departmentName: '',
+                                position: null,
+                                employmentType: '',
+                                hireDate: null,
+                                status: 'Active',
+                                createdAt: ''
+                            } as Employee
+                            loadedManagers = [placeholderManager, ...loadedManagers]
+                        }
+                    }
+                }
+                setManagers(loadedManagers)
             } catch (error) {
                 console.error('Failed to load options', error)
             }
         }
         loadOptions()
-    }, [initialData?.id])
+    }, [initialData?.id, initialData?.managerId, initialData?.managerName])
+
+    const { trigger: createDepartmentFn } = useCreateDepartment()
+    const { trigger: updateDepartmentFn } = useUpdateDepartment()
 
     const onSubmit = async (data: DepartmentFormValues) => {
         setIsLoading(true)
@@ -90,21 +150,19 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
             }
 
             if (isEdit && initialData) {
-                await updateDepartment(initialData.id, { ...payload, id: initialData.id })
+                await updateDepartmentFn({ id: initialData.id, data: { ...payload, id: initialData.id } })
                 toast({
                     title: 'Thành công',
                     description: 'Cập nhật phòng ban thành công',
                 })
             } else {
-                await createDepartment(payload)
+                await createDepartmentFn(payload)
                 toast({
                     title: 'Thành công',
                     description: 'Tạo phòng ban thành công',
                 })
             }
 
-            // Revalidate SWR cache instead of full page refresh
-            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {
@@ -163,7 +221,13 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
                             defaultValue={watch('parentDepartmentId')}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Chọn phòng ban cha (nếu có)" />
+                                <SelectValue placeholder="Chọn phòng ban cha (nếu có)">
+                                    {watch('parentDepartmentId') === '0'
+                                        ? 'Không có'
+                                        : departments.find(d => d.id.toString() === watch('parentDepartmentId'))?.departmentName
+                                        || (watch('parentDepartmentId') ? watch('parentDepartmentId') : "Chọn phòng ban cha (nếu có)")
+                                    }
+                                </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="0">Không có</SelectItem>
@@ -177,13 +241,19 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Người quản lý</Label>
+                        <Label>Trưởng phòng</Label>
+                        {/* 
+                           FIX: Use 'value' instead of 'defaultValue' for controlled component to update when data loads. 
+                           Also ensure we handle the case where managerId is null/undefined.
+                        */}
                         <Select
+                            value={watch('managerId') || ""}
                             onValueChange={(value) => setValue('managerId', value)}
-                            defaultValue={watch('managerId')}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Chọn người quản lý" />
+                                <SelectValue placeholder="Chọn Trưởng phòng">
+                                    {managers.find(m => m.id === watch('managerId'))?.fullName || (watch('managerId') ? watch('managerId') : "Chọn Trưởng phòng")}
+                                </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 {managers.map((emp) => (

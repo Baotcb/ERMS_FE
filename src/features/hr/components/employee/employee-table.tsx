@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useState, useCallback } from 'react'
+import { memo } from 'react'
 import {
     Edit2,
     Trash2,

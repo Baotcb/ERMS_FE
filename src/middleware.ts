@@ -27,6 +27,8 @@ const PROTECTED_ROUTE_PATTERNS = [
   '/profile',
   '/security',
   '/candidate',
+  '/enterprise',
+  '/hr',
 ] as const
 
 // Constant CSP header template (nonce will be injected dynamically)
@@ -127,12 +129,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  if (isPublicRoute(pathname) && authCookie && !isExpired) {
+  if ((isPublicRoute(pathname) || pathname === '/enterprise' || pathname === '/enterprise/') && authCookie && !isExpired) {
     const role = request.cookies.get('user_role')?.value
     if (role === 'Candidate') {
       return NextResponse.redirect(new URL('/jobs', request.url))
+    } else if (['HRManager', 'Director', 'HR'].includes(role || '')) {
+      return NextResponse.redirect(new URL('/enterprise/hr/dashboard', request.url))
     } else {
-      return NextResponse.redirect(new URL('/enterprise/dashboard', request.url))
+      return NextResponse.redirect(new URL('/enterprise/dept-head/dashboard', request.url))
     }
   }
 

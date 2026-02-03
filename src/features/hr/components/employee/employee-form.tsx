@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Loader2, ArrowLeft, CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
-import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,7 +21,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar'
 import { cn } from '@/lib/utils'
 import { getDepartments } from '@/features/hr/api/department-service'
-import { getEmployees, createEmployee, updateEmployee } from '@/features/hr/api/employee-service'
+import { getEmployees, CreateEmployeeData } from '@/features/hr/api/employee-service'
+import { useCreateEmployee, useUpdateEmployee } from '@/features/hr/hooks/use-employees'
 import type { Department } from '@/features/hr/api/department-service'
 import type { Employee } from '@/features/hr/api/employee-service'
 import { useToast } from '@/hooks/use-toast'
@@ -68,7 +68,6 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
             position: initialData?.position || '',
             employmentType: initialData?.employmentType || 'FullTime',
             hireDate: initialData?.hireDate ? new Date(initialData.hireDate) : new Date(),
-            managerId: initialData?.managerId?.toString() || '',
             status: initialData?.status || 'Active',
         },
     })
@@ -82,14 +81,41 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                     getDepartments({ pageSize: 100 }),
                     getEmployees({ pageSize: 100 })
                 ])
-                setDepartments(deptRes.items)
+
+                let loadedDepartments = deptRes.items;
+                // Ensure current department is in the list
+                if (initialData?.departmentId && !loadedDepartments.find(d => d.id === initialData.departmentId)) {
+                    // Create placeholder if real one not loaded
+                    // We cast to any/Department because we might not have all fields, but we have what Select needs
+                    const currentDept = {
+                        id: initialData.departmentId,
+                        departmentName: initialData.departmentName || 'Current Department',
+                        departmentCode: '', // Unknown if not fetched
+                        description: '',
+                        managerId: null,
+                        managerName: null,
+                        parentDepartmentId: null,
+                        parentDepartmentName: null,
+                        isActive: true,
+                        createdAt: '',
+                        updatedAt: '',
+                        employeeCount: 0
+                    } as Department
+
+                    loadedDepartments = [currentDept, ...loadedDepartments]
+                }
+
+                setDepartments(loadedDepartments)
                 setManagers(empRes.items.filter(e => e.id !== initialData?.id))
             } catch (error) {
                 console.error('Failed to load options', error)
             }
         }
         loadOptions()
-    }, [initialData?.id])
+    }, [initialData?.id, initialData?.departmentId, initialData?.departmentName])
+
+    const { trigger: createEmployeeFn, isMutating: isCreating } = useCreateEmployee()
+    const { trigger: updateEmployeeFn, isMutating: isUpdating } = useUpdateEmployee()
 
     const onSubmit = async (data: EmployeeFormValues) => {
         setIsLoading(true)
@@ -101,40 +127,43 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                 return
             }
 
-            const payload = {
-                ...data,
+            // Clean payload - convert empty strings to undefined
+            const cleanData = {
+                fullName: data.fullName,
+                email: data.email,
+                phone: data.phone || undefined,
                 departmentId: parseInt(data.departmentId),
+                position: data.position || undefined,
+                employmentType: data.employmentType,
                 hireDate: data.hireDate ? data.hireDate.toISOString() : undefined,
                 managerId: data.managerId || undefined,
+                // Only include password if provided
+                ...(data.password ? { password: data.password } : {}),
             }
 
             if (isEdit && initialData) {
-                await updateEmployee(initialData.id, {
+                await updateEmployeeFn({
                     id: initialData.id,
-                    departmentId: payload.departmentId,
-                    position: payload.position,
-                    employmentType: payload.employmentType,
-                    managerId: payload.managerId,
-                    status: payload.status
+                    data: {
+                        ...cleanData,
+                        id: initialData.id,
+                        status: data.status, // Status is allowed in update
+                    }
                 })
                 toast({
                     title: 'Thành công',
                     description: 'Cập nhật nhân viên thành công',
                 })
             } else {
-                if (!data.password) throw new Error("Mật khẩu là bắt buộc")
-                await createEmployee({
-                    ...payload,
-                    password: data.password
-                })
+                if (!cleanData.password) throw new Error("Mật khẩu là bắt buộc")
+                // Explicitly cast to CreateEmployeeData to ensure we only send what's expected
+                await createEmployeeFn(cleanData as CreateEmployeeData)
                 toast({
                     title: 'Thành công',
                     description: 'Thêm nhân viên thành công',
                 })
             }
 
-            // Revalidate SWR cache instead of full page refresh
-            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {
@@ -215,47 +244,41 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label>Phòng ban <span className="text-red-500">*</span></Label>
-                        <Select
-                            onValueChange={(value) => setValue('departmentId', value)}
-                            defaultValue={watch('departmentId')}
-                        >
-                            <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
-                                <SelectValue placeholder="Chọn phòng ban" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {departments.map((dept) => (
-                                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                                        {dept.departmentName}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {errors.departmentId && (
-                            <p className="text-sm text-red-500">{errors.departmentId.message}</p>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Người quản lý</Label>
-                        <Select
-                            onValueChange={(value) => setValue('managerId', value)}
-                            defaultValue={watch('managerId')}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Chọn quản lý trực tiếp" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {managers.map((emp) => (
-                                    <SelectItem key={emp.id} value={emp.id}>
-                                        {emp.fullName}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                {/* Manager/Department container was here. We removed Manager selection. 
+                        Re-organizing: Department is remaining. 
+                        We can keep Department in a grid or make it full width if needed?
+                        The original code had Department and Manager in one row (grid-cols-2).
+                        I will remove the Manager Select and keep Department. 
+                    */}
+                <div className="space-y-2">
+                    <Label>Phòng ban <span className="text-red-500">*</span></Label>
+                    <Select
+                        value={watch('departmentId')}
+                        onValueChange={(value) => setValue('departmentId', value)}
+                    >
+                        <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
+                            <SelectValue placeholder="Chọn phòng ban">
+                                {(() => {
+                                    const deptId = watch('departmentId');
+                                    const found = departments.find(d => d.id.toString() === deptId);
+                                    if (found) {
+                                        return found.departmentCode ? `${found.departmentName} (${found.departmentCode})` : found.departmentName;
+                                    }
+                                    return deptId ? deptId : "Chọn phòng ban";
+                                })()}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {departments.map((dept) => (
+                                <SelectItem key={dept.id} value={dept.id.toString()}>
+                                    {dept.departmentCode ? `${dept.departmentName} (${dept.departmentCode})` : dept.departmentName}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.departmentId && (
+                        <p className="text-sm text-red-500">{errors.departmentId.message}</p>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
