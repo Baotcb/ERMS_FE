@@ -115,7 +115,7 @@ export function RecruitmentCampaignList({
                 setIsLoading(false)
             }
         }
-    }, [toast])
+    }, [toast, router])
 
     const handleStatusChange = useCallback(async (id: string, status: string) => {
         try {
@@ -135,7 +135,7 @@ export function RecruitmentCampaignList({
                 description: errorMessage,
             })
         }
-    }, [toast])
+    }, [toast, router])
 
     const handleSuccess = () => {
         // Refresh server data
