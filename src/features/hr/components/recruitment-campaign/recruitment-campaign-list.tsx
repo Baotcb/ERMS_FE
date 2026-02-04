@@ -26,6 +26,7 @@ import { RecruitmentCampaignTable } from './recruitment-campaign-table'
 import { RecruitmentCampaignForm } from './recruitment-campaign-form'
 import { deleteRecruitmentCampaign, updateRecruitmentCampaignStatus } from '../../api/recruitment-campaign-service'
 import type { RecruitmentCampaign } from '../../types/recruitment-campaign-types'
+import { ErrorDialog } from '@/components/common'
 
 interface RecruitmentCampaignListProps {
     data: RecruitmentCampaign[]
@@ -49,6 +50,10 @@ export function RecruitmentCampaignList({
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [selectedCampaign, setSelectedCampaign] = useState<RecruitmentCampaign | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+
+    // Error Handling
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
 
     // Filters
     const handleSearch = (term: string) => {
@@ -115,7 +120,7 @@ export function RecruitmentCampaignList({
                 setIsLoading(false)
             }
         }
-    }, [toast])
+    }, [toast, router])
 
     const handleStatusChange = useCallback(async (id: string, status: string) => {
         try {
@@ -128,14 +133,11 @@ export function RecruitmentCampaignList({
             router.refresh()
         } catch (error) {
             console.error(error)
-            const errorMessage = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
-            toast({
-                variant: 'destructive',
-                title: 'Lỗi',
-                description: errorMessage,
-            })
+            const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
+            setErrorMessage(message)
+            setErrorDialogOpen(true)
         }
-    }, [toast])
+    }, [toast, router])
 
     const handleSuccess = () => {
         // Refresh server data
@@ -254,6 +256,13 @@ export function RecruitmentCampaignList({
                     />
                 </DialogContent>
             </Dialog>
+            <ErrorDialog 
+                open={errorDialogOpen}
+                onOpenChange={setErrorDialogOpen}
+                title="Có lỗi xảy ra"
+                message={errorMessage}
+                variant="forbidden"
+            />
         </div>
     )
 }

@@ -6,7 +6,7 @@ import type { RecruitmentCampaign } from '@/features/hr/types/recruitment-campai
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 
-export default async function RecruitmentPage() {
+export default async function RecruitmentPlansPage() {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
 
@@ -28,7 +28,7 @@ export default async function RecruitmentPage() {
         return (
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Chiến dịch tuyển dụng</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Kế hoạch tuyển dụng</h1>
                 </div>
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
@@ -44,9 +44,9 @@ export default async function RecruitmentPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Chiến dịch tuyển dụng</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Kế hoạch tuyển dụng</h1>
                 <p className="text-muted-foreground">
-                    Danh sách các chiến dịch tuyển dụng đang mở. Chọn một chiến dịch để lập kế hoạch.
+                    Chọn chiến dịch tuyển dụng để xem hoặc lập kế hoạch chi tiết.
                 </p>
             </div>
 

@@ -100,15 +100,15 @@ export function RecruitmentCampaignTable({
                                     {campaign.campaignCode}
                                 </Badge>
                             </TableCell>
-                            <TableCell>
-                                <div className="font-medium text-blue-900">{campaign.campaignName}</div>
+                            <TableCell className="max-w-[300px]">
+                                <div className="font-medium text-blue-900 break-words line-clamp-2">{campaign.campaignName}</div>
                                 {campaign.description && (
-                                    <div className="text-xs text-gray-500 truncate max-w-[200px]">
+                                    <div className="text-xs text-gray-500 line-clamp-1">
                                         {campaign.description}
                                     </div>
                                 )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="whitespace-nowrap">
                                 <div className="flex flex-col text-sm text-gray-600">
                                     <span>Năm {campaign.fiscalYear}</span>
                                     {campaign.fiscalQuarter && (
@@ -116,7 +116,7 @@ export function RecruitmentCampaignTable({
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="whitespace-nowrap">
                                 <div className="flex flex-col text-sm text-gray-600">
                                     <span className="flex items-center gap-1">
                                         {format(new Date(campaign.submissionStartDate), 'dd/MM/yyyy')}
@@ -125,7 +125,7 @@ export function RecruitmentCampaignTable({
                                     </span>
                                 </div>
                             </TableCell>
-                            <TableCell className="text-right font-mono">
+                            <TableCell className="text-right font-mono whitespace-nowrap">
                                 {campaign.totalBudgetCeiling ? (
                                     <span className="text-emerald-600 font-medium">
                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.totalBudgetCeiling)}

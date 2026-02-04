@@ -38,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
         children: [
             { label: 'Đề xuất nhân sự', href: '/enterprise/dept-head/proposals' },
             { label: 'Chiến dịch tuyển dụng', href: '/enterprise/dept-head/recruitment' },
+            { label: 'Kế hoạch tuyển dụng', href: '/enterprise/dept-head/recruitment-plans' },
         ]
     },
     {

@@ -26,6 +26,12 @@ export async function getRecruitmentCampaigns(params: GetRecruitmentCampaignsPar
     })
 
     if (!response.ok) {
+        console.error('getRecruitmentCampaigns failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url,
+            text: await response.text()
+        })
         throw new Error('Không thể tải danh sách chiến dịch tuyển dụng')
     }
 
@@ -57,8 +63,15 @@ export async function createRecruitmentCampaign(data: CreateRecruitmentCampaignR
     const response = await apiClient.post(`/api/recruitment-campaigns`, data)
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể tạo chiến dịch tuyển dụng')
+        const text = await response.text()
+        let errorMessage = 'Không thể tạo chiến dịch tuyển dụng'
+        try {
+            const error = JSON.parse(text)
+            if (error.message) errorMessage = error.message
+        } catch {
+            console.error('Failed to parse error response:', text)
+        }
+        throw new Error(errorMessage)
     }
 
     return response.json()
@@ -68,17 +81,31 @@ export async function updateRecruitmentCampaign(id: string, data: UpdateRecruitm
     const response = await apiClient.put(`/api/recruitment-campaigns/${id}`, data)
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể cập nhật chiến dịch tuyển dụng')
+        const text = await response.text()
+        let errorMessage = 'Không thể cập nhật chiến dịch tuyển dụng'
+        try {
+            const error = JSON.parse(text)
+            if (error.message) errorMessage = error.message
+        } catch {
+            console.error('Failed to parse error response:', text)
+        }
+        throw new Error(errorMessage)
     }
 }
 
 export async function updateRecruitmentCampaignStatus(id: string, status: string): Promise<void> {
-    const response = await apiClient.put(`/api/recruitment-campaigns/${id}/status`, { newStatus: status })
+    const response = await apiClient.put(`/api/recruitment-campaigns/status`, { id, newStatus: status })
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể cập nhật trạng thái chiến dịch')
+        const text = await response.text()
+        let errorMessage = 'Không thể cập nhật trạng thái chiến dịch'
+        try {
+            const error = JSON.parse(text)
+            if (error.message) errorMessage = error.message
+        } catch {
+            console.error('Failed to parse error response:', text)
+        }
+        throw new Error(errorMessage)
     }
 }
 
@@ -86,7 +113,14 @@ export async function deleteRecruitmentCampaign(id: string): Promise<void> {
     const response = await apiClient.delete(`/api/recruitment-campaigns/${id}`)
 
     if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể xóa chiến dịch tuyển dụng')
+        const text = await response.text()
+        let errorMessage = 'Không thể xóa chiến dịch tuyển dụng'
+        try {
+            const error = JSON.parse(text)
+            if (error.message) errorMessage = error.message
+        } catch {
+            console.error('Failed to parse error response:', text)
+        }
+        throw new Error(errorMessage)
     }
 }
