@@ -56,7 +56,7 @@ export const HRDashboard = memo(function HRDashboard() {
 
             {/* Top Row: 3 Lists */}
             {/* Top Row: 3 Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[300px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <DashboardListWidget
                     title="Danh sách Yêu cầu Tuyển dụng & Đào tạo"
                     subtitle="Phòng ban: Tất cả &bull; Chờ duyệt"
@@ -99,7 +99,7 @@ export const HRDashboard = memo(function HRDashboard() {
             </div>
 
             {/* Bottom Row: 2 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[280px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
                 <DashboardChartWidget
                     title="Hiệu suất Tuyển dụng (Theo phòng ban)"
                     subtitle="Tỷ lệ đạt mục tiêu tuyển dụng (%)"
