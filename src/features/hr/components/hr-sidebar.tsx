@@ -255,6 +255,7 @@ export const HRSidebar = memo(function HRSidebar() {
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
+                    {/* Placeholder logic for future logo integration */}
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
                         <span className="text-white font-bold text-lg">HR</span>
                     </div>

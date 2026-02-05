@@ -17,6 +17,8 @@ export async function getRecruitmentPlans(params: GetRecruitmentPlansParams, tok
 
     if (params.search) searchParams.set('search', params.search)
     if (params.status) searchParams.set('status', params.status)
+    if (params.campaignId) searchParams.set('campaignId', params.campaignId)
+    if (params.departmentId) searchParams.set('departmentId', String(params.departmentId))
 
     const headers: HeadersInit = {}
     if (token) {

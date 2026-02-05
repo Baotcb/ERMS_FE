@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
     retries?: number
 }
 
-const DEFAULT_TIMEOUT = 15000
+const DEFAULT_TIMEOUT = 30000
 const DEFAULT_RETRIES = 1
 
 async function fetchWithRetry(url: string, options: RequestOptions = {}): Promise<Response> {
@@ -115,14 +115,19 @@ export const apiClient = {
     delete: (url: string, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'DELETE' }),
     patch: (url: string, body: unknown, options?: RequestOptions) => {
         const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+        const headers = {
+            ...options?.headers,
+        } as Record<string, string>
+
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json'
+        }
+
         return fetchWithRetry(url, {
             ...options,
             method: 'PATCH',
             body: isFormData ? (body as BodyInit) : JSON.stringify(body),
-            headers: {
-                ...(!isFormData && { 'Content-Type': 'application/json' }),
-                ...options?.headers
-            }
+            headers
         })
     },
 }

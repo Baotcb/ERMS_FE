@@ -1,5 +1,6 @@
 export interface RecruitmentPlan {
     id: string
+    campaignId: string
     planName: string
     planCode: string
     description?: string
@@ -20,6 +21,8 @@ export interface CreateRecruitmentPlanRequest {
     startDate: string
     endDate: string
     totalBudget?: number
+    campaignId?: string
+    departmentId?: number
 }
 
 export interface UpdateRecruitmentPlanRequest extends CreateRecruitmentPlanRequest {
@@ -31,6 +34,8 @@ export interface GetRecruitmentPlansParams {
     pageSize?: number
     search?: string
     status?: string
+    campaignId?: string
+    departmentId?: number
 }
 
 export interface PaginatedResult<T> {

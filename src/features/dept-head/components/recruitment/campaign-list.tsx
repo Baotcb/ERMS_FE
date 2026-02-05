@@ -27,7 +27,7 @@ export function DeptHeadCampaignList({ campaigns, isLoading }: DeptHeadCampaignL
     const router = useRouter()
 
     const handleSelect = (id: string) => {
-        router.push(`/enterprise/dept-head/recruitment-plans/${id}`)
+        router.push(`/enterprise/dept-head/recruitment-plans/campaign/${id}`)
     }
 
     if (isLoading) {

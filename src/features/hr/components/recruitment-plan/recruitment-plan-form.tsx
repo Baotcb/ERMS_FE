@@ -45,12 +45,16 @@ interface RecruitmentPlanFormProps {
     plan?: RecruitmentPlan | null
     onSuccess?: () => void
     onCancel?: () => void
+    campaignId?: string
+    departmentId?: number
 }
 
 export function RecruitmentPlanForm({
     plan,
     onSuccess,
-    onCancel
+    onCancel,
+    campaignId,
+    departmentId
 }: RecruitmentPlanFormProps) {
     const { toast } = useToast()
     const isEdit = !!plan
@@ -84,6 +88,8 @@ export function RecruitmentPlanForm({
                 ...data,
                 startDate: data.startDate.toISOString(),
                 endDate: data.endDate.toISOString(),
+                campaignId: campaignId,
+                departmentId: departmentId
             }
 
             if (isEdit && plan) {

@@ -33,13 +33,17 @@ interface RecruitmentPlanListProps {
     page: number
     pageSize: number
     totalPages: number
+    campaignId?: string
+    departmentId?: number
 }
 
 export function RecruitmentPlanList({
     data,
     totalCount,
     page,
-    totalPages
+    totalPages,
+    campaignId,
+    departmentId
 }: RecruitmentPlanListProps) {
     const router = useRouter()
     const pathname = usePathname()
@@ -227,6 +231,8 @@ export function RecruitmentPlanList({
                         plan={selectedPlan}
                         onSuccess={handleSuccess}
                         onCancel={() => setIsDialogOpen(false)}
+                        campaignId={campaignId}
+                        departmentId={departmentId}
                     />
                 </DialogContent>
             </Dialog>
