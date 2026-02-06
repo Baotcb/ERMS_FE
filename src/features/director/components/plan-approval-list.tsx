@@ -36,8 +36,8 @@ export function PlanApprovalList() {
 
     // Fetch Pending plans
     const { data, isLoading, mutate } = useSWR<PlanListResponse>(
-        '/RecruitmentPlans/pending', // Use unique key
-        () => apiClient.get('/RecruitmentPlans?Status=Pending&Page=1&PageSize=50').then(res => res.json())
+        '/api/RecruitmentPlans/pending', // Use unique key
+        () => apiClient.get('/api/RecruitmentPlans?Status=Pending&Page=1&PageSize=50').then(res => res.json())
     )
 
     const handleAction = (plan: RecruitmentPlan, type: 'approve' | 'reject') => {
@@ -52,9 +52,9 @@ export function PlanApprovalList() {
         try {
             let res
             if (actionType === 'approve') {
-                res = await apiClient.patch(`/RecruitmentPlans/approve`, { id: selectedPlan.id })
+                res = await apiClient.patch(`/api/RecruitmentPlans/approve`, { planId: selectedPlan.id })
             } else {
-                res = await apiClient.patch(`/RecruitmentPlans/reject`, { id: selectedPlan.id, reason: rejectReason })
+                res = await apiClient.patch(`/api/RecruitmentPlans/reject`, { planId: selectedPlan.id, rejectionReason: rejectReason })
             }
 
             if (res.ok) {
@@ -122,7 +122,7 @@ export function PlanApprovalList() {
                                     <TableCell className="font-mono text-xs">{plan.planCode}</TableCell>
                                     <TableCell className="font-medium">{plan.planName}</TableCell>
                                     <TableCell>{plan.createdByName}</TableCell>
-                                    <TableCell>{format(new Date(plan.updatedAt), 'dd/MM/yyyy')}</TableCell>
+                                    <TableCell>{plan.updatedAt ? format(new Date(plan.updatedAt), 'dd/MM/yyyy') : format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
                                     <TableCell>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}</TableCell>
                                     <TableCell className="text-right space-x-2">
                                         <Button variant="outline" size="sm" onClick={() => window.location.href = `/enterprise/director/recruitment-plans/${plan.id}`}>

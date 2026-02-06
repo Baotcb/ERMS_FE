@@ -21,27 +21,44 @@ import {
 function ProposalItemRow({ item }: { item: ProposalItem }) {
     const getStatusColor = (s: string) => {
         switch (s) {
-            case 'urgent': return 'bg-red-100 text-red-600 border-red-200'
-            case 'highlight': return 'bg-orange-100 text-orange-600 border-orange-200'
-            default: return 'bg-green-100 text-green-600 border-green-200'
+            case 'Pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+            case 'Approved': return 'bg-green-100 text-green-700 border-green-200'
+            case 'Rejected': return 'bg-red-100 text-red-700 border-red-200'
+            default: return 'bg-gray-100 text-gray-700 border-gray-200' // Draft
+        }
+    }
+
+    const getStatusLabel = (s: string) => {
+        switch (s) {
+            case 'Pending': return 'Chờ duyệt'
+            case 'Approved': return 'Đã duyệt'
+            case 'Rejected': return 'Từ chối'
+            default: return 'Nháp'
         }
     }
 
     return (
-        <div className="flex items-start gap-3 group cursor-pointer border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-            <div className="mt-1 w-8 h-8 rounded bg-gray-100 flex items-center justify-center font-bold text-gray-500 text-xs">
-                {item.quantity}
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-[#0F4C75] transition-colors">
+        <div className="flex flex-col gap-3 group cursor-pointer border-b border-gray-50 pb-4 last:border-0 last:pb-0 hover:bg-gray-50 p-3 rounded -mx-3 transition-colors">
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#0F4C75] transition-colors">
                     {item.title}
                 </p>
-                <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${getStatusColor(item.status)}`}>
-                        {item.status === 'urgent' ? 'Khẩn cấp' : item.status === 'highlight' ? 'Ưu tiên' : 'Bình thường'}
-                    </Badge>
-                    <span className="text-xs text-gray-400 truncate">{item.position} &bull; {item.date}</span>
+                <Badge variant="outline" className={`text-[10px] px-2 py-0.5 h-auto ${getStatusColor(item.status)}`}>
+                    {getStatusLabel(item.status)}
+                </Badge>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center gap-2">
+                    <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
+                        {item.position}
+                    </span>
+                    <span className="text-gray-300">•</span>
+                    <span>{item.date}</span>
                 </div>
+                <span className="font-medium text-[#0F4C75]">
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.budget)}
+                </span>
             </div>
         </div>
     )
@@ -109,7 +126,7 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
     }, [])
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-6">
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Dashboard</h1>
@@ -117,7 +134,7 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
             </div>
 
             {/* Top Row: 3 Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[300px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <DashboardListWidget
                     title="Đề xuất nhân sự"
                     subtitle="Trạng thái: Đang xử lý"
@@ -141,7 +158,7 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
             </div>
 
             {/* Bottom Row: 2 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[280px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DashboardChartWidget
                     title="Tiến độ Tuyển dụng"
                     subtitle="Phễu ứng viên (Funnel)"

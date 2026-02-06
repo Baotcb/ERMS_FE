@@ -34,6 +34,7 @@ import type { RecruitmentPlan, PlanDetail as PlanDetailData } from '@/features/d
 
 interface PlanDetailProps {
     planId: string
+    headerActions?: React.ReactNode
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -45,7 +46,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 // PlanDetailData type is imported from types file
 
-export function PlanDetail({ planId }: PlanDetailProps) {
+export function PlanDetail({ planId, headerActions }: PlanDetailProps) {
     const router = useRouter()
     const { toast } = useToast()
     const [isAddOpen, setIsAddOpen] = useState(false)
@@ -183,20 +184,27 @@ export function PlanDetail({ planId }: PlanDetailProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold text-[#0F4C75]">{plan.planName}</h1>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="font-mono">{plan.planCode}</span>
-                        <span>•</span>
-                        <Badge variant="outline" className={`border-0 ${STATUS_COLORS[plan.status]}`}>
-                            {plan.status}
-                        </Badge>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-[#0F4C75]">{plan.planName}</h1>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span className="font-mono">{plan.planCode}</span>
+                            <span>•</span>
+                            <Badge variant="outline" className={`border-0 ${STATUS_COLORS[plan.status]}`}>
+                                {plan.status}
+                            </Badge>
+                        </div>
                     </div>
                 </div>
+                {headerActions && (
+                    <div className="flex gap-2">
+                        {headerActions}
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -371,22 +379,24 @@ export function PlanDetail({ planId }: PlanDetailProps) {
                             </div>
                         </div>
 
-                        <div>
-                            <Label>Trình độ học vấn</Label>
-                            <Input
-                                value={newDetail.educationLevel}
-                                onChange={(e) => setNewDetail({ ...newDetail, educationLevel: e.target.value })}
-                                placeholder="VD: Đại học, Cao đẳng..."
-                            />
-                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>Trình độ học vấn</Label>
+                                <Input
+                                    value={newDetail.educationLevel}
+                                    onChange={(e) => setNewDetail({ ...newDetail, educationLevel: e.target.value })}
+                                    placeholder="VD: Đại học, Cao đẳng..."
+                                />
+                            </div>
 
-                        <div>
-                            <Label>Kỹ năng yêu cầu</Label>
-                            <Input
-                                value={newDetail.requiredSkills}
-                                onChange={(e) => setNewDetail({ ...newDetail, requiredSkills: e.target.value })}
-                                placeholder="VD: React, TypeScript, Node.js"
-                            />
+                            <div>
+                                <Label>Kỹ năng yêu cầu</Label>
+                                <Input
+                                    value={newDetail.requiredSkills}
+                                    onChange={(e) => setNewDetail({ ...newDetail, requiredSkills: e.target.value })}
+                                    placeholder="VD: React, TypeScript, Node.js"
+                                />
+                            </div>
                         </div>
 
                         <div>
