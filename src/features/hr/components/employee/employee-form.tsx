@@ -189,50 +189,58 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="fullName">Họ và tên <span className="text-red-500">*</span></Label>
-                        <Input
-                            id="fullName"
-                            placeholder="Nguyễn Văn A"
-                            {...register('fullName')}
-                            className={errors.fullName ? 'border-red-500' : ''}
-                        />
-                        {errors.fullName && (
-                            <p className="text-sm text-red-500">{errors.fullName.message}</p>
-                        )}
+                {/* Section 1: Personal & Account Information */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                        <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
+                        <h3 className="text-lg font-semibold text-gray-800">Thông tin cá nhân & Tài khoản</h3>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="employee@company.com"
-                            {...register('email')}
-                            className={errors.email ? 'border-red-500' : ''}
-                            disabled={isEdit}
-                        />
-                        {errors.email && (
-                            <p className="text-sm text-red-500">{errors.email.message}</p>
-                        )}
-                    </div>
-                </div>
-
-                {!isEdit && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="password">Mật khẩu <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="fullName">Họ và tên <span className="text-red-500">*</span></Label>
                             <Input
-                                id="password"
-                                type="password"
-                                {...register('password')}
-                                className={errors.password ? 'border-red-500' : ''}
+                                id="fullName"
+                                placeholder="Nguyễn Văn A"
+                                {...register('fullName')}
+                                className={errors.fullName ? 'border-red-500' : ''}
                             />
-                            {errors.password && (
-                                <p className="text-sm text-red-500">{errors.password.message}</p>
+                            {errors.fullName && (
+                                <p className="text-sm text-red-500">{errors.fullName.message}</p>
                             )}
                         </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="employee@company.com"
+                                {...register('email')}
+                                className={errors.email ? 'border-red-500' : ''}
+                                disabled={isEdit}
+                            />
+                            {errors.email && (
+                                <p className="text-sm text-red-500">{errors.email.message}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {!isEdit && (
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Mật khẩu <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    {...register('password')}
+                                    className={errors.password ? 'border-red-500' : ''}
+                                />
+                                {errors.password && (
+                                    <p className="text-sm text-red-500">{errors.password.message}</p>
+                                )}
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label htmlFor="phone">Số điện thoại</Label>
                             <Input
@@ -242,103 +250,105 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                             />
                         </div>
                     </div>
-                )}
-
-                {/* Manager/Department container was here. We removed Manager selection. 
-                        Re-organizing: Department is remaining. 
-                        We can keep Department in a grid or make it full width if needed?
-                        The original code had Department and Manager in one row (grid-cols-2).
-                        I will remove the Manager Select and keep Department. 
-                    */}
-                <div className="space-y-2">
-                    <Label>Phòng ban <span className="text-red-500">*</span></Label>
-                    <Select
-                        value={watch('departmentId')}
-                        onValueChange={(value) => setValue('departmentId', value)}
-                    >
-                        <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
-                            <SelectValue placeholder="Chọn phòng ban">
-                                {(() => {
-                                    const deptId = watch('departmentId');
-                                    const found = departments.find(d => d.id.toString() === deptId);
-                                    if (found) {
-                                        return found.departmentCode ? `${found.departmentName} (${found.departmentCode})` : found.departmentName;
-                                    }
-                                    return deptId ? deptId : "Chọn phòng ban";
-                                })()}
-                            </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {departments.map((dept) => (
-                                <SelectItem key={dept.id} value={dept.id.toString()}>
-                                    {dept.departmentCode ? `${dept.departmentName} (${dept.departmentCode})` : dept.departmentName}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {errors.departmentId && (
-                        <p className="text-sm text-red-500">{errors.departmentId.message}</p>
-                    )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="position">Chức vụ</Label>
-                        <Input
-                            id="position"
-                            placeholder="Ví dụ: Nhân viên kinh doanh"
-                            {...register('position')}
-                        />
+                {/* Section 2: Job Information */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                        <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
+                        <h3 className="text-lg font-semibold text-gray-800">Thông tin công việc</h3>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Loại hợp đồng</Label>
-                        <Select
-                            onValueChange={(value) => setValue('employmentType', value)}
-                            defaultValue={watch('employmentType')}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Chọn loại hợp đồng" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="FullTime">Toàn thời gian</SelectItem>
-                                <SelectItem value="PartTime">Bán thời gian</SelectItem>
-                                <SelectItem value="Contract">Hợp đồng</SelectItem>
-                                <SelectItem value="Intern">Thực tập</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label>Phòng ban <span className="text-red-500">*</span></Label>
+                            <Select
+                                value={watch('departmentId')}
+                                onValueChange={(value) => setValue('departmentId', value)}
+                            >
+                                <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Chọn phòng ban">
+                                        {(() => {
+                                            const deptId = watch('departmentId');
+                                            const found = departments.find(d => d.id.toString() === deptId);
+                                            if (found) {
+                                                return found.departmentCode ? `${found.departmentName} (${found.departmentCode})` : found.departmentName;
+                                            }
+                                            return deptId ? deptId : "Chọn phòng ban";
+                                        })()}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {departments.map((dept) => (
+                                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                                            {dept.departmentCode ? `${dept.departmentName} (${dept.departmentCode})` : dept.departmentName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.departmentId && (
+                                <p className="text-sm text-red-500">{errors.departmentId.message}</p>
+                            )}
+                        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label>Ngày vào làm</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !watch('hireDate') && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {watch('hireDate') ? format(watch('hireDate')!, 'dd/MM/yyyy') : <span>Chọn ngày</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={watch('hireDate')}
-                                    onSelect={(date) => setValue('hireDate', date)}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
+                        <div className="space-y-2">
+                            <Label htmlFor="position">Chức vụ</Label>
+                            <Input
+                                id="position"
+                                placeholder="Ví dụ: Nhân viên kinh doanh"
+                                {...register('position')}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label>Loại hợp đồng</Label>
+                            <Select
+                                onValueChange={(value) => setValue('employmentType', value)}
+                                defaultValue={watch('employmentType')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Chọn loại hợp đồng" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="FullTime">Toàn thời gian</SelectItem>
+                                    <SelectItem value="PartTime">Bán thời gian</SelectItem>
+                                    <SelectItem value="Contract">Hợp đồng</SelectItem>
+                                    <SelectItem value="Intern">Thực tập</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Ngày vào làm</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !watch('hireDate') && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {watch('hireDate') ? format(watch('hireDate')!, 'dd/MM/yyyy') : <span>Chọn ngày</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={watch('hireDate')}
+                                        onSelect={(date) => setValue('hireDate', date)}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                     </div>
 
                     {isEdit && (
-                        <div className="space-y-2">
+                        <div className="max-w-[50%] space-y-2">
                             <Label>Trạng thái</Label>
                             <Select
                                 onValueChange={(value) => setValue('status', value)}
