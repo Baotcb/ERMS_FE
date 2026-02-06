@@ -310,7 +310,7 @@ export const HRSidebar = memo(function HRSidebar() {
             <aside
                 className={cn(
                     'fixed top-0 left-0 h-screen w-72 z-40 transition-transform duration-300',
-                    'lg:translate-x-0 lg:static lg:z-auto',
+                    'lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:z-auto',
                     isMobileOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
