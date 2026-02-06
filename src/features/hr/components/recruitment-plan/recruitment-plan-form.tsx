@@ -122,153 +122,173 @@ export function RecruitmentPlanForm({
         <div className="space-y-6">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="planName"
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        render={({ field }: { field: any }) => (
-                            <FormItem>
-                                <FormLabel>Tên kế hoạch <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                    <Input placeholder="VD: Kế hoạch tuyển dụng Q1/2024" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    {/* Section 1: General Information */}
+                    <div className="space-y-6 pt-2">
+                        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                            <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
+                            <h3 className="text-lg font-semibold text-gray-800">Thông tin chung</h3>
+                        </div>
 
-                    <FormField
-                        control={form.control}
-                        name="planCode"
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        render={({ field }: { field: any }) => (
-                            <FormItem>
-                                <FormLabel>Mã kế hoạch <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                    <Input placeholder="VD: RP-2024-01" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="planName"
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                render={({ field }: { field: any }) => (
+                                    <FormItem>
+                                        <FormLabel>Tên kế hoạch <span className="text-red-500">*</span></FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="VD: Kế hoạch tuyển dụng Q1/2024" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                            control={form.control}
-                            name="startDate"
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            render={({ field }: { field: any }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Ngày bắt đầu <span className="text-red-500">*</span></FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(field.value, "dd/MM/yyyy")
-                                                    ) : (
-                                                        <span>Chọn ngày</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                    date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                            <FormField
+                                control={form.control}
+                                name="planCode"
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                render={({ field }: { field: any }) => (
+                                    <FormItem>
+                                        <FormLabel>Mã kế hoạch <span className="text-red-500">*</span></FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="VD: RP-2024-01" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
 
                         <FormField
                             control={form.control}
-                            name="endDate"
+                            name="description"
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             render={({ field }: { field: any }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Ngày kết thúc <span className="text-red-500">*</span></FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(field.value, "dd/MM/yyyy")
-                                                    ) : (
-                                                        <span>Chọn ngày</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                    date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                <FormItem>
+                                    <FormLabel>Mô tả</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Mô tả chi tiết..." {...field} className="min-h-[100px]" />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
 
-                    <FormField
-                        control={form.control}
-                        name="totalBudget"
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        render={({ field }: { field: any }) => (
-                            <FormItem>
-                                <FormLabel>Ngân sách dự kiến</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="0" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    {/* Section 2: Timeline & Budget */}
+                    <div className="space-y-6 pt-4">
+                        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                            <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
+                            <h3 className="text-lg font-semibold text-gray-800">Thời hạn & Ngân sách</h3>
+                        </div>
 
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        render={({ field }: { field: any }) => (
-                            <FormItem>
-                                <FormLabel>Mô tả</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder="Mô tả chi tiết..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="startDate"
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                render={({ field }: { field: any }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Ngày bắt đầu <span className="text-red-500">*</span></FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "dd/MM/yyyy")
+                                                        ) : (
+                                                            <span>Chọn ngày</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) =>
+                                                        date < new Date("1900-01-01")
+                                                    }
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="endDate"
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                render={({ field }: { field: any }) => (
+                                    <FormItem className="flex flex-col">
+                                        <FormLabel>Ngày kết thúc <span className="text-red-500">*</span></FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-full pl-3 text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        {field.value ? (
+                                                            format(field.value, "dd/MM/yyyy")
+                                                        ) : (
+                                                            <span>Chọn ngày</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={field.value}
+                                                    onSelect={field.onChange}
+                                                    disabled={(date) =>
+                                                        date < new Date("1900-01-01")
+                                                    }
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="max-w-[50%]">
+                            <FormField
+                                control={form.control}
+                                name="totalBudget"
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                render={({ field }: { field: any }) => (
+                                    <FormItem>
+                                        <FormLabel>Ngân sách dự kiến</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="0" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                         <Button type="button" variant="outline" onClick={onCancel}>
