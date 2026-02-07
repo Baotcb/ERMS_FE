@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { CalendarIcon, Loader2, Plus, Trash2, ArrowRight, CheckCircle2, Briefcase, DollarSign, Pencil, X, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -115,7 +115,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
 
     // Forms
     const planForm = useForm<CreatePlanValues>({
-        resolver: zodResolver(createPlanSchema) as any,
+        resolver: zodResolver(createPlanSchema) as Resolver<CreatePlanValues>,
         defaultValues: {
             campaignId: defaultCampaignId || '',
             departmentId: '',
@@ -126,7 +126,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
     })
 
     const detailForm = useForm<CreateDetailValues>({
-        resolver: zodResolver(createDetailSchema) as any,
+        resolver: zodResolver(createDetailSchema) as Resolver<CreateDetailValues>,
         defaultValues: {
             positionTitle: '',
             quantity: 1,
@@ -274,7 +274,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                 return
             }
 
-            const payload: any = {
+            const payload = {
                 campaignId: values.campaignId,
                 departmentId: Number(values.departmentId),
                 planName: values.planName,
@@ -313,8 +313,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
 
             if (onSuccess) onSuccess()
 
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Lỗi', description: error.message })
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Đã có lỗi xảy ra'
+            toast({ variant: 'destructive', title: 'Lỗi', description: message })
         } finally {
             setIsLoading(false)
         }
