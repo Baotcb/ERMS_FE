@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback } from 'react'
+import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { CalendarIcon, Loader2, Plus, Trash2, ArrowRight, CheckCircle2, Briefcase, DollarSign, Pencil, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarIcon, Loader2, Plus, Trash2, ArrowRight, DollarSign, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 
 import { cn } from '@/lib/utils'
@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogFooter,
@@ -110,12 +109,12 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
     // Loading States
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false)
-    const [isDetectingDepartment, setIsDetectingDepartment] = useState(false)
     const [isAddingDetail, setIsAddingDetail] = useState(false)
 
     // Forms
     const planForm = useForm<CreatePlanValues>({
-        resolver: zodResolver(createPlanSchema) as any,
+        // Cast to unknown then Resolver to bypass strict type mismatch (Zod coerce vs RHF types)
+        resolver: zodResolver(createPlanSchema) as unknown as Resolver<CreatePlanValues>,
         defaultValues: {
             campaignId: defaultCampaignId || '',
             departmentId: '',
@@ -126,7 +125,8 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
     })
 
     const detailForm = useForm<CreateDetailValues>({
-        resolver: zodResolver(createDetailSchema) as any,
+        // Cast to unknown then Resolver to bypass strict type mismatch
+        resolver: zodResolver(createDetailSchema) as unknown as Resolver<CreateDetailValues>,
         defaultValues: {
             positionTitle: '',
             quantity: 1,
@@ -144,127 +144,133 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
     const totalPages = Math.ceil(localDetails.length / ITEMS_PER_PAGE)
     const paginatedDetails = localDetails.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
-    // --- Effects ---
+    // --- Effects & Handlers ---
+
+    const fetchPlanDetails = useCallback(async (planId: string) => {
+        try {
+            const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${planId}`)
+            if (res.ok) {
+                const data = await res.json()
+                setLocalDetails(Array.isArray(data) ? data : data.items || [])
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }, [])
 
     useEffect(() => {
-        if (open) {
-            setCreatedPlanId(null)
-            setLocalDetails([])
-            setPlanCode('')
-            setPage(1)
+        if (!open) return
 
-            // Clean slate for forms
-            planForm.reset({
-                campaignId: defaultCampaignId || '',
-                departmentId: '',
-                planName: '',
-                description: '',
-                totalBudget: 0,
-            })
-            detailForm.reset({
-                positionTitle: '',
-                quantity: 1,
-                priority: 'Normal',
-                salaryRangeMin: 0,
-                salaryRangeMax: 0,
-                minExperience: 0,
-                maxExperience: 0,
-                educationLevel: '',
-                justification: ''
-            })
+        setCreatedPlanId(null)
+        setLocalDetails([])
+        setPlanCode('')
+        setPage(1)
 
-            // Fetch common data
-            fetchInitialData()
+        // Clean slate for forms
+        planForm.reset({
+            campaignId: defaultCampaignId || '',
+            departmentId: '',
+            planName: '',
+            description: '',
+            totalBudget: 0,
+        })
+        detailForm.reset({
+            positionTitle: '',
+            quantity: 1,
+            priority: 'Normal',
+            salaryRangeMin: 0,
+            salaryRangeMax: 0,
+            minExperience: 0,
+            maxExperience: 0,
+            educationLevel: '',
+            justification: ''
+        })
 
-            if (editPlanId) {
-                setStep('add-details')
-                setCreatedPlanId(editPlanId)
-                fetchPlanData(editPlanId)
-            } else {
-                setStep('create-plan')
-                if (detectedDepartment) {
-                    planForm.setValue('departmentId', detectedDepartment.id.toString())
+        const fetchInitialData = async () => {
+            if (!defaultCampaignId) {
+                setIsLoadingCampaigns(true)
+                try {
+                    const res = await apiClient.get('/api/RecruitmentCampaigns?Status=Open&PageSize=100')
+                    if (res.ok) {
+                        const data = await res.json()
+                        setCampaigns(data.items || [])
+                    }
+                } catch (error) {
+                    console.error(error)
+                } finally {
+                    setIsLoadingCampaigns(false)
+                }
+            }
+
+            if (!detectedDepartment) {
+                try {
+                    const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
+                    if (userNameEncoded) {
+                        const userName = decodeURIComponent(userNameEncoded)
+                        const res = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(userName)}&PageSize=1`)
+                        if (res.ok) {
+                            const data = await res.json()
+                            const employee = data.items?.[0]
+                            if (employee?.departmentId) {
+                                setDetectedDepartment({
+                                    id: employee.departmentId,
+                                    departmentName: employee.departmentName,
+                                })
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error(e)
                 }
             }
         }
-    }, [open, defaultCampaignId, editPlanId])
+
+        const fetchPlanData = async (id: string) => {
+            try {
+                const res = await apiClient.get(`/api/RecruitmentPlans/${id}`)
+                if (res.ok) {
+                    const plan = await res.json()
+                    setCreatedPlanName(plan.planName)
+                    setPlanCode(plan.planCode)
+
+                    planForm.reset({
+                        campaignId: plan.campaignId,
+                        departmentId: plan.departmentId?.toString(),
+                        planName: plan.planName,
+                        description: plan.description || '',
+                        startDate: plan.startDate ? new Date(plan.startDate) : undefined,
+                        endDate: plan.endDate ? new Date(plan.endDate) : undefined,
+                        totalBudget: plan.totalBudget,
+                    })
+
+                    await fetchPlanDetails(id)
+                }
+            } catch (e) {
+                console.error(e)
+                toast({ variant: 'destructive', title: 'Lỗi tải dữ liệu', description: 'Không thể tải thông tin kế hoạch' })
+            }
+        }
+
+        fetchInitialData()
+
+        if (editPlanId) {
+            setStep('add-details')
+            setCreatedPlanId(editPlanId)
+            fetchPlanData(editPlanId)
+        } else {
+            setStep('create-plan')
+            if (detectedDepartment) {
+                planForm.setValue('departmentId', detectedDepartment.id.toString())
+            }
+        }
+    }, [open, defaultCampaignId, editPlanId, detectedDepartment, fetchPlanDetails, planForm, detailForm, toast])
 
     useEffect(() => {
         if (detectedDepartment && !editPlanId && !planForm.getValues('departmentId')) {
             planForm.setValue('departmentId', detectedDepartment.id.toString())
         }
-    }, [detectedDepartment, editPlanId])
+    }, [detectedDepartment, editPlanId, planForm])
 
-
-    const fetchInitialData = async () => {
-        if (!defaultCampaignId) {
-            setIsLoadingCampaigns(true)
-            try {
-                const res = await apiClient.get('/api/RecruitmentCampaigns?Status=Open&PageSize=100')
-                if (res.ok) {
-                    const data = await res.json()
-                    setCampaigns(data.items || [])
-                }
-            } catch (error) {
-                console.error(error)
-            } finally {
-                setIsLoadingCampaigns(false)
-            }
-        }
-
-        if (!detectedDepartment) {
-            setIsDetectingDepartment(true)
-            try {
-                const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
-                if (userNameEncoded) {
-                    const userName = decodeURIComponent(userNameEncoded)
-                    const res = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(userName)}&PageSize=1`)
-                    if (res.ok) {
-                        const data = await res.json()
-                        const employee = data.items?.[0]
-                        if (employee?.departmentId) {
-                            setDetectedDepartment({
-                                id: employee.departmentId,
-                                departmentName: employee.departmentName,
-                            })
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error(e)
-            } finally {
-                setIsDetectingDepartment(false)
-            }
-        }
-    }
-
-    const fetchPlanData = async (id: string) => {
-        try {
-            const res = await apiClient.get(`/api/RecruitmentPlans/${id}`)
-            if (res.ok) {
-                const plan = await res.json()
-                setCreatedPlanName(plan.planName)
-                setPlanCode(plan.planCode)
-
-                planForm.reset({
-                    campaignId: plan.campaignId,
-                    departmentId: plan.departmentId?.toString(),
-                    planName: plan.planName,
-                    description: plan.description || '',
-                    startDate: plan.startDate ? new Date(plan.startDate) : undefined,
-                    endDate: plan.endDate ? new Date(plan.endDate) : undefined,
-                    totalBudget: plan.totalBudget,
-                })
-
-                await fetchPlanDetails(id)
-            }
-        } catch (e) {
-            console.error(e)
-            toast({ variant: 'destructive', title: 'Lỗi tải dữ liệu', description: 'Không thể tải thông tin kế hoạch' })
-        }
-    }
-
-    // --- Handlers ---
 
     const onSubmitPlan = async (values: CreatePlanValues) => {
         setIsLoading(true)
@@ -274,7 +280,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                 return
             }
 
-            const payload: any = {
+            const payload = {
                 campaignId: values.campaignId,
                 departmentId: Number(values.departmentId),
                 planName: values.planName,
@@ -313,8 +319,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
 
             if (onSuccess) onSuccess()
 
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Lỗi', description: error.message })
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Lỗi không xác định'
+            toast({ variant: 'destructive', title: 'Lỗi', description: message })
         } finally {
             setIsLoading(false)
         }
@@ -350,22 +357,10 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
 
             toast({ description: 'Đã thêm vị trí thành công' })
 
-        } catch (error) {
+        } catch {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể thêm đề xuất' })
         } finally {
             setIsAddingDetail(false)
-        }
-    }
-
-    const fetchPlanDetails = async (planId: string) => {
-        try {
-            const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${planId}`)
-            if (res.ok) {
-                const data = await res.json()
-                setLocalDetails(Array.isArray(data) ? data : data.items || [])
-            }
-        } catch (e) {
-            console.error(e)
         }
     }
 
@@ -377,7 +372,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                 if (createdPlanId) fetchPlanDetails(createdPlanId)
                 toast({ description: 'Đã xóa vị trí' })
             }
-        } catch (e) { }
+        } catch { }
     }
 
     const handleFinish = () => {
