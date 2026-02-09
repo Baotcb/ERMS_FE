@@ -9,14 +9,20 @@ export function usePublicJobs(params?: {
     location?: string
 }) {
     // SWR key must be unique for each param set
-    const key = ['/api/Public/Jobs', JSON.stringify(params)]
+    const key = ['/api/public/jobs', JSON.stringify(params)]
     return useData(key, {
-        fetcher: () => service.getPublicJobs(params),
+        fetcher: () => service.getPublicJobs({
+            pageNumber: params?.page,
+            pageSize: params?.pageSize,
+            searchTerm: params?.search,
+            departmentId: params?.departmentId,
+            location: params?.location
+        }),
     })
 }
 
 export function usePublicJob(id: string) {
-    return useData(id ? `/api/Public/Jobs/${id}` : null, {
+    return useData(id ? `/api/public/jobs/${id}` : null, {
         fetcher: () => service.getPublicJobById(id),
     })
 }

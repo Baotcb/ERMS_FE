@@ -50,6 +50,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <CalendarRange className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
+            { label: 'Tin tuyển dụng', href: '/enterprise/hr/job-postings' },
             { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
         ]
     }

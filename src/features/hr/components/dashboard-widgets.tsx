@@ -34,8 +34,10 @@ export const RequestItemRow = memo(function RequestItemRow({ title, date, reques
     )
 })
 
-export const TaskItemRow = memo(function TaskItemRow({ title, project, assignee }: { title: string, project: string, assignee: string }) {
-    return (
+import Link from 'next/link'
+
+export const TaskItemRow = memo(function TaskItemRow({ title, project, assignee, link }: { title: string, project: string, assignee: string, link?: string }) {
+    const Content = (
         <div className="flex items-start gap-3 group cursor-pointer">
             <div className="mt-1 w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-[#0F4C75] transition-colors flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -47,6 +49,12 @@ export const TaskItemRow = memo(function TaskItemRow({ title, project, assignee 
             </Avatar>
         </div>
     )
+
+    if (link) {
+        return <Link href={link} className="block">{Content}</Link>
+    }
+
+    return Content
 })
 
 export const CandidateItemRow = memo(function CandidateItemRow({ title, group, status }: { title: string, group: string, status: string }) {

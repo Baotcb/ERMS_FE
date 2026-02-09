@@ -80,6 +80,7 @@ export const HRDashboard = memo(function HRDashboard() {
                             title={item.title}
                             project={item.project}
                             assignee={item.assignee}
+                            link={item.link}
                         />
                     )}
                 />

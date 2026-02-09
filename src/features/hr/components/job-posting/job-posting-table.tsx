@@ -2,10 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-
-// ... existing imports
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Pencil, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Eye, CheckCircle, XCircle, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
@@ -57,6 +55,7 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
         getScrollElement: () => parentRef.current,
         estimateSize: () => 73, // Adjusted estimate including border/padding
         overscan: 5,
+         
     })
 
     const items = virtualizer.getVirtualItems()
@@ -67,7 +66,6 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
     const paddingBottom = items.length > 0 ? totalSize - items[items.length - 1].end : 0
 
     const getStatusBadge = (status: JobStatus) => {
-        // ... existing getStatusBadge
         switch (status) {
             case 'Published':
                 return <Badge className="bg-green-600">Đang tuyển</Badge>
@@ -129,7 +127,10 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                             <TableCell>{job.departmentName}</TableCell>
                                             <TableCell>{getStatusBadge(job.status)}</TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-1">
+                                                <div
+                                                    className="flex items-center gap-1 cursor-pointer hover:underline text-blue-600"
+                                                    onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/applications`)}
+                                                >
                                                     <span className="font-medium">{job.applicationCount}</span>
                                                     <span className="text-xs text-muted-foreground">hồ sơ</span>
                                                 </div>
@@ -150,9 +151,15 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                                                         <DropdownMenuItem
-                                                            onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}`)}
+                                                            onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/applications`)}
                                                         >
                                                             <Eye className="mr-2 h-4 w-4" />
+                                                            Xem hồ sơ
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}`)}
+                                                        >
+                                                            <FileText className="mr-2 h-4 w-4" />
                                                             Xem chi tiết
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem

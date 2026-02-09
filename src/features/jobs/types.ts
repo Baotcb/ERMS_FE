@@ -5,21 +5,29 @@ export interface PublicJobPostingDto {
     description: string
     requirements?: string
     benefits?: string
-    employmentType: string
+    employmentType: 'FullTime' | 'PartTime' | 'Contract' | 'Internship'
     experienceLevel?: string
     educationLevel?: string
     salaryRangeMin?: number
     salaryRangeMax?: number
     showSalary: boolean
     location?: string
-    remoteOption?: string
+    remoteOption: 'OnSite' | 'Remote' | 'Hybrid'
     quantity: number
     applicationDeadline?: string
     publishedAt?: string
     enterpriseName: string
     enterpriseLogoUrl?: string
     departmentName: string
-    isHot?: boolean // Frontend extra
+    isHot?: boolean
+}
+
+export interface PublicJobsResponse {
+    items: PublicJobPostingDto[]
+    totalCount: number
+    pageNumber: number
+    pageSize: number
+    totalPages: number
 }
 
 export type Job = PublicJobPostingDto

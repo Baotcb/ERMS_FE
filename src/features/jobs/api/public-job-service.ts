@@ -1,35 +1,49 @@
 import { apiClient } from '@/lib/api-client'
-import type { PublicJobPostingDto } from '../types'
+import type { PublicJobPostingDto, PublicJobsResponse } from '../types'
 
-export async function getPublicJobs(params?: {
-    page?: number
+interface GetPublicJobsParams {
+    pageNumber?: number
     pageSize?: number
-    search?: string
-    departmentId?: string
+    searchTerm?: string
     location?: string
-}) {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', String(params.page))
-    if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize))
-    if (params?.search) searchParams.set('search', params.search)
-    if (params?.departmentId) searchParams.set('departmentId', params.departmentId)
-    if (params?.location) searchParams.set('location', params.location)
-
-    const response = await apiClient.get(`/api/Public/Jobs?${searchParams}`)
-    if (!response.ok) throw new Error('Không thể tải danh sách việc làm')
-    // Assume API returns object with data array or just array? 
-    // Standard is PaginatedResult
-    return response.json() as Promise<{
-        items: PublicJobPostingDto[]
-        totalCount: number
-        page: number
-        pageSize: number
-        totalPages: number
-    }>
+    employmentType?: string
+    experienceLevel?: string
+    minSalary?: number
+    maxSalary?: number
+    departmentId?: string // Keeping for backward compatibility if needed
 }
 
-export async function getPublicJobById(id: string) {
-    const response = await apiClient.get(`/api/Public/Jobs/${id}`)
-    if (!response.ok) throw new Error('Không thể tải thông tin việc làm')
-    return response.json() as Promise<PublicJobPostingDto>
+export async function getPublicJobs(params?: GetPublicJobsParams): Promise<PublicJobsResponse> {
+    const searchParams = new URLSearchParams({
+        PageNumber: String(params?.pageNumber ?? 1),
+        PageSize: String(params?.pageSize ?? 10),
+    })
+
+    if (params?.searchTerm) searchParams.append('SearchTerm', params.searchTerm)
+    if (params?.location) searchParams.append('Location', params.location)
+    if (params?.employmentType) searchParams.append('EmploymentType', params.employmentType)
+    if (params?.experienceLevel) searchParams.append('ExperienceLevel', params.experienceLevel)
+    if (params?.minSalary) searchParams.append('MinSalary', String(params.minSalary))
+    if (params?.maxSalary) searchParams.append('MaxSalary', String(params.maxSalary))
+    if (params?.departmentId) searchParams.append('DepartmentId', params.departmentId)
+
+    const response = await apiClient.get(`/api/public/jobs?${searchParams}`)
+
+    if (!response.ok) {
+        // Fallback or detailed error
+        throw new Error('Không thể tải danh sách công việc')
+    }
+
+    return response.json()
 }
+
+export async function getPublicJobById(id: string): Promise<PublicJobPostingDto> {
+    const response = await apiClient.get(`/api/public/jobs/${id}`)
+
+    if (!response.ok) {
+        throw new Error('Không thể tải thông tin công việc')
+    }
+
+    return response.json()
+}
+

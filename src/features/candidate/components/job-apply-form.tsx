@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, UploadCloud, X } from 'lucide-react'
+import { Loader2, UploadCloud, X, CheckCircle2 } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useCreateApplication } from '@/features/candidate/hooks/use-applications'
+import { ScreeningResultsCard } from './screening-results-card'
+import { CVScreeningResult } from '../types/application-types'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ACCEPTED_FILE_TYPES = [
@@ -54,6 +56,8 @@ interface JobApplyFormProps {
 export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) {
     const { toast } = useToast()
     const { trigger: applyJob, isMutating } = useCreateApplication()
+    const [screeningResult, setScreeningResult] = useState<CVScreeningResult | null>(null)
+    const [isSuccess, setIsSuccess] = useState(false)
 
     // Mock user details (replace with actual auth context)
     const form = useForm<ApplicationFormValues>({
@@ -94,28 +98,77 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
 
     const onSubmit = async (data: ApplicationFormValues) => {
         try {
-            await applyJob({
+            const result = await applyJob({
                 jobId,
                 ...data,
                 cvFile: data.cvFile,
             })
+
+            // Lưu kết quả AI screening
+            if (result.data.cvScreeningResult) {
+                setScreeningResult(result.data.cvScreeningResult)
+            }
+
+            setIsSuccess(true)
 
             toast({
                 title: 'Ứng tuyển thành công!',
                 description: `Hồ sơ của bạn đã được gửi cho vị trí ${jobTitle}.`,
             })
 
-            if (onSuccess) {
-                onSuccess()
-            }
+            // if (onSuccess) {
+            //     setTimeout(() => onSuccess(), 5000) // Delay to let user see AI result
+            // }
         } catch (error) {
             console.error(error)
             toast({
                 title: 'Lỗi',
-                description: 'Có lỗi xảy ra khi gửi hồ sơ. Vui lòng thử lại.',
+                description: error instanceof Error ? error.message : 'Có lỗi xảy ra khi gửi hồ sơ.',
                 variant: 'destructive',
             })
         }
+    }
+
+    if (isSuccess && screeningResult) {
+        return (
+            <div className="space-y-6 animate-in fade-in zoom-in duration-300">
+                <div className="flex flex-col items-center justify-center space-y-2 text-center py-4">
+                    <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800">Ứng tuyển thành công!</h3>
+                    <p className="text-slate-500 max-w-md">
+                        Hệ thống AI đã phân tích hồ sơ của bạn cho vị trí <strong>{jobTitle}</strong>.
+                        Dưới đây là kết quả đánh giá sơ bộ:
+                    </p>
+                </div>
+
+                <ScreeningResultsCard results={screeningResult} />
+
+                <div className="flex justify-center pt-4">
+                    <Button onClick={onSuccess} className="min-w-[150px]">
+                        Hoàn tất
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
+    if (isSuccess) {
+        return (
+            <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-in fade-in zoom-in duration-300">
+                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800">Ứng tuyển thành công!</h3>
+                <p className="text-slate-500 text-center max-w-md">
+                    Hồ sơ của bạn đã được gửi đến nhà tuyển dụng.
+                </p>
+                <Button onClick={onSuccess} className="mt-4 min-w-[150px]">
+                    Hoàn tất
+                </Button>
+            </div>
+        )
     }
 
     return (
@@ -243,3 +296,4 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         </Form>
     )
 }
+

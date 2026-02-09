@@ -24,6 +24,7 @@ export interface TaskItem {
     dueDate: string | null
     assignee: string
     avatar?: string
+    link?: string
 }
 
 export interface CandidateItem {
@@ -64,6 +65,8 @@ export async function getRequests(): Promise<RequestItem[]> {
 export async function getTasks(): Promise<TaskItem[]> {
     return [
         { id: '1', title: 'Sàng lọc CV vị trí Business Analyst', project: 'Tuyển dụng', dueDate: '05/02/2026', assignee: 'HR Executive' },
+        { id: '5', title: 'Tạo tin tuyển dụng: Senior Java Dev (Đã duyệt)', project: 'Tuyển dụng', dueDate: 'Hôm nay', assignee: 'HR Manager', link: '/enterprise/hr/job-postings/create?planId=123' },
+        { id: '6', title: 'Tạo tin tuyển dụng: QC Manual (Đã duyệt)', project: 'Tuyển dụng', dueDate: 'Hôm nay', assignee: 'HR Executive', link: '/enterprise/hr/job-postings/create?planId=124' },
         { id: '2', title: 'Gửi thư mời nhận việc cho Nguyễn Văn A', project: 'Tuyển dụng', dueDate: '03/02/2026', assignee: 'HR Manager' },
         { id: '3', title: 'Chuẩn bị tài liệu đào tạo tuần 1', project: 'Đào tạo', dueDate: '04/02/2026', assignee: 'Trainer' },
         { id: '4', title: 'Đánh giá thử việc nhân viên QC', project: 'Đánh giá', dueDate: '10/02/2026', assignee: 'HR Executive' },

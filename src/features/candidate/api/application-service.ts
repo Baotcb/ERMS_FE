@@ -1,40 +1,39 @@
 import { apiClient } from '@/lib/api-client'
-import { Application, CreateApplicationRequest, ApplicationHistoryParams } from '../types/application-types'
+import { CreateApplicationRequest, CVScreeningResult } from '../types/application-types'
 
-const BASE_URL = '/api/Applications'
+const BASE_URL = '/api/applications'
 
-export async function createApplication(data: CreateApplicationRequest): Promise<{ id: string }> {
+export interface CreateApplicationResponse {
+    message: string
+    data: {
+        applicationId: string
+        resumeId: string
+        resumeUrl: string
+        stage: string
+        appliedAt: string
+        cvScreeningResult?: CVScreeningResult
+    }
+}
+
+export async function createApplication(data: CreateApplicationRequest): Promise<CreateApplicationResponse> {
     const formData = new FormData()
-    formData.append('JobId', data.jobId)
-    if (data.coverLetter) formData.append('CoverLetter', data.coverLetter)
+    formData.append('JobPostingId', data.jobId)
     formData.append('CvFile', data.cvFile)
 
-    // If we want to support guest apply or override info
     if (data.fullName) formData.append('FullName', data.fullName)
     if (data.email) formData.append('Email', data.email)
     if (data.phone) formData.append('Phone', data.phone)
+    if (data.coverLetter) formData.append('CoverLetter', data.coverLetter)
 
     const response = await apiClient.post(BASE_URL, formData)
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
+        throw new Error(error.message || 'Không thể gửi đơn ứng tuyển')
+    }
+
     return response.json()
 }
 
-export async function getApplications(params?: ApplicationHistoryParams): Promise<{
-    items: Application[]
-    totalCount: number
-    page: number
-    pageSize: number
-    totalPages: number
-}> {
-    const query = new URLSearchParams()
-    if (params?.page) query.append('page', params.page.toString())
-    if (params?.pageSize) query.append('pageSize', params.pageSize.toString())
-    if (params?.status) query.append('status', params.status)
+// ⚠️ Backend CHƯA CÓ endpoint getApplications và getApplicationById cho Candidate
 
-    const response = await apiClient.get(`${BASE_URL}?${query.toString()}`)
-    return response.json()
-}
-
-export async function getApplicationById(id: string): Promise<Application> {
-    const response = await apiClient.get(`${BASE_URL}/${id}`)
-    return response.json()
-}
