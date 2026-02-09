@@ -1,10 +1,11 @@
+import { memo } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 
 export { DashboardListWidget, DashboardChartWidget } from '@/components/common/dashboard/widget-containers'
 
 // Helpers for list items
-export function RequestItemRow({ title, date, requester, status }: { title: string, date: string, requester: string, status: string }) {
+export const RequestItemRow = memo(function RequestItemRow({ title, date, requester, status }: { title: string, date: string, requester: string, status: string }) {
     const getStatusColor = (s: string) => {
         switch (s) {
             case 'urgent': return 'bg-red-100 text-red-600 border-red-200'
@@ -31,9 +32,9 @@ export function RequestItemRow({ title, date, requester, status }: { title: stri
             </Avatar>
         </div>
     )
-}
+})
 
-export function TaskItemRow({ title, project, assignee }: { title: string, project: string, assignee: string }) {
+export const TaskItemRow = memo(function TaskItemRow({ title, project, assignee }: { title: string, project: string, assignee: string }) {
     return (
         <div className="flex items-start gap-3 group cursor-pointer">
             <div className="mt-1 w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-[#0F4C75] transition-colors flex-shrink-0" />
@@ -46,9 +47,9 @@ export function TaskItemRow({ title, project, assignee }: { title: string, proje
             </Avatar>
         </div>
     )
-}
+})
 
-export function CandidateItemRow({ title, group, status }: { title: string, group: string, status: string }) {
+export const CandidateItemRow = memo(function CandidateItemRow({ title, group, status }: { title: string, group: string, status: string }) {
     const isUrgent = status === 'urgent'
 
     return (
@@ -74,4 +75,4 @@ export function CandidateItemRow({ title, group, status }: { title: string, grou
             </div>
         </div>
     )
-}
+})

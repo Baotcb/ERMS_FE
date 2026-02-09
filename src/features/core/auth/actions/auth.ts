@@ -3,6 +3,8 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { LoginFormData, EmployerRegisterFormData } from '../schemas/auth-schemas'
+import { API_URL } from '@/config/api'
+import { logger } from '@/lib/logger'
 
 interface LoginResult {
     success: boolean
@@ -15,8 +17,6 @@ interface LoginResult {
     }
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ermsbe-dcbtdfezebashgb7.southeastasia-01.azurewebsites.net'
-
 export async function loginAction(data: LoginFormData): Promise<LoginResult> {
     const { email, password, rememberMe } = data
 
@@ -25,8 +25,8 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
     }
 
     try {
-        console.log('Login attempt for:', email)
-        console.log('Using API URL:', API_URL)
+        logger.debug('Login attempt initiated')
+
         const res = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -35,21 +35,19 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
         // Handle empty response body gracefully (backend may return empty body on error)
         const resText = await res.text()
-        console.log('Login response status:', res.status)
-        console.log('Login response body:', resText)
 
         let resData: { message?: string; token?: string; user?: { role?: string; fullName?: string; id?: string; email?: string } } = {}
         if (resText) {
             try {
                 resData = JSON.parse(resText)
             } catch {
-                console.error('Failed to parse login response JSON')
+                logger.error('Failed to parse login response JSON')
                 return { success: false, error: 'Phản hồi từ server không hợp lệ' }
             }
         }
 
         if (!res.ok) {
-            console.error('Login failed with status:', res.status, 'Message:', resData.message)
+            logger.error('Login failed with status:', res.status)
             return { success: false, error: (resData.message as string) || 'Đăng nhập thất bại' }
         }
 
@@ -58,7 +56,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days or 1 day
 
         if (!resData.token) {
-            console.error('No token in response:', resData)
+            logger.error('No token in response')
             return { success: false, error: 'Không nhận được token từ server' }
         }
 
@@ -66,7 +64,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         cookieStore.set('auth_token', resData.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
             path: '/',
             maxAge,
         })
@@ -85,7 +83,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
                     userId = payload.nameid || payload.sub || ''
                 }
             } catch (e) {
-                console.error('Token decode error', e)
+                logger.error('Token decode error', e)
             }
         }
 
@@ -95,7 +93,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
                 path: '/',
                 maxAge,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
             })
         }
 
@@ -116,7 +114,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
             path: '/',
             maxAge,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax'
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
         })
 
         return {
@@ -129,7 +127,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
             }
         }
     } catch (error) {
-        console.error('Login action error:', error)
+        logger.error('Login action error:', error)
         return { success: false, error: 'Có lỗi xảy ra, vui lòng thử lại sau' }
     }
 }
@@ -160,7 +158,7 @@ export async function registerEmployerAction(data: EmployerRegisterFormData): Pr
 
         return { success: true }
     } catch (error) {
-        console.error('Register employer error:', error)
+        logger.error('Register employer error:', error)
         return { success: false, error: 'Không thể kết nối đến máy chủ' }
     }
 }

@@ -26,17 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
     Rejected: 'Từ chối',
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-    Normal: 'border-gray-300 text-gray-600',
-    High: 'border-yellow-500 text-yellow-600',
-    Urgent: 'border-red-500 text-red-600',
-}
 
-const PRIORITY_LABELS: Record<string, string> = {
-    Normal: 'Bình thường',
-    High: 'Cao',
-    Urgent: 'Khẩn cấp',
-}
 
 /**
  * CampaignPlanWrapper
@@ -116,7 +106,7 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
                         failedPlans.push(id)
                         errorMessages.push(`Plan ${id}: ${err.message}`)
                     }
-                } catch (e) {
+                } catch {
                     failedPlans.push(id)
                     errorMessages.push(`Plan ${id}: Lỗi mạng`)
                 }
@@ -140,7 +130,7 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
                 setSelectedPlanIds(new Set(failedPlans))
             }
 
-        } catch (error) {
+        } catch {
             toast({ variant: 'destructive', title: 'Lỗi', description: 'Có lỗi xảy ra khi gửi duyệt' })
         } finally {
             setIsSubmittingMultiple(false)

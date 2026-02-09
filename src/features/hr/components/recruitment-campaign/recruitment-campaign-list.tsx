@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { mutate } from 'swr'
 import { Plus, Search, RefreshCw, Filter } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -256,7 +255,7 @@ export function RecruitmentCampaignList({
                     />
                 </DialogContent>
             </Dialog>
-            <ErrorDialog 
+            <ErrorDialog
                 open={errorDialogOpen}
                 onOpenChange={setErrorDialogOpen}
                 title="Có lỗi xảy ra"

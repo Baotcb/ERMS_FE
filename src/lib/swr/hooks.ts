@@ -13,6 +13,8 @@ export interface UseDataConfig<T> extends SWRConfiguration {
     fetcher?: Fetcher<T>
 }
 
+import { DEFAULT_SWR_CONFIG } from './config'
+
 // Generic SWR hook
 export function useData<T>(
     key: Key,
@@ -22,7 +24,7 @@ export function useData<T>(
     return useSWR<T>(
         key,
         fetcherFn,
-        config
+        { ...DEFAULT_SWR_CONFIG, ...config }
     )
 }
 

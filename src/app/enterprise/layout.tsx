@@ -1,7 +1,4 @@
 import { Metadata } from 'next'
-import { cookies } from 'next/headers'
-import { HRSidebar } from '@/features/hr'
-import { DeptHeadSidebar } from '@/features/dept-head/components/dept-head-sidebar'
 
 export const metadata: Metadata = {
     title: 'Enterprise Portal - ERMS',

@@ -1,11 +1,10 @@
 'use client'
 
-import { memo, useState, useEffect } from 'react'
+import { memo } from 'react'
 import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Eye, Check, X } from 'lucide-react'
+import { Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { apiClient } from '@/lib/api-client'
 import {
@@ -22,11 +21,7 @@ interface ActivityItem {
     type: 'info' | 'success' | 'warning'
 }
 
-interface BudgetStat {
-    label: string
-    value: number
-    color: string
-}
+
 
 // Row Components
 function PendingPlanRow({ plan }: { plan: RecruitmentPlan }) {

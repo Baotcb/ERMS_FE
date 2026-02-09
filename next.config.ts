@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
 
   // Enable experimental features for better SSR performance
   images: {
+    minimumCacheTTL: 60,
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -29,8 +31,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' && {
+      exclude: ['error', 'warn'],
+    },
+  },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash'],
+    optimizePackageImports: ['lucide-react', 'date-fns', 'lodash', 'recharts'],
   },
   async rewrites() {
     // Use API_URL (server-side only) to hide backend URL from client

@@ -1,7 +1,6 @@
 'use client'
 
 import { memo, useState, useCallback } from 'react'
-import Link from 'next/link'
 import { Plus, Search, RefreshCw, Loader2 } from 'lucide-react'
 import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
@@ -28,8 +27,7 @@ interface DepartmentListProps {
 export const DepartmentList = memo(function DepartmentList({
     initialDepartments,
     totalCount: initialTotalCount,
-    currentPage: initialPage,
-    totalPages: initialTotalPages
+    currentPage: initialPage
 }: DepartmentListProps) {
     const [page, setPage] = useState(initialPage)
     const [searchQuery, setSearchQuery] = useState('')

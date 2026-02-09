@@ -116,7 +116,7 @@ export function middleware(request: NextRequest) {
 
   // Generate nonce and CSRF token (these are lightweight operations)
   const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64')
-  const csrfToken = request.cookies.get('csrf_token')?.value || crypto.randomUUID()
+  const csrfToken = request.cookies.get('__Host-csrf-token')?.value || crypto.randomUUID()
 
   // Auth Logic (Route Protection) - Check early to avoid unnecessary processing
   const authCookie = request.cookies.get('auth_token')?.value
@@ -169,10 +169,12 @@ export function middleware(request: NextRequest) {
   })
 
   // Set CSRF cookie
-  response.cookies.set('csrf_token', csrfToken, {
+  // Set CSRF cookie with __Host- prefix for better security
+  response.cookies.set('__Host-csrf-token', csrfToken, {
     path: '/',
-    secure: process.env.NODE_ENV === 'production',
+    secure: true, // Required for __Host- prefix
     sameSite: 'strict',
+    httpOnly: false, // Allow client side to read it for x-csrf-token header
   })
 
   // Set CSP header with nonce (replace template placeholder)

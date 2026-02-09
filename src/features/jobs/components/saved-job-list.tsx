@@ -13,7 +13,7 @@ export function SavedJobList() {
     const [savedJobs, setSavedJobs] = useState(MOCK_JOBS.slice(0, 3))
     const { toast } = useToast()
 
-    const handleRemoveJob = (id: number, title: string) => {
+    const handleRemoveJob = (id: string, title: string) => {
         setSavedJobs((prev) => prev.filter((job) => job.id !== id))
         toast({
             title: "Đã bỏ lưu công việc",
@@ -71,7 +71,7 @@ export function SavedJobList() {
                         onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            handleRemoveJob(job.id, job.title)
+                            handleRemoveJob(job.id, job.jobTitle)
                         }}
                         className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm border border-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 z-10"
                         title="Bỏ lưu công việc này"

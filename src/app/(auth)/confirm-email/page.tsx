@@ -11,11 +11,13 @@ interface PageProps {
     searchParams: Promise<{ userId?: string; token?: string; email?: string }>
 }
 
+import { API_URL } from '@/config/api'
+import { logger } from '@/lib/logger'
+
 async function verifyEmail(userId: string, token: string): Promise<{ success: boolean; message: string }> {
     try {
-        const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5129'
         // Remove trailing slash to avoid double-slash in URL
-        const apiUrl = rawApiUrl.replace(/\/+$/, '')
+        const apiUrl = API_URL.replace(/\/+$/, '')
 
         const response = await fetch(`${apiUrl}/api/Auth/confirm-email`, {
             method: 'POST',
@@ -40,7 +42,7 @@ async function verifyEmail(userId: string, token: string): Promise<{ success: bo
         }
         return { success: true, message: data.message || 'Xác thực email thành công!' }
     } catch (err) {
-        console.error('Verify email error:', err)
+        logger.error('Verify email error:', err)
         return { success: false, message: 'Không thể kết nối đến server' }
     }
 }

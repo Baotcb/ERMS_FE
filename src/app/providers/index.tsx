@@ -6,6 +6,8 @@
 import { getServerSession } from '@/lib/server-fetch';
 import { AuthProvider } from './auth-provider';
 
+import { SWRProvider } from './swr-provider';
+
 export async function Providers({ children }: { children: React.ReactNode }) {
   // Get auth state from server
   const session = await getServerSession();
@@ -17,7 +19,9 @@ export async function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider serverAuthData={serverAuthData}>
-      {children}
+      <SWRProvider>
+        {children}
+      </SWRProvider>
     </AuthProvider>
   );
 }

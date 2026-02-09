@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { config } from '@/config';
+import { logger } from '@/lib/logger';
 
 export interface ServerFetchOptions extends RequestInit {
   requireAuth?: boolean;
@@ -103,9 +104,15 @@ export async function getServerSession() {
     }
 
     const payload = JSON.parse(atob(parts[1]));
+    // Validate required fields
+    if (!payload.exp || typeof payload.exp !== 'number') {
+      return { token: null, user: null, role: null };
+    }
+
+    // Validate expiration with proper timestamp
     const currentTime = Math.floor(Date.now() / 1000);
 
-    if (payload.exp && payload.exp < currentTime) {
+    if (payload.exp < currentTime) {
       return { token: null, user: null, role: null };
     }
 
@@ -139,7 +146,8 @@ export async function getServerSession() {
         userRole ||
         '',
     };
-  } catch {
+  } catch (error) {
+    logger.error('Token parsing failed', error);
     return { token: null, user: null, role: null };
   }
 }

@@ -21,7 +21,7 @@ async function fetchWithRetry(url: string, options: RequestOptions = {}): Promis
 
     // Get CSRF token from cookie if available
     const csrfToken = typeof document !== 'undefined'
-        ? document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1]
+        ? document.cookie.split('; ').find(row => row.startsWith('__Host-csrf-token='))?.split('=')[1]
         : undefined
 
     const headers = new Headers(fetchOptions.headers || {})

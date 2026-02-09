@@ -6,7 +6,7 @@ import { Check, X, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import {
     Table,
     TableBody,

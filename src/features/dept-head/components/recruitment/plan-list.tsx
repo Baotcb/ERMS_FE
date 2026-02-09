@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import useSWR from 'swr'
 import { Plus, Search, Send, MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
@@ -29,7 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { CreatePlanForm } from './create-plan-form'
-import type { RecruitmentPlan, PlanListResponse } from '@/features/dept-head/types/recruitment-plan-types'
+import type { PlanListResponse } from '@/features/dept-head/types/recruitment-plan-types'
 
 const STATUS_COLORS: Record<string, string> = {
     Draft: 'bg-gray-100 text-gray-800',
@@ -52,7 +51,7 @@ export function PlanList() {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
 
     // Fetch plans
-    const { data, error, isLoading, mutate } = useSWR<PlanListResponse>(
+    const { data, isLoading, mutate } = useSWR<PlanListResponse>(
         ['/api/RecruitmentPlans', search],
         () => apiClient.get(`/api/RecruitmentPlans?Page=1&PageSize=50&Search=${search}`).then(res => res.json())
     )

@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { mutate } from 'swr'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -51,7 +50,6 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
     const [managers, setManagers] = useState<Employee[]>([])
 
     const form = useForm<DepartmentFormValues>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(departmentSchema) as unknown as Resolver<DepartmentFormValues>,
         defaultValues: {
             departmentName: initialData?.departmentName || '',
