@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MapPin, Briefcase, Flame, ChevronRight } from "lucide-react"
+import { Search, MapPin, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Select,
@@ -18,54 +18,12 @@ export function HeroSection() {
 
     return (
         <div className="relative overflow-hidden min-h-[500px] flex flex-col items-center pt-6 pb-8 bg-gradient-to-br from-[#0F4C75] via-[#0a3d5f] to-[#06263c]">
-            {/* Geometric Background Pattern - Enhanced Linear Gradient & Triangles */}
-            <div className="absolute inset-0 pointer-events-none">
-                {/* 1. Subtle Grid Overlay */}
+            {/* Simplified Geometric Background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute inset-0 bg-[linear-gradient(30deg,#ffffff08_1px,transparent_1px)] bg-[length:40px_40px] opacity-30" />
-
-                {/* 2. Prominent Left Chevrons (Triangle Patterns) */}
-                <div className="absolute top-0 bottom-0 left-0 w-1/3 overflow-hidden">
-                    {/* Large Outer Chevron - Faint */}
-                    <div
-                        className="absolute top-1/2 -left-20 w-[500px] h-[500px] border-[60px] border-r-white/5 border-b-white/5 border-t-transparent border-l-transparent rounded-br-[40px]"
-                        style={{ transform: 'translateY(-50%) rotate(-45deg)', filter: 'blur(2px)' }}
-                    />
-                    {/* Middle Chevron - Brighter */}
-                    <div
-                        className="absolute top-1/2 -left-10 w-[400px] h-[400px] border-[40px] border-r-white/10 border-b-white/10 border-t-transparent border-l-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(-45deg)' }}
-                    />
-                    {/* Inner Chevron - Glowing Highlight */}
-                    <div
-                        className="absolute top-1/2 left-0 w-[300px] h-[300px] border-[2px] border-r-white/20 border-b-white/20 border-t-transparent border-l-transparent bg-gradient-to-br from-transparent via-white/5 to-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(-45deg)', boxShadow: '0 0 40px rgba(255,255,255,0.1)' }}
-                    />
-                </div>
-
-                {/* 3. Prominent Right Chevrons (Mirrored) */}
-                <div className="absolute top-0 bottom-0 right-0 w-1/3 overflow-hidden">
-                    {/* Large Outer Chevron - Faint */}
-                    <div
-                        className="absolute top-1/2 -right-20 w-[500px] h-[500px] border-[60px] border-r-white/5 border-b-white/5 border-t-transparent border-l-transparent rounded-br-[40px]"
-                        style={{ transform: 'translateY(-50%) rotate(135deg)', filter: 'blur(2px)' }}
-                    />
-                    {/* Middle Chevron - Brighter */}
-                    <div
-                        className="absolute top-1/2 -right-10 w-[400px] h-[400px] border-[40px] border-r-white/10 border-b-white/10 border-t-transparent border-l-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(135deg)' }}
-                    />
-                    {/* Inner Chevron - Glowing Highlight */}
-                    <div
-                        className="absolute top-1/2 right-0 w-[300px] h-[300px] border-[2px] border-r-white/20 border-b-white/20 border-t-transparent border-l-transparent bg-gradient-to-br from-transparent via-white/5 to-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(135deg)', boxShadow: '0 0 40px rgba(255,255,255,0.1)' }}
-                    />
-                </div>
-
-                {/* 4. Right Side Glow */}
-                <div
-                    className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#00b14f]/10 to-transparent rounded-bl-full blur-3xl opacity-40"
-                    style={{ transform: 'translate(20%, -20%)' }}
-                />
+                <div className="absolute top-1/2 left-0 w-[300px] h-[300px] -translate-y-1/2 -translate-x-1/2 border-r-2 border-b-2 border-white/10 rotate-[-45deg]" />
+                <div className="absolute top-1/2 right-0 w-[300px] h-[300px] -translate-y-1/2 translate-x-1/2 border-r-2 border-b-2 border-white/10 rotate-[135deg]" />
+                <div className="absolute -top-32 -right-32 w-[600px] h-[600px] bg-gradient-to-bl from-[#00b14f]/10 to-transparent rounded-full blur-3xl" />
             </div>
 
             <div className="container mx-auto px-4 relative z-10 flex flex-col items-center h-full">

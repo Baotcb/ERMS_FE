@@ -3,6 +3,7 @@
 import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
     LayoutDashboard,
     Users,
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { logoutAction } from '@/features/core/auth/actions/auth'
+import { useEnterpriseInfo } from '@/features/enterprise'
 
 interface NavItem {
     label: string
@@ -50,6 +52,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <CalendarRange className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
+            { label: 'Tin tuyển dụng', href: '/enterprise/hr/job-postings' },
             { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
         ]
     }
@@ -222,6 +225,7 @@ export const HRSidebar = memo(function HRSidebar() {
     const { user } = useAuth()
     const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
+    const { enterpriseInfo } = useEnterpriseInfo()
 
     // Get user role for filtering navigation (memoized)
     const userRole = useMemo(() => user?.role || '', [user?.role])
@@ -255,9 +259,22 @@ export const HRSidebar = memo(function HRSidebar() {
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">HR</span>
-                    </div>
+                    {/* Placeholder logic for future logo integration */}
+                    {enterpriseInfo?.logoUrl ? (
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white">
+                            <Image
+                                src={enterpriseInfo.logoUrl}
+                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
+                                fill
+                                sizes="40px"
+                                className="object-contain p-1"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
+                            <span className="text-white font-bold text-lg">HR</span>
+                        </div>
+                    )}
                     <div>
                         <h1 className="font-bold text-[#0F4C75] text-lg">ERMS</h1>
                         <p className="text-xs text-gray-400">HR Management</p>
@@ -309,7 +326,7 @@ export const HRSidebar = memo(function HRSidebar() {
             <aside
                 className={cn(
                     'fixed top-0 left-0 h-screen w-72 z-40 transition-transform duration-300',
-                    'lg:translate-x-0 lg:static lg:z-auto',
+                    'lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:z-auto',
                     isMobileOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >

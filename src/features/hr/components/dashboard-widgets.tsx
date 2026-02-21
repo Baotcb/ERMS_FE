@@ -1,10 +1,11 @@
+import { memo } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 
 export { DashboardListWidget, DashboardChartWidget } from '@/components/common/dashboard/widget-containers'
 
 // Helpers for list items
-export function RequestItemRow({ title, date, requester, status }: { title: string, date: string, requester: string, status: string }) {
+export const RequestItemRow = memo(function RequestItemRow({ title, date, requester, status, project, onClick }: { title: string, date: string, requester: string, status: string, project?: string, onClick?: () => void }) {
     const getStatusColor = (s: string) => {
         switch (s) {
             case 'urgent': return 'bg-red-100 text-red-600 border-red-200'
@@ -15,7 +16,7 @@ export function RequestItemRow({ title, date, requester, status }: { title: stri
 
     // Checkboxes purely visual from image
     return (
-        <div className="flex items-start gap-3 group cursor-pointer">
+        <div className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-all active:scale-[0.99]" onClick={onClick}>
             <div className="mt-1 w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-[#0F4C75] transition-colors flex-shrink-0" />
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-[#0F4C75] transition-colors">{title}</p>
@@ -23,7 +24,7 @@ export function RequestItemRow({ title, date, requester, status }: { title: stri
                     <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${getStatusColor(status)}`}>
                         {status === 'urgent' ? 'Khẩn cấp' : status === 'important' ? 'Quan trọng' : 'Hoàn thành'}
                     </Badge>
-                    <span className="text-xs text-gray-400 truncate">Dự án: TĂNG TRƯỞNG &bull; {date}</span>
+                    <span className="text-xs text-gray-400 truncate text-[10px]">{project ? `Mã: ${project}` : ''} &bull; {date}</span>
                 </div>
             </div>
             <Avatar className="w-8 h-8 flex-shrink-0">
@@ -31,10 +32,12 @@ export function RequestItemRow({ title, date, requester, status }: { title: stri
             </Avatar>
         </div>
     )
-}
+})
 
-export function TaskItemRow({ title, project, assignee }: { title: string, project: string, assignee: string }) {
-    return (
+import Link from 'next/link'
+
+export const TaskItemRow = memo(function TaskItemRow({ title, project, assignee, link }: { title: string, project: string, assignee: string, link?: string }) {
+    const Content = (
         <div className="flex items-start gap-3 group cursor-pointer">
             <div className="mt-1 w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-[#0F4C75] transition-colors flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -46,9 +49,15 @@ export function TaskItemRow({ title, project, assignee }: { title: string, proje
             </Avatar>
         </div>
     )
-}
 
-export function CandidateItemRow({ title, group, status }: { title: string, group: string, status: string }) {
+    if (link) {
+        return <Link href={link} className="block">{Content}</Link>
+    }
+
+    return Content
+})
+
+export const CandidateItemRow = memo(function CandidateItemRow({ title, group, status }: { title: string, group: string, status: string }) {
     const isUrgent = status === 'urgent'
 
     return (
@@ -74,4 +83,4 @@ export function CandidateItemRow({ title, group, status }: { title: string, grou
             </div>
         </div>
     )
-}
+})

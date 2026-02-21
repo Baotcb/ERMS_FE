@@ -1,7 +1,6 @@
 'use client'
 
 import { memo, useState, useCallback } from 'react'
-import Link from 'next/link'
 import { Plus, Search, RefreshCw, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,7 +16,8 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 import type { Employee } from '@/features/hr/api/employee-service'
-import { useEmployees } from '@/features/hr/hooks/use-employees'
+import { useEmployees, employeesKeys } from '@/features/hr/hooks/use-employees'
+import { useDebounce } from '@/hooks/use-debounce'
 
 interface EmployeeListProps {
     initialEmployees: Employee[]
@@ -34,12 +34,22 @@ export const EmployeeList = memo(function EmployeeList({
 }: EmployeeListProps) {
     const [page, setPage] = useState(currentPage)
     const [searchQuery, setSearchQuery] = useState('')
+    const [prevSearch, setPrevSearch] = useState('')
+    const debouncedSearch = useDebounce(searchQuery, 300)
+
+    // Reset page when debounced search changes (and differs from previous)
+    if (debouncedSearch !== prevSearch && debouncedSearch !== searchQuery) {
+        setPrevSearch(debouncedSearch)
+        if (debouncedSearch && page !== 1) {
+            setPage(1)
+        }
+    }
 
     // Use SWR hook for data fetching
     const { data, employees, totalCount: hookedTotalCount, totalPages: hookedTotalPages, isLoading } = useEmployees({
         page: page,
         pageSize: 7,
-        search: searchQuery || undefined
+        search: debouncedSearch || undefined
     })
 
     const displayEmployees = data ? employees : initialEmployees
@@ -71,18 +81,16 @@ export const EmployeeList = memo(function EmployeeList({
 
     const handleSuccess = useCallback(() => {
         setIsCreateOpen(false)
-        // Revalidate SWR cache - handled by hook's mutate/SWR
-        mutate(() => true, undefined, { revalidate: true })
+        mutate(employeesKeys.lists(), undefined, { revalidate: true })
     }, [])
 
     const handleImportSuccess = useCallback(() => {
         setIsImportOpen(false)
-        // Revalidate SWR cache
-        mutate(() => true, undefined, { revalidate: true })
+        mutate(employeesKeys.lists(), undefined, { revalidate: true })
     }, [])
 
     const handleRefresh = () => {
-        mutate(() => true, undefined, { revalidate: true })
+        mutate(employeesKeys.lists(), undefined, { revalidate: true })
     }
 
     return (
@@ -114,7 +122,6 @@ export const EmployeeList = memo(function EmployeeList({
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value)
-                            setPage(1)
                         }}
                         className="pl-10"
                     />

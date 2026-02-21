@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { ConfirmEmailCard } from '@/features/core/auth'
+import { config } from '@/config'
 
 export const metadata: Metadata = {
     title: 'Xác thực Email - ERMS',
@@ -11,11 +12,13 @@ interface PageProps {
     searchParams: Promise<{ userId?: string; token?: string; email?: string }>
 }
 
+import { logger } from '@/lib/logger'
+
 async function verifyEmail(userId: string, token: string): Promise<{ success: boolean; message: string }> {
     try {
-        const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5129'
         // Remove trailing slash to avoid double-slash in URL
-        const apiUrl = rawApiUrl.replace(/\/+$/, '')
+        const apiUrl = config.apiUrl.replace(/\/+$/, '')
+
 
         const response = await fetch(`${apiUrl}/api/Auth/confirm-email`, {
             method: 'POST',
@@ -40,7 +43,7 @@ async function verifyEmail(userId: string, token: string): Promise<{ success: bo
         }
         return { success: true, message: data.message || 'Xác thực email thành công!' }
     } catch (err) {
-        console.error('Verify email error:', err)
+        logger.error('Verify email error:', err)
         return { success: false, message: 'Không thể kết nối đến server' }
     }
 }

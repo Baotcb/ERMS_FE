@@ -92,7 +92,7 @@ export function LoginForm() {
                             'DepartmentHead': '/enterprise/dept-head/dashboard',
                             'Employee': '/enterprise/profile',
                             'Trainer': '/enterprise/dept-head/training', // Assuming training module
-                            'Director': '/enterprise/hr/dashboard',
+                            'Director': '/enterprise/director/dashboard',
                         }
                         const redirectPath = role && roleRoutes[role] ? roleRoutes[role] : '/enterprise/hr/dashboard'
                         router.push(redirectPath)

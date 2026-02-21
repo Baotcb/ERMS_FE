@@ -7,7 +7,9 @@ interface EmployeeListContainerProps {
     searchParams?: Record<string, unknown>
 }
 
-export async function EmployeeListContainer({ page, searchParams }: EmployeeListContainerProps) {
+// searchParams is currently unused but might be needed for future filtering
+// keeping it commented out or removing it to fix lint
+export async function EmployeeListContainer({ page }: EmployeeListContainerProps) {
     const data = await fetchEmployeeList(page)
 
     return (

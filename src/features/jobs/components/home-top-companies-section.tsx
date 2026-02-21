@@ -81,6 +81,7 @@ export function TopCompaniesSection() {
                                             alt={company.name}
                                             width={48}
                                             height={48}
+                                            loading="lazy"
                                             className="object-contain w-full h-full"
                                         />
                                     </div>

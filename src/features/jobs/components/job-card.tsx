@@ -5,12 +5,13 @@
 
 'use client'
 
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import Image from 'next/image'
 import { MapPin, DollarSign, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { Job } from '../types'
+import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
@@ -18,24 +19,58 @@ interface JobCardProps extends Job {
   compact?: boolean
 }
 
-export const JobCard = memo(function JobCard({
-  title,
-  company,
-  salary,
-  location,
-  logo,
-  isHot,
-  compact = false,
-}: JobCardProps) {
+export const JobCard = memo(function JobCard(props: JobCardProps) {
+  const {
+    jobTitle,
+    enterpriseName,
+    salaryRangeMin,
+    salaryRangeMax,
+    showSalary,
+    location,
+    enterpriseLogoUrl,
+    isHot,
+    compact = false,
+  } = props
   const { toast } = useToast()
+  const { saveJob, removeJob, savedJobs } = useSavedJobsStore()
+
+  const isSaved = savedJobs.some((job) => job.id === props.id)
 
   const handleSaveJob = (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent navigation if wrapped in link
-    toast({
-      title: "Tính năng đang phát triển",
-      description: "Chức năng lưu việc làm sẽ sớm ra mắt.",
-    })
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (isSaved) {
+      removeJob(props.id)
+      toast({
+        title: "Đã bỏ lưu công việc",
+        description: props.jobTitle,
+      })
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { compact, ...jobData } = props
+      saveJob(jobData)
+      toast({
+        title: "Đã lưu công việc",
+        description: "Bạn có thể xem lại trong mục Việc làm đã lưu",
+      })
+    }
   }
+
+  const displaySalary = useMemo(() => {
+    if (!showSalary) return 'Thỏa thuận'
+    if (salaryRangeMin && salaryRangeMax) {
+      return `${(salaryRangeMin / 1000000).toLocaleString('vi-VN')} - ${(salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+    }
+    if (salaryRangeMin) {
+      return `Từ ${(salaryRangeMin / 1000000).toLocaleString('vi-VN')} triệu`
+    }
+    if (salaryRangeMax) {
+      return `Đến ${(salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+    }
+    return 'Thỏa thuận'
+  }, [showSalary, salaryRangeMin, salaryRangeMax])
+  const displayLogo = enterpriseLogoUrl || '/placeholder-logo.png' // Fallback needed
 
   return (
     <div className={cn(
@@ -47,9 +82,10 @@ export const JobCard = memo(function JobCard({
           "rounded-lg border border-slate-100 p-1 flex items-center justify-center flex-shrink-0 relative bg-white overflow-hidden group-hover:border-brand-primary/20 transition-colors",
           compact ? "w-14 h-14" : "w-20 h-20"
         )}>
+          {/* Handle Image src carefully */}
           <Image
-            src={logo}
-            alt={`${company} Logo`}
+            src={displayLogo}
+            alt={`${enterpriseName} Logo`}
             fill
             sizes={compact ? "60px" : "80px"}
             className="object-contain p-1"
@@ -61,12 +97,12 @@ export const JobCard = memo(function JobCard({
               "font-bold text-slate-900 line-clamp-2 group-hover:text-[#00b14f] transition-colors mb-1",
               compact ? "text-sm min-h-[2.5rem]" : "text-base min-h-[3rem]"
             )}
-            title={title}
+            title={jobTitle}
           >
-            {title}
+            {jobTitle}
           </h3>
-          <p className={cn("text-slate-500 truncate", compact ? "text-xs" : "text-sm")} title={company}>
-            {company}
+          <p className={cn("text-slate-500 truncate", compact ? "text-xs" : "text-sm")} title={enterpriseName}>
+            {enterpriseName}
           </p>
         </div>
       </div>
@@ -77,7 +113,7 @@ export const JobCard = memo(function JobCard({
           compact ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-sm bg-[#00b14f]/5"
         )}>
           <DollarSign className={compact ? "w-3 h-3" : "w-4 h-4"} />
-          <span>{salary}</span>
+          <span>{displaySalary}</span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 text-slate-400">
@@ -96,11 +132,10 @@ export const JobCard = memo(function JobCard({
         variant="ghost"
         size="icon"
         className="absolute top-2 right-2 h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500 text-slate-300 transition-colors opacity-0 group-hover:opacity-100"
-        // TODO: Implement "Save Job" feature with API integration
         onClick={handleSaveJob}
         aria-label="Save job"
       >
-        <Heart className="w-4 h-4" />
+        <Heart className={cn("w-4 h-4 transition-colors", isSaved ? "fill-red-500 text-red-500" : "text-slate-300 group-hover:text-red-500")} />
       </Button>
     </div>
   )

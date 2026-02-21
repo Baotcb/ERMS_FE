@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { mutate } from 'swr'
 import { Plus, Search, RefreshCw, Filter } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -24,7 +23,7 @@ import {
 
 import { RecruitmentCampaignTable } from './recruitment-campaign-table'
 import { RecruitmentCampaignForm } from './recruitment-campaign-form'
-import { deleteRecruitmentCampaign, updateRecruitmentCampaignStatus } from '../../api/recruitment-campaign-service'
+import { updateRecruitmentCampaignStatus } from '../../api/recruitment-campaign-service'
 import type { RecruitmentCampaign } from '../../types/recruitment-campaign-types'
 import { ErrorDialog } from '@/components/common'
 
@@ -98,19 +97,20 @@ export function RecruitmentCampaignList({
     }, [])
 
     const handleDelete = useCallback(async (campaign: RecruitmentCampaign) => {
-        if (confirm(`Bạn có chắc chắn muốn xóa chiến dịch "${campaign.campaignName}"?`)) {
+        // ⚠️ Backend KHÔNG CÓ route DELETE cho campaign
+        // Thay vào đó, sử dụng đổi trạng thái sang Archived
+        if (confirm(`Backend chưa hỗ trợ xóa chiến dịch. Bạn muốn chuyển "${campaign.campaignName}" sang trạng thái Archived?`)) {
             try {
                 setIsLoading(true)
-                await deleteRecruitmentCampaign(campaign.id)
+                await updateRecruitmentCampaignStatus(campaign.id, 'Archived')
                 toast({
                     title: 'Thành công',
-                    description: 'Đã xóa chiến dịch tuyển dụng',
+                    description: 'Đã chuyển chiến dịch sang trạng thái Archived',
                 })
-                // Refresh server data
                 router.refresh()
             } catch (error) {
                 console.error(error)
-                const errorMessage = error instanceof Error ? error.message : 'Xóa thất bại'
+                const errorMessage = error instanceof Error ? error.message : 'Thao tác thất bại'
                 toast({
                     variant: 'destructive',
                     title: 'Lỗi',
@@ -256,7 +256,7 @@ export function RecruitmentCampaignList({
                     />
                 </DialogContent>
             </Dialog>
-            <ErrorDialog 
+            <ErrorDialog
                 open={errorDialogOpen}
                 onOpenChange={setErrorDialogOpen}
                 title="Có lỗi xảy ra"

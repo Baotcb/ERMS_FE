@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
     retries?: number
 }
 
-const DEFAULT_TIMEOUT = 15000
+const DEFAULT_TIMEOUT = 30000
 const DEFAULT_RETRIES = 1
 
 async function fetchWithRetry(url: string, options: RequestOptions = {}): Promise<Response> {
@@ -20,9 +20,11 @@ async function fetchWithRetry(url: string, options: RequestOptions = {}): Promis
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
 
     // Get CSRF token from cookie if available
-    const csrfToken = typeof document !== 'undefined'
-        ? document.cookie.split('; ').find(row => row.startsWith('csrf_token='))?.split('=')[1]
+    const csrfCookieName = process.env.NODE_ENV === 'production' ? '__Host-csrf-token' : 'csrf-token'
+    const csrfMatch = typeof document !== 'undefined'
+        ? document.cookie.split('; ').find(row => row.startsWith(`${csrfCookieName}=`))
         : undefined
+    const csrfToken = csrfMatch ? csrfMatch.substring(csrfCookieName.length + 1) : undefined
 
     const headers = new Headers(fetchOptions.headers || {})
     if (csrfToken) {
@@ -115,14 +117,19 @@ export const apiClient = {
     delete: (url: string, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'DELETE' }),
     patch: (url: string, body: unknown, options?: RequestOptions) => {
         const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+        const headers = {
+            ...options?.headers,
+        } as Record<string, string>
+
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json'
+        }
+
         return fetchWithRetry(url, {
             ...options,
             method: 'PATCH',
             body: isFormData ? (body as BodyInit) : JSON.stringify(body),
-            headers: {
-                ...(!isFormData && { 'Content-Type': 'application/json' }),
-                ...options?.headers
-            }
+            headers
         })
     },
 }

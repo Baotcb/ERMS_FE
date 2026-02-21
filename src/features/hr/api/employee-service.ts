@@ -185,16 +185,17 @@ export async function importEmployeesFromFile(file: File, commit: boolean = fals
 
     // Nếu Backend trả về lỗi 400 cùng với cấu trúc ImportEmployeesResult (ví dụ lỗi validate)
     if (!response.ok) {
+        let errorResult
         try {
-            const errorResult = await response.json()
-            // Nếu response có cấu trúc lỗi chuẩn của import, trả về để hiển thị
-            if (errorResult.errors || errorResult.failedCount) {
-                return errorResult;
-            }
-            throw new Error(errorResult.message || 'Không thể import nhân viên')
+            errorResult = await response.json()
         } catch {
             throw new Error('Lỗi server không xác định')
         }
+        // Nếu response có cấu trúc lỗi chuẩn của import, trả về để hiển thị
+        if (errorResult.errors || errorResult.failedCount) {
+            return errorResult;
+        }
+        throw new Error(errorResult.message || 'Không thể import nhân viên')
     }
 
     return response.json()

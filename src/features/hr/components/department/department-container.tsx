@@ -7,7 +7,9 @@ interface DepartmentListContainerProps {
     searchParams?: Record<string, unknown>
 }
 
-export async function DepartmentListContainer({ page, searchParams }: DepartmentListContainerProps) {
+// searchParams is currently unused but might be needed for future filtering
+// keeping it commented out or removing it to fix lint
+export async function DepartmentListContainer({ page }: DepartmentListContainerProps) {
     // We can extend this to handle search filtering on server side if params are passed
     const data = await fetchDepartmentList(page)
 

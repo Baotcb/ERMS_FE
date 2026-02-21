@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loginByGoogle, exchangeCodeForTokens } from '@/features/core/auth/api/auth-service';
+import { loginByGoogle } from '@/features/core/auth/api/auth-service';
+import { exchangeCodeForTokens } from '@/features/core/auth/utils/google-auth';
 import { config } from '@/config';
 import { parseJwt } from '@/utils/jwt';
 
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
         const cookieOptions = {
             path: '/',
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax' as const,
+            sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
             maxAge: 60 * 60 * 24 * 7, // 7 days
         };
 

@@ -154,6 +154,7 @@ export const EmployeeTableVirtualized = memo(function EmployeeTableVirtualized({
     const rowData = useMemo(() => employees, [employees])
 
     // Set up virtualizer
+    // eslint-disable-next-line react-hooks/incompatible-library
     const rowVirtualizer = useVirtualizer({
         count: rowData.length,
         getScrollElement: () => parentRef.current,

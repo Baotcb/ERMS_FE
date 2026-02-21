@@ -2,18 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { CalendarRange, ChevronRight, ArrowRight } from 'lucide-react'
+import { CalendarRange, ArrowRight } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 import type { RecruitmentCampaign } from '@/features/hr/types/recruitment-campaign-types'
@@ -27,7 +20,7 @@ export function DeptHeadCampaignList({ campaigns, isLoading }: DeptHeadCampaignL
     const router = useRouter()
 
     const handleSelect = (id: string) => {
-        router.push(`/enterprise/dept-head/recruitment-plans/${id}`)
+        router.push(`/enterprise/dept-head/recruitment-plans/campaign/${id}`)
     }
 
     if (isLoading) {

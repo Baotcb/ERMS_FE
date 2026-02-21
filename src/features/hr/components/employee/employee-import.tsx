@@ -25,6 +25,7 @@ interface EmployeeImportProps {
     onCancel?: () => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
     const { toast } = useToast()
 

@@ -1,11 +1,18 @@
+import { apiClient } from '@/lib/api-client'
+import { format } from 'date-fns'
+import { RecruitmentPlan } from '../types/recruitment-plan-types'
+
 export interface ProposalItem {
     id: string
     title: string
     position: string
-    quantity: number
-    status: 'urgent' | 'highlight' | 'normal'
+    quantity: number // We'll store 0 if not available, or maybe budget?
+    status: string // Allow any string for flexibility with backend statuses
     date: string
+    budget: number // Added budget for display
 }
+
+// ... existing interfaces ...
 
 export interface ShortlistedCandidate {
     id: string
@@ -30,11 +37,27 @@ export interface ChartData {
 }
 
 export async function getProposals(): Promise<ProposalItem[]> {
-    return [
-        { id: '1', title: 'Bổ sung nhân sự team Mobile', position: 'Flutter Dev', quantity: 2, status: 'urgent', date: '02/02/2026' },
-        { id: '2', title: 'Thay thế nhân sự nghỉ thai sản', position: 'Kế toán viên', quantity: 1, status: 'highlight', date: '01/02/2026' },
-        { id: '3', title: 'Mở rộng team Sales HCM', position: 'Sales Executive', quantity: 5, status: 'normal', date: '28/01/2026' },
-    ]
+    try {
+        const res = await apiClient.get('/api/RecruitmentPlans?Page=1&PageSize=5')
+        if (!res.ok) {
+            console.error('Failed to fetch proposals:', res.statusText)
+            return []
+        }
+        const data = await res.json()
+
+        return (data.items || []).map((plan: RecruitmentPlan) => ({
+            id: plan.id,
+            title: plan.planName,
+            position: plan.planCode,
+            quantity: 0, // Plan list doesn't have total qty usually
+            status: plan.status,
+            date: format(new Date(plan.createdAt), 'dd/MM/yyyy'),
+            budget: plan.totalBudget
+        }))
+    } catch (error) {
+        console.error('Failed to fetch proposals', error)
+        return []
+    }
 }
 
 export async function getShortlistedCandidates(): Promise<ShortlistedCandidate[]> {
