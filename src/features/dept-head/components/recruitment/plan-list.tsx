@@ -56,16 +56,24 @@ export function PlanList() {
         () => apiClient.get(`/api/RecruitmentPlans?Page=1&PageSize=50&Search=${search}`).then(res => res.json())
     )
 
-    const handleSubmitPlan = async (planId: string, name: string) => {
-        if (!confirm(`Bạn có chắc chắn muốn gửi kế hoạch "${name}" đi phê duyệt? Bạn sẽ không thể chỉnh sửa sau khi gửi.`)) {
+    const handleSubmitPlan = async (planId: string, name: string, status: string) => {
+        const isResubmit = status === 'Rejected'
+        const confirmMsg = isResubmit
+            ? `Bạn có chắc chắn muốn gửi lại kế hoạch "${name}" đi phê duyệt?`
+            : `Bạn có chắc chắn muốn gửi kế hoạch "${name}" đi phê duyệt? Bạn sẽ không thể chỉnh sửa sau khi gửi.`
+
+        if (!confirm(confirmMsg)) {
             return
         }
 
         try {
-            const res = await apiClient.patch('/api/RecruitmentPlans/submit', { id: planId })
+            const endpoint = isResubmit
+                ? '/api/RecruitmentPlans/resubmit'
+                : '/api/RecruitmentPlans/submit'
+            const res = await apiClient.patch(endpoint, { planId })
             if (res.ok) {
                 toast({
-                    title: 'Đã gửi phê duyệt',
+                    title: isResubmit ? 'Đã gửi lại phê duyệt' : 'Đã gửi phê duyệt',
                     description: `Kế hoạch "${name}" đã được gửi tới Giám đốc.`,
                 })
                 mutate() // Refresh list
@@ -188,8 +196,8 @@ export function PlanList() {
                                                             <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
                                                         </DropdownMenuItem>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => handleSubmitPlan(plan.id, plan.planName)}>
-                                                            <Send className="mr-2 h-4 w-4" /> Gửi duyệt
+                                                        <DropdownMenuItem onClick={() => handleSubmitPlan(plan.id, plan.planName, plan.status)}>
+                                                            <Send className="mr-2 h-4 w-4" /> {plan.status === 'Rejected' ? 'Gửi lại duyệt' : 'Gửi duyệt'}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem className="text-red-600" onClick={() => handleDeletePlan(plan.id)}>
                                                             <Trash2 className="mr-2 h-4 w-4" /> Xóa

@@ -20,9 +20,11 @@ async function fetchWithRetry(url: string, options: RequestOptions = {}): Promis
     const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
 
     // Get CSRF token from cookie if available
-    const csrfToken = typeof document !== 'undefined'
-        ? document.cookie.split('; ').find(row => row.startsWith('__Host-csrf-token='))?.split('=')[1]
+    const csrfCookieName = process.env.NODE_ENV === 'production' ? '__Host-csrf-token' : 'csrf-token'
+    const csrfMatch = typeof document !== 'undefined'
+        ? document.cookie.split('; ').find(row => row.startsWith(`${csrfCookieName}=`))
         : undefined
+    const csrfToken = csrfMatch ? csrfMatch.substring(csrfCookieName.length + 1) : undefined
 
     const headers = new Headers(fetchOptions.headers || {})
     if (csrfToken) {

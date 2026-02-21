@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import {
     LayoutDashboard,
@@ -11,7 +12,7 @@ import {
     FileText
 } from 'lucide-react'
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import Image from 'next/image'
+import { useEnterpriseInfo } from '@/features/enterprise'
 
 const sidebarItems = [
     {
@@ -44,27 +45,25 @@ const sidebarItems = [
 export function DirectorSidebar() {
     const pathname = usePathname()
 
-    // Placeholder fetching logic - similar to DeptHead sidebar
-    // Ideally this comes from useAuth() or a separate API call if not in token
-    const enterpriseLogo = null
-    const enterpriseName = 'Tech Corp'
+    const { enterpriseInfo } = useEnterpriseInfo()
 
     return (
         <div className="flex bg-white h-screen flex-col w-64 border-r border-gray-200">
             {/* Logo Section */}
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/director/dashboard" className="flex items-center gap-3">
-                    {enterpriseLogo ? (
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+                    {enterpriseInfo?.logoUrl ? (
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white">
                             <Image
-                                src={enterpriseLogo}
-                                alt={enterpriseName}
+                                src={enterpriseInfo.logoUrl}
+                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
                                 fill
-                                className="object-cover"
+                                sizes="40px"
+                                className="object-contain p-1"
                             />
                         </div>
                     ) : (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
                             <span className="text-white font-bold text-lg">GD</span>
                         </div>
                     )}

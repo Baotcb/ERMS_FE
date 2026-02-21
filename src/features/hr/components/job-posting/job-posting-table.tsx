@@ -50,12 +50,13 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const parentRef = useRef<HTMLDivElement>(null)
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const virtualizer = useVirtualizer({
         count: data.length,
         getScrollElement: () => parentRef.current,
         estimateSize: () => 73, // Adjusted estimate including border/padding
         overscan: 5,
-         
+
     })
 
     const items = virtualizer.getVirtualItems()

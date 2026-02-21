@@ -9,49 +9,49 @@ export function useJobPostings(params?: {
     status?: string
     departmentId?: string
 }) {
-    const key = ['/api/JobPostings', JSON.stringify(params)]
+    const key = ['/api/job-postings', JSON.stringify(params)]
     return useData(key, {
         fetcher: () => service.getJobPostings(params),
     })
 }
 
 export function useJobPosting(id: string) {
-    return useData(id ? `/api/JobPostings/${id}` : null, {
+    return useData(id ? `/api/job-postings/${id}` : null, {
         fetcher: () => service.getJobPostingById(id),
     })
 }
 
 export function useCreateJobPosting() {
     return useSWRMutation(
-        '/api/JobPostings',
+        '/api/job-postings',
         (_, { arg }: { arg: CreateJobPostingDto }) => service.createJobPosting(arg)
     )
 }
 
 export function useUpdateJobPosting(id: string) {
     return useSWRMutation(
-        `/api/JobPostings/${id}`,
+        `/api/job-postings/${id}`,
         (_, { arg }: { arg: UpdateJobPostingDto }) => service.updateJobPosting(id, arg)
     )
 }
 
 export function usePublishJobPosting() {
     return useSWRMutation(
-        '/api/JobPostings/publish',
+        '/api/job-postings/publish',
         (_, { arg: id }: { arg: string }) => service.publishJobPosting(id)
     )
 }
 
 export function useCloseJobPosting() {
     return useSWRMutation(
-        '/api/JobPostings/close',
+        '/api/job-postings/close',
         (_, { arg: id }: { arg: string }) => service.closeJobPosting(id)
     )
 }
 
 export function useDeleteJobPosting() {
     return useSWRMutation(
-        '/api/JobPostings/delete',
+        '/api/job-postings/delete',
         (_, { arg: id }: { arg: string }) => service.deleteJobPosting(id)
     )
 }

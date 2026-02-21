@@ -2,8 +2,8 @@
 
 import { useState, useCallback, memo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
     LayoutDashboard,
     GraduationCap,
@@ -129,15 +129,13 @@ const NavMenuItem = memo(function NavMenuItem({
 
 // Avatar Dropdown imported from shared component
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
+import { useEnterpriseInfo } from '@/features/enterprise'
 
 export function DeptHeadSidebar() {
     const pathname = usePathname()
     const [expandedItems, setExpandedItems] = useState<string[]>(['Tuyển dụng'])
 
-    // MOCK DATA: Retrieve from API when available.
-    // User mentioned "url in enterprise". We might need a useEnterprise() hook later.
-    const enterpriseLogo = null // "https://via.placeholder.com/150"
-    const enterpriseName = "Tech Corp"
+    const { enterpriseInfo } = useEnterpriseInfo()
 
     const toggleExpand = useCallback((label: string) => {
         setExpandedItems((prev) =>
@@ -159,17 +157,18 @@ export function DeptHeadSidebar() {
             {/* Logo area */}
             <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                    {enterpriseLogo ? (
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+                    {enterpriseInfo?.logoUrl ? (
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white">
                             <Image
-                                src={enterpriseLogo}
-                                alt={enterpriseName}
+                                src={enterpriseInfo.logoUrl}
+                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
                                 fill
-                                className="object-cover"
+                                sizes="40px"
+                                className="object-contain p-1"
                             />
                         </div>
                     ) : (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
                             <span className="text-white font-bold text-lg">DH</span>
                         </div>
                     )}

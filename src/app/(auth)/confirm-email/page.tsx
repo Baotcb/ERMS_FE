@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { ConfirmEmailCard } from '@/features/core/auth'
+import { config } from '@/config'
 
 export const metadata: Metadata = {
     title: 'Xác thực Email - ERMS',
@@ -11,13 +12,13 @@ interface PageProps {
     searchParams: Promise<{ userId?: string; token?: string; email?: string }>
 }
 
-import { API_URL } from '@/config/api'
 import { logger } from '@/lib/logger'
 
 async function verifyEmail(userId: string, token: string): Promise<{ success: boolean; message: string }> {
     try {
         // Remove trailing slash to avoid double-slash in URL
-        const apiUrl = API_URL.replace(/\/+$/, '')
+        const apiUrl = config.apiUrl.replace(/\/+$/, '')
+
 
         const response = await fetch(`${apiUrl}/api/Auth/confirm-email`, {
             method: 'POST',

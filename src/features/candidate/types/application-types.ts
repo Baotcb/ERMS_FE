@@ -32,27 +32,25 @@ export type ApplicationStage =
     | 'Hired'
     | 'Withdrawn'
 
+// Match backend CVScreeningResultSummary exactly
 export interface CVScreeningResult {
-    id: string
-    applicationId: string
     overallScore: number
     skillMatchScore: number
     experienceMatchScore: number
     educationMatchScore: number
-    matchedSkills: string[] // Backend returns List<string> or JSON? Plan says list in example
+    matchedSkills: string[]
     missingSkills: string[]
     strengths: string[]
-    summary?: string
-    concerns?: string[]
+    summary: string
 }
 
+// Match backend SubmitApplicationCommand exactly
 export interface CreateApplicationRequest {
     jobId: string
     cvFile: File
-    fullName?: string
-    email?: string
-    phone?: string
     coverLetter?: string
+    expectedSalary?: number
+    availableStartDate?: string
 }
 
 export interface ApplicationHistoryParams {
@@ -60,4 +58,3 @@ export interface ApplicationHistoryParams {
     pageSize?: number
     status?: string
 }
-

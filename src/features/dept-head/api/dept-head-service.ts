@@ -39,9 +39,13 @@ export interface ChartData {
 export async function getProposals(): Promise<ProposalItem[]> {
     try {
         const res = await apiClient.get('/api/RecruitmentPlans?Page=1&PageSize=5')
+        if (!res.ok) {
+            console.error('Failed to fetch proposals:', res.statusText)
+            return []
+        }
         const data = await res.json()
 
-        return data.items.map((plan: RecruitmentPlan) => ({
+        return (data.items || []).map((plan: RecruitmentPlan) => ({
             id: plan.id,
             title: plan.planName,
             position: plan.planCode,

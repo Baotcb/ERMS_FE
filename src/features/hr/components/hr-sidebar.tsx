@@ -3,6 +3,7 @@
 import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
     LayoutDashboard,
     Users,
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { logoutAction } from '@/features/core/auth/actions/auth'
+import { useEnterpriseInfo } from '@/features/enterprise'
 
 interface NavItem {
     label: string
@@ -223,6 +225,7 @@ export const HRSidebar = memo(function HRSidebar() {
     const { user } = useAuth()
     const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
+    const { enterpriseInfo } = useEnterpriseInfo()
 
     // Get user role for filtering navigation (memoized)
     const userRole = useMemo(() => user?.role || '', [user?.role])
@@ -257,9 +260,21 @@ export const HRSidebar = memo(function HRSidebar() {
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
                     {/* Placeholder logic for future logo integration */}
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">HR</span>
-                    </div>
+                    {enterpriseInfo?.logoUrl ? (
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white">
+                            <Image
+                                src={enterpriseInfo.logoUrl}
+                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
+                                fill
+                                sizes="40px"
+                                className="object-contain p-1"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
+                            <span className="text-white font-bold text-lg">HR</span>
+                        </div>
+                    )}
                     <div>
                         <h1 className="font-bold text-[#0F4C75] text-lg">ERMS</h1>
                         <p className="text-xs text-gray-400">HR Management</p>

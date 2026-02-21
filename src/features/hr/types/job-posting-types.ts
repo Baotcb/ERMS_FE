@@ -1,20 +1,12 @@
 export interface CreateJobPostingDto {
   planDetailId: string
-  jobTitle: string
-  jobCode?: string
-  description: string
-  requirements?: string
+  applicationDeadline: string // ISO date string
+  titleOverride?: string
+  descriptionOverride?: string
   benefits?: string
-  employmentType: string // 'Full-time' | 'Part-time' | 'Contract' | 'Internship'
-  experienceLevel?: string // 'Intern' | 'Junior' | 'Mid-level' | 'Senior' | 'Lead' | 'Manager'
-  educationLevel?: string // 'High School' | 'Bachelor' | 'Master' | 'PhD'
-  salaryRangeMin?: number
-  salaryRangeMax?: number
-  showSalary: boolean
   location?: string
-  remoteOption?: string // 'Remote' | 'On-site' | 'Hybrid'
-  quantity: number
-  applicationDeadline?: string // ISO date string
+  remoteOption?: string
+
 }
 
 export interface UpdateJobPostingDto extends Partial<CreateJobPostingDto> {

@@ -11,10 +11,11 @@ export const MOCK_JOBS: Job[] = [
         salaryRangeMin: 20000000,
         salaryRangeMax: 40000000,
         showSalary: true,
-        employmentType: 'Full-time',
+        employmentType: 'FullTime',
         quantity: 5,
         description: 'Mô tả công việc IT Sales...',
         departmentName: 'Phòng Kinh Doanh',
+        remoteOption: 'OnSite',
         publishedAt: '2025-01-01T00:00:00Z'
     },
     {
@@ -27,10 +28,11 @@ export const MOCK_JOBS: Job[] = [
         salaryRangeMin: 14000000,
         salaryRangeMax: 17000000,
         showSalary: true,
-        employmentType: 'Full-time',
+        employmentType: 'FullTime',
         quantity: 2,
         description: 'Thiết kế banner, poster...',
         departmentName: 'Phòng Marketing',
+        remoteOption: 'OnSite',
         publishedAt: '2025-01-02T00:00:00Z'
     },
     {
@@ -41,10 +43,11 @@ export const MOCK_JOBS: Job[] = [
         enterpriseLogoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBWZAavByrJ86WyC3jehuKavagMZISgGK7zorWt12WAeTszlLWTJDztbIMZye-3r2QFlYbmXa-RAScJZu3sah7CHajoqoYO8Qc8sNR40oMQM2P2p7SqNdEspQJre1RoUEaxSqZgukPRyZ4mZgEjjhTqBJrfOjKhy6ogd2fjV-pTaefGFrnQp65Gb__uyzsUpu7d_a3CJ_qPJfyBW_-ygjZfcTqTotmHuyjKzPhWJ4iulUR0G9xrkItdOsyXrpMHGF_3rn1OuWOW1UE',
         isHot: true,
         showSalary: false, // Thỏa thuận
-        employmentType: 'Full-time',
+        employmentType: 'FullTime',
         quantity: 1,
         description: 'Quản lý phòng lab vi sinh...',
         departmentName: 'Phòng R&D',
+        remoteOption: 'OnSite',
         publishedAt: '2025-01-03T00:00:00Z'
     },
     {
@@ -57,10 +60,11 @@ export const MOCK_JOBS: Job[] = [
         salaryRangeMin: 20000000,
         salaryRangeMax: 30000000,
         showSalary: true,
-        employmentType: 'Full-time',
+        employmentType: 'FullTime',
         quantity: 10,
         description: 'Kinh doanh thị trường...',
         departmentName: 'Phòng Kinh Doanh',
+        remoteOption: 'OnSite',
         publishedAt: '2025-01-04T00:00:00Z'
     },
     {
@@ -73,10 +77,11 @@ export const MOCK_JOBS: Job[] = [
         salaryRangeMin: 10000000,
         salaryRangeMax: 25000000,
         showSalary: true,
-        employmentType: 'Full-time',
+        employmentType: 'FullTime',
         quantity: 3,
         description: 'Tư vấn khách hàng...',
         departmentName: 'Phòng CSKH',
+        remoteOption: 'OnSite',
         publishedAt: '2025-01-05T00:00:00Z'
     },
     {
@@ -89,10 +94,11 @@ export const MOCK_JOBS: Job[] = [
         salaryRangeMin: 15000000,
         salaryRangeMax: 18000000,
         showSalary: true,
-        employmentType: 'Full-time',
+        employmentType: 'FullTime',
         quantity: 1,
         description: 'Thiết kế thời trang...',
         departmentName: 'Phòng Thiết Kế',
+        remoteOption: 'OnSite',
         publishedAt: '2025-01-06T00:00:00Z'
     },
 ]

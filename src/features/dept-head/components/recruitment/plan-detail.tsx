@@ -85,6 +85,26 @@ export function PlanDetail({ planId, headerActions }: PlanDetailProps) {
         mutateDetails()
     }
 
+    const handleDeleteDetail = async (detailId: string) => {
+        if (!confirm('Xóa đề xuất này?')) return
+        try {
+            const res = await apiClient.delete(`/api/plan-details/${detailId}`)
+            if (res.ok) {
+                mutateDetails()
+                toast({ description: 'Đã xóa vị trí' })
+            } else {
+                const err = await res.json().catch(() => ({ message: '' }))
+                throw new Error((err as { message?: string }).message || 'Không thể xóa đề xuất')
+            }
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'Lỗi',
+                description: error instanceof Error ? error.message : 'Không thể xóa đề xuất',
+            })
+        }
+    }
+
     const handleAddDetail = async () => {
         try {
             // Validate required fields
@@ -266,7 +286,7 @@ export function PlanDetail({ planId, headerActions }: PlanDetailProps) {
                                 ) : (
                                     planDetails.map((detail: PlanDetailData) => (
                                         <TableRow key={detail.id}>
-                                            <TableCell className="font-medium">{detail.positionTitle || `Position #${detail.positionId}`}</TableCell>
+                                            <TableCell className="font-medium">{detail.positionTitle || '-'}</TableCell>
                                             <TableCell>{detail.quantity}</TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className={
@@ -284,7 +304,7 @@ export function PlanDetail({ planId, headerActions }: PlanDetailProps) {
                                             </TableCell>
                                             {plan.status === 'Draft' && (
                                                 <TableCell>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleDeleteDetail(detail.id)}>
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 </TableCell>

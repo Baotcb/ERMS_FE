@@ -17,6 +17,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
+    FormDescription,
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useCreateApplication } from '@/features/candidate/hooks/use-applications'
@@ -24,24 +25,19 @@ import { ScreeningResultsCard } from './screening-results-card'
 import { CVScreeningResult } from '../types/application-types'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ACCEPTED_FILE_TYPES = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-]
 
+// Backend only accepts PDF
 const applicationSchema = z.object({
-    fullName: z.string().min(2, 'Họ tên quá ngắn'),
-    email: z.string().email('Email không hợp lệ'),
-    phone: z.string().regex(/^[0-9]{10,11}$/, 'Số điện thoại không hợp lệ'),
     coverLetter: z.string().optional(),
+    expectedSalary: z.string().optional(),
+    availableStartDate: z.string().optional(),
     cvFile: z
         .any()
         .refine((file) => file instanceof File, 'Vui lòng tải lên CV')
-        .refine((file) => file?.size <= MAX_FILE_SIZE, `Kích thước file tối đa là 5MB`)
+        .refine((file) => file?.size <= MAX_FILE_SIZE, 'Kích thước file tối đa là 5MB')
         .refine(
-            (file) => ACCEPTED_FILE_TYPES.includes(file?.type),
-            'Chỉ chấp nhận file .pdf, .doc, .docx'
+            (file) => file?.type === 'application/pdf',
+            'Chỉ chấp nhận file PDF'
         ),
 })
 
@@ -59,14 +55,12 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
     const [screeningResult, setScreeningResult] = useState<CVScreeningResult | null>(null)
     const [isSuccess, setIsSuccess] = useState(false)
 
-    // Mock user details (replace with actual auth context)
     const form = useForm<ApplicationFormValues>({
         resolver: zodResolver(applicationSchema),
         defaultValues: {
-            fullName: '', // Could be pre-filled
-            email: '',
-            phone: '',
             coverLetter: '',
+            expectedSalary: '',
+            availableStartDate: '',
         },
     })
 
@@ -84,8 +78,6 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         onDrop,
         accept: {
             'application/pdf': ['.pdf'],
-            'application/msword': ['.doc'],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
         },
         maxFiles: 1,
         maxSize: MAX_FILE_SIZE,
@@ -100,8 +92,12 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         try {
             const result = await applyJob({
                 jobId,
-                ...data,
                 cvFile: data.cvFile,
+                coverLetter: data.coverLetter || undefined,
+                expectedSalary: data.expectedSalary
+                    ? parseFloat(data.expectedSalary)
+                    : undefined,
+                availableStartDate: data.availableStartDate || undefined,
             })
 
             // Lưu kết quả AI screening
@@ -115,10 +111,6 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                 title: 'Ứng tuyển thành công!',
                 description: `Hồ sơ của bạn đã được gửi cho vị trí ${jobTitle}.`,
             })
-
-            // if (onSuccess) {
-            //     setTimeout(() => onSuccess(), 5000) // Delay to let user see AI result
-            // }
         } catch (error) {
             console.error(error)
             toast({
@@ -129,6 +121,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         }
     }
 
+    // Success state with AI screening results
     if (isSuccess && screeningResult) {
         return (
             <div className="space-y-6 animate-in fade-in zoom-in duration-300">
@@ -154,6 +147,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         )
     }
 
+    // Simple success state (no screening results)
     if (isSuccess) {
         return (
             <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-in fade-in zoom-in duration-300">
@@ -174,49 +168,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="fullName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Họ và tên <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Nguyễn Văn A" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                                <FormControl>
-                                    <Input placeholder="nguyenvana@example.com" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
-                <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Số điện thoại <span className="text-red-500">*</span></FormLabel>
-                            <FormControl>
-                                <Input placeholder="0912345678" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
+                {/* CV Upload - PDF only */}
                 <div className="space-y-2">
                     <FormLabel>CV / Hồ sơ năng lực <span className="text-red-500">*</span></FormLabel>
                     {!selectedFile ? (
@@ -235,7 +187,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                                 <p className="text-sm font-medium">
                                     {isDragActive ? 'Thả file vào đây' : 'Kéo thả hoặc nhấn để tải lên'}
                                 </p>
-                                <p className="text-xs text-slate-400">PDF, DOC, DOCX (Max 5MB)</p>
+                                <p className="text-xs text-slate-400">Chỉ chấp nhận PDF (Tối đa 5MB)</p>
                             </div>
                         </div>
                     ) : (
@@ -267,6 +219,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                     )}
                 </div>
 
+                {/* Cover Letter */}
                 <FormField
                     control={form.control}
                     name="coverLetter"
@@ -285,6 +238,46 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                     )}
                 />
 
+                {/* Expected Salary & Available Start Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="expectedSalary"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Mức lương mong muốn (Không bắt buộc)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        placeholder="VD: 15000000"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                    Đơn vị: VNĐ/tháng
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="availableStartDate"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Ngày có thể bắt đầu (Không bắt buộc)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="date"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4">
                     <Button type="button" variant="outline" onClick={onSuccess}>Hủy</Button>
                     <Button type="submit" disabled={isMutating} className="bg-[#00b14f] hover:bg-[#00b14f]/90 min-w-[120px]">
@@ -296,4 +289,3 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         </Form>
     )
 }
-

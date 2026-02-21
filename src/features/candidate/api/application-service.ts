@@ -15,15 +15,15 @@ export interface CreateApplicationResponse {
     }
 }
 
+// Match backend SubmitApplicationCommand: JobPostingId, CvFile, CoverLetter, ExpectedSalary, AvailableStartDate
 export async function createApplication(data: CreateApplicationRequest): Promise<CreateApplicationResponse> {
     const formData = new FormData()
     formData.append('JobPostingId', data.jobId)
     formData.append('CvFile', data.cvFile)
 
-    if (data.fullName) formData.append('FullName', data.fullName)
-    if (data.email) formData.append('Email', data.email)
-    if (data.phone) formData.append('Phone', data.phone)
     if (data.coverLetter) formData.append('CoverLetter', data.coverLetter)
+    if (data.expectedSalary != null) formData.append('ExpectedSalary', data.expectedSalary.toString())
+    if (data.availableStartDate) formData.append('AvailableStartDate', data.availableStartDate)
 
     const response = await apiClient.post(BASE_URL, formData)
 
@@ -36,4 +36,3 @@ export async function createApplication(data: CreateApplicationRequest): Promise
 }
 
 // ⚠️ Backend CHƯA CÓ endpoint getApplications và getApplicationById cho Candidate
-

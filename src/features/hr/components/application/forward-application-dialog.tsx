@@ -42,7 +42,7 @@ export function ForwardApplicationDialog({
             })
             onOpenChange(false)
             onSuccess?.()
-        } catch (_error) {
+        } catch {
             toast({
                 title: 'Lỗi',
                 description: 'Không thể chuyển hồ sơ. Vui lòng thử lại.',

@@ -4,7 +4,6 @@ import {
     GetRecruitmentCampaignsParams,
     PaginatedResult,
     CreateRecruitmentCampaignRequest,
-    UpdateRecruitmentCampaignRequest
 } from '../types/recruitment-campaign-types'
 
 export async function getRecruitmentCampaigns(params: GetRecruitmentCampaignsParams, token?: string): Promise<PaginatedResult<RecruitmentCampaign>> {
@@ -77,22 +76,11 @@ export async function createRecruitmentCampaign(data: CreateRecruitmentCampaignR
     return response.json()
 }
 
-export async function updateRecruitmentCampaign(id: string, data: UpdateRecruitmentCampaignRequest): Promise<void> {
-    const response = await apiClient.put(`/api/recruitment-campaigns/${id}`, data)
+// ⚠️ Backend KHÔNG CÓ route PUT /{id} cho update campaign
+// Chỉ có PUT /status để đổi trạng thái
+// export async function updateRecruitmentCampaign() → REMOVED (route không tồn tại)
 
-    if (!response.ok) {
-        const text = await response.text()
-        let errorMessage = 'Không thể cập nhật chiến dịch tuyển dụng'
-        try {
-            const error = JSON.parse(text)
-            if (error.message) errorMessage = error.message
-        } catch {
-            console.error('Failed to parse error response:', text)
-        }
-        throw new Error(errorMessage)
-    }
-}
-
+// PUT /api/recruitment-campaigns/status - Cập nhật trạng thái chiến dịch
 export async function updateRecruitmentCampaignStatus(id: string, status: string): Promise<void> {
     const response = await apiClient.put(`/api/recruitment-campaigns/status`, { id, newStatus: status })
 
@@ -109,18 +97,5 @@ export async function updateRecruitmentCampaignStatus(id: string, status: string
     }
 }
 
-export async function deleteRecruitmentCampaign(id: string): Promise<void> {
-    const response = await apiClient.delete(`/api/recruitment-campaigns/${id}`)
-
-    if (!response.ok) {
-        const text = await response.text()
-        let errorMessage = 'Không thể xóa chiến dịch tuyển dụng'
-        try {
-            const error = JSON.parse(text)
-            if (error.message) errorMessage = error.message
-        } catch {
-            console.error('Failed to parse error response:', text)
-        }
-        throw new Error(errorMessage)
-    }
-}
+// ⚠️ Backend KHÔNG CÓ route DELETE /{id} cho xóa campaign
+// export async function deleteRecruitmentCampaign() → REMOVED (route không tồn tại)

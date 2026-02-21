@@ -3,8 +3,9 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { LoginFormData, EmployerRegisterFormData } from '../schemas/auth-schemas'
-import { API_URL } from '@/config/api'
+import { config } from '@/config'
 import { logger } from '@/lib/logger'
+import { COOKIE_OPTIONS } from '@/utils/constants'
 
 interface LoginResult {
     success: boolean
@@ -27,7 +28,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
     try {
         logger.debug('Login attempt initiated')
 
-        const res = await fetch(`${API_URL}/api/auth/login`, {
+        const res = await fetch(`${config.apiUrl}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -54,6 +55,10 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         // Set HttpOnly Cookie
         const cookieStore = await cookies()
         const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days or 1 day
+        const cookieSettings = {
+            ...COOKIE_OPTIONS,
+            maxAge,
+        }
 
         if (!resData.token) {
             logger.error('No token in response')
@@ -62,11 +67,8 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
         // Store Auth Token
         cookieStore.set('auth_token', resData.token, {
+            ...cookieSettings,
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-            path: '/',
-            maxAge,
         })
 
         // Parse token or use returned user data to get role/name
@@ -89,17 +91,12 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
         // Store minimal user info for middleware/client
         if (role) {
-            cookieStore.set('user_role', role, {
-                path: '/',
-                maxAge,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
-            })
+            cookieStore.set('user_role', role, cookieSettings)
         }
 
         // Check if we need to fetch profile for full name
         try {
-            const profileRes = await fetch(`${API_URL}/api/UserProfile/me`, {
+            const profileRes = await fetch(`${config.apiUrl}/api/UserProfile/me`, {
                 headers: { 'Authorization': `Bearer ${resData.token}` }
             })
             if (profileRes.ok) {
@@ -110,12 +107,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
             // ignore profile fetch error
         }
 
-        cookieStore.set('user_name', encodeURIComponent(fullName), {
-            path: '/',
-            maxAge,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
-        })
+        cookieStore.set('user_name', encodeURIComponent(fullName), cookieSettings)
 
         return {
             success: true,
@@ -142,7 +134,7 @@ export async function logoutAction() {
 
 export async function registerEmployerAction(data: EmployerRegisterFormData): Promise<{ success: boolean; error?: string }> {
     try {
-        const response = await fetch(`${API_URL}/api/Auth/register-enterprise`, {
+        const response = await fetch(`${config.apiUrl}/api/Auth/register-enterprise`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

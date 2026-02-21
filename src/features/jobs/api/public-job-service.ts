@@ -27,7 +27,9 @@ export async function getPublicJobs(params?: GetPublicJobsParams): Promise<Publi
     if (params?.maxSalary) searchParams.append('MaxSalary', String(params.maxSalary))
     if (params?.departmentId) searchParams.append('DepartmentId', params.departmentId)
 
-    const response = await apiClient.get(`/api/public/jobs?${searchParams}`)
+    const response = await apiClient.get(`/api/public/jobs?${searchParams}`, {
+        cache: 'force-cache', // Cache public job listings
+    })
 
     if (!response.ok) {
         // Fallback or detailed error
@@ -38,7 +40,9 @@ export async function getPublicJobs(params?: GetPublicJobsParams): Promise<Publi
 }
 
 export async function getPublicJobById(id: string): Promise<PublicJobPostingDto> {
-    const response = await apiClient.get(`/api/public/jobs/${id}`)
+    const response = await apiClient.get(`/api/public/jobs/${id}`, {
+        cache: 'force-cache', // Cache individual job details
+    })
 
     if (!response.ok) {
         throw new Error('Không thể tải thông tin công việc')

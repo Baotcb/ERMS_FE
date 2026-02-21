@@ -1,9 +1,11 @@
 import { cookies } from 'next/headers';
 import { config } from '@/config';
 import { logger } from '@/lib/logger';
+import { cache } from 'react';
 
 export interface ServerFetchOptions extends RequestInit {
   requireAuth?: boolean;
+  cache?: RequestCache;
 }
 
 export interface ServerErrorResponse {
@@ -23,8 +25,11 @@ export async function serverFetch<T>(
   const { requireAuth = false, ...fetchOptions } = options;
 
   // Build full URL
-  const baseUrl = process.env.API_URL || config.apiUrl || '';
-  const fullUrl = baseUrl ? `${baseUrl}${url}` : url;
+  const baseUrl = process.env.API_URL || config.apiUrl;
+  if (!baseUrl) {
+    throw new Error('API_URL is not configured. Please set API_URL environment variable.');
+  }
+  const fullUrl = `${baseUrl}${url}`;
 
   // Prepare headers
   const headers: HeadersInit = {
@@ -48,7 +53,7 @@ export async function serverFetch<T>(
     const response = await fetch(fullUrl, {
       ...fetchOptions,
       headers,
-      cache: 'no-store', // Disable caching for dynamic content
+      cache: fetchOptions.cache || (fetchOptions.method === 'GET' ? 'force-cache' : 'no-store'),
     });
 
     // Handle 204 No Content
@@ -85,8 +90,9 @@ export async function serverFetch<T>(
 
 /**
  * Get's current user's session from cookies
+ * Cached per request to prevent repeated JWT parsing
  */
-export async function getServerSession() {
+export const getServerSession = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
   const userRole = cookieStore.get('user_role')?.value;
@@ -150,30 +156,6 @@ export async function getServerSession() {
     logger.error('Token parsing failed', error);
     return { token: null, user: null, role: null };
   }
-}
+});
 
-/**
- * Check if user is authenticated on the server
- */
-export async function isAuthenticated() {
-  const session = await getServerSession();
-  return session.token !== null;
-}
 
-/**
- * Get's current user's role from cookies
- */
-export async function getUserRole() {
-  const cookieStore = await cookies();
-  return cookieStore.get('user_role')?.value || null;
-}
-
-/**
- * Server-side redirect helper
- */
-export function redirect(url: string) {
-  return new Response(null, {
-    status: 302,
-    headers: { Location: url },
-  });
-}

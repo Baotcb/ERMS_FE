@@ -3,3 +3,5 @@
 // including HR management, training, reports, etc.
 
 export * from './components'
+export * from './api/enterprise-service'
+

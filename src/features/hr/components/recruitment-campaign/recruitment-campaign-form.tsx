@@ -31,7 +31,7 @@ import {
 import { cn } from '@/lib/utils'
 
 import type { RecruitmentCampaign } from '../../types/recruitment-campaign-types'
-import { createRecruitmentCampaign, updateRecruitmentCampaign } from '../../api/recruitment-campaign-service'
+import { createRecruitmentCampaign } from '../../api/recruitment-campaign-service'
 
 // Schema
 const campaignSchema = z.object({
@@ -120,11 +120,9 @@ export function RecruitmentCampaignForm({
             }
 
             if (isEdit && campaign) {
-                await updateRecruitmentCampaign(campaign.id, { ...payload, id: campaign.id })
-                toast({
-                    title: 'Thành công',
-                    description: 'Cập nhật chiến dịch thành công',
-                })
+                // ⚠️ Backend KHÔNG CÓ route PUT /{id} cho update campaign
+                // Hiện tại chỉ hỗ trợ tạo mới
+                throw new Error('Backend chưa hỗ trợ cập nhật chiến dịch. Vui lòng tạo chiến dịch mới.')
             } else {
                 await createRecruitmentCampaign(payload)
                 toast({
@@ -163,7 +161,7 @@ export function RecruitmentCampaignForm({
                             <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
                             <h3 className="text-lg font-semibold text-gray-800">Thông tin chung</h3>
                         </div>
-                        
+
                         <div className="grid grid-cols-3 gap-3">
                             <FormField
                                 control={form.control}
@@ -478,10 +476,10 @@ export function RecruitmentCampaignForm({
                                 <FormItem>
                                     <FormLabel>Mô tả chi tiết</FormLabel>
                                     <FormControl>
-                                        <Textarea 
-                                            placeholder="Nhập mô tả chi tiết cho chiến dịch này..." 
+                                        <Textarea
+                                            placeholder="Nhập mô tả chi tiết cho chiến dịch này..."
                                             className="min-h-[100px]"
-                                            {...field} 
+                                            {...field}
                                         />
                                     </FormControl>
                                     <FormMessage />

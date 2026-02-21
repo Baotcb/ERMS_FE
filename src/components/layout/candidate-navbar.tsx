@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { memo, useMemo, useCallback } from 'react';
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BrandDecoration } from "@/components/layout/brand-decoration";
+import { useAuth } from "@/features/core/auth/hooks/use-auth";
+import { logoutAction } from "@/features/core/auth/actions/auth";
+import { NavItem } from "./nav-item";
 import {
     Bell,
     MessageSquare,
@@ -19,14 +26,14 @@ import {
     Shield,
     User,
     KeyRound,
-} from "lucide-react";
-import { memo, useMemo, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BrandDecoration } from "@/components/layout/brand-decoration";
-import { useAuth } from "@/features/core/auth/hooks/use-auth";
-import { logoutAction } from "@/features/core/auth/actions/auth";
-import { NavItem } from "./nav-item";
+} from 'lucide-react';
+
+// Direct imports — optimizePackageImports in next.config handles tree-shaking
+const Icons = {
+    Bell, MessageSquare, LogOut, Menu, Search, Bookmark,
+    FileCheck, ThumbsUp, Building2, BarChart3, Briefcase,
+    FileText, Mail, Shield, User, KeyRound,
+};
 
 const JOB_POSITIONS = [
     "Việc làm Nhân viên kinh doanh",
@@ -98,19 +105,19 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Việc làm</h3>
                                         <div className="space-y-0.5">
                                             <Link href="/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors group">
-                                                <Search className="w-4 h-4 text-[#FF7E67]" />
+                                                <Icons.Search className="w-4 h-4 text-[#FF7E67]" />
                                                 <span className="text-sm font-bold text-[#FF7E67] group-hover:text-[#FF7E67]/80">Tìm việc làm</span>
                                             </Link>
                                             <Link href="/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <Bookmark className="w-4 h-4 text-slate-400" />
+                                                <Icons.Bookmark className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm đã lưu</span>
                                             </Link>
                                             <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <FileCheck className="w-4 h-4 text-slate-400" />
+                                                <Icons.FileCheck className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm đã ứng tuyển</span>
                                             </Link>
                                             <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <ThumbsUp className="w-4 h-4 text-slate-400" />
+                                                <Icons.ThumbsUp className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Việc làm phù hợp</span>
                                             </Link>
                                         </div>
@@ -121,11 +128,11 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Công ty</h3>
                                         <div className="space-y-0.5">
                                             <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <Building2 className="w-4 h-4 text-slate-400" />
+                                                <Icons.Building2 className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Danh sách công ty</span>
                                             </Link>
                                             <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <BarChart3 className="w-4 h-4 text-slate-400" />
+                                                <Icons.BarChart3 className="w-4 h-4 text-slate-400" />
                                                 <span className="text-sm">Top công ty</span>
                                             </Link>
                                         </div>
@@ -170,10 +177,10 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                             {/* Notifications */}
                             <div className="hidden sm:flex items-center gap-2">
                                 <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-primary hover:bg-slate-50 rounded-full">
-                                    <Bell className="w-5 h-5" />
+                                    <Icons.Bell className="w-5 h-5" />
                                 </Button>
                                 <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-primary hover:bg-slate-50 rounded-full">
-                                    <MessageSquare className="w-5 h-5" />
+                                    <Icons.MessageSquare className="w-5 h-5" />
                                 </Button>
                             </div>
 
@@ -185,7 +192,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                 label={
                                     <div className="flex items-center gap-2">
                                         <Avatar className="w-9 h-9 border border-slate-200">
-                                            <AvatarImage src="https://github.com/shadcn.png" />
+                                            <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
                                             <AvatarFallback>{userInitial}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm font-medium text-slate-700 hidden sm:block">
@@ -199,7 +206,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div className="p-5 bg-white flex items-start gap-4 border-b border-gray-100">
                                         <div className="relative">
                                             <Avatar className="w-14 h-14 border-2 border-white shadow-sm">
-                                                <AvatarImage src="https://github.com/shadcn.png" />
+                                                <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
                                                 <AvatarFallback>{userInitial}</AvatarFallback>
                                             </Avatar>
                                             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#FF7E67] border-2 border-white rounded-full"></span>
@@ -217,7 +224,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <div className="px-4 py-2">
                                             <div className="flex items-center justify-between text-brand-dark font-bold text-sm mb-2 cursor-pointer hover:text-brand-primary transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <Briefcase className="w-5 h-5 text-brand-primary" />
+                                                    <Icons.Briefcase className="w-5 h-5 text-brand-primary" />
                                                     <span>Quản lý tìm việc</span>
                                                 </div>
                                             </div>
@@ -232,7 +239,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         <div className="px-4 py-2 mt-2">
                                             <div className="flex items-center justify-between text-brand-dark font-bold text-sm mb-2 cursor-pointer hover:text-brand-primary transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <FileText className="w-5 h-5 text-brand-primary" />
+                                                    <Icons.FileText className="w-5 h-5 text-brand-primary" />
                                                     <span>Quản lý CV</span>
                                                 </div>
                                             </div>
@@ -246,7 +253,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         {/* Section 3: Email & Thông báo */}
                                         <div className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group mt-1">
                                             <Link href="/not-found" className="flex items-center gap-3 text-brand-dark font-bold text-sm group-hover:text-brand-primary transition-colors">
-                                                <div className="w-5 flex justify-center"><Mail className="w-5 h-5 text-brand-primary" /></div>
+                                                <div className="w-5 flex justify-center"><Icons.Mail className="w-5 h-5 text-brand-primary" /></div>
                                                 <span>Email & Thông báo</span>
                                             </Link>
                                             <div className="w-4 h-4" /> {/* Spacer for alignment if no chevron */}
@@ -255,7 +262,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         {/* Section 4: Cá nhân & Bảo mật - Dropdown */}
                                         <div className="px-4 py-2 mt-1">
                                             <div className="flex items-center gap-3 text-brand-dark font-bold text-sm mb-2">
-                                                <div className="w-5 flex justify-center"><Shield className="w-5 h-5 text-brand-primary" /></div>
+                                                <div className="w-5 flex justify-center"><Icons.Shield className="w-5 h-5 text-brand-primary" /></div>
                                                 <span>Cá nhân & Bảo mật</span>
                                             </div>
                                             <div className="pl-8 space-y-2">
@@ -263,14 +270,14 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                     href="/profile"
                                                     className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
                                                 >
-                                                    <User className="w-4 h-4" />
+                                                    <Icons.User className="w-4 h-4" />
                                                     <span>Thông tin cá nhân</span>
                                                 </Link>
                                                 <Link
                                                     href="/settings/security"
                                                     className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
                                                 >
-                                                    <KeyRound className="w-4 h-4" />
+                                                    <Icons.KeyRound className="w-4 h-4" />
                                                     <span>Đổi mật khẩu</span>
                                                 </Link>
                                             </div>
@@ -284,7 +291,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                             className="w-full bg-brand-coral hover:bg-brand-coral/90 text-white font-bold h-10 rounded-lg flex items-center justify-center gap-2"
                                             onClick={handleLogout}
                                         >
-                                            <LogOut className="w-4 h-4" />
+                                            <Icons.LogOut className="w-4 h-4" />
                                             Đăng xuất
                                         </Button>
                                     </div>
@@ -308,7 +315,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
 
                     {/* Mobile Menu Trigger */}
                     <Button variant="ghost" size="icon" className="md:hidden text-slate-500">
-                        <Menu className="w-6 h-6" />
+                        <Icons.Menu className="w-6 h-6" />
                     </Button>
                 </div>
             </div>

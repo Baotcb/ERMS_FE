@@ -1,24 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { FileQuestion, Search, Trash2 } from 'lucide-react'
+import { FileQuestion, Search } from 'lucide-react'
 import { JobCard } from './job-card'
 import { Button } from '@/components/ui/button'
-import { MOCK_JOBS } from '../../../__tests__/fixtures/job-mock-data'
-import { useToast } from "@/hooks/use-toast"
+import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 
 export function SavedJobList() {
-    const [savedJobs, setSavedJobs] = useState(MOCK_JOBS.slice(0, 3))
-    const { toast } = useToast()
+    const savedJobs = useSavedJobsStore((state) => state.savedJobs)
 
-    const handleRemoveJob = (id: string, title: string) => {
-        setSavedJobs((prev) => prev.filter((job) => job.id !== id))
-        toast({
-            title: "Đã bỏ lưu công việc",
-            description: title,
-        })
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsMounted(true)
+    }, [])
+
+    if (!isMounted) {
+        return null
     }
 
     if (savedJobs.length === 0) {
@@ -66,18 +67,6 @@ export function SavedJobList() {
             {savedJobs.map((job) => (
                 <motion.div key={job.id} variants={item} className="relative group h-full">
                     <JobCard {...job} />
-
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleRemoveJob(job.id, job.jobTitle)
-                        }}
-                        className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm border border-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 z-10"
-                        title="Bỏ lưu công việc này"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
                 </motion.div>
             ))}
         </motion.div>

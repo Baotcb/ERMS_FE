@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogFooter,
@@ -68,6 +69,7 @@ const createDetailSchema = z.object({
     minExperience: z.coerce.number().optional(),
     maxExperience: z.coerce.number().optional(),
     educationLevel: z.string().optional(),
+    requiredSkills: z.string().optional(),
     expectedStartDate: z.date().optional(),
     justification: z.string().optional(),
 })
@@ -136,6 +138,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             minExperience: 0,
             maxExperience: 0,
             educationLevel: '',
+            requiredSkills: '',
             justification: ''
         }
     })
@@ -183,6 +186,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             minExperience: 0,
             maxExperience: 0,
             educationLevel: '',
+            requiredSkills: '',
             justification: ''
         })
 
@@ -259,11 +263,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             fetchPlanData(editPlanId)
         } else {
             setStep('create-plan')
-            if (detectedDepartment) {
-                planForm.setValue('departmentId', detectedDepartment.id.toString())
-            }
         }
-    }, [open, defaultCampaignId, editPlanId, detectedDepartment, fetchPlanDetails, planForm, detailForm, toast])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, defaultCampaignId, editPlanId, fetchPlanDetails, planForm])
 
     useEffect(() => {
         if (detectedDepartment && !editPlanId && !planForm.getValues('departmentId')) {
@@ -304,7 +306,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             }
 
             const data = await res.json()
-            const newId = editPlanId || data.id || data
+            console.log('[DEBUG] create-plan response:', data)
+            const newId = editPlanId || data.recruitmentPlanId || data.id || data
+            console.log('[DEBUG] extracted planId:', newId)
 
             setCreatedPlanId(newId)
             setCreatedPlanName(values.planName)
@@ -335,10 +339,28 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             const payload = {
                 recruitmentPlanId: createdPlanId,
                 ...values,
+                salaryRangeMin: values.salaryRangeMin || undefined,
+                minExperience: values.minExperience || undefined,
+                maxExperience: values.maxExperience || undefined,
                 expectedStartDate: values.expectedStartDate ? values.expectedStartDate.toISOString() : undefined
             }
+            console.log('[DEBUG] plan-detail payload:', JSON.stringify(payload, null, 2))
             const res = await apiClient.post('/api/plan-details', payload)
-            if (!res.ok) throw new Error('Không thể thêm đề xuất')
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => null)
+                console.error('[DEBUG] plan-detail 400 response:', errorData)
+                // Handle both { message: "..." } and ModelState { field: ["error"] } formats
+                let errorMessage = 'Không thể thêm đề xuất'
+                if (errorData?.message) {
+                    errorMessage = errorData.message
+                } else if (errorData?.errors) {
+                    errorMessage = Object.values(errorData.errors).flat().join('; ')
+                } else if (typeof errorData === 'object' && errorData !== null) {
+                    const msgs = Object.values(errorData).flat().filter((v): v is string => typeof v === 'string')
+                    if (msgs.length > 0) errorMessage = msgs.join('; ')
+                }
+                throw new Error(errorMessage)
+            }
 
             await fetchPlanDetails(createdPlanId)
             detailForm.reset({
@@ -350,6 +372,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                 minExperience: 0,
                 maxExperience: 0,
                 educationLevel: '',
+                requiredSkills: '',
                 justification: '',
                 expectedStartDate: undefined
             })
@@ -357,8 +380,8 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
 
             toast({ description: 'Đã thêm vị trí thành công' })
 
-        } catch {
-            toast({ variant: 'destructive', title: 'Lỗi', description: 'Không thể thêm đề xuất' })
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Lỗi', description: error instanceof Error ? error.message : 'Không thể thêm đề xuất' })
         } finally {
             setIsAddingDetail(false)
         }
@@ -372,7 +395,14 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                 if (createdPlanId) fetchPlanDetails(createdPlanId)
                 toast({ description: 'Đã xóa vị trí' })
             }
-        } catch { }
+        } catch (error) {
+            console.error('Failed to delete plan detail:', error)
+            toast({
+                title: 'Lỗi',
+                description: 'Không thể xóa vị trí. Vui lòng thử lại.',
+                variant: 'destructive'
+            })
+        }
     }
 
     const handleFinish = () => {
@@ -390,6 +420,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                     : "sm:max-w-[800px] max-h-[90vh]"
             )}>
                 <DialogHeader className="px-6 py-4 bg-white border-b shrink-0">
+                    <DialogDescription className="sr-only">
+                        {step === 'create-plan' ? 'Form tạo kế hoạch tuyển dụng' : 'Quản lý đề xuất vị trí'}
+                    </DialogDescription>
                     <div className="flex items-center justify-between">
                         <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                             {step === 'create-plan'
@@ -611,10 +644,10 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                                                 </FormItem>
                                             )} />
 
-                                            <FormField control={detailForm.control} name="justification" render={({ field }) => (
+                                            <FormField control={detailForm.control} name="requiredSkills" render={({ field }) => (
                                                 <FormItem className="col-span-8">
-                                                    <FormLabel className="text-[10px] text-gray-500 uppercase">Lý do / Ghi chú</FormLabel>
-                                                    <Input {...field} className="h-7 text-xs" placeholder="Lý do tuyển dụng..." />
+                                                    <FormLabel className="text-[10px] text-gray-500 uppercase">Kỹ năng (Cần thiết)</FormLabel>
+                                                    <Input {...field} className="h-7 text-xs" placeholder="Java, React, SQL..." />
                                                 </FormItem>
                                             )} />
                                         </div>
@@ -634,7 +667,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                                                 <TableHead className="w-[120px]">Lương Max</TableHead>
                                                 <TableHead className="w-[120px]">Kinh nghiệm</TableHead>
                                                 <TableHead className="w-[120px]">Ngày cần</TableHead>
-                                                <TableHead>Ghi chú</TableHead>
+                                                <TableHead>Yêu cầu</TableHead>
                                                 <TableHead className="w-[50px]"></TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -657,7 +690,8 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                                                                     detail.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-200' :
                                                                         'bg-gray-50 text-gray-600 border-gray-200'
                                                             )}>
-                                                                {detail.priority}
+                                                                {detail.priority === 'Urgent' ? 'Khẩn cấp' :
+                                                                    detail.priority === 'High' ? 'Cao' : 'Bình thường'}
                                                             </span>
                                                         </TableCell>
                                                         <TableCell className="text-xs">
@@ -669,8 +703,8 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                                                         <TableCell className="text-xs">
                                                             {detail.expectedStartDate ? format(new Date(detail.expectedStartDate), 'dd/MM/yyyy') : '-'}
                                                         </TableCell>
-                                                        <TableCell className="max-w-[200px] truncate text-gray-500 text-xs" title={detail.justification}>
-                                                            {detail.justification}
+                                                        <TableCell className="max-w-[200px] truncate text-gray-500 text-xs" title={detail.requiredSkills}>
+                                                            {detail.requiredSkills || '-'}
                                                         </TableCell>
                                                         <TableCell>
                                                             <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-600" onClick={() => onDeleteDetail(detail.id)}>

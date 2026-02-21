@@ -6,7 +6,7 @@ const Toaster = dynamic(() => import("@/components/ui/toaster").then(mod => mod.
     ssr: false
 })
 const FloatingMenu = dynamic(() => import("@/components/layout/floating-menu").then(mod => mod.FloatingMenu), {
-    ssr: true // Keep SSR for menu if it has SEO content, otherwise false
+    ssr: false // Skip SSR for menu as it's interactive-only and adds to render time
 })
 
 export function ClientLayoutElements() {

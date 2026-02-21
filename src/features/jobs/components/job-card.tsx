@@ -11,6 +11,7 @@ import { MapPin, DollarSign, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { Job } from '../types'
+import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
@@ -18,25 +19,42 @@ interface JobCardProps extends Job {
   compact?: boolean
 }
 
-export const JobCard = memo(function JobCard({
-  jobTitle,
-  enterpriseName,
-  salaryRangeMin,
-  salaryRangeMax,
-  showSalary,
-  location,
-  enterpriseLogoUrl,
-  isHot,
-  compact = false,
-}: JobCardProps) {
+export const JobCard = memo(function JobCard(props: JobCardProps) {
+  const {
+    jobTitle,
+    enterpriseName,
+    salaryRangeMin,
+    salaryRangeMax,
+    showSalary,
+    location,
+    enterpriseLogoUrl,
+    isHot,
+    compact = false,
+  } = props
   const { toast } = useToast()
+  const { saveJob, removeJob, savedJobs } = useSavedJobsStore()
+
+  const isSaved = savedJobs.some((job) => job.id === props.id)
 
   const handleSaveJob = (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent navigation if wrapped in link
-    toast({
-      title: "Tính năng đang phát triển",
-      description: "Chức năng lưu việc làm sẽ sớm ra mắt.",
-    })
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (isSaved) {
+      removeJob(props.id)
+      toast({
+        title: "Đã bỏ lưu công việc",
+        description: props.jobTitle,
+      })
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { compact, ...jobData } = props
+      saveJob(jobData)
+      toast({
+        title: "Đã lưu công việc",
+        description: "Bạn có thể xem lại trong mục Việc làm đã lưu",
+      })
+    }
   }
 
   const displaySalary = useMemo(() => {
@@ -117,7 +135,7 @@ export const JobCard = memo(function JobCard({
         onClick={handleSaveJob}
         aria-label="Save job"
       >
-        <Heart className="w-4 h-4" />
+        <Heart className={cn("w-4 h-4 transition-colors", isSaved ? "fill-red-500 text-red-500" : "text-slate-300 group-hover:text-red-500")} />
       </Button>
     </div>
   )

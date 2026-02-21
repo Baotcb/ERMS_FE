@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { useSWRConfig } from 'swr'
+import dynamic from 'next/dynamic'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 
 import { JobPostingTable } from './job-posting-table'
+import type { JobPostingFormValues } from './job-posting-wizard-dialog'
 import {
     useJobPostings,
     usePublishJobPosting,
@@ -24,14 +26,22 @@ import {
     useDeleteJobPosting,
 } from '../../hooks/use-job-postings'
 
+const JobPostingWizardDialog = dynamic(() =>
+    import('./job-posting-wizard-dialog').then((mod) => mod.JobPostingWizardDialog),
+    { ssr: false }
+)
+
 export function JobPostingList() {
     const { toast } = useToast()
     const { mutate } = useSWRConfig()
+    const searchParams = useSearchParams()
 
     const [page, setPage] = useState(1)
     const [pageSize] = useState(10)
     const [status, setStatus] = useState<string>('all')
     const [departmentId] = useState<string>('all')
+    const [showWizard, setShowWizard] = useState(false)
+    const [initialData, setInitialData] = useState<Partial<JobPostingFormValues>>({})
 
     const { data, isLoading } = useJobPostings({
         page,
@@ -40,20 +50,59 @@ export function JobPostingList() {
         departmentId: departmentId === 'all' ? undefined : departmentId,
     })
 
+    // Auto-open wizard if coming from dashboard with request data
+    useEffect(() => {
+        if (searchParams) {
+            const autoOpen = searchParams.get('autoOpen')
+            if (autoOpen === 'true') {
+                const planDetailId = searchParams.get('planDetailId')
+                const jobTitle = searchParams.get('jobTitle')
+                const quantity = searchParams.get('quantity')
+                const location = searchParams.get('location')
+                const applicationDeadline = searchParams.get('applicationDeadline')
+                const requirements = searchParams.get('requirements')
+
+                // Fix synchronous setState in effect
+                setTimeout(() => {
+                    setInitialData({
+                        planDetailId: planDetailId || '',
+                        jobTitle: jobTitle || '',
+                        quantity: quantity ? parseInt(quantity) : 1,
+                        location: location || 'Hà Nội',
+                        applicationDeadline: applicationDeadline ? applicationDeadline.split('T')[0] : '',
+                        description: '',
+                        requirements: requirements || '',
+                        benefits: '',
+                        hidePlanDetailId: true // hidePlanDetailId is stripped in Wizard
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    } as any)
+                    setShowWizard(true)
+                }, 0)
+
+                // Clean URL after opening wizard
+                window.history.replaceState({}, '', '/enterprise/hr/job-postings')
+            }
+        }
+    }, [searchParams])
+
     // Mutations
     const { trigger: publishJob } = usePublishJobPosting()
     const { trigger: closeJob } = useCloseJobPosting()
     const { trigger: deleteJob } = useDeleteJobPosting()
 
     const handlePublish = async (id: string) => {
+        console.log('📢 handlePublish called with id:', id)
         try {
-            await publishJob(id)
+            const result = await publishJob(id)
+            console.log('✅ Publish result:', result)
             toast({ title: 'Đã đăng tuyển dụng thành công' })
-            mutate(['/api/JobPostings', JSON.stringify({ page, pageSize, status, departmentId })])
-        } catch {
+            mutate(['/api/job-postings', JSON.stringify({ page, pageSize, status, departmentId })])
+        } catch (error) {
+            console.error('❌ Publish error:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Không thể đăng tuyển dụng'
             toast({
                 title: 'Lỗi',
-                description: 'Không thể đăng tuyển dụng',
+                description: errorMessage,
                 variant: 'destructive',
             })
         }
@@ -76,7 +125,7 @@ export function JobPostingList() {
         try {
             await deleteJob(id)
             toast({ title: 'Đã xóa tuyển dụng thành công' })
-            mutate(['/api/JobPostings', JSON.stringify({ page, pageSize, status, departmentId })])
+            mutate(['/api/job-postings', JSON.stringify({ page, pageSize, status, departmentId })])
         } catch {
             toast({
                 title: 'Lỗi',
@@ -84,6 +133,11 @@ export function JobPostingList() {
                 variant: 'destructive',
             })
         }
+    }
+
+    const handleCreateNew = () => {
+        setInitialData({})
+        setShowWizard(true)
     }
 
     return (
@@ -107,12 +161,10 @@ export function JobPostingList() {
                         </SelectContent>
                     </Select>
                 </div>
-                <Link href="/enterprise/hr/job-postings/create">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Tạo bài đăng mới
-                    </Button>
-                </Link>
+                <Button onClick={handleCreateNew}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tạo bài đăng mới
+                </Button>
             </div>
 
             <div className="rounded-md border bg-card">
@@ -149,6 +201,17 @@ export function JobPostingList() {
                         Sau
                     </Button>
                 </div>
+            )}
+
+            {/* Wizard Dialog */}
+            {showWizard && (
+                <JobPostingWizardDialog
+                    open={showWizard}
+                    onOpenChange={setShowWizard}
+                    initialData={initialData}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    hidePlanDetailId={(initialData as any).hidePlanDetailId || false}
+                />
             )}
         </div>
     )

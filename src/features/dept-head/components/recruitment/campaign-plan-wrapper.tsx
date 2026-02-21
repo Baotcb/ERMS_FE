@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import useSWR from 'swr'
+import useSWR, { useSWRConfig } from 'swr'
 import { Loader2, Plus, Send, CheckSquare, Square } from 'lucide-react'
 import { format } from 'date-fns'
 import { apiClient } from '@/lib/api-client'
@@ -41,6 +41,7 @@ const STATUS_LABELS: Record<string, string> = {
  */
 export default function CampaignPlanWrapper({ campaignId }: { campaignId: string }) {
     const { toast } = useToast()
+    const { mutate: globalMutate } = useSWRConfig()
     const [plans, setPlans] = useState<RecruitmentPlan[]>([])
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [selectedPlanIds, setSelectedPlanIds] = useState<Set<string>>(new Set())
@@ -67,7 +68,15 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
 
     const handleOpenChange = (open: boolean) => {
         setIsCreateOpen(open)
-        if (!open) setEditingPlanId(null)
+        if (!open) {
+            setEditingPlanId(null)
+            // Revalidate plan-details counts khi đóng dialog
+            globalMutate(
+                (key: string) => typeof key === 'string' && key.startsWith('/api/plan-details'),
+                undefined,
+                { revalidate: true }
+            )
+        }
     }
 
     const handleEditPlan = (planId: string) => {
@@ -100,7 +109,12 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
             // Since API might not support bulk, loop
             await Promise.all(submittedPlanIds.map(async (id) => {
                 try {
-                    const res = await apiClient.patch('/api/RecruitmentPlans/submit', { planId: id })
+                    // Xác định endpoint dựa trên status của plan
+                    const plan = plans.find(p => p.id === id)
+                    const endpoint = plan?.status === 'Rejected'
+                        ? '/api/RecruitmentPlans/resubmit'
+                        : '/api/RecruitmentPlans/submit'
+                    const res = await apiClient.patch(endpoint, { planId: id })
                     if (!res.ok) {
                         const err = await res.json()
                         failedPlans.push(id)
@@ -166,7 +180,7 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
             ) : (
                 <>
                     {/* Bulk Submit Action */}
-                    {plans.some(p => p.status === 'Draft') && selectedPlanIds.size > 0 && (
+                    {plans.some(p => p.status === 'Draft' || p.status === 'Rejected') && selectedPlanIds.size > 0 && (
                         <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100">
                             <span className="text-sm font-medium text-blue-800">
                                 Đã chọn {selectedPlanIds.size} kế hoạch
@@ -228,7 +242,7 @@ function PlanItemCompact({
     // Check if detailsData is an array (API returns array directly) or has items property
     const detailsCount = Array.isArray(detailsData) ? detailsData.length : (detailsData?.items?.length || 0)
 
-    const canSubmit = plan.status === 'Draft'
+    const canSubmit = plan.status === 'Draft' || plan.status === 'Rejected'
 
     return (
         <Card className={`border hover:shadow-sm transition-all ${isSelected ? 'border-blue-300 ring-1 ring-blue-200' : 'border-gray-200'}`}>
