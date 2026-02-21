@@ -105,7 +105,7 @@ export const HRDashboard = memo(function HRDashboard({
             </div>
 
             {/* Bottom Row: 2 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[280px]">
                 <DashboardChartWidget
                     title="Hiệu suất Tuyển dụng (Theo phòng ban)"
                     subtitle="Tỷ lệ đạt mục tiêu tuyển dụng (%)"

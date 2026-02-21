@@ -11,7 +11,7 @@ export interface DashboardListWidgetProps<T> {
 
 export function DashboardListWidget<T>({ title, subtitle, items, renderItem, onRefresh }: DashboardListWidgetProps<T>) {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[450px]">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
                     <h3 className="font-bold text-[#0F4C75] text-lg uppercase">{title}</h3>
@@ -26,7 +26,7 @@ export function DashboardListWidget<T>({ title, subtitle, items, renderItem, onR
                     </Button>
                 </div>
             </div>
-            <div className="p-4 flex-1 overflow-y-auto space-y-4 max-h-[400px]">
+            <div className="p-4 flex-1 overflow-y-auto space-y-4">
                 {items.length > 0 ? items.map((item, index) => (
                     <div key={index}>{renderItem(item)}</div>
                 )) : (
@@ -53,7 +53,7 @@ export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWi
     const maxValue = Math.max(...data.map(d => d.value), 1) * 1.1 // Add 10% buffering
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-[400px]">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
                     <h3 className="font-bold text-[#0F4C75] text-lg uppercase">{title}</h3>
