@@ -106,8 +106,10 @@ export function planFormReducer(state: PlanFormState, action: PlanFormAction): P
             return { ...state, campaigns: action.campaigns, isLoadingCampaigns: false }
         case 'SET_DEPARTMENT':
             return { ...state, detectedDepartment: action.department }
-        case 'SET_DETAILS':
-            return { ...state, localDetails: action.details }
+        case 'SET_DETAILS': {
+            const maxPage = Math.max(1, Math.ceil(action.details.length / ITEMS_PER_PAGE))
+            return { ...state, localDetails: action.details, page: Math.min(state.page, maxPage) }
+        }
         case 'SET_PAGE':
             return { ...state, page: action.page }
         case 'SET_LOADING':

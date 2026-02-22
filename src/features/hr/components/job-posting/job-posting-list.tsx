@@ -53,6 +53,7 @@ function listReducer(state: ListState, action: ListAction): ListState {
         case 'setStatus': return { ...state, status: action.status }
         case 'openWizard': return { ...state, wizard: { open: true, data: action.data ?? {} } }
         case 'closeWizard': return { ...state, wizard: { open: false, data: {} } }
+        default: return state
     }
 }
 
@@ -67,7 +68,7 @@ function initFromSearchParams(searchParams: ReturnType<typeof useSearchParams>):
                 data: {
                     planDetailId: searchParams.get('planDetailId') || '',
                     jobTitle: searchParams.get('jobTitle') || '',
-                    quantity: parseInt(searchParams.get('quantity') || '1'),
+                    quantity: Number(searchParams.get('quantity')) || 1,
                     location: searchParams.get('location') || 'Hà Nội',
                     applicationDeadline: (searchParams.get('applicationDeadline') || '').split('T')[0],
                     description: '',

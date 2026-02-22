@@ -50,19 +50,21 @@ export const EditProfileForm = memo(function EditProfileForm() {
         if (!value) return undefined;
         const birthDate = new Date(value);
         const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
+
+        if (birthDate > today) {
+            return "Ngày sinh không được trong tương lai";
+        }
+
+        let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
 
+        // Subtract 1 if birthday hasn't occurred yet this year
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            return undefined;
+            age--;
         }
 
         if (age < MIN_AGE) {
             return `Bạn phải ít nhất ${MIN_AGE} tuổi`;
-        }
-
-        if (birthDate > today) {
-            return "Ngày sinh không được trong tương lai";
         }
 
         return undefined;

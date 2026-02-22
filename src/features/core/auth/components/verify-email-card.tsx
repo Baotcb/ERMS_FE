@@ -24,6 +24,7 @@ function sendReducer(state: SendState, action: SendAction): SendState {
         case 'success': return { ...state, resendSuccess: true }
         case 'error': return { ...state, error: action.message }
         case 'done': return { ...state, isResending: false }
+        default: return state
     }
 }
 

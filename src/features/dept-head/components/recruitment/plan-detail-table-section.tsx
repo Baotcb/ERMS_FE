@@ -29,7 +29,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 }
 
 export function PlanDetailTableSection({ details, page, onPageChange, onDelete }: PlanDetailTableSectionProps) {
-    const totalPages = Math.ceil(details.length / ITEMS_PER_PAGE)
+    const totalPages = Math.max(1, Math.ceil(details.length / ITEMS_PER_PAGE))
     const paginatedDetails = details.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
     return (
@@ -89,7 +89,7 @@ export function PlanDetailTableSection({ details, page, onPageChange, onDelete }
                 </Table>
             </div>
             <div className="border-t p-2 flex items-center justify-between bg-gray-50 text-xs text-gray-500">
-                <span>Hiển thị {((page - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(page * ITEMS_PER_PAGE, details.length)} trên tổng {details.length}</span>
+                <span>Hiển thị {details.length === 0 ? 0 : ((page - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(page * ITEMS_PER_PAGE, details.length)} trên tổng {details.length}</span>
                 <div className="flex gap-1">
                     <Button variant="outline" size="sm" className="h-7 w-7 p-0" disabled={page === 1} onClick={() => onPageChange(page - 1)}>
                         <ChevronLeft className="w-4 h-4" />
