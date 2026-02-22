@@ -47,14 +47,17 @@ export function Footer() {
                         </div>
 
                         <div className="flex gap-2 pt-2">
+                            {/* TODO: Replace with actual company social profile URLs */}
                             {[
-                                { Icon: Facebook, label: 'Facebook' },
-                                { Icon: Linkedin, label: 'LinkedIn' },
-                                { Icon: Youtube, label: 'YouTube' },
-                            ].map(({ Icon, label }) => (
+                                { Icon: Facebook, label: 'Facebook', href: '#' },
+                                { Icon: Linkedin, label: 'LinkedIn', href: '#' },
+                                { Icon: Youtube, label: 'YouTube', href: '#' },
+                            ].map(({ Icon, label, href }) => (
                                 <a
                                     key={label}
-                                    href="#"
+                                    href={href}
+                                    target={href === '#' ? undefined : "_blank"}
+                                    rel={href === '#' ? undefined : "noopener noreferrer"}
                                     aria-label={label}
                                     className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#00b14f] transition-colors"
                                 >

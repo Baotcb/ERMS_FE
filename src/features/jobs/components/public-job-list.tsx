@@ -1,16 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Search, MapPin, Briefcase } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, Briefcase } from 'lucide-react'
 
 import { JobCard } from './job-card'
 import { Button } from '@/components/ui/button'
 import { usePublicJobs } from '../hooks/use-public-jobs'
 import { cn } from '@/lib/utils'
 
-export function PublicJobList() {
+function PublicJobListContent() {
     const searchParams = useSearchParams()
     const [page, setPage] = useState(1)
     const [pageSize] = useState(12)
@@ -148,5 +148,12 @@ export function PublicJobList() {
                 </div>
             )}
         </div>
+    )
+}
+export function PublicJobList() {
+    return (
+        <Suspense>
+            <PublicJobListContent />
+        </Suspense>
     )
 }

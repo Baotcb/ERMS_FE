@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, memo } from 'react'
+import { useEffect, useReducer, useRef, useCallback, memo } from 'react'
 import Link from 'next/link'
 import { Mail, RefreshCw, ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,35 +11,53 @@ interface VerifyEmailCardProps {
     email: string | null
 }
 
+type SendState = { isResending: boolean; resendSuccess: boolean; error: string | null }
+type SendAction =
+    | { type: 'start' }
+    | { type: 'success' }
+    | { type: 'error'; message: string }
+    | { type: 'done' }
+
+function sendReducer(state: SendState, action: SendAction): SendState {
+    switch (action.type) {
+        case 'start': return { isResending: true, resendSuccess: false, error: null }
+        case 'success': return { ...state, resendSuccess: true }
+        case 'error': return { ...state, error: action.message }
+        case 'done': return { ...state, isResending: false }
+        default: return state
+    }
+}
+
 export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEmailCardProps) {
-    const [isResending, setIsResending] = useState(false)
-    const [resendSuccess, setResendSuccess] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [autoSent, setAutoSent] = useState(false)
+    const [{ isResending, resendSuccess, error }, dispatch] = useReducer(sendReducer, {
+        isResending: false,
+        resendSuccess: false,
+        error: null,
+    })
+    const autoSentRef = useRef(false)
 
     // Auto-send verification email on first mount
     useEffect(() => {
-        if (email && !autoSent) {
-            setAutoSent(true)
-            setIsResending(true)
+        if (email && !autoSentRef.current) {
+            autoSentRef.current = true
+            dispatch({ type: 'start' })
             resendConfirmation(email)
-                .then(() => setResendSuccess(true))
-                .catch((err) => setError(err instanceof Error ? err.message : 'Gửi email xác thực thất bại'))
-                .finally(() => setIsResending(false))
+                .then(() => dispatch({ type: 'success' }))
+                .catch((err) => dispatch({ type: 'error', message: err instanceof Error ? err.message : 'Gửi email xác thực thất bại' }))
+                .finally(() => dispatch({ type: 'done' }))
         }
-    }, [email, autoSent])
+    }, [email])
 
     const handleResend = useCallback(async () => {
         if (!email) return
-        setIsResending(true)
-        setError(null)
+        dispatch({ type: 'start' })
         try {
             await resendConfirmation(email)
-            setResendSuccess(true)
+            dispatch({ type: 'success' })
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Gửi lại email thất bại')
+            dispatch({ type: 'error', message: err instanceof Error ? err.message : 'Gửi lại email thất bại' })
         } finally {
-            setIsResending(false)
+            dispatch({ type: 'done' })
         }
     }, [email])
 

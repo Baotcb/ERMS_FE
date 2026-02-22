@@ -127,15 +127,15 @@ export function HeroSection() {
                             if (cat.id !== activeCategory) return null
                             return (
                                 <div key={cat.id} className="animate-in fade-in duration-200 space-y-4">
-                                    {cat.subCategories?.map((sub, idx) => (
-                                        <div key={idx} className="flex flex-col sm:flex-row sm:items-start gap-2 md:gap-3 pb-3 border-b border-dashed border-[#e8e8e8] last:border-0 last:pb-0">
+                                    {cat.subCategories?.map((sub) => (
+                                        <div key={sub.name} className="flex flex-col sm:flex-row sm:items-start gap-2 md:gap-3 pb-3 border-b border-dashed border-[#e8e8e8] last:border-0 last:pb-0">
                                             <h4 className="text-[13px] font-bold text-[#212f3f] w-full sm:w-[160px] shrink-0 pt-0.5 leading-tight">
                                                 {sub.name}
                                             </h4>
                                             <div className="flex flex-wrap gap-1.5 flex-1">
-                                                {sub.tags.map((tag, tIdx) => (
+                                                {sub.tags.map((tag) => (
                                                     <div
-                                                        key={tIdx}
+                                                        key={tag}
                                                         className="px-2.5 py-1 bg-white text-[#6f7882] rounded text-xs hover:bg-[#00b14f] hover:text-white cursor-pointer transition-colors border border-[#e8e8e8] hover:border-[#00b14f] whitespace-nowrap"
                                                     >
                                                         {tag}

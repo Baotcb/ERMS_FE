@@ -29,7 +29,10 @@ function PendingPlanRow({ plan }: { plan: RecruitmentPlan }) {
     return (
         <div
             className="flex items-center justify-between gap-4 p-4 rounded-lg border border-gray-100 bg-white hover:bg-gray-50 hover:border-blue-100 hover:shadow-sm cursor-pointer transition-all duration-200"
+            role="button"
+            tabIndex={0}
             onClick={() => router.push(`/enterprise/director/recruitment-plans/${plan.id}`)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/enterprise/director/recruitment-plans/${plan.id}`) } }}
         >
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

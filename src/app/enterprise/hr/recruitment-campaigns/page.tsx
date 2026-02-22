@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getRecruitmentCampaigns } from '@/features/hr/api/recruitment-campaign-service'
@@ -34,13 +35,15 @@ export default async function RecruitmentCampaignsPage(props: PageProps) {
 
     return (
         <div className="w-full py-6">
-            <RecruitmentCampaignList
-                data={result.items}
-                totalCount={result.totalCount}
-                page={result.page}
-                pageSize={result.pageSize}
-                totalPages={result.totalPages}
-            />
+            <Suspense>
+                <RecruitmentCampaignList
+                    data={result.items}
+                    totalCount={result.totalCount}
+                    page={result.page}
+                    pageSize={result.pageSize}
+                    totalPages={result.totalPages}
+                />
+            </Suspense>
         </div>
     )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { Suspense, useState, useCallback } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Plus, Search, RefreshCw, Filter } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
@@ -35,7 +35,7 @@ interface RecruitmentCampaignListProps {
     totalPages: number
 }
 
-export function RecruitmentCampaignList({
+function RecruitmentCampaignListContent({
     data,
     totalCount,
     page,
@@ -50,9 +50,7 @@ export function RecruitmentCampaignList({
     const [selectedCampaign, setSelectedCampaign] = useState<RecruitmentCampaign | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
-    // Error Handling
-    const [errorDialogOpen, setErrorDialogOpen] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
+    const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
 
     // Filters
     const handleSearch = (term: string) => {
@@ -134,8 +132,7 @@ export function RecruitmentCampaignList({
         } catch (error) {
             console.error(error)
             const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
-            setErrorMessage(message)
-            setErrorDialogOpen(true)
+            setErrorDialog({ open: true, message })
         }
     }, [toast, router])
 
@@ -257,12 +254,19 @@ export function RecruitmentCampaignList({
                 </DialogContent>
             </Dialog>
             <ErrorDialog
-                open={errorDialogOpen}
-                onOpenChange={setErrorDialogOpen}
+                open={errorDialog.open}
+                onOpenChange={(open) => setErrorDialog(prev => ({ ...prev, open }))}
                 title="Có lỗi xảy ra"
-                message={errorMessage}
+                message={errorDialog.message}
                 variant="forbidden"
             />
         </div>
+    )
+}
+export function RecruitmentCampaignList(props: RecruitmentCampaignListProps) {
+    return (
+        <Suspense>
+            <RecruitmentCampaignListContent {...props} />
+        </Suspense>
     )
 }

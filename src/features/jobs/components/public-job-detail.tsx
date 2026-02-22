@@ -334,9 +334,9 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             <div className="mt-6 pt-5 border-t border-[#e8e8e8]">
                                 <p className="text-sm font-semibold text-[#212f3f] mb-3">Từ khóa liên quan</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {[job.employmentType, job.location, job.departmentName, job.experienceLevel].filter(Boolean).map((tag, idx) => (
+                                    {[job.employmentType, job.location, job.departmentName, job.experienceLevel].filter(Boolean).map((tag, index) => (
                                         <span
-                                            key={idx}
+                                            key={`tag-${index}`}
                                             className="px-3 py-1.5 bg-[#f4f5f5] text-[#6f7882] rounded-full text-xs font-medium hover:bg-[#00b14f] hover:text-white cursor-pointer transition-colors"
                                         >
                                             {tag}
@@ -412,6 +412,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                         src={job.enterpriseLogoUrl || '/placeholder-logo.png'}
                                         alt={job.enterpriseName}
                                         fill
+                                        sizes="80px"
                                         className="object-contain p-1"
                                     />
                                 </div>

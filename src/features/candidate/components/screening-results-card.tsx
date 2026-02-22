@@ -58,8 +58,8 @@ export function ScreeningResultsCard({ results }: { results: CVScreeningResult }
                             </h4>
                             <div className="flex flex-wrap gap-2">
                                 {results.matchedSkills && results.matchedSkills.length > 0 ? (
-                                    results.matchedSkills.map((skill, idx) => (
-                                        <Badge key={idx} variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                                    results.matchedSkills.map((skill) => (
+                                        <Badge key={skill} variant="secondary" className="bg-green-50 text-green-700 border-green-200">
                                             {skill}
                                         </Badge>
                                     ))
@@ -75,8 +75,8 @@ export function ScreeningResultsCard({ results }: { results: CVScreeningResult }
                                     Kỹ năng còn thiếu
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {results.missingSkills.map((skill, idx) => (
-                                        <Badge key={idx} variant="outline" className="border-orange-300 text-orange-700 bg-orange-50">
+                                    {results.missingSkills.map((skill) => (
+                                        <Badge key={skill} variant="outline" className="border-orange-300 text-orange-700 bg-orange-50">
                                             {skill}
                                         </Badge>
                                     ))}
@@ -90,8 +90,8 @@ export function ScreeningResultsCard({ results }: { results: CVScreeningResult }
                         <div>
                             <h4 className="text-sm font-medium mb-2 text-slate-700">Điểm mạnh nổi bật</h4>
                             <ul className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                {results.strengths.map((strength, idx) => (
-                                    <li key={idx} className="text-sm text-slate-600 flex items-start gap-2">
+                                {results.strengths.map((strength) => (
+                                    <li key={strength} className="text-sm text-slate-600 flex items-start gap-2">
                                         <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
                                         <span>{strength}</span>
                                     </li>

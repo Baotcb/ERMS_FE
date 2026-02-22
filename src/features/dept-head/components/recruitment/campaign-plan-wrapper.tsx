@@ -43,10 +43,9 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
     const { toast } = useToast()
     const { mutate: globalMutate } = useSWRConfig()
     const [plans, setPlans] = useState<RecruitmentPlan[]>([])
-    const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [dialog, setDialog] = useState<{ open: boolean; editingPlanId: string | null }>({ open: false, editingPlanId: null })
     const [selectedPlanIds, setSelectedPlanIds] = useState<Set<string>>(new Set())
     const [isSubmittingMultiple, setIsSubmittingMultiple] = useState(false)
-    const [editingPlanId, setEditingPlanId] = useState<string | null>(null)
 
     // Fetch plans list (PageSize 100 to filtering client-side)
     const { data: listData, mutate: mutateList } = useSWR<PlanListResponse>(
@@ -67,9 +66,9 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
     }
 
     const handleOpenChange = (open: boolean) => {
-        setIsCreateOpen(open)
+        setDialog(prev => ({ ...prev, open }))
         if (!open) {
-            setEditingPlanId(null)
+            setDialog(prev => ({ ...prev, editingPlanId: null }))
             // Revalidate plan-details counts khi đóng dialog
             globalMutate(
                 (key: string) => typeof key === 'string' && key.startsWith('/api/plan-details'),
@@ -80,8 +79,7 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
     }
 
     const handleEditPlan = (planId: string) => {
-        setEditingPlanId(planId)
-        setIsCreateOpen(true)
+        setDialog({ open: true, editingPlanId: planId })
     }
 
     const handleToggleSelect = (planId: string) => {
@@ -161,7 +159,7 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
                     Kế hoạch tuyển dụng
                 </h3>
                 <Button
-                    onClick={() => setIsCreateOpen(true)}
+                    onClick={() => setDialog(prev => ({ ...prev, open: true }))}
                     size="sm"
                     className="bg-[#0F4C75] hover:bg-[#0F4C75]/90 h-8"
                 >
@@ -173,7 +171,7 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
             {plans.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">
                     <p className="text-sm text-gray-500 mb-3">Chưa có kế hoạch nào</p>
-                    <Button onClick={() => setIsCreateOpen(true)} variant="outline" size="sm">
+                    <Button onClick={() => setDialog(prev => ({ ...prev, open: true }))} variant="outline" size="sm">
                         <Plus className="w-3 h-3 mr-1" /> Tạo ngay
                     </Button>
                 </div>
@@ -212,11 +210,11 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
             )}
 
             <CreatePlanForm
-                open={isCreateOpen}
+                open={dialog.open}
                 onOpenChange={handleOpenChange}
                 defaultCampaignId={campaignId}
                 onSuccess={handlePlanCreated}
-                editPlanId={editingPlanId}
+                editPlanId={dialog.editingPlanId}
             />
         </div>
     )
@@ -273,12 +271,15 @@ function PlanItemCompact({
                         <div className="col-span-4 pr-2">
                             <div className="flex items-center gap-2 mb-1">
                                 <h3
+                                    role="button"
+                                    tabIndex={0}
                                     className="text-sm font-semibold text-gray-800 truncate cursor-pointer hover:text-blue-600 hover:underline"
                                     title={plan.planName}
                                     onClick={(e) => {
                                         e.preventDefault()
                                         onEdit()
                                     }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() } }}
                                 >
                                     {plan.planName}
                                 </h3>
@@ -293,7 +294,7 @@ function PlanItemCompact({
 
                         {/* Date */}
                         <div className="col-span-3">
-                            <label className="text-[10px] text-gray-400 block uppercase">Thời gian</label>
+                            <span className="text-[10px] text-gray-400 block uppercase">Thời gian</span>
                             <span className="text-xs text-gray-600">
                                 {format(new Date(plan.startDate), 'dd/MM/yyyy')} - {format(new Date(plan.endDate), 'dd/MM/yyyy')}
                             </span>
@@ -301,7 +302,7 @@ function PlanItemCompact({
 
                         {/* Budget */}
                         <div className="col-span-3">
-                            <label className="text-[10px] text-gray-400 block uppercase">Ngân sách</label>
+                            <span className="text-[10px] text-gray-400 block uppercase">Ngân sách</span>
                             <span className="text-xs font-medium text-gray-600">
                                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
                             </span>
@@ -309,7 +310,7 @@ function PlanItemCompact({
 
                         {/* Proposals Count */}
                         <div className="col-span-2 text-right">
-                            <label className="text-[10px] text-gray-400 block uppercase text-right">Đề xuất</label>
+                            <span className="text-[10px] text-gray-400 block uppercase text-right">Đề xuất</span>
                             <span className="text-sm font-bold text-[#0F4C75]">
                                 {detailsCount}
                             </span>
