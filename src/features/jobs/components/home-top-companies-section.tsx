@@ -1,7 +1,5 @@
-
-
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const TOP_COMPANIES = [
@@ -15,109 +13,71 @@ const TOP_COMPANIES = [
 
 export function TopCompaniesSection() {
     return (
-        <section className="py-12 bg-white">
-            <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold text-[#0F4C75] uppercase">Thương hiệu lớn tiêu biểu</h2>
+        <section className="py-10 bg-white">
+            <div className="container mx-auto px-4 max-w-6xl">
+                {/* Section Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-xl md:text-2xl font-bold text-[#212f3f]">
+                            Top Công ty hàng đầu
+                        </h2>
+                        <p className="text-[#6f7882] text-sm mt-1">
+                            Những thương hiệu tuyển dụng uy tín đã xác thực
+                        </p>
+                    </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200" disabled>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]"
+                            disabled
+                        >
                             <ChevronLeft className="w-4 h-4" />
                         </Button>
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full border-slate-200">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]"
+                        >
                             <ChevronRight className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
 
-                <div className="flex gap-6 relative">
-                    {/* Featured Company Card (Left) */}
-                    <div className="w-full md:w-1/3 min-h-[400px] relative rounded-xl overflow-hidden group cursor-pointer shadow-lg">
-                        <Image
-                            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800"
-                            alt="Featured Company Office"
-                            fill
-                            priority
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 mt-10">
-                            <div className="w-24 h-24 bg-white rounded-lg p-2 mb-4 shadow-xl">
+                {/* Companies Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {TOP_COMPANIES.map((company, index) => (
+                        <div
+                            key={index}
+                            className="bg-white border border-[#e8e8e8] rounded-lg p-4 flex flex-col items-center text-center hover:border-[#00b14f] hover:shadow-[0_4px_16px_rgba(0,177,79,0.1)] transition-all cursor-pointer group"
+                        >
+                            {/* Logo */}
+                            <div className="w-16 h-16 border border-[#e8e8e8] rounded-lg p-1.5 mb-3 group-hover:border-[#00b14f]/30 transition-colors">
                                 <Image
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4ZQ8p-yOrqKGtncPThG4xwW2vnrSpR393EdI2FK25plphAsDhUhY0R3ACuLhPGLmr0dCT_hOgU8EuYi6UV9uN3Pm44gy6NsTaz8y06rtEEQN19xtkNgWpuTLwPUzw6CmpnfFazLOXsm4ZT1tLdm-hC_fIo3f571viEtMRcp5aAYAkOa5CkCHuyAl5iZOQUgNMehp3zNMZKUzEEvHOe-VjdQPNrbgadAzHufcrQfO9AEgf5rf7le-DsPMCfy0JKe1DHDMQZGWomhM"
-                                    alt="Logo"
-                                    width={96}
-                                    height={96}
-                                    className="object-contain"
+                                    src={company.logo}
+                                    alt={company.name}
+                                    width={56}
+                                    height={56}
+                                    loading="lazy"
+                                    className="object-contain w-full h-full"
                                 />
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Công Ty Cổ Phần Bột Thực Phẩm Tài Ký</h3>
-                            <p className="text-slate-300 text-sm mb-6">Bán lẻ - Hàng tiêu dùng - FMCG</p>
 
-                            <div className="flex flex-col gap-3 w-full max-w-[200px]">
-                                <span className="bg-[#FF9F00] text-[#0F4C75] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                                    Pro Company
+                            {/* Company Name */}
+                            <h4 className="text-xs font-semibold text-[#212f3f] line-clamp-2 min-h-[32px] group-hover:text-[#00b14f] transition-colors leading-tight">
+                                {company.name}
+                            </h4>
+
+                            {/* Job Count */}
+                            <div className="mt-auto pt-2">
+                                <span className="text-[11px] text-[#00b14f] font-medium bg-[#f0faf4] rounded px-2 py-0.5">
+                                    {company.jobs} việc làm
                                 </span>
-                                <Button className="bg-white hover:bg-slate-100 text-[#0F4C75] font-bold rounded-full w-full">
-                                    <Plus className="w-4 h-4 mr-1" /> Theo dõi
-                                </Button>
-                            </div>
-
-                            <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium border border-white/20">
-                                <span className="mr-1">💼</span> 0 việc làm
                             </div>
                         </div>
-                    </div>
-
-                    {/* Grid of Companies (Right) */}
-                    <div className="w-full md:w-2/3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {TOP_COMPANIES.map((company, index) => (
-                            <div key={index} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col h-full hover:border-[#00b14f] hover:shadow-md transition-all cursor-pointer group">
-                                <div className="flex items-start gap-3 mb-3">
-                                    <div className="w-12 h-12 border border-slate-100 rounded-lg p-1 flex-shrink-0">
-                                        <Image
-                                            src={company.logo}
-                                            alt={company.name}
-                                            width={48}
-                                            height={48}
-                                            loading="lazy"
-                                            className="object-contain w-full h-full"
-                                        />
-                                    </div>
-                                    <h4 className="text-sm font-bold text-[#0F4C75] line-clamp-3 group-hover:text-[#00b14f] transition-colors">
-                                        {company.name}
-                                    </h4>
-                                </div>
-                                <div className="mt-auto flex items-center text-slate-500 text-xs gap-1">
-                                    <BriefcaseIcon className="w-3 h-3" />
-                                    <span>{company.jobs} việc làm</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    ))}
                 </div>
             </div>
         </section>
-    )
-}
-
-function BriefcaseIcon(props: React.SVGAttributes<SVGElement>) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-            <rect width="20" height="14" x="2" y="6" rx="2" />
-        </svg>
     )
 }

@@ -3,16 +3,24 @@ import { SavedJobList } from './saved-job-list'
 
 export function SavedJobsView() {
     return (
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-            <div className="mb-8 border-b border-gray-200 pb-4">
-                <h1 className="text-3xl font-bold flex items-center gap-3 text-brand-dark">
-                    <Bookmark className="w-8 h-8 text-brand-primary" />
-                    Việc làm đã lưu
-                </h1>
-                <p className="text-lg text-gray-500 mt-2">Quản lý danh sách các công việc bạn đang quan tâm.</p>
+        <div className="min-h-screen bg-[#f4f5f5]">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#00b14f] to-[#009643] py-6">
+                <div className="container mx-auto px-4 max-w-6xl">
+                    <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Bookmark className="w-5 h-5" />
+                        Việc làm đã lưu
+                    </h1>
+                    <p className="text-white/80 text-sm mt-1">
+                        Quản lý danh sách các công việc bạn đang quan tâm
+                    </p>
+                </div>
             </div>
 
-            <SavedJobList />
+            {/* Content */}
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <SavedJobList />
+            </div>
         </div>
     )
 }
