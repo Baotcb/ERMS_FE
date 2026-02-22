@@ -165,7 +165,7 @@ function HRAccountFormContent() {
 }
 export function HRAccountForm() {
     return (
-        <Suspense>
+        <Suspense fallback={<LoadingSpinner />}>
             <HRAccountFormContent />
         </Suspense>
     )
