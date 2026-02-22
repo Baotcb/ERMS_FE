@@ -56,8 +56,8 @@ export function Footer() {
                                 <a
                                     key={label}
                                     href={href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    target={href === '#' ? undefined : "_blank"}
+                                    rel={href === '#' ? undefined : "noopener noreferrer"}
                                     aria-label={label}
                                     className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#00b14f] transition-colors"
                                 >
