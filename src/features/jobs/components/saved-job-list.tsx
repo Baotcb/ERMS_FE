@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { motion } from 'framer-motion'
 import { FileQuestion, Search } from 'lucide-react'
 import { JobCard } from './job-card'
@@ -8,14 +8,12 @@ import { Button } from '@/components/ui/button'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import Link from 'next/link'
 
+const emptySubscribe = () => () => { }
+
 export function SavedJobList() {
     const savedJobs = useSavedJobsStore((state) => state.savedJobs)
 
-    const [isMounted, setIsMounted] = useState(false)
-
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
+    const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false)
 
     if (!isMounted) {
         return null
