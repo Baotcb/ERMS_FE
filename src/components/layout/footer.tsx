@@ -47,10 +47,11 @@ export function Footer() {
                         </div>
 
                         <div className="flex gap-2 pt-2">
+                            {/* TODO: Replace with actual company social profile URLs */}
                             {[
-                                { Icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
-                                { Icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com' },
-                                { Icon: Youtube, label: 'YouTube', href: 'https://youtube.com' },
+                                { Icon: Facebook, label: 'Facebook', href: '#' },
+                                { Icon: Linkedin, label: 'LinkedIn', href: '#' },
+                                { Icon: Youtube, label: 'YouTube', href: '#' },
                             ].map(({ Icon, label, href }) => (
                                 <a
                                     key={label}

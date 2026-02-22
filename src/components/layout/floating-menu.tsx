@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/tooltip"
 import { useAuth } from "@/features/core/auth/hooks/use-auth"
 
-const ICON_SAVED = <Bookmark className="w-4 h-4 group-hover:fill-current" />
-const ICON_CONNECT = <UserPlus className="w-4 h-4" />
+
 
 interface FloatingMenuItemProps {
     href: string
@@ -88,7 +87,7 @@ export function FloatingMenu() {
             {/* Saved Jobs */}
             <FloatingMenuItem
                 href="/jobs/saved"
-                icon={ICON_SAVED}
+                icon={<Bookmark className="w-4 h-4 group-hover:fill-current" />}
                 label="Công việc đã lưu"
                 color="group-hover:text-brand-coral"
                 count={1}
@@ -97,7 +96,7 @@ export function FloatingMenu() {
             {/* Job Connections */}
             <FloatingMenuItem
                 href="/not-found"
-                icon={ICON_CONNECT}
+                icon={<UserPlus className="w-4 h-4" />}
                 label="Kết nối việc làm"
                 color="group-hover:text-brand-primary"
             />

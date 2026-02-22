@@ -1,6 +1,6 @@
 import { UseFormReturn } from 'react-hook-form'
 import { Loader2, Plus } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, startOfDay } from 'date-fns'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -74,7 +74,7 @@ export function PlanDetailFormSection({ form, isAddingDetail, onSubmit }: PlanDe
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0">
-                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < startOfDay(new Date())} initialFocus />
                                 </PopoverContent>
                             </Popover>
                         </FormItem>
