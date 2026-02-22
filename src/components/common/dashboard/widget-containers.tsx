@@ -6,10 +6,11 @@ export interface DashboardListWidgetProps<T> {
     subtitle?: string
     items: T[]
     renderItem: (item: T) => React.ReactNode
+    keyExtractor?: (item: T, index: number) => React.Key
     onRefresh?: () => void
 }
 
-export function DashboardListWidget<T>({ title, subtitle, items, renderItem, onRefresh }: DashboardListWidgetProps<T>) {
+export function DashboardListWidget<T>({ title, subtitle, items, renderItem, keyExtractor, onRefresh }: DashboardListWidgetProps<T>) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[450px]">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -28,7 +29,7 @@ export function DashboardListWidget<T>({ title, subtitle, items, renderItem, onR
             </div>
             <div className="p-4 flex-1 overflow-y-auto space-y-4">
                 {items.length > 0 ? items.map((item, index) => (
-                    <div key={index}>{renderItem(item)}</div>
+                    <div key={keyExtractor ? keyExtractor(item, index) : index}>{renderItem(item)}</div>
                 )) : (
                     <div className="text-center text-gray-400 py-8">Chưa có dữ liệu</div>
                 )}
@@ -70,8 +71,8 @@ export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWi
             </div>
             <div className="p-6 flex-1 flex flex-col justify-end">
                 <div className="flex items-end justify-between gap-4 h-[250px] w-full">
-                    {data.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center flex-1 gap-2 group">
+                    {data.map((item) => (
+                        <div key={item.label} className="flex flex-col items-center flex-1 gap-2 group">
                             <div className="relative w-full flex justify-center">
                                 <div
                                     className="w-full max-w-[40px] rounded-t-sm transition-all duration-500 hover:opacity-80 relative group-hover:scale-105"

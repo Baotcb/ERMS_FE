@@ -100,7 +100,7 @@ export function ApplicationDetailModal({
                                             </h4>
                                             <ul className="space-y-2">
                                                 {application.cvScreeningResult.strengths.map((item, idx) => (
-                                                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
+                                                    <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 mt-2 flex-shrink-0" />
                                                         {item}
                                                     </li>
@@ -115,7 +115,7 @@ export function ApplicationDetailModal({
                                                 </h4>
                                                 <ul className="space-y-2">
                                                     {application.cvScreeningResult.concerns.map((item, idx) => (
-                                                        <li key={idx} className="flex items-start gap-2 text-sm text-slate-700">
+                                                        <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
                                                             {item}
                                                         </li>

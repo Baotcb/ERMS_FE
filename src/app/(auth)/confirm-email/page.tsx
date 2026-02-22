@@ -61,5 +61,8 @@ export default async function ConfirmEmailPage({ searchParams }: PageProps) {
     }
 
     const result = await verifyEmail(userId, token)
+    if (result.success) {
+        cookieStore.delete('verify_email')
+    }
     return <ConfirmEmailCard status={result.success ? 'success' : 'error'} message={result.message} email={email} />
 }

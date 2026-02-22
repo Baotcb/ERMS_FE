@@ -116,8 +116,9 @@ export default function DirectorPlanDetailPage() {
 
                     {actionType === 'reject' && (
                         <div className="py-2">
-                            <label className="text-sm font-medium mb-2 block">Lý do từ chối:</label>
+                            <label htmlFor="reject-reason-detail" className="text-sm font-medium mb-2 block">Lý do từ chối:</label>
                             <Textarea
+                                id="reject-reason-detail"
                                 value={rejectReason}
                                 onChange={(e) => setRejectReason(e.target.value)}
                                 placeholder="Nhập lý do từ chối..."

@@ -67,7 +67,7 @@ const NavMenuItem = memo(function NavMenuItem({
     item: NavItem
     isActive: boolean
     isExpanded: boolean
-    onToggle: () => void
+    onToggle: (label: string) => void
 }) {
     const hasChildren = item.children && item.children.length > 0
 
@@ -92,7 +92,7 @@ const NavMenuItem = memo(function NavMenuItem({
     return (
         <div>
             <button
-                onClick={onToggle}
+                onClick={() => onToggle(item.label)}
                 className={cn(
                     'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
@@ -290,7 +290,7 @@ export const HRSidebar = memo(function HRSidebar() {
                         item={item}
                         isActive={isItemActive(item)}
                         isExpanded={expandedItems.includes(item.label)}
-                        onToggle={() => toggleExpand(item.label)}
+                        onToggle={toggleExpand}
                     />
                 ))}
             </nav>
@@ -318,7 +318,11 @@ export const HRSidebar = memo(function HRSidebar() {
             {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close sidebar"
                     onClick={() => setIsMobileOpen(false)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setIsMobileOpen(false) } }}
                 />
             )}
 

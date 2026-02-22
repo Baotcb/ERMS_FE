@@ -257,7 +257,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                             {importResult.columnMappings
                                 .filter(c => c.mappedKey)
                                 .map((col, i) => (
-                                    <li key={i}>• &quot;{col.originalHeader}&quot; → {col.mappedKey}</li>
+                                    <li key={col.originalHeader}>• &quot;{col.originalHeader}&quot; → {col.mappedKey}</li>
                                 ))}
                         </ul>
                     </div>
@@ -271,7 +271,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                             </h3>
                             <ul className="mt-2 text-sm text-yellow-700 space-y-1">
                                 {importResult.unknownColumns.map((col, i) => (
-                                    <li key={i}>• &quot;{col}&quot; - sẽ bị bỏ qua</li>
+                                    <li key={col}>• &quot;{col}&quot; - sẽ bị bỏ qua</li>
                                 ))}
                             </ul>
                         </div>
@@ -286,7 +286,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                             </h3>
                             <ul className="mt-2 text-sm text-red-700 space-y-1 max-h-64 overflow-auto scrollbar-thin">
                                 {importResult.errors.map((err, i) => (
-                                    <li key={i}>
+                                    <li key={err.rowNumber ?? i}>
                                         • <strong>Dòng {err.rowNumber}</strong>
                                         {err.email && <span className="text-red-600"> ({err.email})</span>}
                                         : {err.message}

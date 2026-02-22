@@ -273,12 +273,15 @@ function PlanItemCompact({
                         <div className="col-span-4 pr-2">
                             <div className="flex items-center gap-2 mb-1">
                                 <h3
+                                    role="button"
+                                    tabIndex={0}
                                     className="text-sm font-semibold text-gray-800 truncate cursor-pointer hover:text-blue-600 hover:underline"
                                     title={plan.planName}
                                     onClick={(e) => {
                                         e.preventDefault()
                                         onEdit()
                                     }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit() } }}
                                 >
                                     {plan.planName}
                                 </h3>
@@ -293,7 +296,7 @@ function PlanItemCompact({
 
                         {/* Date */}
                         <div className="col-span-3">
-                            <label className="text-[10px] text-gray-400 block uppercase">Thời gian</label>
+                            <span className="text-[10px] text-gray-400 block uppercase">Thời gian</span>
                             <span className="text-xs text-gray-600">
                                 {format(new Date(plan.startDate), 'dd/MM/yyyy')} - {format(new Date(plan.endDate), 'dd/MM/yyyy')}
                             </span>
@@ -301,7 +304,7 @@ function PlanItemCompact({
 
                         {/* Budget */}
                         <div className="col-span-3">
-                            <label className="text-[10px] text-gray-400 block uppercase">Ngân sách</label>
+                            <span className="text-[10px] text-gray-400 block uppercase">Ngân sách</span>
                             <span className="text-xs font-medium text-gray-600">
                                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
                             </span>
@@ -309,7 +312,7 @@ function PlanItemCompact({
 
                         {/* Proposals Count */}
                         <div className="col-span-2 text-right">
-                            <label className="text-[10px] text-gray-400 block uppercase text-right">Đề xuất</label>
+                            <span className="text-[10px] text-gray-400 block uppercase text-right">Đề xuất</span>
                             <span className="text-sm font-bold text-[#0F4C75]">
                                 {detailsCount}
                             </span>

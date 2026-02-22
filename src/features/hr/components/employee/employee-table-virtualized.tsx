@@ -150,8 +150,7 @@ export const EmployeeTableVirtualized = memo(function EmployeeTableVirtualized({
 }: EmployeeTableProps) {
     const parentRef = useRef<HTMLDivElement>(null)
 
-    // Memoize row data to prevent re-renders
-    const rowData = useMemo(() => employees, [employees])
+    const rowData = employees
 
     // Set up virtualizer
     // eslint-disable-next-line react-hooks/incompatible-library

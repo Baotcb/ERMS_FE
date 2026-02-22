@@ -1,7 +1,7 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import { motion } from 'framer-motion'
+import { LazyMotion, m, domAnimation } from 'framer-motion'
 import { FileQuestion, Search } from 'lucide-react'
 import { JobCard } from './job-card'
 import { Button } from '@/components/ui/button'
@@ -55,19 +55,21 @@ export function SavedJobList() {
     }
 
     return (
-        <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={container}
-            initial="hidden"
-            animate="show"
-        >
-            {savedJobs.map((job) => (
-                <motion.div key={job.id} variants={item} className="relative group h-full">
-                    <Link href={`/jobs/${job.id}`} className="block h-full">
-                        <JobCard {...job} />
-                    </Link>
-                </motion.div>
-            ))}
-        </motion.div>
+        <LazyMotion features={domAnimation}>
+            <m.div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                variants={container}
+                initial="hidden"
+                animate="show"
+            >
+                {savedJobs.map((job) => (
+                    <m.div key={job.id} variants={item} className="relative group h-full">
+                        <Link href={`/jobs/${job.id}`} className="block h-full">
+                            <JobCard {...job} />
+                        </Link>
+                    </m.div>
+                ))}
+            </m.div>
+        </LazyMotion>
     )
 }

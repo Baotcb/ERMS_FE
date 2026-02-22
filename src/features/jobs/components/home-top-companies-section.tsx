@@ -46,9 +46,9 @@ export function TopCompaniesSection() {
 
                 {/* Companies Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    {TOP_COMPANIES.map((company, index) => (
+                    {TOP_COMPANIES.map((company) => (
                         <div
-                            key={index}
+                            key={company.name}
                             className="bg-white border border-[#e8e8e8] rounded-lg p-4 flex flex-col items-center text-center hover:border-[#00b14f] hover:shadow-[0_4px_16px_rgba(0,177,79,0.1)] transition-all cursor-pointer group"
                         >
                             {/* Logo */}

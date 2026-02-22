@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AnimatePresence, motion } from 'framer-motion'
+import { LazyMotion, AnimatePresence, m, domAnimation } from 'framer-motion'
 import {
     Briefcase,
     CheckCircle2,
@@ -231,6 +231,7 @@ export function JobPostingWizardDialog({
     }
 
     return (
+        <LazyMotion features={domAnimation}>
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl rounded-xl">
                 {/* Header Section with Gradient */}
@@ -309,7 +310,7 @@ export function JobPostingWizardDialog({
                             {/* Scrollable Area */}
                             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                                 <AnimatePresence mode="wait" custom={direction}>
-                                    <motion.div
+                                    <m.div
                                         key={step}
                                         custom={direction}
                                         variants={variants}
@@ -646,7 +647,7 @@ export function JobPostingWizardDialog({
                                                 </div>
                                             </div>
                                         )}
-                                    </motion.div>
+                                    </m.div>
                                 </AnimatePresence>
                             </div>
 
@@ -705,5 +706,6 @@ export function JobPostingWizardDialog({
                 </div>
             </DialogContent>
         </Dialog>
+        </LazyMotion>
     )
 }

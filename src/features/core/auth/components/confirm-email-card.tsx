@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, memo } from 'react'
+import { useState, useCallback, memo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react'
@@ -20,13 +20,6 @@ export const ConfirmEmailCard = memo(function ConfirmEmailCard({ status, message
     const router = useRouter()
     const [isResending, setIsResending] = useState(false)
     const [resendMessage, setResendMessage] = useState<string | null>(null)
-
-    // Clear verify_email cookie on successful verification
-    useEffect(() => {
-        if (status === 'success') {
-            fetch('/api/auth/session/verify-email', { method: 'DELETE' })
-        }
-    }, [status])
 
     const handleResend = useCallback(async () => {
         if (!email) return

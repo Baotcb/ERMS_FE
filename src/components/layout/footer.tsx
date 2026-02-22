@@ -48,13 +48,15 @@ export function Footer() {
 
                         <div className="flex gap-2 pt-2">
                             {[
-                                { Icon: Facebook, label: 'Facebook' },
-                                { Icon: Linkedin, label: 'LinkedIn' },
-                                { Icon: Youtube, label: 'YouTube' },
-                            ].map(({ Icon, label }) => (
+                                { Icon: Facebook, label: 'Facebook', href: 'https://facebook.com' },
+                                { Icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com' },
+                                { Icon: Youtube, label: 'YouTube', href: 'https://youtube.com' },
+                            ].map(({ Icon, label, href }) => (
                                 <a
                                     key={label}
-                                    href="#"
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     aria-label={label}
                                     className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#00b14f] transition-colors"
                                 >
