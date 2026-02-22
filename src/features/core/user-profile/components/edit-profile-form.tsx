@@ -15,6 +15,9 @@ import { logger } from "@/utils/logger";
 const MIN_AGE = 18;
 const VIETNAM_PHONE_REGEX = /^(0|\+84)(3[2-9]|5[2689]|7[0-9]|8[1-9]|9[0-9])[0-9]{7}$/;
 
+type FormData = { fullName: string; phone: string; hometown: string; dob: string }
+type FormErrors = { fullName?: string; phone?: string; hometown?: string; dob?: string }
+
 export const EditProfileForm = memo(function EditProfileForm() {
     const { user, updateUser } = useAuth();
     const [profile, setProfile] = useState<UserProfileDto | null>(null);
@@ -23,11 +26,8 @@ export const EditProfileForm = memo(function EditProfileForm() {
     const { toast } = useToast();
     const fetchedRef = useRef(false);
 
-    // Form states
-    const [fullName, setFullName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [hometown, setHometown] = useState("");
-    const [dob, setDob] = useState("");
+    const [formData, setFormData] = useState<FormData>({ fullName: "", phone: "", hometown: "", dob: "" });
+    const [errors, setErrors] = useState<FormErrors>({});
 
     // Calculate max date (18 years ago from today)
     const today = new Date();
@@ -37,17 +37,9 @@ export const EditProfileForm = memo(function EditProfileForm() {
         today.getDate()
     ).toISOString().split('T')[0];
 
-    // Validation states
-    const [errors, setErrors] = useState<{
-        fullName?: string;
-        phone?: string;
-        hometown?: string;
-        dob?: string;
-    }>({});
-
     // Validation functions - memoized for performance
     const validatePhone = useCallback((value: string): string | undefined => {
-        if (!value) return undefined; // Optional field
+        if (!value) return undefined;
         if (!VIETNAM_PHONE_REGEX.test(value)) {
             return "Số điện thoại không đúng định dạng Việt Nam";
         }
@@ -55,21 +47,20 @@ export const EditProfileForm = memo(function EditProfileForm() {
     }, []);
 
     const validateDOB = useCallback((value: string): string | undefined => {
-        if (!value) return undefined; // Optional field
+        if (!value) return undefined;
         const birthDate = new Date(value);
         const today = new Date();
         const age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
 
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            return undefined; // Not yet had birthday this year
+            return undefined;
         }
 
         if (age < MIN_AGE) {
             return `Bạn phải ít nhất ${MIN_AGE} tuổi`;
         }
 
-        // Check if date is in the future
         if (birthDate > today) {
             return "Ngày sinh không được trong tương lai";
         }
@@ -92,47 +83,44 @@ export const EditProfileForm = memo(function EditProfileForm() {
 
     const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setPhone(value);
-        setErrors((prev) => ({ ...prev, phone: validatePhone(value) }));
+        setFormData(prev => ({ ...prev, phone: value }));
+        setErrors(prev => ({ ...prev, phone: validatePhone(value) }));
     }, [validatePhone]);
 
     const handleDobChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setDob(value);
-        setErrors((prev) => ({ ...prev, dob: validateDOB(value) }));
+        setFormData(prev => ({ ...prev, dob: value }));
+        setErrors(prev => ({ ...prev, dob: validateDOB(value) }));
     }, [validateDOB]);
 
     const handleFullNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setFullName(value);
-        setErrors((prev) => ({ ...prev, fullName: validateFullName(value) }));
+        setFormData(prev => ({ ...prev, fullName: value }));
+        setErrors(prev => ({ ...prev, fullName: validateFullName(value) }));
     }, [validateFullName]);
 
     const handleHometownChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        setHometown(value);
-        setErrors((prev) => ({ ...prev, hometown: validateHometown(value) }));
+        setFormData(prev => ({ ...prev, hometown: value }));
+        setErrors(prev => ({ ...prev, hometown: validateHometown(value) }));
     }, [validateHometown]);
 
     const isFormValid = useCallback(() => {
         return !errors.fullName && !errors.phone && !errors.hometown && !errors.dob &&
-            fullName.trim().length >= 2;
-    }, [errors.fullName, errors.phone, errors.hometown, errors.dob, fullName]);
+            formData.fullName.trim().length >= 2;
+    }, [errors.fullName, errors.phone, errors.hometown, errors.dob, formData.fullName]);
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                // if (!user) return; // Optional check
-
                 const data = await getProfile();
                 setProfile(data);
-                setFullName(data.fullName || "");
-                setPhone(data.phones || "");
-                setHometown(data.hometown || "");
-                // Format DOB to YYYY-MM-DD for input
-                if (data.dateOfBirth) {
-                    setDob(new Date(data.dateOfBirth).toISOString().split('T')[0]);
-                }
+                setFormData({
+                    fullName: data.fullName || "",
+                    phone: data.phones || "",
+                    hometown: data.hometown || "",
+                    dob: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : "",
+                });
             } catch (error) {
                 logger.error('Failed to fetch user profile', error);
                 toast({
@@ -145,7 +133,6 @@ export const EditProfileForm = memo(function EditProfileForm() {
             }
         };
 
-        // Only fetch once when user is available and not yet fetched
         if (user && !fetchedRef.current) {
             fetchedRef.current = true;
             fetchProfile();
@@ -155,17 +142,12 @@ export const EditProfileForm = memo(function EditProfileForm() {
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate all fields before submitting
-        const fullNameError = validateFullName(fullName);
-        const phoneError = validatePhone(phone);
-        const hometownError = validateHometown(hometown);
-        const dobError = validateDOB(dob);
-
-        const newErrors = {
-            fullName: fullNameError,
-            phone: phoneError,
-            hometown: hometownError,
-            dob: dobError,
+        const { fullName, phone, hometown, dob } = formData;
+        const newErrors: FormErrors = {
+            fullName: validateFullName(fullName),
+            phone: validatePhone(phone),
+            hometown: validateHometown(hometown),
+            dob: validateDOB(dob),
         };
 
         setErrors(newErrors);
@@ -188,19 +170,17 @@ export const EditProfileForm = memo(function EditProfileForm() {
                 dateOfBirth: dob ? new Date(dob).toISOString() : undefined
             });
 
-            // Update local profile state first to ensure UI consistency
             setProfile(updatedProfile);
 
-            // Update global auth store with response data from server to avoid showing old data
             if (updatedProfile.fullName) updateUser({ fullName: updatedProfile.fullName });
 
-            // Only update DOB if returned valid date to ensure format consistency
             if (updatedProfile.dateOfBirth) {
                 const formattedDob = new Date(updatedProfile.dateOfBirth).toISOString().split('T')[0];
-                if (formattedDob !== dob) setDob(formattedDob);
+                if (formattedDob !== dob) {
+                    setFormData(prev => ({ ...prev, dob: formattedDob }));
+                }
             }
 
-            // Clear errors on success
             setErrors({});
 
             toast({
@@ -222,6 +202,8 @@ export const EditProfileForm = memo(function EditProfileForm() {
     if (loading) {
         return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="animate-spin w-8 h-8 text-brand-primary" /></div>;
     }
+
+    const { fullName, phone, hometown, dob } = formData;
 
     return (
         <div className="flex flex-col gap-6">

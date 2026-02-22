@@ -322,7 +322,7 @@ export const HRSidebar = memo(function HRSidebar() {
                     tabIndex={0}
                     aria-label="Close sidebar"
                     onClick={() => setIsMobileOpen(false)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setIsMobileOpen(false) } }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsMobileOpen(false) } }}
                 />
             )}
 

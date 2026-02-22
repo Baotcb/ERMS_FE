@@ -99,7 +99,7 @@ export function ApplicationDetailModal({
                                                 <CheckCircle className="w-4 h-4" /> Điểm mạnh
                                             </h4>
                                             <ul className="space-y-2">
-                                                {application.cvScreeningResult.strengths.map((item, idx) => (
+                                                {application.cvScreeningResult.strengths.map((item) => (
                                                     <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 mt-2 flex-shrink-0" />
                                                         {item}
@@ -114,7 +114,7 @@ export function ApplicationDetailModal({
                                                     <AlertTriangle className="w-4 h-4" /> Cần lưu ý
                                                 </h4>
                                                 <ul className="space-y-2">
-                                                    {application.cvScreeningResult.concerns.map((item, idx) => (
+                                                    {application.cvScreeningResult.concerns.map((item) => (
                                                         <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
                                                             {item}

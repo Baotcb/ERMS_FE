@@ -32,7 +32,7 @@ function PendingPlanRow({ plan }: { plan: RecruitmentPlan }) {
             role="button"
             tabIndex={0}
             onClick={() => router.push(`/enterprise/director/recruitment-plans/${plan.id}`)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { router.push(`/enterprise/director/recruitment-plans/${plan.id}`) } }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/enterprise/director/recruitment-plans/${plan.id}`) } }}
         >
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

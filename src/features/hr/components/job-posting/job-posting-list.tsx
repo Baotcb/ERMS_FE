@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useEffect, useReducer } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { useSWRConfig } from 'swr'
@@ -31,59 +31,77 @@ const JobPostingWizardDialog = dynamic(() =>
     { ssr: false }
 )
 
-export function JobPostingList() {
+const PAGE_SIZE = 10
+const DEPARTMENT_ID = 'all'
+
+type WizardState = {
+    open: boolean
+    data: Partial<JobPostingFormValues> & { hidePlanDetailId?: boolean }
+}
+
+type ListState = { page: number; status: string; wizard: WizardState }
+
+type ListAction =
+    | { type: 'setPage'; page: number }
+    | { type: 'setStatus'; status: string }
+    | { type: 'openWizard'; data?: WizardState['data'] }
+    | { type: 'closeWizard' }
+
+function listReducer(state: ListState, action: ListAction): ListState {
+    switch (action.type) {
+        case 'setPage': return { ...state, page: action.page }
+        case 'setStatus': return { ...state, status: action.status }
+        case 'openWizard': return { ...state, wizard: { open: true, data: action.data ?? {} } }
+        case 'closeWizard': return { ...state, wizard: { open: false, data: {} } }
+    }
+}
+
+function initFromSearchParams(searchParams: ReturnType<typeof useSearchParams>): ListState {
+    const autoOpen = searchParams.get('autoOpen') === 'true'
+    return {
+        page: 1,
+        status: 'all',
+        wizard: autoOpen
+            ? {
+                open: true,
+                data: {
+                    planDetailId: searchParams.get('planDetailId') || '',
+                    jobTitle: searchParams.get('jobTitle') || '',
+                    quantity: parseInt(searchParams.get('quantity') || '1'),
+                    location: searchParams.get('location') || 'Hà Nội',
+                    applicationDeadline: (searchParams.get('applicationDeadline') || '').split('T')[0],
+                    description: '',
+                    requirements: searchParams.get('requirements') || '',
+                    benefits: '',
+                    hidePlanDetailId: true,
+                },
+            }
+            : { open: false, data: {} },
+    }
+}
+
+function JobPostingListContent() {
     const { toast } = useToast()
     const { mutate } = useSWRConfig()
     const searchParams = useSearchParams()
 
-    const [page, setPage] = useState(1)
-    const [pageSize] = useState(10)
-    const [status, setStatus] = useState<string>('all')
-    const [departmentId] = useState<string>('all')
-    const [showWizard, setShowWizard] = useState(false)
-    const [initialData, setInitialData] = useState<Partial<JobPostingFormValues>>({})
+    const [state, dispatch] = useReducer(listReducer, searchParams, initFromSearchParams)
+    const { page, status, wizard } = state
 
     const { data, isLoading } = useJobPostings({
         page,
-        pageSize,
+        pageSize: PAGE_SIZE,
         status: status === 'all' ? undefined : status,
-        departmentId: departmentId === 'all' ? undefined : departmentId,
+        departmentId: DEPARTMENT_ID === 'all' ? undefined : DEPARTMENT_ID,
     })
 
-    // Auto-open wizard if coming from dashboard with request data
+    // Clean URL if opened via autoOpen param
     useEffect(() => {
-        if (searchParams) {
-            const autoOpen = searchParams.get('autoOpen')
-            if (autoOpen === 'true') {
-                const planDetailId = searchParams.get('planDetailId')
-                const jobTitle = searchParams.get('jobTitle')
-                const quantity = searchParams.get('quantity')
-                const location = searchParams.get('location')
-                const applicationDeadline = searchParams.get('applicationDeadline')
-                const requirements = searchParams.get('requirements')
-
-                // Fix synchronous setState in effect
-                setTimeout(() => {
-                    setInitialData({
-                        planDetailId: planDetailId || '',
-                        jobTitle: jobTitle || '',
-                        quantity: quantity ? parseInt(quantity) : 1,
-                        location: location || 'Hà Nội',
-                        applicationDeadline: applicationDeadline ? applicationDeadline.split('T')[0] : '',
-                        description: '',
-                        requirements: requirements || '',
-                        benefits: '',
-                        hidePlanDetailId: true // hidePlanDetailId is stripped in Wizard
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } as any)
-                    setShowWizard(true)
-                }, 0)
-
-                // Clean URL after opening wizard
-                window.history.replaceState({}, '', '/enterprise/hr/job-postings')
-            }
+        if (searchParams.get('autoOpen') === 'true') {
+            window.history.replaceState({}, '', '/enterprise/hr/job-postings')
         }
-    }, [searchParams])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // Mutations
     const { trigger: publishJob } = usePublishJobPosting()
@@ -96,7 +114,7 @@ export function JobPostingList() {
             const result = await publishJob(id)
             console.log('✅ Publish result:', result)
             toast({ title: 'Đã đăng tuyển dụng thành công' })
-            mutate(['/api/job-postings', JSON.stringify({ page, pageSize, status, departmentId })])
+            mutate(['/api/job-postings', JSON.stringify({ page, pageSize: PAGE_SIZE, status, departmentId: DEPARTMENT_ID })])
         } catch (error) {
             console.error('❌ Publish error:', error)
             const errorMessage = error instanceof Error ? error.message : 'Không thể đăng tuyển dụng'
@@ -125,7 +143,7 @@ export function JobPostingList() {
         try {
             await deleteJob(id)
             toast({ title: 'Đã xóa tuyển dụng thành công' })
-            mutate(['/api/job-postings', JSON.stringify({ page, pageSize, status, departmentId })])
+            mutate(['/api/job-postings', JSON.stringify({ page, pageSize: PAGE_SIZE, status, departmentId: DEPARTMENT_ID })])
         } catch {
             toast({
                 title: 'Lỗi',
@@ -136,8 +154,7 @@ export function JobPostingList() {
     }
 
     const handleCreateNew = () => {
-        setInitialData({})
-        setShowWizard(true)
+        dispatch({ type: 'openWizard', data: {} })
     }
 
     return (
@@ -149,7 +166,7 @@ export function JobPostingList() {
                         className="max-w-xs"
                     // Implement search logic if API supports it
                     />
-                    <Select value={status} onValueChange={setStatus}>
+                    <Select value={status} onValueChange={(s) => dispatch({ type: 'setStatus', status: s })}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Trạng thái" />
                         </SelectTrigger>
@@ -185,7 +202,7 @@ export function JobPostingList() {
                 <div className="flex justify-center gap-2 mt-4">
                     <Button
                         variant="outline"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        onClick={() => dispatch({ type: 'setPage', page: Math.max(1, page - 1) })}
                         disabled={page === 1}
                     >
                         Trước
@@ -195,7 +212,7 @@ export function JobPostingList() {
                     </span>
                     <Button
                         variant="outline"
-                        onClick={() => setPage((p) => Math.min(data.pageCount, p + 1))}
+                        onClick={() => dispatch({ type: 'setPage', page: Math.min(data.pageCount, page + 1) })}
                         disabled={page === data.pageCount}
                     >
                         Sau
@@ -204,15 +221,21 @@ export function JobPostingList() {
             )}
 
             {/* Wizard Dialog */}
-            {showWizard && (
+            {wizard.open && (
                 <JobPostingWizardDialog
-                    open={showWizard}
-                    onOpenChange={setShowWizard}
-                    initialData={initialData}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    hidePlanDetailId={(initialData as any).hidePlanDetailId || false}
+                    open={wizard.open}
+                    onOpenChange={(open) => !open && dispatch({ type: 'closeWizard' })}
+                    initialData={wizard.data}
+                    hidePlanDetailId={wizard.data.hidePlanDetailId || false}
                 />
             )}
         </div>
+    )
+}
+export function JobPostingList() {
+    return (
+        <Suspense>
+            <JobPostingListContent />
+        </Suspense>
     )
 }

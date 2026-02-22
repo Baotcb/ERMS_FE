@@ -1,5 +1,5 @@
 'use client'
-import { memo, useState, useEffect } from 'react'
+import { memo, useEffect, useReducer } from 'react'
 import { Badge } from '@/components/ui/badge'
 import {
     DashboardListWidget,
@@ -98,29 +98,35 @@ function TrainingRequestRow({ item }: { item: TrainingRequest }) {
     )
 }
 
+type DashboardData = {
+    proposals: ProposalItem[]
+    candidates: ShortlistedCandidate[]
+    trainingRequests: TrainingRequest[]
+    recruitmentData: ChartData[]
+    trainingData: ChartData[]
+}
+
+const initialDashboardData: DashboardData = {
+    proposals: [],
+    candidates: [],
+    trainingRequests: [],
+    recruitmentData: [],
+    trainingData: [],
+}
+
 export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
-    // Local state for mock data
-    const [proposals, setProposals] = useState<ProposalItem[]>([])
-    const [candidates, setCandidates] = useState<ShortlistedCandidate[]>([])
-    const [trainingRequests, setTrainingRequests] = useState<TrainingRequest[]>([])
-    const [recruitmentData, setRecruitmentData] = useState<ChartData[]>([])
-    const [trainingData, setTrainingData] = useState<ChartData[]>([])
+    const [data, dispatch] = useReducer((_: DashboardData, next: DashboardData) => next, initialDashboardData)
 
     useEffect(() => {
-        // Simulate fetching data
         const loadData = async () => {
-            const [props, cands, trains, recPerf, trainPerf] = await Promise.all([
+            const [proposals, candidates, trainingRequests, recruitmentData, trainingData] = await Promise.all([
                 getProposals(),
                 getShortlistedCandidates(),
                 getTrainingRequests(),
                 getRecruitmentProgress(),
                 getTrainingCompletion()
             ])
-            setProposals(props)
-            setCandidates(cands)
-            setTrainingRequests(trains)
-            setRecruitmentData(recPerf)
-            setTrainingData(trainPerf)
+            dispatch({ proposals, candidates, trainingRequests, recruitmentData, trainingData })
         }
         loadData()
     }, [])
@@ -138,21 +144,21 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
                 <DashboardListWidget
                     title="Đề xuất nhân sự"
                     subtitle="Trạng thái: Đang xử lý"
-                    items={proposals}
+                    items={data.proposals}
                     renderItem={(item) => <ProposalItemRow item={item} />}
                 />
 
                 <DashboardListWidget
                     title="Ứng viên chờ phỏng vấn"
                     subtitle="Chiến dịch hiện tại"
-                    items={candidates}
+                    items={data.candidates}
                     renderItem={(item) => <ShortlistedCandidateRow item={item} />}
                 />
 
                 <DashboardListWidget
                     title="Yêu cầu đào tạo"
                     subtitle="Qúy 1/2026"
-                    items={trainingRequests}
+                    items={data.trainingRequests}
                     renderItem={(item) => <TrainingRequestRow item={item} />}
                 />
             </div>
@@ -162,13 +168,13 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
                 <DashboardChartWidget
                     title="Tiến độ Tuyển dụng"
                     subtitle="Phễu ứng viên (Funnel)"
-                    data={recruitmentData}
+                    data={data.recruitmentData}
                 />
 
                 <DashboardChartWidget
                     title="Hoàn thành Đào tạo"
                     subtitle="Theo Team/Nhóm"
-                    data={trainingData}
+                    data={data.trainingData}
                 />
             </div>
         </div>

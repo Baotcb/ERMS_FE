@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,7 +12,7 @@ import { Alert, LoadingSpinner } from '@/components/common'
 import { createHRAccountSchema, type CreateHRAccountData } from '../schemas/auth-schemas'
 import { createHRAccount } from '../api/auth-service'
 
-export function HRAccountForm() {
+function HRAccountFormContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const enterpriseId = searchParams.get('enterpriseId')
@@ -161,5 +161,12 @@ export function HRAccountForm() {
                 </Button>
             </form>
         </div>
+    )
+}
+export function HRAccountForm() {
+    return (
+        <Suspense>
+            <HRAccountFormContent />
+        </Suspense>
     )
 }

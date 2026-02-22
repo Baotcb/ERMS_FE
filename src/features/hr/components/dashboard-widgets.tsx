@@ -16,7 +16,7 @@ export const RequestItemRow = memo(function RequestItemRow({ title, date, reques
 
     // Checkboxes purely visual from image
     return (
-        <div className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-all active:scale-[0.99]" role="button" tabIndex={0} onClick={onClick} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onClick() } }}>
+        <div className="flex items-start gap-3 group cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-all active:scale-[0.99]" role="button" tabIndex={0} onClick={onClick} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } }}>
             <div className="mt-1 w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-[#0F4C75] transition-colors flex-shrink-0" />
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-[#0F4C75] transition-colors">{title}</p>

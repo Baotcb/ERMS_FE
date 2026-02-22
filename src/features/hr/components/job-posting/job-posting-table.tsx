@@ -133,7 +133,7 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                                     role="button"
                                                     tabIndex={0}
                                                     onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/applications`)}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { router.push(`/enterprise/hr/job-postings/${job.id}/applications`) } }}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/enterprise/hr/job-postings/${job.id}/applications`) } }}
                                                 >
                                                     <span className="font-medium">{job.applicationCount}</span>
                                                     <span className="text-xs text-muted-foreground">hồ sơ</span>

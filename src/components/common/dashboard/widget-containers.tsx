@@ -10,6 +10,10 @@ export interface DashboardListWidgetProps<T> {
     onRefresh?: () => void
 }
 
+function WidgetListItem<T>({ item, renderFn }: { item: T; renderFn: (item: T) => React.ReactNode }) {
+    return <>{renderFn(item)}</>
+}
+
 export function DashboardListWidget<T>({ title, subtitle, items, renderItem, keyExtractor, onRefresh }: DashboardListWidgetProps<T>) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[450px]">
@@ -29,7 +33,9 @@ export function DashboardListWidget<T>({ title, subtitle, items, renderItem, key
             </div>
             <div className="p-4 flex-1 overflow-y-auto space-y-4">
                 {items.length > 0 ? items.map((item, index) => (
-                    <div key={keyExtractor ? keyExtractor(item, index) : index}>{renderItem(item)}</div>
+                    <div key={keyExtractor ? keyExtractor(item, index) : index}>
+                        <WidgetListItem item={item} renderFn={renderItem} />
+                    </div>
                 )) : (
                     <div className="text-center text-gray-400 py-8">Chưa có dữ liệu</div>
                 )}
@@ -51,7 +57,7 @@ export interface DashboardChartWidgetProps {
 }
 
 export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWidgetProps) {
-    const maxValue = Math.max(...data.map(d => d.value), 1) * 1.1 // Add 10% buffering
+    const maxValue = Math.max(...data.map(d => d.value), 1) * 1.1
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-[400px]">
