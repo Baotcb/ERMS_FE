@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { FileQuestion, Search } from 'lucide-react'
 import { JobCard } from './job-card'
 import { Button } from '@/components/ui/button'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
+import Link from 'next/link'
 
 export function SavedJobList() {
     const savedJobs = useSavedJobsStore((state) => state.savedJobs)
@@ -14,7 +14,6 @@ export function SavedJobList() {
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsMounted(true)
     }, [])
 
@@ -33,7 +32,7 @@ export function SavedJobList() {
                     Đừng bỏ lỡ cơ hội! Lưu các công việc bạn quan tâm để xem lại và ứng tuyển bất cứ lúc nào.
                 </p>
                 <Link href="/jobs">
-                    <Button className="bg-brand-primary hover:bg-brand-primary/90 font-bold text-lg h-12 px-8 shadow-lg shadow-brand-primary/20 transition-transform active:scale-95">
+                    <Button className="bg-[#00b14f] hover:bg-[#009643] text-white font-bold text-lg h-12 px-8 shadow-lg shadow-[#00b14f]/20 transition-transform active:scale-95">
                         <Search className="w-5 h-5 mr-2" />
                         Tìm việc làm ngay
                     </Button>
@@ -66,7 +65,9 @@ export function SavedJobList() {
         >
             {savedJobs.map((job) => (
                 <motion.div key={job.id} variants={item} className="relative group h-full">
-                    <JobCard {...job} />
+                    <Link href={`/jobs/${job.id}`} className="block h-full">
+                        <JobCard {...job} />
+                    </Link>
                 </motion.div>
             ))}
         </motion.div>
