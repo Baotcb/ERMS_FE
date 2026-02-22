@@ -117,7 +117,7 @@ export function planFormReducer(state: PlanFormState, action: PlanFormAction): P
         case 'PLAN_CREATED':
             return { ...state, createdPlanId: action.id, createdPlanName: action.name, step: 'add-details', isLoading: false }
         case 'INIT_EDIT_MODE':
-            return { ...state, step: 'add-details', createdPlanId: action.planId, createdPlanName: action.planName, planCode: action.planCode }
+            return { ...state, step: 'add-details', createdPlanId: action.planId, createdPlanName: action.planName, planCode: action.planCode, isLoading: false }
         default:
             return state
     }

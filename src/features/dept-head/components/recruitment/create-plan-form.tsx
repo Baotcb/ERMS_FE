@@ -135,6 +135,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
         fetchInitialData()
 
         if (editPlanId) {
+            dispatch({ type: 'SET_LOADING', key: 'isLoading', value: true })
             fetchPlanData(editPlanId)
         } else {
             dispatch({ type: 'SET_STEP', step: 'create-plan' })
@@ -278,7 +279,14 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
-                    {state.step === 'create-plan' ? (
+                    {state.isLoading && editPlanId ? (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                                <span className="text-sm text-gray-500">Đang tải dữ liệu kế hoạch...</span>
+                            </div>
+                        </div>
+                    ) : state.step === 'create-plan' ? (
                         <PlanFormStep
                             form={planForm}
                             campaigns={state.campaigns}
