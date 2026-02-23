@@ -11,7 +11,7 @@ export default function JobSearchPage() {
     return (
         <div className="min-h-screen bg-[#f4f5f5]">
             {/* Search Header Bar */}
-            <div className="bg-gradient-to-r from-[#00b14f] to-[#009643] py-6">
+            <div className="bg-gradient-to-r from-[#1B5583] to-[#154360] py-6">
                 <div className="container mx-auto px-4 max-w-6xl">
                     <h1 className="text-xl font-bold text-white mb-1">
                         Tìm kiếm việc làm

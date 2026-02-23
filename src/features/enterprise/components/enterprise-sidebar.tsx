@@ -303,7 +303,7 @@ export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
                                 alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
                                 fill
                                 sizes="40px"
-                                className="object-contain p-1"
+                                className="object-cover"
                             />
                         </div>
                     ) : (

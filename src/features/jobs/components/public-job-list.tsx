@@ -47,7 +47,7 @@ function PublicJobListContent() {
                 <p className="text-[#6f7882] text-sm mt-1 mb-4">Vui lòng thử lại sau</p>
                 <Button
                     variant="outline"
-                    className="border-[#00b14f] text-[#00b14f] hover:bg-[#00b14f] hover:text-white"
+                    className="border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white"
                     onClick={() => window.location.reload()}
                 >
                     Thử lại
@@ -93,7 +93,7 @@ function PublicJobListContent() {
                     <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]"
+                        className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
                     >
@@ -109,8 +109,8 @@ function PublicJobListContent() {
                                     className={cn(
                                         "h-9 w-9 rounded-lg text-sm font-medium transition-colors",
                                         page === pageNum
-                                            ? "bg-[#00b14f] text-white"
-                                            : "text-[#6f7882] hover:bg-[#f4f5f5]"
+                                            ? "bg-[#1B5583] text-white"
+                                            : "text-[#6f7882] hover:bg-[#EDE8F0]"
                                     )}
                                     onClick={() => setPage(pageNum)}
                                 >
@@ -125,8 +125,8 @@ function PublicJobListContent() {
                                     className={cn(
                                         "h-9 w-9 rounded-lg text-sm font-medium transition-colors",
                                         page === data.totalPages
-                                            ? "bg-[#00b14f] text-white"
-                                            : "text-[#6f7882] hover:bg-[#f4f5f5]"
+                                            ? "bg-[#1B5583] text-white"
+                                            : "text-[#6f7882] hover:bg-[#EDE8F0]"
                                     )}
                                     onClick={() => setPage(data.totalPages)}
                                 >
@@ -139,7 +139,7 @@ function PublicJobListContent() {
                     <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]"
+                        className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]"
                         onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                         disabled={page === data.totalPages}
                     >

@@ -59,7 +59,7 @@ export function Footer() {
                                     target={href === '#' ? undefined : "_blank"}
                                     rel={href === '#' ? undefined : "noopener noreferrer"}
                                     aria-label={label}
-                                    className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#00b14f] transition-colors"
+                                    className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center hover:bg-[#1B5583] transition-colors"
                                 >
                                     <Icon className="w-4 h-4" />
                                 </a>
@@ -71,12 +71,12 @@ export function Footer() {
                     <div>
                         <h3 className="font-bold text-sm mb-4 uppercase tracking-wider text-white/90">Về ERMS</h3>
                         <ul className="space-y-2.5 text-white/60 text-sm">
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Giới thiệu</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Tuyển dụng</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Liên hệ</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Hỏi đáp</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Chính sách bảo mật</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Điều khoản dịch vụ</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Giới thiệu</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Tuyển dụng</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Liên hệ</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Hỏi đáp</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Chính sách bảo mật</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Điều khoản dịch vụ</Link></li>
                         </ul>
                     </div>
 
@@ -84,11 +84,11 @@ export function Footer() {
                     <div>
                         <h3 className="font-bold text-sm mb-4 uppercase tracking-wider text-white/90">Dành cho ứng viên</h3>
                         <ul className="space-y-2.5 text-white/60 text-sm">
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Việc làm mới nhất</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">CV Hay</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">VietnamSalary</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Cẩm nang nghề nghiệp</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Top Công ty</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Việc làm mới nhất</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">CV Hay</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">VietnamSalary</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Cẩm nang nghề nghiệp</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Top Công ty</Link></li>
                         </ul>
                     </div>
 
@@ -96,13 +96,13 @@ export function Footer() {
                     <div>
                         <h3 className="font-bold text-sm mb-4 uppercase tracking-wider text-white/90">Nhà tuyển dụng</h3>
                         <ul className="space-y-2.5 text-white/60 text-sm">
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Đăng tin tuyển dụng</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Tìm hồ sơ</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Giải pháp quản lý</Link></li>
-                            <li><Link href="#" className="hover:text-[#00b14f] transition-colors">Sản phẩm dịch vụ</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Đăng tin tuyển dụng</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Tìm hồ sơ</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Giải pháp quản lý</Link></li>
+                            <li><Link href="#" className="hover:text-[#1B5583] transition-colors">Sản phẩm dịch vụ</Link></li>
                         </ul>
                         <div className="mt-4">
-                            <Button className="w-full bg-[#00b14f] hover:bg-[#009643] text-white font-semibold border-0 h-9 rounded-lg text-sm transition-colors shadow-none">
+                            <Button className="w-full bg-[#1B5583] hover:bg-[#154360] text-white font-semibold border-0 h-9 rounded-lg text-sm transition-colors shadow-none">
                                 Đăng tin ngay
                             </Button>
                         </div>

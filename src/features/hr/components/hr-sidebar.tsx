@@ -267,7 +267,7 @@ export const HRSidebar = memo(function HRSidebar() {
                                 alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
                                 fill
                                 sizes="40px"
-                                className="object-contain p-1"
+                                className="object-cover"
                             />
                         </div>
                     ) : (
