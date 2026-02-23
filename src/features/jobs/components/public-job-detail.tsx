@@ -407,13 +407,13 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                         <div className="bg-white rounded-lg border border-[#e8e8e8] sticky top-20 overflow-hidden">
                             {/* Company Header */}
                             <div className="p-5 text-center border-b border-[#e8e8e8]">
-                                <div className="w-[80px] h-[80px] mx-auto mb-3 border border-[#e8e8e8] rounded-lg p-1.5 bg-white relative overflow-hidden">
+                                <div className="w-[80px] h-[80px] mx-auto mb-3 border border-[#e8e8e8] rounded-lg bg-white relative overflow-hidden">
                                     <Image
                                         src={job.enterpriseLogoUrl || '/placeholder-logo.png'}
                                         alt={job.enterpriseName}
                                         fill
                                         sizes="80px"
-                                        className="object-contain p-1"
+                                        className="object-cover"
                                     />
                                 </div>
                                 <h3 className="font-bold text-[15px] text-[#212f3f] leading-tight line-clamp-2">

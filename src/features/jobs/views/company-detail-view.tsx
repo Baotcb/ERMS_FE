@@ -102,13 +102,13 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                 {/* Header Card (Logo, Name, Actions) */}
                 <div className="bg-white rounded-lg p-6 mb-6 shadow-sm border border-[#e8e8e8]">
                     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-                        <div className="w-32 h-32 bg-white rounded-xl border border-[#e8e8e8] p-2 flex-shrink-0 shadow-sm relative overflow-hidden">
+                        <div className="w-32 h-32 bg-white rounded-xl border border-[#e8e8e8] flex-shrink-0 shadow-sm relative overflow-hidden">
                             <Image
                                 src={company.enterpriseLogoUrl || '/placeholder-logo.png'}
                                 alt={company.enterpriseName}
                                 fill
                                 sizes="128px"
-                                className="object-contain p-2"
+                                className="object-cover"
                             />
                         </div>
                         <div className="flex-1">

@@ -58,13 +58,13 @@ export function TopCompaniesSection() {
                             <Link href={`/companies/${encodeURIComponent(company.enterpriseName)}`} key={company.enterpriseName}>
                                 <div className="bg-white border border-[#e8e8e8] rounded-lg p-4 flex flex-col items-center text-center hover:border-[#1B5583] hover:shadow-[0_4px_16px_rgba(27,85,131,0.1)] transition-all cursor-pointer group h-full">
                                     {/* Logo */}
-                                    <div className="w-16 h-16 border border-[#e8e8e8] rounded-lg p-1.5 mb-3 group-hover:border-[#1B5583]/30 transition-colors bg-white relative overflow-hidden flex-shrink-0">
+                                    <div className="w-16 h-16 border border-[#e8e8e8] rounded-lg mb-3 group-hover:border-[#1B5583]/30 transition-colors bg-white relative overflow-hidden flex-shrink-0">
                                         <Image
                                             src={company.enterpriseLogoUrl || '/placeholder-logo.png'}
                                             alt={company.enterpriseName}
                                             fill
                                             sizes="64px"
-                                            className="object-contain p-1 w-full h-full"
+                                            className="object-cover"
                                         />
                                     </div>
 

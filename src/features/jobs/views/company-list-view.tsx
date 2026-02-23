@@ -99,13 +99,13 @@ export function CompanyListView() {
                                 <div className="bg-white rounded-lg border border-[#e8e8e8] hover:border-[#1B5583] hover:shadow-[0_4px_16px_rgba(27,85,131,0.12)] transition-all cursor-pointer h-full flex flex-col group p-5">
                                     {/* Logo & Name */}
                                     <div className="flex gap-4 mb-4">
-                                        <div className="w-16 h-16 border border-[#e8e8e8] rounded-lg p-1.5 flex-shrink-0 relative overflow-hidden bg-white">
+                                        <div className="w-16 h-16 border border-[#e8e8e8] rounded-lg flex-shrink-0 relative overflow-hidden bg-white">
                                             <Image
                                                 src={company.enterpriseLogoUrl || '/placeholder-logo.png'}
                                                 alt={company.enterpriseName}
                                                 fill
                                                 sizes="64px"
-                                                className="object-contain p-1"
+                                                className="object-cover"
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
