@@ -5,7 +5,7 @@ export function SavedJobsView() {
     return (
         <div className="min-h-screen bg-[#f4f5f5]">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#00b14f] to-[#009643] py-6">
+            <div className="bg-gradient-to-r from-[#1B5583] to-[#154360] py-6">
                 <div className="container mx-auto px-4 max-w-6xl">
                     <h1 className="text-xl font-bold text-white flex items-center gap-2">
                         <Bookmark className="w-5 h-5" />

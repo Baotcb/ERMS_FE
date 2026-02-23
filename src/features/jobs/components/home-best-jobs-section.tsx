@@ -38,7 +38,7 @@ export function BestJobsSection() {
     })
 
     return (
-        <section className="py-10 bg-[#f4f5f5]">
+        <section className="py-10 bg-[#EDE8F0]">
             <div className="container mx-auto px-4 max-w-6xl">
                 {/* Section Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -59,8 +59,8 @@ export function BestJobsSection() {
                                 className={cn(
                                     "px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap",
                                     filter === tab.key
-                                        ? "bg-[#00b14f] text-white shadow-sm"
-                                        : "text-[#6f7882] hover:text-[#212f3f] hover:bg-[#f4f5f5]"
+                                        ? "bg-[#1B5583] text-white shadow-sm"
+                                        : "text-[#6f7882] hover:text-[#212f3f] hover:bg-[#EDE8F0]"
                                 )}
                                 onClick={() => { setFilter(tab.key); setPage(1) }}
                             >
@@ -79,7 +79,7 @@ export function BestJobsSection() {
                     </div>
                 ) : !data?.items || data.items.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-lg border border-[#e8e8e8]">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#f4f5f5] flex items-center justify-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#EDE8F0] flex items-center justify-center">
                             <Search className="w-8 h-8 text-[#a6acb2]" />
                         </div>
                         <p className="text-[#6f7882] font-medium">Chưa có việc làm nào phù hợp.</p>
@@ -101,7 +101,7 @@ export function BestJobsSection() {
                         <Button
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]"
+                            className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]"
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
                         >
@@ -118,8 +118,8 @@ export function BestJobsSection() {
                                         className={cn(
                                             "h-9 w-9 rounded-lg text-sm font-medium transition-colors",
                                             page === pageNum
-                                                ? "bg-[#00b14f] text-white"
-                                                : "text-[#6f7882] hover:bg-[#f4f5f5]"
+                                                ? "bg-[#1B5583] text-white"
+                                                : "text-[#6f7882] hover:bg-[#EDE8F0]"
                                         )}
                                         onClick={() => setPage(pageNum)}
                                     >
@@ -134,8 +134,8 @@ export function BestJobsSection() {
                                         className={cn(
                                             "h-9 w-9 rounded-lg text-sm font-medium transition-colors",
                                             page === data.totalPages
-                                                ? "bg-[#00b14f] text-white"
-                                                : "text-[#6f7882] hover:bg-[#f4f5f5]"
+                                                ? "bg-[#1B5583] text-white"
+                                                : "text-[#6f7882] hover:bg-[#EDE8F0]"
                                         )}
                                         onClick={() => setPage(data.totalPages)}
                                     >
@@ -148,7 +148,7 @@ export function BestJobsSection() {
                         <Button
                             variant="outline"
                             size="icon"
-                            className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]"
+                            className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]"
                             onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
                             disabled={page === data.totalPages}
                         >
@@ -162,7 +162,7 @@ export function BestJobsSection() {
                     <Link href="/jobs">
                         <Button
                             variant="outline"
-                            className="border-[#00b14f] text-[#00b14f] hover:bg-[#00b14f] hover:text-white font-semibold px-8 h-11 rounded-lg transition-colors"
+                            className="border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white font-semibold px-8 h-11 rounded-lg transition-colors"
                         >
                             Xem tất cả việc làm
                             <ChevronRight className="w-4 h-4 ml-1" />

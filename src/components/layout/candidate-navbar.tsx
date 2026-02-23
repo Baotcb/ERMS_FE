@@ -91,7 +91,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                         <NavItem
                             label="Việc làm"
                             href="/jobs"
-                            className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#00b14f]"
+                            className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]"
                         >
                             <div className="grid grid-cols-[200px_1fr] gap-5 w-[580px] p-4">
                                 {/* Column 1: Main Actions */}
@@ -100,19 +100,19 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div>
                                         <h3 className="text-xs font-bold text-[#a6acb2] mb-2 uppercase tracking-wider">Việc làm</h3>
                                         <div className="space-y-0.5">
-                                            <Link href="/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#f0faf4] transition-colors group/item">
-                                                <Icons.Search className="w-4 h-4 text-[#00b14f]" />
-                                                <span className="text-sm font-bold text-[#00b14f]">Tìm việc làm</span>
+                                            <Link href="/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#B5D5F5]/20 transition-colors group/item">
+                                                <Icons.Search className="w-4 h-4 text-[#1B5583]" />
+                                                <span className="text-sm font-bold text-[#1B5583]">Tìm việc làm</span>
                                             </Link>
-                                            <Link href="/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#f4f5f5] transition-colors text-[#6f7882] hover:text-[#00b14f]">
+                                            <Link href="/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
                                                 <Icons.Bookmark className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm đã lưu</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#f4f5f5] transition-colors text-[#6f7882] hover:text-[#00b14f]">
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
                                                 <Icons.FileCheck className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm đã ứng tuyển</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#f4f5f5] transition-colors text-[#6f7882] hover:text-[#00b14f]">
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
                                                 <Icons.ThumbsUp className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm phù hợp</span>
                                             </Link>
@@ -123,11 +123,11 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div>
                                         <h3 className="text-xs font-bold text-[#a6acb2] mb-2 uppercase tracking-wider">Công ty</h3>
                                         <div className="space-y-0.5">
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#f4f5f5] transition-colors text-[#6f7882] hover:text-[#00b14f]">
+                                            <Link href="/companies" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
                                                 <Icons.Building2 className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Danh sách công ty</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#f4f5f5] transition-colors text-[#6f7882] hover:text-[#00b14f]">
+                                            <Link href="/companies" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
                                                 <Icons.BarChart3 className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Top công ty</span>
                                             </Link>
@@ -143,7 +143,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                             <Link
                                                 key={job}
                                                 href="/not-found"
-                                                className="text-sm text-[#6f7882] hover:text-[#00b14f] hover:translate-x-0.5 transition-all"
+                                                className="text-sm text-[#6f7882] hover:text-[#1B5583] hover:translate-x-0.5 transition-all"
                                             >
                                                 {job}
                                             </Link>
@@ -154,9 +154,9 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                         </NavItem>
 
                         {/* Other Simple Links */}
-                        <NavItem label="Hồ sơ & CV" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#00b14f]" />
-                        <NavItem label="Công ty" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#00b14f]" />
-                        <NavItem label="Cẩm nang" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#00b14f]" />
+                        <NavItem label="Hồ sơ & CV" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]" />
+                        <NavItem label="Công ty" href="/companies" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]" />
+                        <NavItem label="Cẩm nang" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]" />
                     </div>
                 </div>
 
@@ -175,14 +175,14 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-[#6f7882] hover:text-[#00b14f] hover:bg-[#f0faf4] rounded-full h-9 w-9"
+                                    className="text-[#6f7882] hover:text-[#1B5583] hover:bg-[#B5D5F5]/20 rounded-full h-9 w-9"
                                 >
                                     <Icons.Bell className="w-5 h-5" />
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-[#6f7882] hover:text-[#00b14f] hover:bg-[#f0faf4] rounded-full h-9 w-9"
+                                    className="text-[#6f7882] hover:text-[#1B5583] hover:bg-[#B5D5F5]/20 rounded-full h-9 w-9"
                                 >
                                     <Icons.MessageSquare className="w-5 h-5" />
                                 </Button>
@@ -197,7 +197,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div className="flex items-center gap-2">
                                         <Avatar className="w-8 h-8 border border-[#e8e8e8]">
                                             <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
-                                            <AvatarFallback className="bg-[#00b14f] text-white text-xs">{userInitial}</AvatarFallback>
+                                            <AvatarFallback className="bg-[#1B5583] text-white text-xs">{userInitial}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm font-medium text-[#212f3f] hidden sm:block">
                                             {displayName}
@@ -207,13 +207,13 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                             >
                                 <div className="w-[300px]">
                                     {/* Profile Header */}
-                                    <div className="p-4 bg-white flex items-start gap-3 border-b border-[#f4f5f5]">
+                                    <div className="p-4 bg-white flex items-start gap-3 border-b border-[#EDE8F0]">
                                         <div className="relative">
                                             <Avatar className="w-12 h-12 border-2 border-white shadow-sm">
                                                 <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
-                                                <AvatarFallback className="bg-[#00b14f] text-white">{userInitial}</AvatarFallback>
+                                                <AvatarFallback className="bg-[#1B5583] text-white">{userInitial}</AvatarFallback>
                                             </Avatar>
-                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#00b14f] border-2 border-white rounded-full" />
+                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#1B5583] border-2 border-white rounded-full" />
                                         </div>
                                         <div className="flex-1 min-w-0 pt-0.5">
                                             <h4 className="text-sm font-bold text-[#212f3f] truncate">{displayName}</h4>
@@ -227,24 +227,24 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         {/* Section: Quản lý tìm việc */}
                                         <div className="px-4 py-2">
                                             <div className="flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] mb-1.5">
-                                                <Icons.Briefcase className="w-4 h-4 text-[#00b14f]" />
+                                                <Icons.Briefcase className="w-4 h-4 text-[#1B5583]" />
                                                 <span>Quản lý tìm việc</span>
                                             </div>
                                             <div className="pl-6.5 space-y-1.5" style={{ paddingLeft: '26px' }}>
-                                                <Link href="/jobs/saved" className="block text-[13px] text-[#6f7882] hover:text-[#00b14f] transition-colors py-0.5">Việc làm đã lưu</Link>
-                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#00b14f] transition-colors py-0.5">Việc làm đã ứng tuyển</Link>
-                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#00b14f] transition-colors py-0.5">Việc làm phù hợp</Link>
+                                                <Link href="/jobs/saved" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã lưu</Link>
+                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã ứng tuyển</Link>
+                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm phù hợp</Link>
                                             </div>
                                         </div>
 
                                         {/* Section: Quản lý CV */}
                                         <div className="px-4 py-2">
                                             <div className="flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] mb-1.5">
-                                                <Icons.FileText className="w-4 h-4 text-[#00b14f]" />
+                                                <Icons.FileText className="w-4 h-4 text-[#1B5583]" />
                                                 <span>Quản lý CV</span>
                                             </div>
                                             <div style={{ paddingLeft: '26px' }}>
-                                                <Link href="/profile/cv" className="block text-[13px] text-[#6f7882] hover:text-[#00b14f] transition-colors py-0.5">
+                                                <Link href="/profile/cv" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">
                                                     CV của tôi
                                                 </Link>
                                             </div>
@@ -253,29 +253,29 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         {/* Section: Email & Thông báo */}
                                         <Link
                                             href="/not-found"
-                                            className="px-4 py-2.5 flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] hover:bg-[#f4f5f5] transition-colors"
+                                            className="px-4 py-2.5 flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] hover:bg-[#EDE8F0] transition-colors"
                                         >
-                                            <Icons.Mail className="w-4 h-4 text-[#00b14f]" />
+                                            <Icons.Mail className="w-4 h-4 text-[#1B5583]" />
                                             <span>Email & Thông báo</span>
                                         </Link>
 
                                         {/* Section: Cá nhân & Bảo mật */}
                                         <div className="px-4 py-2">
                                             <div className="flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] mb-1.5">
-                                                <Icons.Shield className="w-4 h-4 text-[#00b14f]" />
+                                                <Icons.Shield className="w-4 h-4 text-[#1B5583]" />
                                                 <span>Cá nhân & Bảo mật</span>
                                             </div>
                                             <div style={{ paddingLeft: '26px' }} className="space-y-1.5">
                                                 <Link
                                                     href="/profile"
-                                                    className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#00b14f] transition-colors py-0.5"
+                                                    className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5"
                                                 >
                                                     <Icons.User className="w-3.5 h-3.5" />
                                                     <span>Thông tin cá nhân</span>
                                                 </Link>
                                                 <Link
                                                     href="/settings/security"
-                                                    className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#00b14f] transition-colors py-0.5"
+                                                    className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5"
                                                 >
                                                     <Icons.KeyRound className="w-3.5 h-3.5" />
                                                     <span>Đổi mật khẩu</span>
@@ -285,7 +285,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     </div>
 
                                     {/* Footer: Logout */}
-                                    <div className="p-3 border-t border-[#f4f5f5]">
+                                    <div className="p-3 border-t border-[#EDE8F0]">
                                         <Button
                                             variant="outline"
                                             className="w-full border-[#e74c3c] text-[#e74c3c] hover:bg-[#e74c3c] hover:text-white font-semibold h-9 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -303,13 +303,13 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                             <Link href="/login">
                                 <Button
                                     variant="outline"
-                                    className="border-[#00b14f] text-[#00b14f] hover:bg-[#00b14f] hover:text-white font-semibold h-9 px-4 rounded-lg text-sm transition-colors"
+                                    className="border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white font-semibold h-9 px-4 rounded-lg text-sm transition-colors"
                                 >
                                     Đăng nhập
                                 </Button>
                             </Link>
                             <Link href="/register">
-                                <Button className="bg-[#00b14f] hover:bg-[#009643] text-white font-semibold h-9 px-4 rounded-lg text-sm shadow-none transition-colors">
+                                <Button className="bg-[#1B5583] hover:bg-[#154360] text-white font-semibold h-9 px-4 rounded-lg text-sm shadow-none transition-colors">
                                     Đăng ký
                                 </Button>
                             </Link>

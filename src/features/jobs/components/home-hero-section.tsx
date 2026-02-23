@@ -17,7 +17,7 @@ export function HeroSection() {
     const [activeCategory, setActiveCategory] = useState<string>("marketing")
 
     return (
-        <div className="relative overflow-hidden bg-gradient-to-r from-[#00b14f] via-[#009643] to-[#007a37]">
+        <div className="relative overflow-hidden bg-gradient-to-r from-[#1B5583] via-[#1B5583]/90 to-[#1B5583]/80">
             {/* Decorative Background Elements */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Grid pattern */}
@@ -47,7 +47,7 @@ export function HeroSection() {
                     <div className="bg-white rounded-lg p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.15)] flex items-center gap-1">
                         {/* Keyword Input */}
                         <div className="flex-1 flex items-center px-4 h-[44px] relative">
-                            <Search className="w-5 h-5 text-[#00b14f] mr-3 shrink-0" />
+                            <Search className="w-5 h-5 text-[#1B5583] mr-3 shrink-0" />
                             <input
                                 placeholder="Vị trí tuyển dụng, tên công ty..."
                                 className="w-full text-sm text-[#212f3f] placeholder:text-[#a6acb2] outline-none border-none bg-transparent"
@@ -59,7 +59,7 @@ export function HeroSection() {
 
                         {/* Location Select */}
                         <div className="hidden md:flex items-center px-3 h-[44px] min-w-[180px]">
-                            <MapPin className="w-4 h-4 text-[#00b14f] mr-2 shrink-0" />
+                            <MapPin className="w-4 h-4 text-[#1B5583] mr-2 shrink-0" />
                             <Select defaultValue="">
                                 <SelectTrigger className="border-0 shadow-none focus:ring-0 w-full p-0 h-auto text-sm font-normal text-[#212f3f] bg-transparent">
                                     <SelectValue placeholder="Tất cả địa điểm" />
@@ -74,7 +74,7 @@ export function HeroSection() {
                         </div>
 
                         {/* Search Button */}
-                        <Button className="h-[44px] px-8 rounded-md bg-[#00b14f] hover:bg-[#009643] text-white font-bold text-sm shadow-none transition-colors">
+                        <Button className="h-[44px] px-8 rounded-md bg-[#1B5583] hover:bg-[#154360] text-white font-bold text-sm shadow-none transition-colors">
                             <Search className="w-4 h-4 mr-2 md:hidden" />
                             <span className="hidden md:inline">Tìm kiếm</span>
                         </Button>
@@ -84,15 +84,15 @@ export function HeroSection() {
                 {/* Quick Stats Bar */}
                 <div className="flex items-center justify-center gap-6 md:gap-10 mb-6 text-white/90 text-sm animate-in fade-in duration-700 delay-300">
                     <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-[#ffd700] rounded-full animate-pulse" />
+                        <span className="w-2 h-2 bg-[#F58B7C] rounded-full animate-pulse" />
                         <span className="font-medium">Việc làm đang tuyển</span>
                     </div>
                     <div className="hidden md:flex items-center gap-2">
-                        <span className="w-2 h-2 bg-[#ffd700] rounded-full animate-pulse" />
+                        <span className="w-2 h-2 bg-[#F58B7C] rounded-full animate-pulse" />
                         <span className="font-medium">Cập nhật hàng giờ</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-[#ffd700] rounded-full animate-pulse" />
+                        <span className="w-2 h-2 bg-[#F58B7C] rounded-full animate-pulse" />
                         <span className="font-medium">Miễn phí cho ứng viên</span>
                     </div>
                 </div>
@@ -107,15 +107,15 @@ export function HeroSection() {
                                 className={cn(
                                     "px-4 py-3 cursor-pointer flex items-center justify-between text-[13px] font-medium transition-colors border-l-2",
                                     activeCategory === cat.id
-                                        ? "text-[#00b14f] bg-[#f0faf4] border-l-[#00b14f]"
-                                        : "text-[#212f3f] hover:text-[#00b14f] hover:bg-[#f8f9fa] border-l-transparent"
+                                        ? "text-[#1B5583] bg-[#B5D5F5]/20 border-l-[#1B5583]"
+                                        : "text-[#212f3f] hover:text-[#1B5583] hover:bg-[#f8f9fa] border-l-transparent"
                                 )}
                                 onMouseEnter={() => setActiveCategory(cat.id)}
                             >
                                 <span className="leading-snug">{cat.label}</span>
                                 <ChevronRight className={cn(
                                     "w-3.5 h-3.5 shrink-0 ml-2 transition-opacity",
-                                    activeCategory === cat.id ? "opacity-100 text-[#00b14f]" : "opacity-0"
+                                    activeCategory === cat.id ? "opacity-100 text-[#1B5583]" : "opacity-0"
                                 )} />
                             </div>
                         ))}
@@ -136,7 +136,7 @@ export function HeroSection() {
                                                 {sub.tags.map((tag) => (
                                                     <div
                                                         key={tag}
-                                                        className="px-2.5 py-1 bg-white text-[#6f7882] rounded text-xs hover:bg-[#00b14f] hover:text-white cursor-pointer transition-colors border border-[#e8e8e8] hover:border-[#00b14f] whitespace-nowrap"
+                                                        className="px-2.5 py-1 bg-white text-[#6f7882] rounded text-xs hover:bg-[#1B5583] hover:text-white cursor-pointer transition-colors border border-[#e8e8e8] hover:border-[#1B5583] whitespace-nowrap"
                                                     >
                                                         {tag}
                                                     </div>

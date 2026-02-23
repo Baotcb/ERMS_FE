@@ -74,7 +74,7 @@ export const JobCard = memo(function JobCard(props: JobCardProps) {
 
   return (
     <div className={cn(
-      "bg-white rounded-lg border border-[#e8e8e8] hover:border-[#00b14f] hover:shadow-[0_4px_16px_rgba(0,177,79,0.12)] transition-all duration-200 group relative cursor-pointer h-full flex flex-col",
+      "bg-white rounded-lg border border-[#e8e8e8] hover:border-[#1B5583] hover:shadow-[0_4px_16px_rgba(27,85,131,0.12)] transition-all duration-200 group relative cursor-pointer h-full flex flex-col",
       compact ? "p-3" : "p-4"
     )}>
       {/* Top row: Logo + Title + Save */}
@@ -97,7 +97,7 @@ export const JobCard = memo(function JobCard(props: JobCardProps) {
         <div className="flex-1 min-w-0">
           <h3
             className={cn(
-              "font-semibold text-[#212f3f] line-clamp-2 group-hover:text-[#00b14f] transition-colors leading-snug",
+              "font-semibold text-[#212f3f] line-clamp-2 group-hover:text-[#1B5583] transition-colors leading-snug",
               compact ? "text-[13px]" : "text-sm"
             )}
             title={jobTitle}

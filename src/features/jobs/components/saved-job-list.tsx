@@ -30,7 +30,7 @@ export function SavedJobList() {
                     Đừng bỏ lỡ cơ hội! Lưu các công việc bạn quan tâm để xem lại và ứng tuyển bất cứ lúc nào.
                 </p>
                 <Link href="/jobs">
-                    <Button className="bg-[#00b14f] hover:bg-[#009643] text-white font-bold text-lg h-12 px-8 shadow-lg shadow-[#00b14f]/20 transition-transform active:scale-95">
+                    <Button className="bg-[#1B5583] hover:bg-[#154360] text-white font-bold text-lg h-12 px-8 shadow-lg shadow-[#1B5583]/20 transition-transform active:scale-95">
                         <Search className="w-5 h-5 mr-2" />
                         Tìm việc làm ngay
                     </Button>

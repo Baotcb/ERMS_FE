@@ -31,3 +31,11 @@ export interface PublicJobsResponse {
 }
 
 export type Job = PublicJobPostingDto
+
+export interface PublicEnterprise {
+    enterpriseName: string
+    enterpriseLogoUrl?: string
+    jobCount: number
+    locations: string[]
+    departmentName?: string
+}

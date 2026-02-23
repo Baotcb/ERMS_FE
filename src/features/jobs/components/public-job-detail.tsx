@@ -119,7 +119,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                     <p className="text-[#6f7882] max-w-md">Tin tuyển dụng này có thể đã bị xóa hoặc không tồn tại.</p>
                     <Button
                         onClick={() => router.push('/jobs')}
-                        className="mt-4 bg-[#00b14f] hover:bg-[#009643] text-white font-medium rounded-lg h-10"
+                        className="mt-4 bg-[#1B5583] hover:bg-[#154360] text-white font-medium rounded-lg h-10 shadow-none"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Quay lại danh sách việc làm
@@ -172,14 +172,14 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             variant="outline"
                             size="sm"
                             onClick={handleSaveJob}
-                            className={`h-9 rounded-lg border-[#e8e8e8] ${isSaved ? 'border-[#e74c3c] text-[#e74c3c]' : 'text-[#6f7882] hover:border-[#00b14f] hover:text-[#00b14f]'}`}
+                            className={`h-9 rounded-lg border-[#e8e8e8] ${isSaved ? 'border-[#e74c3c] text-[#e74c3c]' : 'text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]'}`}
                         >
                             <Heart className={`h-4 w-4 mr-1.5 ${isSaved ? 'fill-[#e74c3c]' : ''}`} />
                             {isSaved ? 'Đã lưu' : 'Lưu'}
                         </Button>
                         <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
                             <DialogTrigger asChild>
-                                <Button size="sm" className="h-9 bg-[#00b14f] hover:bg-[#009643] text-white font-bold rounded-lg px-5 transition-colors">
+                                <Button size="sm" className="h-9 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-lg px-5 transition-colors shadow-none">
                                     <Send className="h-4 w-4 mr-1.5" />
                                     Ứng tuyển ngay
                                 </Button>
@@ -203,9 +203,9 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
             <div className="bg-white border-b border-[#e8e8e8]">
                 <div className="container mx-auto px-4 max-w-6xl py-3">
                     <nav className="flex items-center gap-1.5 text-sm text-[#6f7882]">
-                        <Link href="/" className="hover:text-[#00b14f] transition-colors">Trang chủ</Link>
+                        <Link href="/" className="hover:text-[#1B5583] transition-colors">Trang chủ</Link>
                         <ChevronRight className="w-3.5 h-3.5 text-[#a6acb2]" />
-                        <Link href="/jobs" className="hover:text-[#00b14f] transition-colors">Tìm việc làm</Link>
+                        <Link href="/jobs" className="hover:text-[#1B5583] transition-colors">Tìm việc làm</Link>
                         <ChevronRight className="w-3.5 h-3.5 text-[#a6acb2]" />
                         <span className="text-[#212f3f] font-medium truncate max-w-[300px]">{job.jobTitle}</span>
                     </nav>
@@ -244,19 +244,19 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                         icon={<DollarSign className="w-6 h-6" />}
                                         label="Mức lương"
                                         value={formatSalary()}
-                                        accentColor="#00b14f"
+                                        accentColor="#1B5583"
                                     />
                                     <HighlightBox
                                         icon={<MapPin className="w-6 h-6" />}
                                         label="Địa điểm"
                                         value={job.location || 'Hà Nội'}
-                                        accentColor="#00b14f"
+                                        accentColor="#1B5583"
                                     />
                                     <HighlightBox
                                         icon={<Briefcase className="w-6 h-6" />}
                                         label="Kinh nghiệm"
                                         value={job.experienceLevel || 'Không yêu cầu'}
-                                        accentColor="#00b14f"
+                                        accentColor="#1B5583"
                                     />
                                 </div>
 
@@ -274,7 +274,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                         <DialogTrigger asChild>
                                             <Button
                                                 size="lg"
-                                                className="flex-1 bg-[#00b14f] hover:bg-[#009643] text-white font-bold h-[48px] text-[15px] rounded-lg transition-colors shadow-[0_2px_8px_rgba(0,177,79,0.3)]"
+                                                className="flex-1 bg-[#1B5583] hover:bg-[#154360] text-white font-bold h-[48px] text-[15px] rounded-lg transition-colors shadow-none"
                                             >
                                                 <Send className="mr-2 h-5 w-5" />
                                                 Ứng tuyển ngay
@@ -298,7 +298,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                         onClick={handleSaveJob}
                                         className={`h-[48px] px-5 rounded-lg font-medium transition-colors ${isSaved
                                             ? 'border-[#e74c3c] text-[#e74c3c] bg-[#fff5f0] hover:bg-[#ffe8e0]'
-                                            : 'border-[#00b14f] text-[#00b14f] hover:bg-[#f0faf4]'
+                                            : 'border-[#1B5583] text-[#1B5583] hover:bg-[#B5D5F5]/20'
                                             }`}
                                     >
                                         <Heart className={`mr-1.5 h-5 w-5 ${isSaved ? 'fill-[#e74c3c]' : ''}`} />
@@ -311,7 +311,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                         {/* Job Description Card */}
                         <div className="bg-white rounded-lg border border-[#e8e8e8] p-6">
                             <h2 className="text-lg font-bold text-[#212f3f] mb-5 flex items-center gap-2">
-                                <span className="w-1 h-6 bg-[#00b14f] rounded-full" />
+                                <span className="w-1 h-6 bg-[#1B5583] rounded-full" />
                                 Chi tiết tin tuyển dụng
                             </h2>
 
@@ -337,7 +337,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                     {[job.employmentType, job.location, job.departmentName, job.experienceLevel].filter(Boolean).map((tag, index) => (
                                         <span
                                             key={`tag-${index}`}
-                                            className="px-3 py-1.5 bg-[#f4f5f5] text-[#6f7882] rounded-full text-xs font-medium hover:bg-[#00b14f] hover:text-white cursor-pointer transition-colors"
+                                            className="px-3 py-1.5 bg-[#f4f5f5] text-[#6f7882] rounded-full text-xs font-medium hover:bg-[#1B5583] hover:text-white cursor-pointer transition-colors"
                                         >
                                             {tag}
                                         </span>
@@ -349,7 +349,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             <div className="mt-5 pt-5 border-t border-[#e8e8e8] flex items-center gap-3">
                                 <span className="text-sm text-[#6f7882]">Chia sẻ:</span>
                                 <button
-                                    className="p-2 rounded-full hover:bg-[#f4f5f5] text-[#6f7882] hover:text-[#00b14f] transition-colors"
+                                    className="p-2 rounded-full hover:bg-[#f4f5f5] text-[#6f7882] hover:text-[#1B5583] transition-colors"
                                     onClick={() => {
                                         navigator.clipboard.writeText(window.location.href)
                                         toast({ title: 'Đã sao chép link' })
@@ -363,7 +363,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                         {/* General Info Card */}
                         <div className="bg-white rounded-lg border border-[#e8e8e8] p-6">
                             <h2 className="text-lg font-bold text-[#212f3f] mb-5 flex items-center gap-2">
-                                <span className="w-1 h-6 bg-[#00b14f] rounded-full" />
+                                <span className="w-1 h-6 bg-[#1B5583] rounded-full" />
                                 Thông tin chung
                             </h2>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
@@ -444,10 +444,10 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             <div className="px-5 pb-5">
                                 <Button
                                     variant="outline"
-                                    className="w-full border-[#00b14f] text-[#00b14f] hover:bg-[#00b14f] hover:text-white rounded-lg h-10 font-medium transition-colors text-sm"
+                                    className="w-full border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white rounded-lg h-10 font-medium transition-colors text-sm"
                                     asChild
                                 >
-                                    <Link href="#">
+                                    <Link href={`/companies/${encodeURIComponent(job.enterpriseName)}`}>
                                         Xem trang công ty
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Link>
@@ -522,7 +522,7 @@ function DescriptionSection({ title, content }: { title: string; content: string
         <div>
             <h3
                 className="text-[15px] font-bold text-[#212f3f] mb-3 pl-3 relative"
-                style={{ borderLeft: '3px solid #00b14f' }}
+                style={{ borderLeft: '3px solid #1B5583' }}
             >
                 {title}
             </h3>
@@ -541,7 +541,7 @@ function GeneralInfoItem({ icon, label, value }: {
 }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#f0faf4] text-[#00b14f] flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-9 h-9 rounded-full bg-[#B5D5F5]/20 text-[#1B5583] flex items-center justify-center flex-shrink-0 mt-0.5">
                 {icon}
             </div>
             <div>
@@ -566,7 +566,7 @@ function SidebarInfoRow({ icon, label, value, highlight = false }: {
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-[12px] text-[#a6acb2] leading-none mb-1">{label}</p>
-                <p className={`text-sm font-medium truncate ${highlight ? 'text-[#00b14f] font-bold' : 'text-[#212f3f]'}`}>
+                <p className={`text-sm font-medium truncate ${highlight ? 'text-[#1B5583] font-bold' : 'text-[#212f3f]'}`}>
                     {value}
                 </p>
             </div>

@@ -280,7 +280,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
 
                 <div className="flex justify-end gap-3 pt-4">
                     <Button type="button" variant="outline" onClick={onSuccess}>Hủy</Button>
-                    <Button type="submit" disabled={isMutating} className="bg-[#00b14f] hover:bg-[#00b14f]/90 min-w-[120px]">
+                    <Button type="submit" disabled={isMutating} className="bg-[#1B5583] hover:bg-[#154360] min-w-[120px] text-white">
                         {isMutating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Nộp hồ sơ
                     </Button>
