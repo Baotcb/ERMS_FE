@@ -69,7 +69,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
             <div className="container mx-auto px-4 lg:px-6 h-full flex items-center justify-between max-w-[1320px]">
                 {/* Left Side: Brand & Links */}
                 <div className="flex items-center gap-6 h-full">
-                    <Link href="/jobs" className="flex items-center gap-3 group">
+                    <Link href="/" className="flex items-center gap-3 group">
                         {/* Logo */}
                         <div className="relative w-10 h-10 flex-shrink-0 transition-transform group-hover:scale-105">
                             <Image
