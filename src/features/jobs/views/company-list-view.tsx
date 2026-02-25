@@ -95,7 +95,7 @@ export function CompanyListView() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredCompanies.map((company) => (
-                            <Link href={`/companies/${encodeURIComponent(company.enterpriseName)}`} key={company.enterpriseName}>
+                            <Link href={`/companies/${company.id || encodeURIComponent(company.enterpriseName)}`} key={company.id || company.enterpriseName}>
                                 <div className="bg-white rounded-lg border border-[#e8e8e8] hover:border-[#1B5583] hover:shadow-[0_4px_16px_rgba(27,85,131,0.12)] transition-all cursor-pointer h-full flex flex-col group p-5">
                                     {/* Logo & Name */}
                                     <div className="flex gap-4 mb-4">

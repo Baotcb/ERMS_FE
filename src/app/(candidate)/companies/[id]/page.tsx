@@ -6,6 +6,6 @@ export const metadata: Metadata = {
     description: 'Thông tin chi tiết và danh sách việc làm tại công ty.',
 }
 
-export default function CompanyPage({ params }: { params: { name: string } }) {
-    return <CompanyDetailView name={decodeURIComponent(params.name)} />
+export default function CompanyPage({ params }: { params: { id: string } }) {
+    return <CompanyDetailView id={params.id} />
 }

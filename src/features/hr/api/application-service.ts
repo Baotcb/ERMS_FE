@@ -69,11 +69,15 @@ export async function getApplicationById(id: string): Promise<ApplicationDto> {
 }
 
 // Forward application to Dept Head
+// Backend: PATCH /api/applications/forward — { applicationId, hrNote } in body
 export async function forwardApplication(
     id: string,
     data: ForwardApplicationRequest
 ): Promise<ApplicationDto> {
-    const response = await apiClient.patch(`${BASE_URL}/${id}/forward`, data)
+    const response = await apiClient.patch(`${BASE_URL}/forward`, {
+        applicationId: id,
+        hrNote: data.hrNote,
+    })
     if (!response.ok) throw new Error('Không thể chuyển hồ sơ')
     return response.json()
 }

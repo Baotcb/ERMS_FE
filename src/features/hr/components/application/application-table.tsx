@@ -16,13 +16,14 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, Eye, Send, Download, XCircle, Star, User } from 'lucide-react'
+import { MoreHorizontal, Eye, Send, Download, XCircle, Star, User, CalendarCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { ApplicationDto } from '../../types/application-types'
 import { StageBadge } from './stage-badge'
 import { AIScoreBadge } from './ai-score-badge'
 import { ApplicationDetailModal } from './application-detail-modal'
 import { ForwardApplicationDialog } from './forward-application-dialog'
+import { ConfirmScheduleDialog } from '../interview/confirm-schedule-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
@@ -37,6 +38,7 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
     const [selectedApp, setSelectedApp] = useState<ApplicationDto | null>(null)
     const [detailOpen, setDetailOpen] = useState(false)
     const [forwardOpen, setForwardOpen] = useState(false)
+    const [scheduleOpen, setScheduleOpen] = useState(false)
 
     const handleViewDetail = (app: ApplicationDto) => {
         setSelectedApp(app)
@@ -46,6 +48,11 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
     const handleForward = (app: ApplicationDto) => {
         setSelectedApp(app)
         setForwardOpen(true)
+    }
+
+    const handleSchedule = (app: ApplicationDto) => {
+        setSelectedApp(app)
+        setScheduleOpen(true)
     }
 
     const handleReject = (app: ApplicationDto) => {
@@ -150,6 +157,15 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                         </DropdownMenuItem>
                                                     </>
                                                 )}
+
+                                                {app.stage === 'Shortlisted' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => handleSchedule(app)} className="cursor-pointer text-[#0F4C75] focus:text-[#0F4C75] focus:bg-[#BBE1FA]/10">
+                                                            <CalendarCheck className="mr-2 h-4 w-4" /> Xác nhận lịch PV
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -178,6 +194,16 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                 <ForwardApplicationDialog
                     open={forwardOpen}
                     onOpenChange={setForwardOpen}
+                    applicationId={selectedApp.id}
+                    candidateName={selectedApp.candidateName}
+                    onSuccess={onRefresh}
+                />
+            )}
+
+            {selectedApp && (
+                <ConfirmScheduleDialog
+                    open={scheduleOpen}
+                    onOpenChange={setScheduleOpen}
                     applicationId={selectedApp.id}
                     candidateName={selectedApp.candidateName}
                     onSuccess={onRefresh}

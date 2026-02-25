@@ -88,7 +88,7 @@ export function PlanDetail({ planId, headerActions }: PlanDetailProps) {
     const handleDeleteDetail = async (detailId: string) => {
         if (!confirm('Xóa đề xuất này?')) return
         try {
-            const res = await apiClient.delete(`/api/plan-details/${detailId}`)
+            const res = await apiClient.delete('/api/plan-details', { id: detailId })
             if (res.ok) {
                 mutateDetails()
                 toast({ description: 'Đã xóa vị trí' })

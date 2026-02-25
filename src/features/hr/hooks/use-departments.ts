@@ -122,7 +122,7 @@ export function useUpdateDepartment() {
     return useMutation<void, { id: number; data: UpdateDepartmentData }>(
         departmentsKeys.lists().join('/'),
         async ({ id, data }) => {
-            const response = await apiClient.put(`/api/Departments/${id}`, data)
+            const response = await apiClient.put('/api/Departments', { ...data, id })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -148,7 +148,7 @@ export function useDeleteDepartment() {
     return useMutation<void, number>(
         departmentsKeys.lists().join('/'),
         async (id: number) => {
-            const response = await apiClient.delete(`/api/Departments/${id}`)
+            const response = await apiClient.delete('/api/Departments', { id })
 
             if (!response.ok) {
                 const error = await response.json()

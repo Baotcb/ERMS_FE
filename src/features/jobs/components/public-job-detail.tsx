@@ -447,7 +447,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                     className="w-full border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white rounded-lg h-10 font-medium transition-colors text-sm"
                                     asChild
                                 >
-                                    <Link href={`/companies/${encodeURIComponent(job.enterpriseName)}`}>
+                                    <Link href={`/companies/${job.enterpriseId || encodeURIComponent(job.enterpriseName)}`}>
                                         Xem trang công ty
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Link>

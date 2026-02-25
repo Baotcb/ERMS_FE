@@ -114,7 +114,14 @@ export const apiClient = {
             }
         })
     },
-    delete: (url: string, options?: RequestOptions) => fetchWithRetry(url, { ...options, method: 'DELETE' }),
+    delete: (url: string, body?: unknown, options?: RequestOptions) => fetchWithRetry(url, {
+        ...options,
+        method: 'DELETE',
+        ...(body != null && {
+            body: JSON.stringify(body),
+            headers: { 'Content-Type': 'application/json', ...options?.headers },
+        }),
+    }),
     patch: (url: string, body: unknown, options?: RequestOptions) => {
         const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
         const headers = {
