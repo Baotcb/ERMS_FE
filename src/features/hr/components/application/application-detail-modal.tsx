@@ -1,7 +1,9 @@
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
 } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -32,6 +34,9 @@ export function ApplicationDetailModal({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 overflow-hidden rounded-xl border-none shadow-2xl">
+                <VisuallyHidden>
+                    <DialogTitle>Chi tiết ứng viên: {application.candidateName}</DialogTitle>
+                </VisuallyHidden>
                 {/* Header */}
                 <div className="bg-slate-900 text-white px-8 py-6 flex-shrink-0 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -69,7 +74,7 @@ export function ApplicationDetailModal({
                         {application.cvScreeningResult && (
                             <div className="flex flex-col items-end bg-white/5 p-4 rounded-lg backdrop-blur-sm border border-white/10">
                                 <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">AI Match Score</span>
-                                <AIScoreBadge score={application.cvScreeningResult.overallScore * 100} />
+                                <AIScoreBadge score={application.cvScreeningResult.overallScore} />
                             </div>
                         )}
                     </div>
@@ -231,7 +236,7 @@ export function ApplicationDetailModal({
 }
 
 function ScoreItem({ label, score }: { label: string; score: number }) {
-    const percentage = Math.round(score * 100);
+    const percentage = Math.round(score);
     const getColor = (p: number) => {
         if (p >= 80) return "bg-green-500";
         if (p >= 50) return "bg-yellow-500";

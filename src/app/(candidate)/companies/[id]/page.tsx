@@ -6,6 +6,7 @@ export const metadata: Metadata = {
     description: 'Thông tin chi tiết và danh sách việc làm tại công ty.',
 }
 
-export default function CompanyPage({ params }: { params: { id: string } }) {
-    return <CompanyDetailView id={params.id} />
+export default async function CompanyPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+    return <CompanyDetailView id={id} />
 }

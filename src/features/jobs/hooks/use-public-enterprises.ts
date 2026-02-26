@@ -36,3 +36,16 @@ export function useEnterpriseJobs(
         }
     )
 }
+
+/**
+ * Lấy thông tin công ty và danh sách jobs theo TÊN công ty
+ * Dùng khi không có enterpriseId (backend không trả trong public jobs API)
+ */
+export function useEnterpriseByName(name: string | null) {
+    return useData<{ company: PublicEnterprise; jobs: PublicJobPostingDto[] }>(
+        name ? `/api/public/enterprises/by-name/${name}` : null,
+        {
+            fetcher: () => service.getEnterpriseByName(name!),
+        }
+    )
+}

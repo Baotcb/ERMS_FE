@@ -170,7 +170,10 @@ export function middleware(request: NextRequest) {
   if ((isPublicRoute(pathname) || pathname === '/enterprise' || pathname === '/enterprise/') && authCookie && !isExpired) {
     const role = request.cookies.get('user_role')?.value
     if (role === USER_ROLES.CANDIDATE) {
-      return NextResponse.redirect(new URL('/jobs', request.url))
+      // Candidates stay on '/' — only redirect from other public routes (e.g. /login)
+      if (pathname !== '/') {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
     } else if (HR_ROLES.includes(role as typeof HR_ROLES[number])) {
       return NextResponse.redirect(new URL('/enterprise/hr/dashboard', request.url))
     } else {

@@ -91,9 +91,16 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     }
 }
 
-export async function getRequests(): Promise<RequestItem[]> {
+export async function getRequests(token?: string): Promise<RequestItem[]> {
     try {
-        const response = await apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=5')
+        const headers: HeadersInit = {}
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+
+        const response = await apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=5', {
+            headers,
+        })
 
         if (!response.ok) {
             logger.error('Failed to fetch requests:', response.statusText)

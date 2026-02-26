@@ -68,3 +68,34 @@ export async function getJobsByEnterpriseId(
     })
     return { items: response.items, totalCount: response.totalCount }
 }
+
+/**
+ * Lấy thông tin công ty và jobs theo TÊN công ty
+ * Trích xuất từ public jobs API vì backend không trả enterpriseId
+ */
+export async function getEnterpriseByName(
+    name: string
+): Promise<{ company: PublicEnterprise; jobs: PublicJobPostingDto[] }> {
+    const response = await getPublicJobs({ pageSize: 100 })
+
+    const matchedJobs = response.items.filter(
+        (job) => job.enterpriseName === name
+    )
+
+    if (matchedJobs.length === 0) {
+        throw new Error('Không tìm thấy công ty')
+    }
+
+    const firstJob = matchedJobs[0]
+    const locations = [...new Set(matchedJobs.map((j) => j.location).filter(Boolean))] as string[]
+
+    const company: PublicEnterprise = {
+        enterpriseName: firstJob.enterpriseName,
+        enterpriseLogoUrl: firstJob.enterpriseLogoUrl,
+        jobCount: matchedJobs.length,
+        locations,
+        departmentName: firstJob.departmentName,
+    }
+
+    return { company, jobs: matchedJobs }
+}

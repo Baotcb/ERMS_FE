@@ -1,4 +1,5 @@
 import { HRDashboard } from '@/features/hr/components/hr-dashboard'
+import { cookies } from 'next/headers'
 import {
     getRequests,
     getTasks,
@@ -8,8 +9,11 @@ import {
 } from '@/features/hr/api/dashboard-service'
 
 export default async function HRDashboardPage() {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+
     const [initialRequests, initialTasks, initialCandidates, initialRecruitmentData, initialTrainingData] = await Promise.all([
-        getRequests(),
+        getRequests(token),
         getTasks(),
         getCandidates(),
         getRecruitmentPerformance(),

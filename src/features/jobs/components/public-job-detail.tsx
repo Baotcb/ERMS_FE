@@ -404,7 +404,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                     {/* ========== Sidebar ========== */}
                     <div className="lg:col-span-1 space-y-4">
                         {/* Company Card */}
-                        <div className="bg-white rounded-lg border border-[#e8e8e8] sticky top-20 overflow-hidden">
+                        <div className="bg-white rounded-lg border border-[#e8e8e8] overflow-hidden">
                             {/* Company Header */}
                             <div className="p-5 text-center border-b border-[#e8e8e8]">
                                 <div className="w-[80px] h-[80px] mx-auto mb-3 border border-[#e8e8e8] rounded-lg bg-white relative overflow-hidden">

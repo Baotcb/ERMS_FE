@@ -84,7 +84,7 @@ export function LoginForm() {
                 setTimeout(() => {
                     const role = user.role
                     if (role === 'Candidate') {
-                        router.push('/jobs')
+                        router.push('/')
                     } else {
                         // Route to role-specific dashboard
                         const roleRoutes: Record<string, string> = {

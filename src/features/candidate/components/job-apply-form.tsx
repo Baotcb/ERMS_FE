@@ -21,8 +21,6 @@ import {
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useCreateApplication } from '@/features/candidate/hooks/use-applications'
-import { ScreeningResultsCard } from './screening-results-card'
-import { CVScreeningResult } from '../types/application-types'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -52,7 +50,6 @@ interface JobApplyFormProps {
 export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) {
     const { toast } = useToast()
     const { trigger: applyJob, isMutating } = useCreateApplication()
-    const [screeningResult, setScreeningResult] = useState<CVScreeningResult | null>(null)
     const [isSuccess, setIsSuccess] = useState(false)
 
     const form = useForm<ApplicationFormValues>({
@@ -90,7 +87,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
 
     const onSubmit = async (data: ApplicationFormValues) => {
         try {
-            const result = await applyJob({
+            await applyJob({
                 jobId,
                 cvFile: data.cvFile,
                 coverLetter: data.coverLetter || undefined,
@@ -99,11 +96,6 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                     : undefined,
                 availableStartDate: data.availableStartDate || undefined,
             })
-
-            // Lưu kết quả AI screening
-            if (result.data.cvScreeningResult) {
-                setScreeningResult(result.data.cvScreeningResult)
-            }
 
             setIsSuccess(true)
 
@@ -121,33 +113,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         }
     }
 
-    // Success state with AI screening results
-    if (isSuccess && screeningResult) {
-        return (
-            <div className="space-y-6 animate-in fade-in zoom-in duration-300">
-                <div className="flex flex-col items-center justify-center space-y-2 text-center py-4">
-                    <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                        <CheckCircle2 className="h-6 w-6 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">Ứng tuyển thành công!</h3>
-                    <p className="text-slate-500 max-w-md">
-                        Hệ thống AI đã phân tích hồ sơ của bạn cho vị trí <strong>{jobTitle}</strong>.
-                        Dưới đây là kết quả đánh giá sơ bộ:
-                    </p>
-                </div>
-
-                <ScreeningResultsCard results={screeningResult} />
-
-                <div className="flex justify-center pt-4">
-                    <Button onClick={onSuccess} className="min-w-[150px]">
-                        Hoàn tất
-                    </Button>
-                </div>
-            </div>
-        )
-    }
-
-    // Simple success state (no screening results)
+    // Success state - simple notification only
     if (isSuccess) {
         return (
             <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-in fade-in zoom-in duration-300">
@@ -156,7 +122,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800">Ứng tuyển thành công!</h3>
                 <p className="text-slate-500 text-center max-w-md">
-                    Hồ sơ của bạn đã được gửi đến nhà tuyển dụng.
+                    Hồ sơ của bạn đã được gửi cho vị trí <strong>{jobTitle}</strong>. Nhà tuyển dụng sẽ xem xét và liên hệ với bạn sớm nhất.
                 </p>
                 <Button onClick={onSuccess} className="mt-4 min-w-[150px]">
                     Hoàn tất
@@ -272,6 +238,9 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                                         {...field}
                                     />
                                 </FormControl>
+                                <FormDescription className="text-xs">
+                                    &nbsp;
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}

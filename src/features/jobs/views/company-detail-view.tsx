@@ -10,15 +10,12 @@ import {
     Share2,
     Users,
     ChevronRight,
-    Globe,
-    Phone,
-    Mail,
     Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { useState } from 'react'
-import { useEnterpriseDetails, useEnterpriseJobs } from '../hooks/use-public-enterprises'
+import { useEnterpriseByName } from '../hooks/use-public-enterprises'
 import { JobCard } from '../components/job-card'
 
 interface CompanyDetailViewProps {
@@ -28,9 +25,10 @@ interface CompanyDetailViewProps {
 export function CompanyDetailView({ id }: CompanyDetailViewProps) {
     const router = useRouter()
     const { toast } = useToast()
-    const { data: company, isLoading, error } = useEnterpriseDetails(id)
-    const { data: jobsData } = useEnterpriseJobs(id)
-    const jobs = jobsData?.items || []
+    const companyName = decodeURIComponent(id)
+    const { data, isLoading, error } = useEnterpriseByName(companyName)
+    const company = data?.company
+    const jobs = data?.jobs || []
     const [isFollowing, setIsFollowing] = useState(false)
 
     if (isLoading) {
@@ -84,7 +82,7 @@ export function CompanyDetailView({ id }: CompanyDetailViewProps) {
         toast({ title: 'Đã sao chép link công ty' })
     }
 
-    const uniqueLocations = [...new Set(jobs.map(j => j.location).filter(Boolean))] as string[]
+    const uniqueLocations = company.locations || []
 
     return (
         <div className="min-h-screen bg-[#EDE8F0] pb-12">
@@ -97,7 +95,7 @@ export function CompanyDetailView({ id }: CompanyDetailViewProps) {
                     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                         <div className="w-32 h-32 bg-white rounded-xl border border-[#e8e8e8] flex-shrink-0 shadow-sm relative overflow-hidden">
                             <Image
-                                src={company.logoUrl || '/placeholder-logo.png'}
+                                src={company.enterpriseLogoUrl || '/placeholder-logo.png'}
                                 alt={company.enterpriseName}
                                 fill
                                 sizes="128px"
@@ -178,11 +176,12 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {jobs.map((job) => (
-                                        <JobCard
-                                            key={job.id}
-                                            {...job}
-                                            compact={true}
-                                        />
+                                        <Link key={job.id} href={`/jobs/${job.id}`} className="block h-full">
+                                            <JobCard
+                                                {...job}
+                                                compact={true}
+                                            />
+                                        </Link>
                                     ))}
                                 </div>
                             )}
@@ -193,39 +192,23 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                     <div className="lg:col-span-1 space-y-6">
                         {/* Company Info Box */}
                         <div className="bg-white rounded-lg border border-[#e8e8e8] p-6 shadow-sm">
-                            <h2 className="text-[15px] font-bold text-[#212f3f] mb-5">Thông tin liên hệ</h2>
+                            <h2 className="text-[15px] font-bold text-[#212f3f] mb-5">Thông tin công ty</h2>
 
                             <div className="space-y-4">
                                 <SidebarInfoItem
                                     icon={<MapPin className="w-4 h-4" />}
-                                    title="Địa chỉ công ty"
-                                    value={company.address || uniqueLocations.join(', ') || 'Đang cập nhật'}
-                                />
-                                {company.phone && (
-                                    <SidebarInfoItem
-                                        icon={<Phone className="w-4 h-4" />}
-                                        title="Số điện thoại"
-                                        value={company.phone}
-                                    />
-                                )}
-                                {company.email && (
-                                    <SidebarInfoItem
-                                        icon={<Mail className="w-4 h-4" />}
-                                        title="Email"
-                                        value={company.email}
-                                        link={`mailto:${company.email}`}
-                                    />
-                                )}
-                                <SidebarInfoItem
-                                    icon={<Globe className="w-4 h-4" />}
-                                    title="Website"
-                                    value={company.website || 'Đang cập nhật'}
-                                    link={company.website || undefined}
+                                    title="Địa điểm"
+                                    value={uniqueLocations.join(', ') || 'Đang cập nhật'}
                                 />
                                 <SidebarInfoItem
                                     icon={<Building2 className="w-4 h-4" />}
-                                    title="Mã doanh nghiệp"
-                                    value={company.enterpriseCode || 'Đang cập nhật'}
+                                    title="Phòng ban"
+                                    value={company.departmentName || 'Đang cập nhật'}
+                                />
+                                <SidebarInfoItem
+                                    icon={<Users className="w-4 h-4" />}
+                                    title="Số vị trí đang tuyển"
+                                    value={`${company.jobCount} việc làm`}
                                 />
                             </div>
                         </div>

@@ -115,8 +115,8 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                     <TableCell>
                                         {app.cvScreeningResult ? (
                                             <div className="flex items-center gap-2">
-                                                <AIScoreBadge score={app.cvScreeningResult.overallScore * 100} />
-                                                {app.cvScreeningResult.overallScore >= 0.8 && (
+                                                <AIScoreBadge score={app.cvScreeningResult.overallScore} />
+                                                {app.cvScreeningResult.overallScore >= 80 && (
                                                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 animate-pulse" />
                                                 )}
                                             </div>
