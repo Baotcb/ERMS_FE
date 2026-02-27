@@ -102,7 +102,7 @@ export function useUpdateEmployee() {
     return useMutation<void, { id: string; data: UpdateEmployeeData }>(
         employeesKeys.lists().join('/'),
         async ({ id, data }) => {
-            const response = await apiClient.put(`/api/Employees/${id}`, data)
+            const response = await apiClient.put('/api/Employees', { ...data, id })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -128,7 +128,7 @@ export function useDeleteEmployee() {
     return useMutation<void, string>(
         employeesKeys.lists().join('/'),
         async (id) => {
-            const response = await apiClient.delete(`/api/Employees/${id}`)
+            const response = await apiClient.delete('/api/Employees', { id })
 
             if (!response.ok) {
                 const error = await response.json()

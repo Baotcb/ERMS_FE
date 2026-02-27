@@ -1,7 +1,9 @@
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
 } from '@/components/ui/dialog'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -32,6 +34,9 @@ export function ApplicationDetailModal({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 overflow-hidden rounded-xl border-none shadow-2xl">
+                <VisuallyHidden>
+                    <DialogTitle>Chi tiết ứng viên: {application.candidateName}</DialogTitle>
+                </VisuallyHidden>
                 {/* Header */}
                 <div className="bg-slate-900 text-white px-8 py-6 flex-shrink-0 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -69,7 +74,7 @@ export function ApplicationDetailModal({
                         {application.cvScreeningResult && (
                             <div className="flex flex-col items-end bg-white/5 p-4 rounded-lg backdrop-blur-sm border border-white/10">
                                 <span className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">AI Match Score</span>
-                                <AIScoreBadge score={application.cvScreeningResult.overallScore * 100} />
+                                <AIScoreBadge score={application.cvScreeningResult.overallScore} />
                             </div>
                         )}
                     </div>
@@ -99,7 +104,7 @@ export function ApplicationDetailModal({
                                                 <CheckCircle className="w-4 h-4" /> Điểm mạnh
                                             </h4>
                                             <ul className="space-y-2">
-                                                {application.cvScreeningResult.strengths.map((item) => (
+                                                {(application.cvScreeningResult.strengths ?? []).map((item) => (
                                                     <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 mt-2 flex-shrink-0" />
                                                         {item}
@@ -108,13 +113,13 @@ export function ApplicationDetailModal({
                                             </ul>
                                         </div>
 
-                                        {application.cvScreeningResult.concerns.length > 0 && (
+                                        {(application.cvScreeningResult.concerns ?? []).length > 0 && (
                                             <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100">
                                                 <h4 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
                                                     <AlertTriangle className="w-4 h-4" /> Cần lưu ý
                                                 </h4>
                                                 <ul className="space-y-2">
-                                                    {application.cvScreeningResult.concerns.map((item) => (
+                                                    {(application.cvScreeningResult.concerns ?? []).map((item) => (
                                                         <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
                                                             {item}
@@ -130,12 +135,12 @@ export function ApplicationDetailModal({
                                         <div className="mb-4">
                                             <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Kỹ năng chuyên môn</h4>
                                             <div className="flex flex-wrap gap-2">
-                                                {application.cvScreeningResult.matchedSkills.map(skill => (
+                                                {(application.cvScreeningResult.matchedSkills ?? []).map(skill => (
                                                     <Badge key={skill} variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1">
                                                         {skill}
                                                     </Badge>
                                                 ))}
-                                                {application.cvScreeningResult.missingSkills.map(skill => (
+                                                {(application.cvScreeningResult.missingSkills ?? []).map(skill => (
                                                     <Badge key={skill} variant="outline" className="border-red-200 text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 opacity-75">
                                                         Thiếu: {skill}
                                                     </Badge>
@@ -230,8 +235,9 @@ export function ApplicationDetailModal({
     )
 }
 
-function ScoreItem({ label, score }: { label: string; score: number }) {
-    const percentage = Math.round(score * 100);
+function ScoreItem({ label, score }: { label: string; score?: number }) {
+    if (score == null) return null;
+    const percentage = Math.round(score);
     const getColor = (p: number) => {
         if (p >= 80) return "bg-green-500";
         if (p >= 50) return "bg-yellow-500";

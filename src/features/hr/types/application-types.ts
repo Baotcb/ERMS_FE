@@ -1,22 +1,23 @@
-// Application Stage
+// Application Stage — khớp 100% với BE ApplicationStage constants
 export type ApplicationStage =
     | 'Applied'
     | 'Reviewing'
     | 'Shortlisted'
     | 'InterviewScheduled'
     | 'Interviewed'
+    | 'OfferProcessing'
     | 'Offered'
     | 'Hired'
     | 'Rejected'
     | 'Withdrawn'
 
-// CV Screening Result
+// CV Screening Result — khớp với BE ApplicationListDto (flat fields → grouped)
 export interface CVScreeningResult {
     overallScore: number
-    skillMatchScore: number
-    experienceMatchScore: number
-    educationMatchScore: number
-    keywordMatchScore: number
+    skillMatchScore?: number
+    experienceMatchScore?: number
+    educationMatchScore?: number
+    keywordMatchScore?: number
     matchedSkills: string[]
     missingSkills: string[]
     strengths: string[]
@@ -24,7 +25,7 @@ export interface CVScreeningResult {
     summary: string
 }
 
-// Application DTO
+// Application DTO — khớp với BE ApplicationListDto
 export interface ApplicationDto {
     id: string
     jobPostingId: string
@@ -35,15 +36,15 @@ export interface ApplicationDto {
     stage: ApplicationStage
     status: string
     appliedAt: string
-    stageUpdatedAt: string
     cvUrl: string
     hrNote?: string
-    rejectionReason?: string
     cvScreeningResult?: CVScreeningResult
 }
 
-// Paginated Response
+// Paginated Response — khớp với BE GetApplicationsByJobResponse
 export interface ApplicationsResponse {
+    jobPostingId: string
+    jobTitle: string
     data: ApplicationDto[]
     totalCount: number
     pageNumber: number

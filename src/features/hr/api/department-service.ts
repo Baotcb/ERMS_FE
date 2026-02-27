@@ -108,7 +108,7 @@ export interface UpdateDepartmentData extends CreateDepartmentData {
 }
 
 export async function updateDepartment(id: number, data: UpdateDepartmentData): Promise<void> {
-    const response = await apiClient.put(`/api/Departments/${id}`, data)
+    const response = await apiClient.put('/api/Departments', { ...data, id })
 
     if (!response.ok) {
         const error = await response.json()
@@ -117,7 +117,7 @@ export async function updateDepartment(id: number, data: UpdateDepartmentData): 
 }
 
 export async function deleteDepartment(id: number): Promise<void> {
-    const response = await apiClient.delete(`/api/Departments/${id}`)
+    const response = await apiClient.delete('/api/Departments', { id })
 
     if (!response.ok) {
         const error = await response.json()

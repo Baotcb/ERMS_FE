@@ -89,7 +89,7 @@ export const JobCard = memo(function JobCard(props: JobCardProps) {
             alt={`${enterpriseName} Logo`}
             fill
             sizes={compact ? "52px" : "68px"}
-            className="object-cover"
+            className="object-contain p-1"
           />
         </div>
 

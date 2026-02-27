@@ -25,7 +25,8 @@ export async function createApplication(data: CreateApplicationRequest): Promise
     if (data.expectedSalary != null) formData.append('ExpectedSalary', data.expectedSalary.toString())
     if (data.availableStartDate) formData.append('AvailableStartDate', data.availableStartDate)
 
-    const response = await apiClient.post(BASE_URL, formData)
+    // Upload CV + AI processing nên backend cần thời gian xử lý (upload Cloudinary + parse PDF)
+    const response = await apiClient.post(BASE_URL, formData, { timeout: 120000 })
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))

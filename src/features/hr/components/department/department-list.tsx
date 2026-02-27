@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useState, useCallback } from 'react'
-import { Plus, Search, RefreshCw, Loader2 } from 'lucide-react'
+import { Plus, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { mutate } from 'swr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,34 +17,11 @@ import {
 import type { Department } from '@/features/hr/api/department-service'
 import { useDepartments } from '@/features/hr/hooks/use-departments'
 
-interface DepartmentListProps {
-    initialDepartments: Department[]
-    totalCount: number
-    currentPage: number
-    totalPages: number
-}
-
-export const DepartmentList = memo(function DepartmentList({
-    initialDepartments,
-    totalCount: initialTotalCount,
-    currentPage: initialPage
-}: DepartmentListProps) {
-    const [page, setPage] = useState(initialPage)
+export const DepartmentList = memo(function DepartmentList() {
+    const [page, setPage] = useState(1)
     const [searchQuery, setSearchQuery] = useState('')
 
-    // Use SWR hook for data fetching and caching
-    // We don't pass fallbackData here because useData in the hook handles it differently,
-    // but the hook will fetch fresh data on mount/update. 
-    // To make it instant on first load we could use fallbackData but the hook interface might need tweak.
-    // For now, let's just use the hook.
-
-    // Note: To properly support SSR hydration with SWR, we'd typically pass fallbackData to SWRConfig or useData options.
-    // However, given the current hook structure, we'll try to use the hook's return values which fallback to empty, 
-    // effectively doing a client-side fetch. 
-    // To prevent layout shift, we can initialize state with props, but SWR is better source of truth.
-
-    // Better approach: Since we have initial data, we can just fetch.
-    const { data, departments, totalCount, totalPages, isLoading } = useDepartments({
+    const { departments, totalCount, totalPages, isLoading } = useDepartments({
         page: page,
         pageSize: 7,
         search: searchQuery || undefined
@@ -65,13 +42,11 @@ export const DepartmentList = memo(function DepartmentList({
     }, [])
 
     const handleDelete = useCallback((dept: Department) => {
-        // TODO: Confirm and delete
         console.log('Delete', dept)
     }, [])
 
     const handleSuccess = useCallback(() => {
         setIsOpen(false)
-        // Revalidate SWR cache - handled by hook's mutate/SWR
         mutate(() => true, undefined, { revalidate: true })
     }, [])
 
@@ -79,74 +54,98 @@ export const DepartmentList = memo(function DepartmentList({
         mutate(() => true, undefined, { revalidate: true })
     }
 
-    // Determine which departments to display
-    // If SWR has fetched data (data is not undefined), use it (even if empty)
-    // Otherwise, fallback to initialDepartments (SSR data)
-    const displayDepartments = data ? departments : initialDepartments
+    const displayDepartments = departments
+    const displayTotalCount = totalCount
+    const displayTotalPages = totalPages
 
     return (
-        <div className="space-y-3">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Phòng ban</h1>
-                    <p className="text-gray-500 text-sm">Quản lý {totalCount ?? initialTotalCount} phòng ban</p>
+        <div className="flex flex-col gap-6">
+            {/* Page Header */}
+            <div className="flex flex-col gap-1">
+                <h1 className="text-3xl font-bold tracking-tight text-[#0C4A6E]">
+                    Phòng ban
+                </h1>
+                <p className="text-[#0C4A6E]/70 text-base">
+                    Quản lý {displayTotalCount} phòng ban trong doanh nghiệp.
+                </p>
+            </div>
+
+            {/* Toolbar */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <Input
+                            placeholder="Tìm kiếm phòng ban..."
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value)
+                                setPage(1)
+                            }}
+                            className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-sky-200 focus-visible:border-sky-300"
+                        />
+                    </div>
+
+                    {/* Refresh */}
+                    <button
+                        type="button"
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        className="p-2.5 text-slate-400 hover:text-[#0369A1] hover:bg-sky-50 rounded-full transition-colors cursor-pointer disabled:opacity-50"
+                        title="Làm mới"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
                 </div>
-                <Button onClick={handleCreate} className="bg-[#0F4C75] hover:bg-[#0F4C75]/90">
+
+                {/* CTA Button */}
+                <Button
+                    onClick={handleCreate}
+                    className="bg-[#22C55E] hover:bg-green-600 text-white rounded-xl h-10 px-6 font-semibold text-sm shadow-md shadow-green-200 active:scale-95 transition-all w-full md:w-auto cursor-pointer"
+                >
                     <Plus className="w-4 h-4 mr-2" />
                     Thêm phòng ban
                 </Button>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                        placeholder="Tìm kiếm phòng ban..."
-                        value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value)
-                            setPage(1) // Reset to page 1 on search
-                        }}
-                        className="pl-10"
+            {/* Data Table Card */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[500px]">
+                <div className="flex-1 overflow-x-auto">
+                    <DepartmentTable
+                        departments={displayDepartments}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
                     />
                 </div>
-                <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
-                    {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                    Làm mới
-                </Button>
-            </div>
 
-            {/* Table */}
-            <div className="relative min-h-[500px]">
-                {isLoading && !data && (
-                    <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#0F4C75]" />
-                    </div>
-                )}
-                <DepartmentTable
-                    departments={displayDepartments}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                />
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex justify-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                        <Button
-                            key={p}
-                            variant={p === page ? "default" : "outline"}
-                            className={p === page ? "bg-[#0F4C75]" : ""}
-                            onClick={() => setPage(p)}
-                        >
-                            {p}
-                        </Button>
-                    ))}
+                {/* Pagination - inside card */}
+                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Trước
+                    </Button>
+                    <span className="text-sm font-medium text-slate-600">
+                        Trang {page} / {displayTotalPages}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(displayTotalPages, p + 1))}
+                        disabled={page === displayTotalPages}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        Sau
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
                 </div>
-            )}
+            </div>
 
             {/* Create/Edit Modal */}
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -168,3 +167,4 @@ export const DepartmentList = memo(function DepartmentList({
         </div>
     )
 })
+

@@ -57,17 +57,18 @@ export async function createJobPosting(data: CreateJobPostingDto) {
     return response.json() as Promise<{ id: string }>
 }
 
-// PUT /api/job-postings/{id} - Update job posting
-// Note: Backend might use PUT or PATCH for update
+// PUT /api/job-postings - Update job posting
+// Backend: Id must be in request body, not URL path
 export async function updateJobPosting(id: string, data: UpdateJobPostingDto) {
-    const response = await apiClient.put(`/api/job-postings/${id}`, data)
+    const response = await apiClient.put('/api/job-postings', { id, ...data })
     if (!response.ok) throw new Error('Không thể cập nhật bài đăng')
     return response.json()
 }
 
-// PATCH /api/job-postings/{id}/publish - Publish job
+// PATCH /api/job-postings/publish - Publish job
+// Backend: Id in request body, not URL path
 export async function publishJobPosting(id: string) {
-    const response = await apiClient.patch(`/api/job-postings/${id}/publish`, {})
+    const response = await apiClient.patch('/api/job-postings/publish', { id })
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Không thể đăng bài viết');
@@ -75,9 +76,10 @@ export async function publishJobPosting(id: string) {
     return response.json().catch(() => ({ success: true }))
 }
 
-// PATCH /api/job-postings/{id}/close - Close job
+// PATCH /api/job-postings/close - Close job
+// Backend: Id in request body, not URL path
 export async function closeJobPosting(id: string) {
-    const response = await apiClient.patch(`/api/job-postings/${id}/close`, {})
+    const response = await apiClient.patch('/api/job-postings/close', { id })
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Không thể đóng bài đăng');
@@ -85,8 +87,9 @@ export async function closeJobPosting(id: string) {
     return response.json().catch(() => ({ success: true }))
 }
 
-// DELETE /api/job-postings/{id} - Delete job posting
+// DELETE /api/job-postings - Delete job posting
+// Backend: Id in request body, not URL path
 export async function deleteJobPosting(id: string) {
-    const response = await apiClient.delete(`/api/job-postings/${id}`)
+    const response = await apiClient.delete('/api/job-postings', { id })
     if (!response.ok) throw new Error('Không thể xóa bài đăng')
 }

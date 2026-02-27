@@ -91,9 +91,16 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     }
 }
 
-export async function getRequests(): Promise<RequestItem[]> {
+export async function getRequests(token?: string): Promise<RequestItem[]> {
     try {
-        const response = await apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=5')
+        const headers: HeadersInit = {}
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+
+        const response = await apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=5', {
+            headers,
+        })
 
         if (!response.ok) {
             logger.error('Failed to fetch requests:', response.statusText)
@@ -109,26 +116,49 @@ export async function getRequests(): Promise<RequestItem[]> {
 
         const requestItems: RequestItem[] = []
 
-        await Promise.all(data.items.map(async (plan: RecruitmentPlan) => {
-            let details = plan.planDetails
+        // Chỉ fetch details cho plans CHƯA có planDetails
+        // (tránh N+1: nếu BE trả planDetails sẵn thì dùng luôn)
+        const plansNeedingDetails = data.items.filter(
+            p => !p.planDetails || !Array.isArray(p.planDetails) || p.planDetails.length === 0
+        )
+        const plansWithDetails = data.items.filter(
+            p => p.planDetails && Array.isArray(p.planDetails) && p.planDetails.length > 0
+        )
 
-            if (!details || !Array.isArray(details) || details.length === 0) {
-                try {
-                    const detailsResponse = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`)
-                    if (detailsResponse.ok) {
-                        const detailsData = await detailsResponse.json()
-                        details = Array.isArray(detailsData) ? detailsData : (detailsData.items || [])
+        // Batch fetch cho plans thiếu details (vẫn parallel nhưng giới hạn)
+        const fetchedDetailsMap: Record<string, RecruitmentPlanDetail[]> = {}
+        if (plansNeedingDetails.length > 0) {
+            const results = await Promise.allSettled(
+                plansNeedingDetails.map(async (plan) => {
+                    const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`, { headers })
+                    if (!res.ok) return { planId: plan.id, details: [] as RecruitmentPlanDetail[] }
+                    const d = await res.json()
+                    return {
+                        planId: plan.id,
+                        details: (Array.isArray(d) ? d : (d.items || [])) as RecruitmentPlanDetail[]
                     }
-                } catch (err) {
-                    logger.error(`Failed to fetch details for plan ${plan.id}`, err)
+                })
+            )
+            results.forEach(r => {
+                if (r.status === 'fulfilled' && r.value) {
+                    fetchedDetailsMap[r.value.planId] = r.value.details
                 }
-            }
+            })
+        }
 
-            if (details && Array.isArray(details) && details.length > 0) {
+        // Process: plans có sẵn details + plans vừa fetch
+        const allPlans = [...plansWithDetails, ...plansNeedingDetails]
+        for (const plan of allPlans) {
+            const details = plan.planDetails && Array.isArray(plan.planDetails) && plan.planDetails.length > 0
+                ? plan.planDetails
+                : (fetchedDetailsMap[plan.id] || [])
+
+            if (details.length > 0) {
+                // Chỉ hiển thị planDetail status 'Approved' — chưa có JobPosting, sẵn sàng tạo tin
+                // 'Recruiting' = đã có JobPosting active, không cần tạo thêm
                 const approvedDetails = details.filter((d) => d.status === 'Approved')
                 approvedDetails.forEach((detail) => {
                     const isUrgent = detail.priority === 'Urgent' || detail.priority === 'High'
-                    const status = isUrgent ? 'urgent' : 'important'
                     const title = detail.positionTitle || `Tuyển dụng ${detail.quantity} vị trí`
 
                     requestItems.push({
@@ -136,7 +166,7 @@ export async function getRequests(): Promise<RequestItem[]> {
                         title: title,
                         requester: detail.requestedByName || plan.createdByName || 'Phòng ban',
                         date: new Date(detail.createdAt || plan.createdAt || new Date()).toLocaleDateString('vi-VN'),
-                        status: status,
+                        status: isUrgent ? 'urgent' : 'important',
                         type: 'request',
                         avatar: (detail.requestedByName || plan.createdByName || 'U').substring(0, 2).toUpperCase(),
                         project: plan.planCode || plan.campaignName,
@@ -165,7 +195,7 @@ export async function getRequests(): Promise<RequestItem[]> {
                     deadline: plan.endDate
                 })
             }
-        }))
+        }
 
         return requestItems
     } catch (error) {

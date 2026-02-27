@@ -171,7 +171,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             }
 
             const res = editPlanId
-                ? await apiClient.put(`/api/RecruitmentPlans/${editPlanId}`, payload)
+                ? await apiClient.put('/api/RecruitmentPlans', { id: editPlanId, ...payload })
                 : await apiClient.post('/api/RecruitmentPlans', payload)
 
             if (!res.ok) {
@@ -240,7 +240,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
     const onDeleteDetail = async (detailId: string) => {
         if (!confirm('Xóa đề xuất này?')) return
         try {
-            const res = await apiClient.delete(`/api/plan-details/${detailId}`)
+            const res = await apiClient.delete('/api/plan-details', { id: detailId })
             if (res.ok) {
                 if (state.createdPlanId) fetchPlanDetails(state.createdPlanId)
                 toast({ description: 'Đã xóa vị trí' })

@@ -1,5 +1,5 @@
 'use client'
-import { memo, useState } from 'react'
+import { memo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     DashboardListWidget,
@@ -8,35 +8,23 @@ import {
     TaskItemRow,
     CandidateItemRow
 } from './dashboard-widgets'
+import type { RequestItem } from '../api/dashboard-service'
 import {
-    RequestItem,
-    TaskItem,
-    CandidateItem,
-    ChartData
-} from '../api/dashboard-service'
+    useDashboardRequests,
+    useDashboardTasks,
+    useDashboardCandidates,
+    useDashboardRecruitmentChart,
+    useDashboardTrainingChart
+} from '../hooks/use-dashboard'
 
-interface HRDashboardProps {
-    initialRequests?: RequestItem[]
-    initialTasks?: TaskItem[]
-    initialCandidates?: CandidateItem[]
-    initialRecruitmentData?: ChartData[]
-    initialTrainingData?: ChartData[]
-}
-
-export const HRDashboard = memo(function HRDashboard({
-    initialRequests = [],
-    initialTasks = [],
-    initialCandidates = [],
-    initialRecruitmentData = [],
-    initialTrainingData = []
-}: HRDashboardProps) {
+export const HRDashboard = memo(function HRDashboard() {
     const router = useRouter()
 
-    const [requests] = useState<RequestItem[]>(initialRequests)
-    const [tasks] = useState<TaskItem[]>(initialTasks)
-    const [candidates] = useState<CandidateItem[]>(initialCandidates)
-    const [recruitmentData] = useState<ChartData[]>(initialRecruitmentData)
-    const [trainingData] = useState<ChartData[]>(initialTrainingData)
+    const { data: requests = [] } = useDashboardRequests()
+    const { data: tasks = [] } = useDashboardTasks()
+    const { data: candidates = [] } = useDashboardCandidates()
+    const { data: recruitmentData = [] } = useDashboardRecruitmentChart()
+    const { data: trainingData = [] } = useDashboardTrainingChart()
 
     const handleRequestClick = (item: RequestItem) => {
         const params = new URLSearchParams()
@@ -61,7 +49,7 @@ export const HRDashboard = memo(function HRDashboard({
             {/* Top Row: 3 Lists */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <DashboardListWidget
-                    title="Danh sách Yêu cầu Tuyển dụng & Đào tạo"
+                    title="Danh sách Yêu cầu Tuyển dụng &amp; Đào tạo"
                     subtitle="Phòng ban: Tất cả &bull; Chờ duyệt (Click để tạo tin)"
                     items={requests}
                     renderItem={(item) => (
@@ -78,7 +66,7 @@ export const HRDashboard = memo(function HRDashboard({
 
                 <DashboardListWidget
                     title="Danh sách Nhiệm vụ (Tasks)"
-                    subtitle="Cá nhân & Team &bull; Hôm nay"
+                    subtitle="Cá nhân &amp; Team &bull; Hôm nay"
                     items={tasks}
                     renderItem={(item) => (
                         <TaskItemRow

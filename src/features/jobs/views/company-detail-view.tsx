@@ -1,42 +1,39 @@
 "use client"
 
-import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
     MapPin,
-    Briefcase,
     Building2,
     ArrowLeft,
     Share2,
     Users,
     ChevronRight,
-    Globe,
-    Phone,
     Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
-import { usePublicEnterprise } from '../hooks/use-public-enterprises'
+import { useState } from 'react'
+import { useEnterpriseByName } from '../hooks/use-public-enterprises'
 import { JobCard } from '../components/job-card'
 
 interface CompanyDetailViewProps {
-    name: string
+    id: string
 }
 
-export function CompanyDetailView({ name }: CompanyDetailViewProps) {
+export function CompanyDetailView({ id }: CompanyDetailViewProps) {
     const router = useRouter()
     const { toast } = useToast()
-    const { data, isLoading, error } = usePublicEnterprise(name)
-    const company = data?.enterprise
+    const companyName = decodeURIComponent(id)
+    const { data, isLoading, error } = useEnterpriseByName(companyName)
+    const company = data?.company
     const jobs = data?.jobs || []
     const [isFollowing, setIsFollowing] = useState(false)
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#EDE8F0] animate-pulse">
-                {/* Skeleton header */}
                 <div className="h-[200px] bg-white border-b border-[#e8e8e8]" />
                 <div className="container mx-auto px-4 max-w-6xl -mt-10">
                     <div className="bg-white rounded-lg p-6 flex items-start gap-4 mb-6 shadow-sm">
@@ -85,17 +82,11 @@ export function CompanyDetailView({ name }: CompanyDetailViewProps) {
         toast({ title: 'Đã sao chép link công ty' })
     }
 
-    const uniqueLocations = company ? Array.from(new Set(jobs.map(job => job.location).filter(Boolean))) : []
-    // Dữ liệu giả lập vì API không trả về
-    const mockDescription = company ? `Chào mừng bạn đến với ${company.enterpriseName}!
-
-Chúng tôi tự hào là một trong những doanh nghiệp hàng đầu trong lĩnh vực, với sứ mệnh mang lại giá trị bền vững và các giải pháp sáng tạo cho khách hàng. Đội ngũ của chúng tôi luôn tận tâm, học hỏi và phát triển.
-
-Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tranh và con đường thăng tiến minh bạch, chúng tôi mong muốn đồng hành cùng các tài năng để xây dựng một tương lai tốt đẹp hơn.` : ''
+    const uniqueLocations = company.locations || []
 
     return (
         <div className="min-h-screen bg-[#EDE8F0] pb-12">
-            {/* Banner Cover - Simplified using gradient to match TopCV aesthetic style */}
+            {/* Banner Cover */}
             <div className="h-[250px] bg-gradient-to-r from-[#1B5583] via-[#1B5583]/90 to-[#1B5583]/80 relative overflow-hidden" />
 
             <div className="container mx-auto px-4 max-w-6xl -mt-[80px] relative z-10">
@@ -108,7 +99,7 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                                 alt={company.enterpriseName}
                                 fill
                                 sizes="128px"
-                                className="object-cover"
+                                className="object-contain p-1.5"
                             />
                         </div>
                         <div className="flex-1">
@@ -157,7 +148,11 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                                 Giới thiệu công ty
                             </h2>
                             <div className="text-sm text-[#4a4a4a] leading-relaxed whitespace-pre-line">
-                                {mockDescription}
+                                {`Chào mừng bạn đến với ${company.enterpriseName}!
+
+Chúng tôi tự hào là một trong những doanh nghiệp hàng đầu trong lĩnh vực, với sứ mệnh mang lại giá trị bền vững và các giải pháp sáng tạo cho khách hàng. Đội ngũ của chúng tôi luôn tận tâm, học hỏi và phát triển.
+
+Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tranh và con đường thăng tiến minh bạch, chúng tôi mong muốn đồng hành cùng các tài năng để xây dựng một tương lai tốt đẹp hơn.`}
                             </div>
                         </div>
 
@@ -173,15 +168,23 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                                 </span>
                             </h2>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {jobs.map((job) => (
-                                    <JobCard
-                                        key={job.id}
-                                        {...job}
-                                        compact={true}
-                                    />
-                                ))}
-                            </div>
+                            {jobs.length === 0 ? (
+                                <div className="text-center py-8 text-[#a6acb2]">
+                                    <Building2 className="w-10 h-10 mx-auto mb-2 text-[#d4d4d4]" />
+                                    <p className="text-sm">Hiện chưa có tin tuyển dụng nào.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {jobs.map((job) => (
+                                        <Link key={job.id} href={`/jobs/${job.id}`} className="block h-full">
+                                            <JobCard
+                                                {...job}
+                                                compact={true}
+                                            />
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -189,24 +192,23 @@ Với môi trường làm việc cởi mở, chế độ đãi ngộ cạnh tran
                     <div className="lg:col-span-1 space-y-6">
                         {/* Company Info Box */}
                         <div className="bg-white rounded-lg border border-[#e8e8e8] p-6 shadow-sm">
-                            <h2 className="text-[15px] font-bold text-[#212f3f] mb-5">Thông tin liên hệ</h2>
+                            <h2 className="text-[15px] font-bold text-[#212f3f] mb-5">Thông tin công ty</h2>
 
                             <div className="space-y-4">
                                 <SidebarInfoItem
                                     icon={<MapPin className="w-4 h-4" />}
-                                    title="Địa chỉ công ty"
+                                    title="Địa điểm"
                                     value={uniqueLocations.join(', ') || 'Đang cập nhật'}
                                 />
                                 <SidebarInfoItem
-                                    icon={<Globe className="w-4 h-4" />}
-                                    title="Website"
-                                    value="Đang cập nhật"
-                                    link="#"
+                                    icon={<Building2 className="w-4 h-4" />}
+                                    title="Phòng ban"
+                                    value={company.departmentName || 'Đang cập nhật'}
                                 />
                                 <SidebarInfoItem
-                                    icon={<Building2 className="w-4 h-4" />}
-                                    title="Lĩnh vực hoạt động"
-                                    value="Đang cập nhật"
+                                    icon={<Users className="w-4 h-4" />}
+                                    title="Số vị trí đang tuyển"
+                                    value={`${company.jobCount} việc làm`}
                                 />
                             </div>
                         </div>

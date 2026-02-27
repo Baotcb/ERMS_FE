@@ -78,25 +78,10 @@ export function LoginForm() {
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 
-
-
                 // Redirect after short delay for UX
                 setTimeout(() => {
-                    const role = user.role
-                    if (role === 'Candidate') {
-                        router.push('/jobs')
-                    } else {
-                        // Route to role-specific dashboard
-                        const roleRoutes: Record<string, string> = {
-                            'HRManager': '/enterprise/hr/dashboard',
-                            'DepartmentHead': '/enterprise/dept-head/dashboard',
-                            'Employee': '/enterprise/profile',
-                            'Trainer': '/enterprise/dept-head/training', // Assuming training module
-                            'Director': '/enterprise/director/dashboard',
-                        }
-                        const redirectPath = role && roleRoutes[role] ? roleRoutes[role] : '/enterprise/hr/dashboard'
-                        router.push(redirectPath)
-                    }
+                    router.push('/')
+                    router.refresh()
                 }, 500)
             } catch (err) {
                 const errorMessage =

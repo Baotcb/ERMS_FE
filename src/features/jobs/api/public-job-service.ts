@@ -10,7 +10,8 @@ interface GetPublicJobsParams {
     experienceLevel?: string
     minSalary?: number
     maxSalary?: number
-    departmentId?: string // Keeping for backward compatibility if needed
+    departmentId?: string
+    enterpriseId?: string
 }
 
 export async function getPublicJobs(params?: GetPublicJobsParams): Promise<PublicJobsResponse> {
@@ -26,23 +27,27 @@ export async function getPublicJobs(params?: GetPublicJobsParams): Promise<Publi
     if (params?.minSalary) searchParams.append('MinSalary', String(params.minSalary))
     if (params?.maxSalary) searchParams.append('MaxSalary', String(params.maxSalary))
     if (params?.departmentId) searchParams.append('DepartmentId', params.departmentId)
+    if (params?.enterpriseId) searchParams.append('EnterpriseId', params.enterpriseId)
 
     const response = await apiClient.get(`/api/public/jobs?${searchParams}`, {
-        cache: 'force-cache', // Cache public job listings
+        cache: 'no-store',
     })
 
     if (!response.ok) {
-        // Fallback or detailed error
         throw new Error('Không thể tải danh sách công việc')
     }
 
     return response.json()
 }
 
-export async function getPublicJobById(id: string): Promise<PublicJobPostingDto> {
+export async function getPublicJobById(id: string): Promise<PublicJobPostingDto | null> {
     const response = await apiClient.get(`/api/public/jobs/${id}`, {
-        cache: 'force-cache', // Cache individual job details
+        cache: 'no-store',
     })
+
+    if (response.status === 404) {
+        return null
+    }
 
     if (!response.ok) {
         throw new Error('Không thể tải thông tin công việc')

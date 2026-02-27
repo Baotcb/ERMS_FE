@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { USER_ROLES, HR_ROLES } from '@/utils/constants'
+import { USER_ROLES, ROLE_DASHBOARD_MAP } from '@/utils/constants'
 
 /**
  * Security Middleware
@@ -128,6 +128,19 @@ export function middleware(request: NextRequest) {
     !pathname.match(/\.(json|xml|txt)$/) &&
     request.headers.get('accept')?.includes('text/html')
 
+  // Redirect authenticated non-candidate users away from '/'
+  // Home page is only for guests and Candidates
+  if (pathname === '/' && !isMutation) {
+    const token = request.cookies.get('auth_token')?.value
+    if (token && !isTokenExpired(token)) {
+      const role = request.cookies.get('user_role')?.value
+      if (role && role !== USER_ROLES.CANDIDATE) {
+        const dashboard = ROLE_DASHBOARD_MAP[role] || '/enterprise/hr/dashboard'
+        return NextResponse.redirect(new URL(dashboard, request.url))
+      }
+    }
+  }
+
   // Generate minimal headers for public routes
   if (isPublic && !isMutation && pathname !== '/enterprise') {
     if (needsNonce) {
@@ -170,11 +183,13 @@ export function middleware(request: NextRequest) {
   if ((isPublicRoute(pathname) || pathname === '/enterprise' || pathname === '/enterprise/') && authCookie && !isExpired) {
     const role = request.cookies.get('user_role')?.value
     if (role === USER_ROLES.CANDIDATE) {
-      return NextResponse.redirect(new URL('/jobs', request.url))
-    } else if (HR_ROLES.includes(role as typeof HR_ROLES[number])) {
-      return NextResponse.redirect(new URL('/enterprise/hr/dashboard', request.url))
-    } else {
-      return NextResponse.redirect(new URL('/enterprise/dept-head/dashboard', request.url))
+      // Candidates stay on '/' — only redirect from other public routes (e.g. /login)
+      if (pathname !== '/') {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    } else if (role) {
+      const dashboard = ROLE_DASHBOARD_MAP[role] || '/enterprise/hr/dashboard'
+      return NextResponse.redirect(new URL(dashboard, request.url))
     }
   }
 

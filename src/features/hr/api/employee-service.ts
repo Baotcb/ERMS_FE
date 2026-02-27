@@ -126,7 +126,7 @@ export interface UpdateEmployeeData {
 }
 
 export async function updateEmployee(id: string, data: UpdateEmployeeData): Promise<void> {
-    const response = await apiClient.put(`/api/Employees/${id}`, data)
+    const response = await apiClient.put('/api/Employees', { ...data, id })
 
     if (!response.ok) {
         const error = await response.json()
@@ -135,7 +135,7 @@ export async function updateEmployee(id: string, data: UpdateEmployeeData): Prom
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
-    const response = await apiClient.delete(`/api/Employees/${id}`)
+    const response = await apiClient.delete('/api/Employees', { id })
 
     if (!response.ok) {
         const error = await response.json()

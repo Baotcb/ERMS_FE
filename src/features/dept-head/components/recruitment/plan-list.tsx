@@ -95,7 +95,7 @@ export function PlanList() {
         if (!confirm('Bạn có chắc chắn muốn xóa bản nháp này?')) return
 
         try {
-            const res = await apiClient.delete(`/api/RecruitmentPlans/${id}`)
+            const res = await apiClient.delete('/api/RecruitmentPlans', { id })
             if (res.ok) {
                 toast({
                     title: 'Đã xóa',

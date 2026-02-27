@@ -1,30 +1,31 @@
+import { apiClient } from '@/lib/api-client'
 import { getPublicJobs } from './public-job-service'
-import type { PublicEnterprise } from '../types'
+import type { PublicEnterprise, EnterpriseDetailsResponse, PublicJobPostingDto } from '../types'
 
 /**
  * Trích xuất danh sách công ty từ public jobs API
  * Group theo enterpriseName, đếm job count, gom locations
  */
 export async function getPublicEnterprises(): Promise<PublicEnterprise[]> {
-    // Lấy nhiều jobs để có đủ dữ liệu công ty
     const response = await getPublicJobs({ pageSize: 100 })
 
     const enterpriseMap = new Map<string, PublicEnterprise>()
 
     for (const job of response.items) {
-        const existing = enterpriseMap.get(job.enterpriseName)
+        const key = job.enterpriseId || job.enterpriseName
+        const existing = enterpriseMap.get(key)
 
         if (existing) {
             existing.jobCount += 1
             if (job.location && !existing.locations.includes(job.location)) {
                 existing.locations.push(job.location)
             }
-            // Ưu tiên logo có giá trị
             if (!existing.enterpriseLogoUrl && job.enterpriseLogoUrl) {
                 existing.enterpriseLogoUrl = job.enterpriseLogoUrl
             }
         } else {
-            enterpriseMap.set(job.enterpriseName, {
+            enterpriseMap.set(key, {
+                id: job.enterpriseId,
                 enterpriseName: job.enterpriseName,
                 enterpriseLogoUrl: job.enterpriseLogoUrl,
                 jobCount: 1,
@@ -34,33 +35,67 @@ export async function getPublicEnterprises(): Promise<PublicEnterprise[]> {
         }
     }
 
-    // Sắp xếp theo số lượng job giảm dần
     return Array.from(enterpriseMap.values())
         .sort((a, b) => b.jobCount - a.jobCount)
 }
 
 /**
- * Lấy thông tin 1 công ty + danh sách job theo tên
+ * Lấy thông tin chi tiết 1 công ty qua API backend
+ * GET /api/Enterprise/{id}
  */
-export async function getPublicEnterpriseByName(name: string) {
+export async function getEnterpriseById(id: string): Promise<EnterpriseDetailsResponse> {
+    const response = await apiClient.get(`/api/Enterprise/${id}`, {
+        cache: 'force-cache',
+    })
+    if (!response.ok) {
+        throw new Error('Không thể tải thông tin công ty')
+    }
+    return response.json()
+}
+
+/**
+ * Lấy danh sách jobs của 1 công ty
+ * GET /api/public/jobs?EnterpriseId={id}
+ */
+export async function getJobsByEnterpriseId(
+    enterpriseId: string,
+    params?: { pageNumber?: number; pageSize?: number }
+): Promise<{ items: PublicJobPostingDto[]; totalCount: number }> {
+    const response = await getPublicJobs({
+        pageSize: params?.pageSize ?? 50,
+        pageNumber: params?.pageNumber ?? 1,
+        enterpriseId,
+    })
+    return { items: response.items, totalCount: response.totalCount }
+}
+
+/**
+ * Lấy thông tin công ty và jobs theo TÊN công ty
+ * Trích xuất từ public jobs API vì backend không trả enterpriseId
+ */
+export async function getEnterpriseByName(
+    name: string
+): Promise<{ company: PublicEnterprise; jobs: PublicJobPostingDto[] }> {
     const response = await getPublicJobs({ pageSize: 100 })
 
-    const jobs = response.items.filter(
+    const matchedJobs = response.items.filter(
         (job) => job.enterpriseName === name
     )
 
-    if (jobs.length === 0) return null
+    if (matchedJobs.length === 0) {
+        throw new Error('Không tìm thấy công ty')
+    }
 
-    const firstJob = jobs[0]
-    const locations = [...new Set(jobs.map((j) => j.location).filter(Boolean))] as string[]
+    const firstJob = matchedJobs[0]
+    const locations = [...new Set(matchedJobs.map((j) => j.location).filter(Boolean))] as string[]
 
-    const enterprise: PublicEnterprise = {
+    const company: PublicEnterprise = {
         enterpriseName: firstJob.enterpriseName,
         enterpriseLogoUrl: firstJob.enterpriseLogoUrl,
-        jobCount: jobs.length,
+        jobCount: matchedJobs.length,
         locations,
         departmentName: firstJob.departmentName,
     }
 
-    return { enterprise, jobs }
+    return { company, jobs: matchedJobs }
 }

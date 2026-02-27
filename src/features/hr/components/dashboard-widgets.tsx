@@ -20,8 +20,8 @@ export const RequestItemRow = memo(function RequestItemRow({ title, date, reques
             <div className="mt-1 w-5 h-5 rounded-full border-2 border-gray-200 group-hover:border-[#0F4C75] transition-colors flex-shrink-0" />
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 line-clamp-2 group-hover:text-[#0F4C75] transition-colors">{title}</p>
-                <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${getStatusColor(status)}`}>
+                <div className="flex items-center gap-2 mt-1 min-w-0">
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 whitespace-nowrap flex-shrink-0 ${getStatusColor(status)}`}>
                         {status === 'urgent' ? 'Khẩn cấp' : status === 'important' ? 'Quan trọng' : 'Hoàn thành'}
                     </Badge>
                     <span className="text-xs text-gray-400 truncate text-[10px]">{project ? `Mã: ${project}` : ''} &bull; {date}</span>

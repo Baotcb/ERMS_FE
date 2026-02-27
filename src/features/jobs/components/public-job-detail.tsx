@@ -109,20 +109,27 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
     }
 
     if (error || !job) {
+        const isNotFound = !error && !job // API returned null (404) → job closed/removed
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-[#f4f5f5]">
                 <div className="text-center space-y-4 bg-white rounded-lg p-12 shadow-sm border border-[#e8e8e8]">
                     <div className="w-20 h-20 bg-[#f4f5f5] rounded-full flex items-center justify-center mx-auto">
                         <Briefcase className="w-10 h-10 text-[#a6acb2]" />
                     </div>
-                    <h1 className="text-2xl font-bold text-[#212f3f]">Không tìm thấy công việc</h1>
-                    <p className="text-[#6f7882] max-w-md">Tin tuyển dụng này có thể đã bị xóa hoặc không tồn tại.</p>
+                    <h1 className="text-2xl font-bold text-[#212f3f]">
+                        {isNotFound ? 'Tin tuyển dụng đã ngừng nhận hồ sơ' : 'Không thể tải tin tuyển dụng'}
+                    </h1>
+                    <p className="text-[#6f7882] max-w-md">
+                        {isNotFound
+                            ? 'Vị trí này đã đóng hoặc hết hạn ứng tuyển. Hãy khám phá các cơ hội khác!'
+                            : 'Đã có lỗi xảy ra khi tải thông tin. Vui lòng thử lại sau.'}
+                    </p>
                     <Button
                         onClick={() => router.push('/jobs')}
                         className="mt-4 bg-[#1B5583] hover:bg-[#154360] text-white font-medium rounded-lg h-10 shadow-none"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại danh sách việc làm
+                        Xem các vị trí khác
                     </Button>
                 </div>
             </div>
@@ -404,7 +411,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                     {/* ========== Sidebar ========== */}
                     <div className="lg:col-span-1 space-y-4">
                         {/* Company Card */}
-                        <div className="bg-white rounded-lg border border-[#e8e8e8] sticky top-20 overflow-hidden">
+                        <div className="bg-white rounded-lg border border-[#e8e8e8] overflow-hidden">
                             {/* Company Header */}
                             <div className="p-5 text-center border-b border-[#e8e8e8]">
                                 <div className="w-[80px] h-[80px] mx-auto mb-3 border border-[#e8e8e8] rounded-lg bg-white relative overflow-hidden">
@@ -413,7 +420,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                         alt={job.enterpriseName}
                                         fill
                                         sizes="80px"
-                                        className="object-cover"
+                                        className="object-contain p-1"
                                     />
                                 </div>
                                 <h3 className="font-bold text-[15px] text-[#212f3f] leading-tight line-clamp-2">
@@ -447,7 +454,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                     className="w-full border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white rounded-lg h-10 font-medium transition-colors text-sm"
                                     asChild
                                 >
-                                    <Link href={`/companies/${encodeURIComponent(job.enterpriseName)}`}>
+                                    <Link href={`/companies/${job.enterpriseId || encodeURIComponent(job.enterpriseName)}`}>
                                         Xem trang công ty
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Link>

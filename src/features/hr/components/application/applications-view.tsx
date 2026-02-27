@@ -20,21 +20,25 @@ const STAGES: ApplicationStage[] = [
     'Shortlisted',
     'InterviewScheduled',
     'Interviewed',
+    'OfferProcessing',
     'Offered',
     'Hired',
     'Rejected',
+    'Withdrawn',
 ]
 
 const FILTER_LABELS: Record<string, string> = {
     'all': 'Tất cả',
     'Applied': 'Đã nộp',
-    'Reviewing': 'Đang xem',
+    'Reviewing': 'Đang xem xét',
     'Shortlisted': 'Đã sơ tuyển',
     'InterviewScheduled': 'Lịch phỏng vấn',
     'Interviewed': 'Đã phỏng vấn',
-    'Offered': 'Đề nghị',
+    'OfferProcessing': 'Đang xử lý offer',
+    'Offered': 'Đã đề nghị',
     'Hired': 'Đã tuyển',
-    'Rejected': 'Từ chối'
+    'Rejected': 'Từ chối',
+    'Withdrawn': 'Rút lui',
 }
 
 export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
@@ -112,8 +116,8 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
                             size="sm"
                             onClick={() => { setStageFilter('all'); setPage(1); }}
                             className={`rounded-full px-4 text-xs ${stageFilter === 'all'
-                                    ? 'bg-slate-900 shadow-md'
-                                    : 'text-slate-600 border-slate-200 hover:bg-slate-50'
+                                ? 'bg-slate-900 shadow-md'
+                                : 'text-slate-600 border-slate-200 hover:bg-slate-50'
                                 }`}
                         >
                             Tất cả
@@ -125,8 +129,8 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
                                 size="sm"
                                 onClick={() => { setStageFilter(stage); setPage(1); }}
                                 className={`rounded-full px-4 text-xs transition-all ${stageFilter === stage
-                                        ? 'bg-brand-primary text-white shadow-md hover:bg-brand-primary/90'
-                                        : 'text-slate-600 border-slate-200 hover:bg-slate-50'
+                                    ? 'bg-brand-primary text-white shadow-md hover:bg-brand-primary/90'
+                                    : 'text-slate-600 border-slate-200 hover:bg-slate-50'
                                     }`}
                             >
                                 {FILTER_LABELS[stage] || stage}
