@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, ChevronLeft, ChevronRight, Upload } from 'lucide-react'
+import { ArrowLeft, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -11,8 +11,6 @@ import {
 } from '@/components/ui/table'
 import { useShortlistedApplications } from '../../hooks/use-interview'
 import { AssignInterviewerDialog } from './assign-interviewer-dialog'
-import { ConfirmScheduleDialog } from './confirm-schedule-dialog'
-import type { AssignedInterviewer } from './assign-interviewer-dialog'
 import type { ShortlistedApplicationDto } from '../../types/interview-types'
 
 interface ShortlistedListProps {
@@ -53,23 +51,15 @@ function SkillPills({ skills, variant }: { skills?: string; variant: 'match' | '
         return <span className="text-slate-400 text-xs italic">Không có</span>
     }
 
-    const displayed = allItems.slice(0, 3)
     const cls = variant === 'match'
         ? 'bg-[#BBE1FA]/30 text-[#0F4C75] border-[#BBE1FA]'
         : 'bg-red-50 text-red-600 border-red-100'
 
-    const maxW = variant === 'match' ? 'max-w-[200px]' : 'max-w-[150px]'
-
     return (
-        <div className={`flex flex-wrap gap-1.5 ${maxW}`}>
-            {displayed.map(s => (
+        <div className="flex flex-wrap gap-1.5">
+            {allItems.map(s => (
                 <Badge key={s} variant="outline" className={`text-[11px] px-2 py-0.5 font-medium ${cls}`}>{s}</Badge>
             ))}
-            {allItems.length > 3 && (
-                <Badge variant="outline" className="text-[11px] px-2 py-0.5 bg-gray-50 text-gray-500">
-                    +{allItems.length - 3}
-                </Badge>
-            )}
         </div>
     )
 }
@@ -80,10 +70,7 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
     const [search, setSearch] = useState('')
     const [sortBy, setSortBy] = useState<SortOption>('score-desc')
     const [filterStatus, setFilterStatus] = useState<FilterOption>('all')
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [assignTarget, setAssignTarget] = useState<ShortlistedApplicationDto | null>(null)
-    const [scheduleTarget, setScheduleTarget] = useState<ShortlistedApplicationDto | null>(null)
-    const [assignedInterviewers, setAssignedInterviewers] = useState<AssignedInterviewer[]>([])
 
     const pageSize = 20
     const { data, isLoading, mutate } = useShortlistedApplications(planDetailId, {
@@ -123,28 +110,6 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
     const startItem = (page - 1) * pageSize + 1
     const endItem = Math.min(page * pageSize, totalCount)
 
-    // Checkbox handlers
-    const allSelected = processedItems.length > 0 && processedItems.every(item => selectedIds.has(item.applicationId))
-
-    const toggleAll = () => {
-        if (allSelected) {
-            setSelectedIds(new Set())
-        } else {
-            setSelectedIds(new Set(processedItems.map(item => item.applicationId)))
-        }
-    }
-
-    const toggleOne = (id: string) => {
-        setSelectedIds(prev => {
-            const next = new Set(prev)
-            if (next.has(id)) {
-                next.delete(id)
-            } else {
-                next.add(id)
-            }
-            return next
-        })
-    }
 
     return (
         <div className="space-y-0 max-w-full pb-12">
@@ -172,14 +137,7 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
                         </span>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <button
-                        className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-sm font-medium hover:bg-slate-50 flex items-center gap-2 transition-all"
-                    >
-                        <Upload className="w-5 h-5" />
-                        Xuất Excel
-                    </button>
-                </div>
+
             </header>
 
             {/* Filter bar - matches Stitch design */}
@@ -231,30 +189,22 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-[#F8FAFC] border-b border-slate-200">
-                                <TableHead className="w-12 text-center p-4">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-slate-300 text-[#0F4C75] focus:ring-[#0F4C75] h-4 w-4"
-                                        checked={allSelected}
-                                        onChange={toggleAll}
-                                    />
-                                </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[200px]">
                                     Ứng viên
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-center p-4">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-center p-4 w-[80px]">
                                     Điểm AI
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[30%]">
                                     Kỹ năng khớp
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[15%]">
                                     Kỹ năng thiếu
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[120px]">
                                     Ngày ứng tuyển
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-right p-4">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-right p-4 w-[140px]">
                                     Hành động
                                 </TableHead>
                             </TableRow>
@@ -262,27 +212,19 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
                         <TableBody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-16 text-slate-400">
+                                    <TableCell colSpan={6} className="text-center py-16 text-slate-400">
                                         Đang tải danh sách ứng viên...
                                     </TableCell>
                                 </TableRow>
                             ) : processedItems.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-16 text-slate-400">
+                                    <TableCell colSpan={6} className="text-center py-16 text-slate-400">
                                         {search ? 'Không tìm thấy ứng viên phù hợp' : 'Chưa có ứng viên nào'}
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 processedItems.map(app => (
                                     <TableRow key={app.applicationId} className="hover:bg-slate-50 transition-colors group">
-                                        <TableCell className="text-center p-4">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-slate-300 text-[#0F4C75] focus:ring-[#0F4C75] h-4 w-4"
-                                                checked={selectedIds.has(app.applicationId)}
-                                                onChange={() => toggleOne(app.applicationId)}
-                                            />
-                                        </TableCell>
                                         <TableCell className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-[#BBE1FA]/40 flex items-center justify-center text-[#0F4C75] font-bold text-sm flex-shrink-0">
@@ -374,32 +316,8 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
                     onOpenChange={open => { if (!open) setAssignTarget(null) }}
                     applicationId={assignTarget.applicationId}
                     candidateName={assignTarget.candidateName}
-                    onAssignSuccess={(interviewers) => {
-                        // Store the target & interviewers, then open schedule dialog
-                        setScheduleTarget(assignTarget)
-                        setAssignedInterviewers(interviewers)
-                        setAssignTarget(null)
-                    }}
                     onSuccess={() => {
                         setAssignTarget(null)
-                        mutate()
-                    }}
-                />
-            )}
-
-            {/* Confirm Schedule Dialog */}
-            {scheduleTarget && (
-                <ConfirmScheduleDialog
-                    open={!!scheduleTarget}
-                    onOpenChange={open => { if (!open) { setScheduleTarget(null); setAssignedInterviewers([]) } }}
-                    applicationId={scheduleTarget.applicationId}
-                    candidateName={scheduleTarget.candidateName}
-                    candidateEmail={scheduleTarget.candidateEmail}
-                    positionTitle={data?.positionTitle}
-                    interviewers={assignedInterviewers}
-                    onSuccess={() => {
-                        setScheduleTarget(null)
-                        setAssignedInterviewers([])
                         mutate()
                     }}
                 />
