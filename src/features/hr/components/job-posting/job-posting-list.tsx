@@ -97,6 +97,15 @@ function JobPostingListContent() {
         departmentId: DEPARTMENT_ID === 'all' ? undefined : DEPARTMENT_ID,
     })
 
+    // Helper: invalidate tất cả cache job-postings list (mọi filter/page)
+    const revalidateList = () => {
+        mutate(
+            (key: unknown) => Array.isArray(key) && key[0] === '/api/job-postings',
+            undefined,
+            { revalidate: true }
+        )
+    }
+
     // Clean URL if opened via autoOpen param
     useEffect(() => {
         if (searchParams.get('autoOpen') === 'true') {
@@ -114,7 +123,7 @@ function JobPostingListContent() {
         try {
             await publishJob(id)
             toast({ title: 'Đã đăng tuyển dụng thành công' })
-            mutate(['/api/job-postings', JSON.stringify({ page, pageSize: PAGE_SIZE, status, departmentId: DEPARTMENT_ID })])
+            revalidateList()
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Không thể đăng tuyển dụng'
             toast({
@@ -129,6 +138,7 @@ function JobPostingListContent() {
         try {
             await closeJob(id)
             toast({ title: 'Đã đóng tuyển dụng thành công' })
+            revalidateList()
         } catch {
             toast({
                 title: 'Lỗi',
@@ -142,7 +152,7 @@ function JobPostingListContent() {
         try {
             await deleteJob(id)
             toast({ title: 'Đã xóa tuyển dụng thành công' })
-            mutate(['/api/job-postings', JSON.stringify({ page, pageSize: PAGE_SIZE, status, departmentId: DEPARTMENT_ID })])
+            revalidateList()
         } catch {
             toast({
                 title: 'Lỗi',
@@ -263,7 +273,12 @@ function JobPostingListContent() {
             {wizard.open && (
                 <JobPostingWizardDialog
                     open={wizard.open}
-                    onOpenChange={(open) => !open && dispatch({ type: 'closeWizard' })}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            dispatch({ type: 'closeWizard' })
+                            revalidateList()
+                        }
+                    }}
                     initialData={wizard.data}
                     hidePlanDetailId={wizard.data.hidePlanDetailId || false}
                 />

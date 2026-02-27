@@ -5,6 +5,8 @@ import type {
     ShortlistedResponse,
     AssignInterviewerRequest,
     AssignInterviewerResult,
+    ConfirmScheduleRequest,
+    ConfirmScheduleResult,
     SubmitFeedbackRequest,
     SubmitFeedbackResult,
     SubmitFinalDecisionRequest,
@@ -33,6 +35,13 @@ export function useAssignInterviewer() {
     )
 }
 
+// ===== Confirm Interview Schedule =====
+export function useConfirmSchedule() {
+    return useSWRMutation<ConfirmScheduleResult, Error, string, ConfirmScheduleRequest>(
+        '/api/applications/confirm-schedule',
+        (_, { arg }) => service.confirmInterviewSchedule(arg)
+    )
+}
 
 // ===== Submit Interview Feedback =====
 export function useSubmitFeedback() {

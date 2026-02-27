@@ -53,7 +53,27 @@ export interface AssignInterviewerResult {
     participants: InterviewParticipantDto[]
 }
 
+// ===== Confirm Interview Schedule =====
+export type InterviewFormatType = 'Online' | 'Offline'
 
+export interface ConfirmScheduleRequest {
+    applicationId: string
+    interviewFormat: number // 0 = Online, 1 = Offline
+    scheduledAt: string     // ISO datetime
+    duration: number        // minutes
+    location?: string
+    meetingLink?: string
+}
+
+export interface ConfirmScheduleResult {
+    interviewId: string
+    status: string
+    interviewFormat: number
+    scheduledAt: string
+    duration: number
+    meetingLink?: string
+    location?: string
+}
 
 // ===== Submit Interview Feedback (Employee/Interviewer) =====
 export interface SubmitFeedbackRequest {

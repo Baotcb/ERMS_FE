@@ -94,8 +94,9 @@ export default function ShortlistedOverviewPage() {
 
     const planDetails = Array.isArray(details) ? details : []
 
-    // Only show approved plan details
-    const approvedDetails = planDetails.filter(d => d.status === 'Approved')
+    // Show plan details that can have candidates: Approved (ready), Recruiting (active), Fulfilled (done)
+    const VISIBLE_STATUSES = ['Recruiting']
+    const approvedDetails = planDetails.filter(d => VISIBLE_STATUSES.includes(d.status || ''))
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto pb-12">

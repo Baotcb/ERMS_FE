@@ -17,19 +17,8 @@ import {
 import type { Department } from '@/features/hr/api/department-service'
 import { useDepartments } from '@/features/hr/hooks/use-departments'
 
-interface DepartmentListProps {
-    initialDepartments: Department[]
-    totalCount: number
-    currentPage: number
-    totalPages: number
-}
-
-export const DepartmentList = memo(function DepartmentList({
-    initialDepartments,
-    totalCount: initialTotalCount,
-    currentPage: initialPage
-}: DepartmentListProps) {
-    const [page, setPage] = useState(initialPage)
+export const DepartmentList = memo(function DepartmentList() {
+    const [page, setPage] = useState(1)
     const [searchQuery, setSearchQuery] = useState('')
 
     const { data, departments, totalCount, totalPages, isLoading } = useDepartments({
@@ -65,9 +54,9 @@ export const DepartmentList = memo(function DepartmentList({
         mutate(() => true, undefined, { revalidate: true })
     }
 
-    const displayDepartments = data ? departments : initialDepartments
-    const displayTotalCount = totalCount ?? initialTotalCount
-    const displayTotalPages = totalPages ?? 1
+    const displayDepartments = departments
+    const displayTotalCount = totalCount
+    const displayTotalPages = totalPages
 
     return (
         <div className="flex flex-col gap-6">

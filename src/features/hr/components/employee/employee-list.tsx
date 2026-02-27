@@ -27,13 +27,6 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 
-interface EmployeeListProps {
-    initialEmployees: Employee[]
-    totalCount: number
-    currentPage: number
-    totalPages: number
-}
-
 // Status options for filter
 const STATUS_OPTIONS = [
     { value: '', label: 'Trạng thái' },
@@ -45,13 +38,8 @@ const STATUS_OPTIONS = [
 
 const PAGE_SIZE = 7
 
-export const EmployeeList = memo(function EmployeeList({
-    initialEmployees,
-    totalCount,
-    currentPage,
-    totalPages
-}: EmployeeListProps) {
-    const [page, setPage] = useState(currentPage)
+export const EmployeeList = memo(function EmployeeList() {
+    const [page, setPage] = useState(1)
     const [searchQuery, setSearchQuery] = useState('')
     const [prevSearch, setPrevSearch] = useState('')
     const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined)
@@ -78,9 +66,9 @@ export const EmployeeList = memo(function EmployeeList({
         status: statusFilter,
     })
 
-    const displayEmployees = data ? employees : initialEmployees
-    const displayTotalCount = data ? hookedTotalCount : totalCount
-    const displayTotalPages = data ? hookedTotalPages : totalPages
+    const displayEmployees = employees
+    const displayTotalCount = hookedTotalCount
+    const displayTotalPages = hookedTotalPages
 
     // Modal states
     const [isCreateOpen, setIsCreateOpen] = useState(false)

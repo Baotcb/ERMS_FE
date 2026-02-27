@@ -16,12 +16,19 @@ import { apiClient } from '@/lib/api-client'
 import { useAssignInterviewer } from '../../hooks/use-interview'
 import type { AssignInterviewerRequest } from '../../types/interview-types'
 
+export interface AssignedInterviewer {
+    id: string
+    fullName: string
+    email?: string
+}
+
 interface AssignInterviewerDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     applicationId: string
     candidateName: string
     onSuccess?: () => void
+    onAssignSuccess?: (interviewers: AssignedInterviewer[]) => void
 }
 
 interface EmployeeOption {
@@ -29,21 +36,15 @@ interface EmployeeOption {
     fullName: string
     position: string | null
     departmentName: string
+    departmentId: number
 }
 
-const INTERVIEW_TYPES = [
-    { value: 'Technical' as const, label: 'Kỹ thuật' },
-    { value: 'Cultural' as const, label: 'Văn hóa' },
-    { value: 'Combined' as const, label: 'Tổng hợp' },
-]
-
 export function AssignInterviewerDialog({
-    open, onOpenChange, applicationId, candidateName, onSuccess,
+    open, onOpenChange, applicationId, candidateName, onSuccess, onAssignSuccess,
 }: AssignInterviewerDialogProps) {
     const { toast } = useToast()
     const { trigger, isMutating } = useAssignInterviewer()
 
-    const [interviewType, setInterviewType] = useState<AssignInterviewerRequest['interviewType']>('Technical')
     const [selectedIds, setSelectedIds] = useState<string[]>([])
     const [note, setNote] = useState('')
     const [employeeSearch, setEmployeeSearch] = useState('')
@@ -51,7 +52,6 @@ export function AssignInterviewerDialog({
     // Reset state when dialog opens (React docs: adjusting state when prop changes)
     const [prevOpen, setPrevOpen] = useState(open)
     if (open && !prevOpen) {
-        setInterviewType('Technical')
         setSelectedIds([])
         setNote('')
         setEmployeeSearch('')
@@ -60,13 +60,26 @@ export function AssignInterviewerDialog({
         setPrevOpen(open)
     }
 
-    // Fetch employees in department
+    // Fetch employees and filter by department on client-side
+    // Backend returns departmentName per employee — we find the DeptHead's dept
+    // by detecting which department appears most (DeptHead is in that dept)
     const { data: employeesData } = useSWR<{ items: EmployeeOption[] }>(
         open ? ['/api/Employees', employeeSearch] : null,
-        () => apiClient.get(`/api/Employees?pageSize=20&search=${employeeSearch}`).then(r => r.json())
+        () => apiClient.get(`/api/Employees?pageSize=100&search=${employeeSearch}`).then(r => r.json())
     )
 
-    const employees = employeesData?.items ?? []
+    // Auto-detect DeptHead's department: find the most common departmentName
+    const allEmployees = employeesData?.items ?? []
+    const deptCounts = allEmployees.reduce<Record<string, number>>((acc, emp) => {
+        acc[emp.departmentName] = (acc[emp.departmentName] || 0) + 1
+        return acc
+    }, {})
+    const mainDept = Object.entries(deptCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
+
+    // Only show employees from the same department
+    const employees = mainDept
+        ? allEmployees.filter(e => e.departmentName === mainDept)
+        : allEmployees
 
     const toggleEmployee = useCallback((id: string) => {
         setSelectedIds(prev =>
@@ -80,7 +93,7 @@ export function AssignInterviewerDialog({
         try {
             await trigger({
                 applicationId,
-                interviewType,
+                interviewType: 'Technical',
                 interviewerIds: selectedIds,
                 note: note || undefined,
             })
@@ -88,8 +101,25 @@ export function AssignInterviewerDialog({
                 title: 'Phân công thành công',
                 description: `Đã phân công ${selectedIds.length} người phỏng vấn.`,
             })
+
+            // Build assigned interviewer list for the schedule dialog
+            const assignedInterviewers: AssignedInterviewer[] = selectedIds
+                .map(id => {
+                    const emp = employees.find(e => e.id === id)
+                    if (!emp) return null
+                    const interviewer: AssignedInterviewer = { id: emp.id, fullName: emp.fullName }
+                    return interviewer
+                })
+                .filter((x): x is AssignedInterviewer => x !== null)
+
             onOpenChange(false)
-            onSuccess?.()
+
+            // Pass interviewers to parent so it can open ConfirmScheduleDialog
+            if (onAssignSuccess) {
+                onAssignSuccess(assignedInterviewers)
+            } else {
+                onSuccess?.()
+            }
         } catch (error) {
             toast({
                 variant: 'destructive',
@@ -110,25 +140,6 @@ export function AssignInterviewerDialog({
                 </DialogHeader>
 
                 <div className="space-y-5 py-2 max-h-[60vh] overflow-y-auto">
-                    {/* Interview Type */}
-                    <div className="space-y-2">
-                        <Label className="text-sm font-medium">Loại phỏng vấn</Label>
-                        <div className="flex gap-2">
-                            {INTERVIEW_TYPES.map(t => (
-                                <button
-                                    key={t.value}
-                                    type="button"
-                                    onClick={() => setInterviewType(t.value)}
-                                    className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${interviewType === t.value
-                                        ? 'bg-[#0F4C75] text-white border-[#0F4C75]'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:border-[#3282B8]'
-                                        }`}
-                                >
-                                    {t.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
 
                     {/* Employee Search & Selection */}
                     <div className="space-y-2">

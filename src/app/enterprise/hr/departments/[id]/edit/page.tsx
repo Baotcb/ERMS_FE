@@ -1,23 +1,30 @@
-import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+'use client'
+
+import { useParams } from 'next/navigation'
 import { DepartmentForm } from '@/features/hr/components/department/department-form'
-import { getDepartmentById } from '@/features/hr/api/department-service'
+import { useDepartment } from '@/features/hr/hooks/use-departments'
+import { Skeleton } from '@/components/ui/skeleton'
 
-export const metadata: Metadata = {
-    title: 'Chỉnh sửa phòng ban - HR Management',
-    description: 'Cập nhật thông tin phòng ban',
-}
+export default function EditDepartmentPage() {
+    const params = useParams<{ id: string }>()
+    const departmentId = parseInt(params.id)
+    const { department, isLoading } = useDepartment(departmentId)
 
-interface Props {
-    params: Promise<{ id: string }>
-}
-
-export default async function EditDepartmentPage({ params }: Props) {
-    const { id } = await params
-    const department = await getDepartmentById(parseInt(id)).catch(() => null)
+    if (isLoading) {
+        return (
+            <div className="space-y-4 p-6">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+        )
+    }
 
     if (!department) {
-        notFound()
+        return (
+            <div className="p-6 text-center text-slate-500">
+                Không tìm thấy phòng ban
+            </div>
+        )
     }
 
     return <DepartmentForm initialData={department} isEdit />
