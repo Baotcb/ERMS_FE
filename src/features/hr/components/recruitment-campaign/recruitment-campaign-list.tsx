@@ -1,19 +1,13 @@
 'use client'
 
 import { Suspense, useState, useCallback } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Plus, Search, RefreshCw, Filter } from 'lucide-react'
+import { Plus, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { mutate } from 'swr'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
     Dialog,
     DialogContent,
@@ -25,62 +19,56 @@ import { RecruitmentCampaignTable } from './recruitment-campaign-table'
 import { RecruitmentCampaignForm } from './recruitment-campaign-form'
 import { updateRecruitmentCampaignStatus } from '../../api/recruitment-campaign-service'
 import type { RecruitmentCampaign } from '../../types/recruitment-campaign-types'
+import { useRecruitmentCampaigns, campaignsKeys } from '../../hooks/use-recruitment-campaigns'
 import { ErrorDialog } from '@/components/common'
 
-interface RecruitmentCampaignListProps {
-    data: RecruitmentCampaign[]
-    totalCount: number
-    page: number
-    pageSize: number
-    totalPages: number
-}
+const STATUS_TABS = [
+    { value: 'All', label: 'Tất cả' },
+    { value: 'Open', label: 'Open' },
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Closed', label: 'Closed' },
+    { value: 'Archived', label: 'Archived' },
+] as const
 
-function RecruitmentCampaignListContent({
-    data,
-    totalCount,
-    page,
-    totalPages
-}: RecruitmentCampaignListProps) {
-    const router = useRouter()
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
+const PAGE_SIZE = 7
+
+function RecruitmentCampaignListContent() {
     const { toast } = useToast()
+
+    const [page, setPage] = useState(1)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [statusFilter, setStatusFilter] = useState('All')
 
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [selectedCampaign, setSelectedCampaign] = useState<RecruitmentCampaign | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
-
+    const [actionLoading, setActionLoading] = useState(false)
     const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string }>({ open: false, message: '' })
+
+    // SWR hook — client-side fetching
+    const { campaigns, totalCount, totalPages, isLoading } = useRecruitmentCampaigns({
+        page,
+        pageSize: PAGE_SIZE,
+        search: searchQuery || undefined,
+        status: statusFilter !== 'All' ? statusFilter : undefined,
+    })
+
+    const revalidate = useCallback(() => {
+        mutate(
+            (key: unknown) => Array.isArray(key) && key[0] === 'campaigns' && key[1] === 'list',
+            undefined,
+            { revalidate: true }
+        )
+    }, [])
 
     // Filters
     const handleSearch = (term: string) => {
-        const params = new URLSearchParams(searchParams)
-        if (term) {
-            params.set('search', term)
-        } else {
-            params.delete('search')
-        }
-        params.set('page', '1') // Reset to page 1
-        router.push(`${pathname}?${params.toString()}`)
+        setSearchQuery(term)
+        setPage(1)
     }
 
     const handleStatusFilter = (status: string) => {
-        const params = new URLSearchParams(searchParams)
-        if (status && status !== 'All') {
-            params.set('status', status)
-        } else {
-            params.delete('status')
-        }
-        params.set('page', '1')
-        router.push(`${pathname}?${params.toString()}`)
-    }
-
-    const handleRefresh = () => {
-        // Refresh server data
-        router.refresh()
-        toast({
-            description: 'Đã làm mới dữ liệu',
-        })
+        setStatusFilter(status)
+        setPage(1)
     }
 
     // Actions
@@ -95,17 +83,15 @@ function RecruitmentCampaignListContent({
     }, [])
 
     const handleDelete = useCallback(async (campaign: RecruitmentCampaign) => {
-        // ⚠️ Backend KHÔNG CÓ route DELETE cho campaign
-        // Thay vào đó, sử dụng đổi trạng thái sang Archived
         if (confirm(`Backend chưa hỗ trợ xóa chiến dịch. Bạn muốn chuyển "${campaign.campaignName}" sang trạng thái Archived?`)) {
             try {
-                setIsLoading(true)
+                setActionLoading(true)
                 await updateRecruitmentCampaignStatus(campaign.id, 'Archived')
                 toast({
                     title: 'Thành công',
                     description: 'Đã chuyển chiến dịch sang trạng thái Archived',
                 })
-                router.refresh()
+                revalidate()
             } catch (error) {
                 console.error(error)
                 const errorMessage = error instanceof Error ? error.message : 'Thao tác thất bại'
@@ -115,10 +101,10 @@ function RecruitmentCampaignListContent({
                     description: errorMessage,
                 })
             } finally {
-                setIsLoading(false)
+                setActionLoading(false)
             }
         }
-    }, [toast, router])
+    }, [toast, revalidate])
 
     const handleStatusChange = useCallback(async (id: string, status: string) => {
         try {
@@ -127,119 +113,133 @@ function RecruitmentCampaignListContent({
                 title: 'Thành công',
                 description: 'Đã cập nhật trạng thái chiến dịch',
             })
-            // Refresh server data
-            router.refresh()
+            revalidate()
         } catch (error) {
             console.error(error)
             const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái'
             setErrorDialog({ open: true, message })
         }
-    }, [toast, router])
+    }, [toast, revalidate])
 
     const handleSuccess = () => {
-        // Refresh server data
-        router.refresh()
+        revalidate()
         setIsDialogOpen(false)
     }
 
     return (
-        <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Chiến dịch tuyển dụng</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Quản lý các chiến dịch tuyển dụng nhân sự ({totalCount} chiến dịch)
-                    </p>
+        <div className="flex flex-col gap-6">
+            {/* Page Header */}
+            <div className="flex flex-col gap-1">
+                <h1 className="text-3xl font-bold tracking-tight text-[#0C4A6E]">
+                    Chiến dịch tuyển dụng
+                </h1>
+                <p className="text-[#0C4A6E]/70 text-base">
+                    Quản lý các chiến dịch tuyển dụng nhân sự ({totalCount} chiến dịch)
+                </p>
+            </div>
+
+            {/* Toolbar */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <Input
+                            placeholder="Tìm kiếm theo tên hoặc mã chiến dịch..."
+                            value={searchQuery}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-sky-200 focus-visible:border-sky-300"
+                        />
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex gap-1 p-1 bg-slate-50 rounded-xl">
+                        {STATUS_TABS.map((tab) => (
+                            <button
+                                key={tab.value}
+                                type="button"
+                                onClick={() => handleStatusFilter(tab.value)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${statusFilter === tab.value
+                                    ? 'bg-white shadow-sm text-[#0C4A6E]'
+                                    : 'text-slate-500 hover:text-[#0369A1]'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Refresh */}
+                    <button
+                        type="button"
+                        onClick={revalidate}
+                        disabled={isLoading}
+                        className="p-2.5 text-slate-400 hover:text-[#0369A1] hover:bg-sky-50 rounded-full transition-colors cursor-pointer disabled:opacity-50"
+                        title="Làm mới"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
                 </div>
-                <Button onClick={handleCreate} className="bg-[#22C55E] hover:bg-[#22C55E]/90 text-white shadow-sm">
+
+                {/* CTA Button */}
+                <Button
+                    onClick={handleCreate}
+                    className="bg-[#22C55E] hover:bg-green-600 text-white rounded-xl h-10 px-6 font-semibold text-sm shadow-md shadow-green-200 active:scale-95 transition-all w-full md:w-auto cursor-pointer"
+                >
                     <Plus className="w-4 h-4 mr-2" />
                     Tạo chiến dịch mới
                 </Button>
             </div>
 
-            <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col sm:flex-row gap-4 items-center">
-                <div className="relative flex-1 w-full">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                        placeholder="Tìm kiếm theo tên hoặc mã chiến dịch..."
-                        defaultValue={searchParams.get('search') || ''}
-                        onChange={() => {
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                handleSearch(e.currentTarget.value)
-                            }
-                        }}
-                        className="pl-10"
-                    />
+            {/* Data Table Card */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[500px]">
+                <div className="flex-1 overflow-x-auto">
+                    {isLoading ? (
+                        <div className="p-6 space-y-4">
+                            <Skeleton className="h-10 w-full rounded-lg" />
+                            <Skeleton className="h-16 w-full rounded-lg" />
+                            <Skeleton className="h-16 w-full rounded-lg" />
+                            <Skeleton className="h-16 w-full rounded-lg" />
+                            <Skeleton className="h-16 w-full rounded-lg" />
+                        </div>
+                    ) : (
+                        <RecruitmentCampaignTable
+                            campaigns={campaigns}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onStatusChange={handleStatusChange}
+                            isLoading={actionLoading}
+                        />
+                    )}
                 </div>
-                <div className="w-full sm:w-[200px]">
-                    <Select
-                        defaultValue={searchParams.get('status') || 'All'}
-                        onValueChange={handleStatusFilter}
-                    >
-                        <SelectTrigger>
-                            <div className="flex items-center gap-2">
-                                <Filter className="w-4 h-4 text-gray-500" />
-                                <SelectValue placeholder="Trạng thái" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="All">Tất cả trạng thái</SelectItem>
-                            <SelectItem value="Draft">Draft</SelectItem>
-                            <SelectItem value="Open">Open</SelectItem>
-                            <SelectItem value="Closed">Closed</SelectItem>
-                            <SelectItem value="Archived">Archived</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Button variant="outline" size="icon" onClick={handleRefresh} title="Làm mới">
-                    <RefreshCw className="w-4 h-4" />
-                </Button>
-            </div>
 
-            <div className="min-h-[500px]">
-                <RecruitmentCampaignTable
-                    campaigns={data}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onStatusChange={handleStatusChange}
-                    isLoading={isLoading}
-                />
-            </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-center space-x-2 py-4">
+                {/* Pagination - inside card */}
+                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => {
-                            const params = new URLSearchParams(searchParams)
-                            params.set('page', String(page - 1))
-                            router.push(`${pathname}?${params.toString()}`)
-                        }}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page <= 1}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
                     >
+                        <ChevronLeft className="w-4 h-4" />
                         Trước
                     </Button>
-                    <div className="text-sm font-medium">
+                    <span className="text-sm font-medium text-slate-600">
                         Trang {page} / {totalPages}
-                    </div>
+                    </span>
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        onClick={() => {
-                            const params = new URLSearchParams(searchParams)
-                            params.set('page', String(page + 1))
-                            router.push(`${pathname}?${params.toString()}`)
-                        }}
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                         disabled={page >= totalPages}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
                     >
                         Sau
+                        <ChevronRight className="w-4 h-4" />
                     </Button>
                 </div>
-            )}
+            </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
@@ -263,10 +263,11 @@ function RecruitmentCampaignListContent({
         </div>
     )
 }
-export function RecruitmentCampaignList(props: RecruitmentCampaignListProps) {
+
+export function RecruitmentCampaignList() {
     return (
         <Suspense>
-            <RecruitmentCampaignListContent {...props} />
+            <RecruitmentCampaignListContent />
         </Suspense>
     )
 }

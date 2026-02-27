@@ -121,7 +121,10 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                 )}
                                             </div>
                                         ) : (
-                                            <span className="text-sm text-slate-400 italic">Processing...</span>
+                                            <span className="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                Đang chấm điểm
+                                            </span>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-slate-600 font-mono text-xs">

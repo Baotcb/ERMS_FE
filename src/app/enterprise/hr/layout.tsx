@@ -6,7 +6,7 @@ export default function HRLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="flex bg-gray-50 min-h-screen">
+        <div className="flex min-h-screen" style={{ backgroundColor: '#F0F9FF' }}>
             <HRSidebar />
             <main className="flex-1 p-8 overflow-x-hidden">
                 {children}

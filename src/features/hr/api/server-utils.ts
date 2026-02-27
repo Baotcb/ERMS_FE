@@ -2,13 +2,15 @@ import { cookies } from 'next/headers'
 import { getDepartments, Department } from './department-service'
 import { getEmployees, Employee } from './employee-service'
 
+const DEFAULT_PAGE_SIZE = 7
+
 // Wrapper for Server Components
 export async function fetchDepartmentList(page: number) {
     try {
         const cookieStore = await cookies()
         const token = cookieStore.get('auth_token')?.value
 
-        const data = await getDepartments({ page, pageSize: 20 }, token)
+        const data = await getDepartments({ page, pageSize: DEFAULT_PAGE_SIZE }, token)
         return {
             items: data.items,
             totalCount: data.totalCount,
@@ -22,7 +24,7 @@ export async function fetchDepartmentList(page: number) {
             items: [] as Department[],
             totalCount: 0,
             page: 1,
-            pageSize: 20,
+            pageSize: DEFAULT_PAGE_SIZE,
             totalPages: 1
         }
     }
@@ -33,7 +35,7 @@ export async function fetchEmployeeList(page: number) {
         const cookieStore = await cookies()
         const token = cookieStore.get('auth_token')?.value
 
-        const data = await getEmployees({ page, pageSize: 20 }, token)
+        const data = await getEmployees({ page, pageSize: DEFAULT_PAGE_SIZE }, token)
         return {
             items: data.items,
             totalCount: data.totalCount,
@@ -47,8 +49,9 @@ export async function fetchEmployeeList(page: number) {
             items: [] as Employee[],
             totalCount: 0,
             page: 1,
-            pageSize: 20,
+            pageSize: DEFAULT_PAGE_SIZE,
             totalPages: 1
         }
     }
 }
+

@@ -12,14 +12,14 @@ export interface ProposalItem {
     budget: number // Added budget for display
 }
 
-// ... existing interfaces ...
-
-export interface ShortlistedCandidate {
+export interface ShortlistedPosition {
     id: string
-    name: string
-    position: string
-    status: 'interview' | 'offer' | 'screening'
-    priority: 'urgent' | 'normal'
+    positionTitle: string
+    quantity: number
+    priority: 'Normal' | 'High' | 'Urgent'
+    planName: string
+    planId: string
+    status?: string
 }
 
 export interface TrainingRequest {
@@ -36,6 +36,15 @@ export interface ChartData {
     color: string
 }
 
+interface PlanDetailDto {
+    id: string
+    recruitmentPlanId: string
+    positionTitle: string
+    quantity: number
+    priority: string
+    status?: string
+}
+
 export async function getProposals(): Promise<ProposalItem[]> {
     try {
         const res = await apiClient.get('/api/RecruitmentPlans?Page=1&PageSize=5')
@@ -49,7 +58,7 @@ export async function getProposals(): Promise<ProposalItem[]> {
             id: plan.id,
             title: plan.planName,
             position: plan.planCode,
-            quantity: 0, // Plan list doesn't have total qty usually
+            quantity: 0,
             status: plan.status,
             date: format(new Date(plan.createdAt), 'dd/MM/yyyy'),
             budget: plan.totalBudget
@@ -60,13 +69,50 @@ export async function getProposals(): Promise<ProposalItem[]> {
     }
 }
 
-export async function getShortlistedCandidates(): Promise<ShortlistedCandidate[]> {
-    return [
-        { id: '1', name: 'Nguyễn Văn A', position: 'Flutter Dev', status: 'interview', priority: 'urgent' },
-        { id: '2', name: 'Trần Thị B', position: 'Kế toán viên', status: 'screening', priority: 'normal' },
-        { id: '3', name: 'Lê Văn C', position: 'Sales Executive', status: 'offer', priority: 'urgent' },
-        { id: '4', name: 'Phạm Thị D', position: 'Flutter Dev', status: 'interview', priority: 'normal' },
-    ]
+/**
+ * Lấy danh sách vị trí tuyển dụng từ kế hoạch đã duyệt (Approved)
+ * Backend: GET /api/RecruitmentPlans (DeptHead có quyền)
+ *        + GET /api/plan-details?recruitmentPlanId={id}
+ */
+export async function getShortlistedPositions(): Promise<ShortlistedPosition[]> {
+    try {
+        // 1. Lấy danh sách plans đã duyệt
+        const plansRes = await apiClient.get('/api/RecruitmentPlans?Page=1&PageSize=10&Status=Approved')
+        if (!plansRes.ok) return []
+        const plansData = await plansRes.json()
+        const plans: RecruitmentPlan[] = plansData.items || []
+
+        if (plans.length === 0) return []
+
+        // 2. Lấy plan details của từng plan (tối đa 3 plans gần nhất)
+        const recentPlans = plans.slice(0, 3)
+        const detailsPromises = recentPlans.map(async (plan) => {
+            try {
+                const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`)
+                if (!res.ok) return []
+                const details: PlanDetailDto[] = await res.json()
+                return details
+                    .filter((d) => d.status === 'Approved')
+                    .map((d) => ({
+                        id: d.id,
+                        positionTitle: d.positionTitle,
+                        quantity: d.quantity,
+                        priority: d.priority as ShortlistedPosition['priority'],
+                        planName: plan.planName,
+                        planId: plan.id,
+                        status: d.status,
+                    }))
+            } catch {
+                return []
+            }
+        })
+
+        const allDetails = await Promise.all(detailsPromises)
+        return allDetails.flat().slice(0, 5) // Tối đa 5 vị trí cho dashboard
+    } catch (error) {
+        console.error('Failed to fetch shortlisted positions', error)
+        return []
+    }
 }
 
 export async function getTrainingRequests(): Promise<TrainingRequest[]> {

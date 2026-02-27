@@ -7,12 +7,12 @@ import {
 } from '@/components/common/dashboard/widget-containers'
 import {
     getProposals,
-    getShortlistedCandidates,
+    getShortlistedPositions,
     getTrainingRequests,
     getRecruitmentProgress,
     getTrainingCompletion,
     ProposalItem,
-    ShortlistedCandidate,
+    ShortlistedPosition,
     TrainingRequest,
     ChartData
 } from '../api/dept-head-service'
@@ -64,20 +64,31 @@ function ProposalItemRow({ item }: { item: ProposalItem }) {
     )
 }
 
-function ShortlistedCandidateRow({ item }: { item: ShortlistedCandidate }) {
+function ShortlistedPositionRow({ item }: { item: ShortlistedPosition }) {
+    const priorityStyles: Record<string, string> = {
+        Urgent: 'bg-red-100 text-red-600',
+        High: 'bg-yellow-100 text-yellow-600',
+        Normal: 'bg-gray-100 text-gray-600',
+    }
+    const priorityLabels: Record<string, string> = {
+        Urgent: 'Khẩn cấp',
+        High: 'Cao',
+        Normal: 'Bình thường',
+    }
+
     return (
         <div className="flex items-center gap-3 group cursor-pointer border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-            <div className="w-8 h-8 rounded-full bg-blue-50 text-[#0F4C75] flex items-center justify-center text-xs font-bold">
-                {item.name.substring(0, 1)}
+            <div className="w-8 h-8 rounded-lg bg-[#BBE1FA]/30 text-[#0F4C75] flex items-center justify-center text-xs font-bold">
+                {item.quantity}
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#0F4C75] transition-colors">
-                    {item.name}
+                    {item.positionTitle}
                 </p>
-                <p className="text-xs text-gray-400">{item.position}</p>
+                <p className="text-xs text-gray-400 line-clamp-1">{item.planName}</p>
             </div>
-            <Badge variant="secondary" className="text-[10px] whitespace-nowrap">
-                {item.status === 'interview' ? 'Phỏng vấn' : item.status === 'offer' ? 'Offer' : 'Sơ loại'}
+            <Badge variant="secondary" className={`text-[10px] whitespace-nowrap ${priorityStyles[item.priority] || ''}`}>
+                {priorityLabels[item.priority] || item.priority}
             </Badge>
         </div>
     )
@@ -100,7 +111,7 @@ function TrainingRequestRow({ item }: { item: TrainingRequest }) {
 
 type DashboardData = {
     proposals: ProposalItem[]
-    candidates: ShortlistedCandidate[]
+    positions: ShortlistedPosition[]
     trainingRequests: TrainingRequest[]
     recruitmentData: ChartData[]
     trainingData: ChartData[]
@@ -108,7 +119,7 @@ type DashboardData = {
 
 const initialDashboardData: DashboardData = {
     proposals: [],
-    candidates: [],
+    positions: [],
     trainingRequests: [],
     recruitmentData: [],
     trainingData: [],
@@ -119,14 +130,14 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
 
     useEffect(() => {
         const loadData = async () => {
-            const [proposals, candidates, trainingRequests, recruitmentData, trainingData] = await Promise.all([
+            const [proposals, positions, trainingRequests, recruitmentData, trainingData] = await Promise.all([
                 getProposals(),
-                getShortlistedCandidates(),
+                getShortlistedPositions(),
                 getTrainingRequests(),
                 getRecruitmentProgress(),
                 getTrainingCompletion()
             ])
-            dispatch({ proposals, candidates, trainingRequests, recruitmentData, trainingData })
+            dispatch({ proposals, positions, trainingRequests, recruitmentData, trainingData })
         }
         loadData()
     }, [])
@@ -149,10 +160,10 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
                 />
 
                 <DashboardListWidget
-                    title="Ứng viên chờ phỏng vấn"
-                    subtitle="Chiến dịch hiện tại"
-                    items={data.candidates}
-                    renderItem={(item) => <ShortlistedCandidateRow item={item} />}
+                    title="Vị trí đang tuyển"
+                    subtitle="Kế hoạch đã duyệt"
+                    items={data.positions}
+                    renderItem={(item) => <ShortlistedPositionRow item={item} />}
                 />
 
                 <DashboardListWidget
