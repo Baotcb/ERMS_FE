@@ -14,7 +14,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { useAssignInterviewer } from '../../hooks/use-interview'
-import type { AssignInterviewerRequest } from '../../types/interview-types'
+
 
 export interface AssignedInterviewer {
     id: string

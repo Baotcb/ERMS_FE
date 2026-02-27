@@ -99,7 +99,7 @@ export function CompanyDetailView({ id }: CompanyDetailViewProps) {
                                 alt={company.enterpriseName}
                                 fill
                                 sizes="128px"
-                                className="object-cover"
+                                className="object-contain p-1.5"
                             />
                         </div>
                         <div className="flex-1">

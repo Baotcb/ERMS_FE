@@ -15,7 +15,7 @@ export async function getMyInterviews(
     const searchParams = new URLSearchParams()
     if (params?.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))
     if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize))
-    if (params?.status) searchParams.set('status', params.status)
+    if (params?.status) searchParams.set('statusFilter', params.status)
 
     const response = await apiClient.get(
         `${APPLICATIONS_URL}/my-interviews?${searchParams}`

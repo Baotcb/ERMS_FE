@@ -11,7 +11,36 @@ import type {
     SubmitFeedbackResult,
     SubmitFinalDecisionRequest,
     SubmitFinalDecisionResult,
+    InterviewsForFeedbackResponse,
+    InterviewFeedbackDetailResponse,
 } from '../types/interview-types'
+
+// ===== DeptHead: danh sách interviews chờ quyết định =====
+export function useInterviewsForFeedback(params?: {
+    pageNumber?: number
+    pageSize?: number
+}) {
+    const key = [
+        '/api/applications/department/interviews-feedback',
+        params?.pageNumber,
+        params?.pageSize,
+    ]
+
+    return useSWR<InterviewsForFeedbackResponse, Error>(
+        key,
+        () => service.getInterviewsForFeedback(params),
+        { revalidateOnFocus: false }
+    )
+}
+
+// ===== DeptHead: chi tiết interview feedback =====
+export function useInterviewFeedbackDetail(interviewId: string | null) {
+    return useSWR<InterviewFeedbackDetailResponse, Error>(
+        interviewId ? `/api/applications/department/interviews-feedback/${interviewId}` : null,
+        () => service.getInterviewFeedbackById(interviewId!),
+        { revalidateOnFocus: false }
+    )
+}
 
 // ===== Shortlisted candidates =====
 export function useShortlistedApplications(

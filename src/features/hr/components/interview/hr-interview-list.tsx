@@ -8,24 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ConfirmScheduleDialog } from './confirm-schedule-dialog'
-
-// Types tạm (sẽ dùng API GET khi backend có)
-interface InterviewItem {
-    interviewId: string
-    applicationId: string
-    candidateName: string
-    candidateEmail?: string
-    jobTitle: string
-    interviewType: string
-    interviewFormat: 'Online' | 'Offline'
-    roundNumber: number
-    scheduledAt?: string
-    duration: number
-    location?: string
-    meetingLink?: string
-    status: string // PendingSchedule | Scheduled | Completed | Cancelled
-    interviewerNames: string[]
-}
+import { useAllInterviews } from '../../hooks/use-interview'
+import type { InterviewDto } from '../../types/interview-types'
 
 function StatusBadge({ status }: { status: string }) {
     const config: Record<string, { label: string; className: string }> = {
@@ -48,23 +32,26 @@ const STATUS_TABS = [
 export function HRInterviewList() {
     const [statusFilter, setStatusFilter] = useState('')
     const [search, setSearch] = useState('')
-    const [scheduleDialog, setScheduleDialog] = useState<{ open: boolean; item: InterviewItem | null }>({ open: false, item: null })
+    const [scheduleDialog, setScheduleDialog] = useState<{ open: boolean; item: InterviewDto | null }>({ open: false, item: null })
 
-    // TODO: Replace with actual API call when backend supports GET interviews for HR
-    const interviews: InterviewItem[] = []
-    const isLoading = false
-    const hasError = false
-
-    const filteredInterviews = interviews.filter(i => {
-        if (statusFilter && i.status !== statusFilter) return false
-        if (search) {
-            const q = search.toLowerCase()
-            return i.candidateName.toLowerCase().includes(q) || i.jobTitle.toLowerCase().includes(q)
-        }
-        return true
+    // Real API call
+    const { data, isLoading, error, mutate } = useAllInterviews({
+        pageNumber: 1,
+        pageSize: 50,
+        statusFilter: statusFilter || undefined,
     })
 
-    const handleScheduleClick = (item: InterviewItem) => {
+    const interviews = data?.items ?? []
+    const hasError = !!error
+
+    // Client-side search filter (search by candidate name or job title)
+    const filteredInterviews = interviews.filter(i => {
+        if (!search) return true
+        const q = search.toLowerCase()
+        return i.candidateName.toLowerCase().includes(q) || i.jobTitle.toLowerCase().includes(q)
+    })
+
+    const handleScheduleClick = (item: InterviewDto) => {
         setScheduleDialog({ open: true, item })
     }
 
@@ -165,10 +152,10 @@ export function HRInterviewList() {
                                         </div>
 
                                         {/* Interviewers */}
-                                        {item.interviewerNames.length > 0 && (
+                                        {item.participants.length > 0 && (
                                             <div className="flex items-center gap-1.5 text-xs text-slate-500">
                                                 <Users className="w-3.5 h-3.5" />
-                                                <span>PV: {item.interviewerNames.join(', ')}</span>
+                                                <span>PV: {item.participants.map(p => p.employeeName).join(', ')}</span>
                                             </div>
                                         )}
 
@@ -189,7 +176,7 @@ export function HRInterviewList() {
                                                         : <Building2 className="w-4 h-4 text-orange-400" />
                                                     }
                                                     {item.interviewFormat === 'Online'
-                                                        ? (item.meetingLink ? 'Zoom' : 'Online')
+                                                        ? (item.meetingLink ? 'Online' : 'Online')
                                                         : (item.location || 'Tại văn phòng')
                                                     }
                                                 </span>
@@ -238,10 +225,10 @@ export function HRInterviewList() {
                     onOpenChange={(open) => setScheduleDialog(prev => ({ ...prev, open }))}
                     applicationId={scheduleDialog.item.applicationId}
                     candidateName={scheduleDialog.item.candidateName}
-                    interviewerNames={scheduleDialog.item.interviewerNames}
+                    interviewerNames={scheduleDialog.item.participants.map(p => p.employeeName)}
                     onSuccess={() => {
                         setScheduleDialog({ open: false, item: null })
-                        // TODO: mutate/refresh list
+                        mutate()
                     }}
                 />
             )}

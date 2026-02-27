@@ -1,7 +1,9 @@
 'use client'
 
 import { use } from 'react'
+import { useInterviewFeedbackDetail } from '@/features/dept-head/hooks/use-interview'
 import { FinalDecisionPage } from '@/features/dept-head/components/interview/final-decision-page'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 interface PageProps {
     params: Promise<{ applicationId: string }>
@@ -13,17 +15,61 @@ export default function DecisionPage({ params, searchParams }: PageProps) {
     const query = use(searchParams)
     const interviewId = query.interviewId ?? ''
 
-    // In a real implementation, these would come from API data
-    // For now, we pass placeholder data; the component will be enhanced later
+    // Fetch real feedback từ backend
+    const { data, isLoading, error } = useInterviewFeedbackDetail(interviewId || null)
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center space-y-3">
+                    <Loader2 className="w-8 h-8 text-[#0F4C75] animate-spin mx-auto" />
+                    <p className="text-sm text-slate-500">Đang tải dữ liệu đánh giá...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="bg-white rounded-xl border border-red-200 p-8 text-center max-w-md">
+                    <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+                    <p className="text-sm text-red-600 font-medium">Không thể tải đánh giá</p>
+                    <p className="text-xs text-red-400 mt-1">{error.message}</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Map feedback data từ backend sang format FinalDecisionPage expect
+    const feedbacks = (data?.participantsFeedback ?? []).map(pf => ({
+        participantName: pf.employeeName,
+        position: pf.role,
+        rating: pf.rating ?? 0,
+        feedback: pf.feedback ?? 'Không có nhận xét',
+        recommendation: (pf.recommendation ?? 'Consider') as 'Hire' | 'Consider' | 'Reject',
+    }))
+
     return (
         <FinalDecisionPage
             applicationId={applicationId}
             interviewId={interviewId}
-            candidateName={query.candidateName ?? 'Ứng viên'}
-            jobTitle={query.jobTitle ?? ''}
+            candidateName={data?.candidateName ?? query.candidateName ?? 'Ứng viên'}
+            jobTitle={data?.jobTitle ?? query.jobTitle ?? ''}
             candidateStage={query.stage}
+            roundLabel={
+                data
+                    ? `Vòng ${data.roundNumber} — ${data.interviewType}`
+                    : query.roundLabel
+            }
+            interviewDate={
+                data?.completedAt
+                    ? new Date(data.completedAt).toLocaleDateString('vi-VN')
+                    : query.interviewDate
+            }
+            interviewFormat={query.interviewFormat}
             resumeUrl={query.resumeUrl}
-            feedbacks={[]}
+            feedbacks={feedbacks}
         />
     )
 }

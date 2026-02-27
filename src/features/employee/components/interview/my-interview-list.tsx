@@ -184,7 +184,7 @@ export function MyInterviewList() {
                                         </Button>
                                     )}
 
-                                    {interview.status === 'Scheduled' && !interview.hasFeedbackSubmitted && (
+                                    {interview.status === 'Scheduled' && !interview.hasSubmittedFeedback && (
                                         <Button
                                             size="sm"
                                             className="text-xs bg-[#0F4C75] hover:bg-[#3282B8]"
@@ -195,7 +195,7 @@ export function MyInterviewList() {
                                         </Button>
                                     )}
 
-                                    {interview.hasFeedbackSubmitted && (
+                                    {interview.hasSubmittedFeedback && (
                                         <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                                             <CheckCircle2 className="w-3 h-3 mr-1" />
                                             Đã đánh giá

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { Search, Users, Briefcase, ChevronRight, Loader2 } from 'lucide-react'
@@ -85,12 +85,10 @@ export default function ShortlistedOverviewPage() {
         p.planCode.toLowerCase().includes(search.toLowerCase())
     )
 
-    // Auto-select first plan if none selected
-    useEffect(() => {
-        if (!selectedPlanId && filteredPlans.length > 0) {
-            setSelectedPlanId(filteredPlans[0].id)
-        }
-    }, [selectedPlanId, filteredPlans])
+    // Auto-select first plan if none selected (React: adjust state during render)
+    if (!selectedPlanId && filteredPlans.length > 0) {
+        setSelectedPlanId(filteredPlans[0].id)
+    }
 
     const planDetails = Array.isArray(details) ? details : []
 

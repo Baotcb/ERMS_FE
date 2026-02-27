@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { useConfirmSchedule } from '@/features/hr/hooks/use-interview'
-import type { InterviewFormat } from '@/features/hr/types/interview-types'
 
 interface ConfirmScheduleDialogProps {
     open: boolean
@@ -39,7 +38,7 @@ export function ConfirmScheduleDialog({
     const { toast } = useToast()
     const { trigger, isMutating } = useConfirmSchedule()
 
-    const [format, setFormat] = useState<InterviewFormat>('Online')
+    const [format, setFormat] = useState<'Online' | 'Offline'>('Online')
     const [date, setDate] = useState('')
     const [time, setTime] = useState('14:00')
     const [duration, setDuration] = useState('60')
@@ -68,11 +67,11 @@ export function ConfirmScheduleDialog({
         try {
             await trigger({
                 applicationId,
-                interviewFormat: format,
+                interviewFormat: format === 'Online' ? 0 : 1,
                 scheduledAt,
                 duration: Number(duration),
-                meetingLink: format === 'Online' ? meetingLink : undefined,
-                location: format === 'Offline' ? location : undefined,
+                meetingLink: format === 'Online' ? meetingLink || undefined : undefined,
+                location: format === 'Offline' ? location || undefined : undefined,
             })
             toast({
                 title: 'Đã xác nhận lịch phỏng vấn',

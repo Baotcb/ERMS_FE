@@ -9,10 +9,48 @@ import type {
     SubmitFeedbackResult,
     SubmitFinalDecisionRequest,
     SubmitFinalDecisionResult,
+    InterviewsForFeedbackResponse,
+    InterviewFeedbackDetailResponse,
 } from '../types/interview-types'
 
 const APPLICATIONS_URL = '/api/applications'
 const PLAN_DETAILS_URL = '/api/plan-details'
+
+// ===== GET interviews awaiting feedback review (DeptHead) =====
+// Backend: GET /api/applications/department/interviews-feedback
+export async function getInterviewsForFeedback(params?: {
+    pageNumber?: number
+    pageSize?: number
+}): Promise<InterviewsForFeedbackResponse> {
+    const searchParams = new URLSearchParams()
+    if (params?.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))
+    if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize))
+
+    const qs = searchParams.toString()
+    const url = `${APPLICATIONS_URL}/department/interviews-feedback${qs ? `?${qs}` : ''}`
+
+    const response = await apiClient.get(url)
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error((err as { message?: string }).message || 'Không thể tải danh sách phỏng vấn')
+    }
+    return response.json()
+}
+
+// ===== GET detailed interview feedback by ID (DeptHead) =====
+// Backend: GET /api/applications/department/interviews-feedback/{id}
+export async function getInterviewFeedbackById(
+    interviewId: string
+): Promise<InterviewFeedbackDetailResponse> {
+    const response = await apiClient.get(
+        `${APPLICATIONS_URL}/department/interviews-feedback/${interviewId}`
+    )
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error((err as { message?: string }).message || 'Không thể tải chi tiết đánh giá')
+    }
+    return response.json()
+}
 
 // ===== GET shortlisted candidates =====
 // Backend: GET /api/plan-details/{planDetailId}/shortlisted

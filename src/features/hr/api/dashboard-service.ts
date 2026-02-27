@@ -126,7 +126,7 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
         )
 
         // Batch fetch cho plans thiếu details (vẫn parallel nhưng giới hạn)
-        let fetchedDetailsMap: Record<string, RecruitmentPlanDetail[]> = {}
+        const fetchedDetailsMap: Record<string, RecruitmentPlanDetail[]> = {}
         if (plansNeedingDetails.length > 0) {
             const results = await Promise.allSettled(
                 plansNeedingDetails.map(async (plan) => {

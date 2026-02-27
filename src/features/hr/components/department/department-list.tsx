@@ -21,7 +21,7 @@ export const DepartmentList = memo(function DepartmentList() {
     const [page, setPage] = useState(1)
     const [searchQuery, setSearchQuery] = useState('')
 
-    const { data, departments, totalCount, totalPages, isLoading } = useDepartments({
+    const { departments, totalCount, totalPages, isLoading } = useDepartments({
         page: page,
         pageSize: 7,
         search: searchQuery || undefined

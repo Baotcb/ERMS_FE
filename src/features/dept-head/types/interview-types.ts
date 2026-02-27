@@ -1,5 +1,55 @@
 // Types cho interview workflow — maps to backend Commands/Results
 
+// ===== GET /api/applications/department/interviews-feedback (DeptHead list) =====
+export interface InterviewFeedbackSummaryDto {
+    interviewId: string
+    applicationId: string
+    candidateName: string
+    candidateEmail: string
+    jobTitle: string
+    interviewType: string
+    roundNumber: number
+    completedAt: string | null
+    feedbacksReceived: number
+    totalInterviewers: number
+    departmentHeadDecision: string | null
+}
+
+export interface InterviewsForFeedbackResponse {
+    items: InterviewFeedbackSummaryDto[]
+    totalCount: number
+    pageNumber: number
+    pageSize: number
+}
+
+// ===== GET /api/applications/department/interviews-feedback/{id} (Detail) =====
+export interface ParticipantFeedbackDto {
+    participantId: string
+    employeeName: string
+    role: string
+    rating: number | null
+    feedback: string | null
+    recommendation: string | null      // 'Hire' | 'Consider' | 'Reject'
+    feedbackSubmittedAt: string | null
+}
+
+export interface InterviewFeedbackDetailResponse {
+    interviewId: string
+    applicationId: string
+    candidateName: string
+    candidateEmail: string
+    jobTitle: string
+    departmentId: number | null
+    interviewType: string
+    roundNumber: number
+    completedAt: string | null
+    departmentHeadDecision: string | null
+    departmentHeadOverallRating: number | null
+    departmentHeadOverallFeedback: string | null
+    departmentHeadNote: string | null
+    participantsFeedback: ParticipantFeedbackDto[]
+}
+
 // ===== Shortlisted Applications =====
 export interface ShortlistedApplicationDto {
     applicationId: string

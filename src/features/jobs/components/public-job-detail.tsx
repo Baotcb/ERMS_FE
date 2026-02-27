@@ -420,7 +420,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                         alt={job.enterpriseName}
                                         fill
                                         sizes="80px"
-                                        className="object-cover"
+                                        className="object-contain p-1"
                                     />
                                 </div>
                                 <h3 className="font-bold text-[15px] text-[#212f3f] leading-tight line-clamp-2">

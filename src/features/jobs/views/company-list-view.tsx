@@ -105,7 +105,7 @@ export function CompanyListView() {
                                                 alt={company.enterpriseName}
                                                 fill
                                                 sizes="64px"
-                                                className="object-cover"
+                                                className="object-contain p-1"
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">

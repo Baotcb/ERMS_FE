@@ -19,7 +19,7 @@ import { RecruitmentCampaignTable } from './recruitment-campaign-table'
 import { RecruitmentCampaignForm } from './recruitment-campaign-form'
 import { updateRecruitmentCampaignStatus } from '../../api/recruitment-campaign-service'
 import type { RecruitmentCampaign } from '../../types/recruitment-campaign-types'
-import { useRecruitmentCampaigns, campaignsKeys } from '../../hooks/use-recruitment-campaigns'
+import { useRecruitmentCampaigns } from '../../hooks/use-recruitment-campaigns'
 import { ErrorDialog } from '@/components/common'
 
 const STATUS_TABS = [

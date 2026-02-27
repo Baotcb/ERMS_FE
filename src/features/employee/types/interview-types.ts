@@ -15,10 +15,9 @@ export interface MyInterviewDto {
     location?: string
     meetingLink?: string
     status: string                   // PendingSchedule | Scheduled | Completed | Cancelled
-    participantRole: string          // "Interviewer"
-    confirmationStatus: string       // "Pending" | "Confirmed"
-    hasFeedbackSubmitted: boolean
-    feedbackSubmittedAt?: string
+    myRole: string                   // "Interviewer" (backend field name)
+    myConfirmationStatus: string     // "Pending" | "Confirmed" (backend field name)
+    hasSubmittedFeedback: boolean    // backend field name
 }
 
 export interface MyInterviewsResponse {

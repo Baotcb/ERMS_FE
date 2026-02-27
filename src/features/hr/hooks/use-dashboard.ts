@@ -74,7 +74,7 @@ async function fetchRequests(): Promise<RequestItem[]> {
             p => p.planDetails && Array.isArray(p.planDetails) && p.planDetails.length > 0
         )
 
-        let fetchedDetailsMap: Record<string, RecruitmentPlanDetail[]> = {}
+        const fetchedDetailsMap: Record<string, RecruitmentPlanDetail[]> = {}
         if (plansNeedingDetails.length > 0) {
             const results = await Promise.allSettled(
                 plansNeedingDetails.map(async (plan) => {

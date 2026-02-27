@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useState, useCallback, useMemo } from 'react'
+import { memo, useState, useCallback } from 'react'
 import { Plus, Search, RefreshCw, Upload, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,7 +58,7 @@ export const EmployeeList = memo(function EmployeeList() {
     }
 
     // Use SWR hook for data fetching
-    const { data, employees, totalCount: hookedTotalCount, totalPages: hookedTotalPages, isLoading } = useEmployees({
+    const { employees, totalCount: hookedTotalCount, totalPages: hookedTotalPages, isLoading } = useEmployees({
         page: page,
         pageSize: PAGE_SIZE,
         search: debouncedSearch || undefined,

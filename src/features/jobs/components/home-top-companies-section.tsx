@@ -148,7 +148,7 @@ export function TopCompaniesSection() {
                                                     alt={featuredCompany.enterpriseName}
                                                     fill
                                                     sizes="96px"
-                                                    className="object-cover"
+                                                    className="object-contain p-1.5"
                                                 />
                                             </div>
 
@@ -264,7 +264,7 @@ function CompanyCard({ company }: { company: CompanyData }) {
                         alt={company.enterpriseName}
                         fill
                         sizes="60px"
-                        className="object-cover"
+                        className="object-contain p-1"
                     />
                 </div>
 
