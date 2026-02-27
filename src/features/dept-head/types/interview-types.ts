@@ -21,8 +21,8 @@ export interface ShortlistedApplicationDto {
 }
 
 export interface ShortlistedResponse {
-    jobPostingId: string
-    jobTitle: string
+    planDetailId: string
+    positionTitle: string
     items: ShortlistedApplicationDto[]
     totalCount: number
     pageNumber: number

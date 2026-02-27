@@ -15,7 +15,7 @@ import { AssignInterviewerDialog } from './assign-interviewer-dialog'
 import type { ShortlistedApplicationDto } from '../../types/interview-types'
 
 interface ShortlistedListProps {
-    jobPostingId: string
+    planDetailId: string
 }
 
 function AiScoreBadge({ score }: { score?: number }) {
@@ -51,13 +51,13 @@ function SkillPills({ skills, variant }: { skills?: string; variant: 'match' | '
     )
 }
 
-export function ShortlistedList({ jobPostingId }: ShortlistedListProps) {
+export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
     const router = useRouter()
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [assignTarget, setAssignTarget] = useState<ShortlistedApplicationDto | null>(null)
 
-    const { data, isLoading, mutate } = useShortlistedApplications(jobPostingId, {
+    const { data, isLoading, mutate } = useShortlistedApplications(planDetailId, {
         pageNumber: page,
         pageSize: 20,
     })
@@ -85,7 +85,7 @@ export function ShortlistedList({ jobPostingId }: ShortlistedListProps) {
                     <div>
                         <h1 className="text-2xl font-bold text-[#0F4C75]">Ứng viên đã sơ tuyển</h1>
                         <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                            <span className="font-medium">{data?.jobTitle || 'Đang tải...'}</span>
+                            <span className="font-medium">{data?.positionTitle || 'Đang tải...'}</span>
                             <span>•</span>
                             <Badge variant="outline" className="bg-[#BBE1FA]/30 text-[#0F4C75] border-[#BBE1FA]">
                                 {data?.totalCount ?? 0} ứng viên

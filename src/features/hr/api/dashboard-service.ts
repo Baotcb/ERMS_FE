@@ -129,8 +129,8 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
         let fetchedDetailsMap: Record<string, RecruitmentPlanDetail[]> = {}
         if (plansNeedingDetails.length > 0) {
             const results = await Promise.allSettled(
-                plansNeedingDetails.slice(0, 3).map(async (plan) => {
-                    const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`)
+                plansNeedingDetails.map(async (plan) => {
+                    const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`, { headers })
                     if (!res.ok) return { planId: plan.id, details: [] as RecruitmentPlanDetail[] }
                     const d = await res.json()
                     return {
@@ -154,6 +154,8 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
                 : (fetchedDetailsMap[plan.id] || [])
 
             if (details.length > 0) {
+                // Chỉ hiển thị planDetail status 'Approved' — chưa có JobPosting, sẵn sàng tạo tin
+                // 'Recruiting' = đã có JobPosting active, không cần tạo thêm
                 const approvedDetails = details.filter((d) => d.status === 'Approved')
                 approvedDetails.forEach((detail) => {
                     const isUrgent = detail.priority === 'Urgent' || detail.priority === 'High'

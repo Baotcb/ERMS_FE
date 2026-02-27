@@ -13,15 +13,15 @@ import type {
 
 // ===== Shortlisted candidates =====
 export function useShortlistedApplications(
-    jobPostingId: string | null,
+    planDetailId: string | null,
     params?: { pageNumber?: number; pageSize?: number }
 ) {
-    const key = jobPostingId
-        ? [`/api/job-postings/${jobPostingId}/shortlisted`, params?.pageNumber, params?.pageSize]
+    const key = planDetailId
+        ? [`/api/plan-details/${planDetailId}/shortlisted`, params?.pageNumber, params?.pageSize]
         : null
 
     return useSWR<ShortlistedResponse>(key, () =>
-        service.getShortlistedApplications(jobPostingId!, params)
+        service.getShortlistedApplications(planDetailId!, params)
     )
 }
 

@@ -16,7 +16,6 @@ interface PlanDetailItem {
     priority: 'Normal' | 'High' | 'Urgent'
     requiredSkills?: string
     status?: string
-    jobPostingId?: string
 }
 
 interface RecruitmentPlanItem {
@@ -200,16 +199,10 @@ export default function ShortlistedOverviewPage() {
                                 {approvedDetails.map(detail => (
                                     <button
                                         key={detail.id}
-                                        onClick={() => {
-                                            if (detail.jobPostingId) {
-                                                router.push(`/enterprise/dept-head/shortlisted/${detail.jobPostingId}`)
-                                            }
-                                        }}
-                                        disabled={!detail.jobPostingId}
-                                        className={`w-full text-left p-5 transition-all group ${detail.jobPostingId
-                                            ? 'hover:bg-slate-50 cursor-pointer'
-                                            : 'opacity-60 cursor-not-allowed'
-                                            }`}
+                                        onClick={() =>
+                                            router.push(`/enterprise/dept-head/shortlisted/${detail.id}`)
+                                        }
+                                        className={`w-full text-left p-5 transition-all group hover:bg-slate-50 cursor-pointer`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1 min-w-0">
@@ -242,19 +235,11 @@ export default function ShortlistedOverviewPage() {
                                             </div>
 
                                             <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                                                {detail.jobPostingId ? (
-                                                    <>
-                                                        <Badge className="bg-[#BBE1FA]/30 text-[#0F4C75] border-[#BBE1FA] text-xs">
-                                                            <Users className="w-3 h-3 mr-1" />
-                                                            Xem ứng viên
-                                                        </Badge>
-                                                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#0F4C75] transition-colors" />
-                                                    </>
-                                                ) : (
-                                                    <Badge variant="outline" className="text-xs text-slate-400 border-slate-200">
-                                                        Chưa đăng tuyển
-                                                    </Badge>
-                                                )}
+                                                <Badge className="bg-[#BBE1FA]/30 text-[#0F4C75] border-[#BBE1FA] text-xs">
+                                                    <Users className="w-3 h-3 mr-1" />
+                                                    Xem ứng viên
+                                                </Badge>
+                                                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#0F4C75] transition-colors" />
                                             </div>
                                         </div>
                                     </button>

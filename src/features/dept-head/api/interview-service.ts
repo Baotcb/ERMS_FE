@@ -10,12 +10,12 @@ import type {
 } from '../types/interview-types'
 
 const APPLICATIONS_URL = '/api/applications'
-const JOB_POSTINGS_URL = '/api/job-postings'
+const PLAN_DETAILS_URL = '/api/plan-details'
 
 // ===== GET shortlisted candidates =====
-// Backend: GET /api/job-postings/{id}/shortlisted
+// Backend: GET /api/plan-details/{planDetailId}/shortlisted
 export async function getShortlistedApplications(
-    jobPostingId: string,
+    planDetailId: string,
     params?: { pageNumber?: number; pageSize?: number }
 ): Promise<ShortlistedResponse> {
     const searchParams = new URLSearchParams()
@@ -23,7 +23,7 @@ export async function getShortlistedApplications(
     if (params?.pageSize) searchParams.set('pageSize', String(params.pageSize))
 
     const response = await apiClient.get(
-        `${JOB_POSTINGS_URL}/${jobPostingId}/shortlisted?${searchParams}`
+        `${PLAN_DETAILS_URL}/${planDetailId}/shortlisted?${searchParams}`
     )
     if (!response.ok) throw new Error('Không thể tải danh sách ứng viên sơ tuyển')
     return response.json()
