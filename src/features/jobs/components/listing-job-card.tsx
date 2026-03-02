@@ -1,6 +1,13 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { MapPin, Clock, Heart, Flame } from 'lucide-react'
+
+import type { Job } from '../types'
+import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
+import { cn } from '@/lib/utils'
 
 function formatTimeAgo(publishedAt?: string): string {
     if (!publishedAt) return ''
@@ -11,16 +18,16 @@ function formatTimeAgo(publishedAt?: string): string {
     if (hours < 24) return `Cập nhật ${hours} giờ trước`
     return `Cập nhật ${Math.floor(hours / 24)} ngày trước`
 }
-import Image from 'next/image'
-import Link from 'next/link'
-import { MapPin, Clock, Heart, Flame } from 'lucide-react'
-
-import type { Job } from '../types'
-import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
-import { cn } from '@/lib/utils'
 
 export const ListingJobCard = memo(function ListingJobCard({ job }: { job: Job }) {
-    const { saveJob, removeJob, isSaved } = useSavedJobsStore()
+    const { saveJob, removeJob, isSaved, fetchSavedJobIds, isLoaded } = useSavedJobsStore()
+
+    useEffect(() => {
+        if (!isLoaded) {
+            fetchSavedJobIds()
+        }
+    }, [isLoaded, fetchSavedJobIds])
+
     const saved = isSaved(job.id)
 
     const displaySalary = useMemo(() => {
@@ -39,7 +46,7 @@ export const ListingJobCard = memo(function ListingJobCard({ job }: { job: Job }
         e.preventDefault()
         e.stopPropagation()
         if (saved) removeJob(job.id)
-        else saveJob(job)
+        else saveJob(job.id)
     }
 
     const displayLogo = job.enterpriseLogoUrl || '/placeholder-logo.png'

@@ -1,35 +1,37 @@
-// Match backend response exactly
-export interface Application {
-    id: string
+// ── Match backend CandidateApplicationDto (GET /api/applications/my-applications) ──
+export interface CandidateApplicationDto {
+    applicationId: string
     jobPostingId: string
-    candidateId: string
-    resumeId?: string
-    resumeUrl?: string
-    coverLetter?: string
-    expectedSalary?: number
-    availableStartDate?: string
+    jobTitle: string
+    jobCode?: string
+    companyName?: string
+    location?: string
+    employmentType: string
     stage: ApplicationStage
     status: string
     appliedAt: string
-    createdAt: string
-    // Job info
-    jobTitle: string
-    jobCode?: string
-    enterpriseName: string
-    enterpriseLogoUrl?: string
-    departmentName?: string
-    // Screening Results
-    cvScreeningResult?: CVScreeningResult
+    stageUpdatedAt?: string
+    hasInterview: boolean
+    hasOffer: boolean
+}
+
+export interface GetMyApplicationsResponse {
+    items: CandidateApplicationDto[]
+    totalCount: number
+    pageNumber: number
+    pageSize: number
 }
 
 export type ApplicationStage =
     | 'Applied'
-    | 'Screening'
+    | 'Reviewing'
     | 'Shortlisted'
-    | 'Interview'
-    | 'Offer'
-    | 'Rejected'
+    | 'InterviewScheduled'
+    | 'Interviewed'
+    | 'OfferProcessing'
+    | 'Offered'
     | 'Hired'
+    | 'Rejected'
     | 'Withdrawn'
 
 // Match backend CVScreeningResultSummary exactly
@@ -54,7 +56,7 @@ export interface CreateApplicationRequest {
 }
 
 export interface ApplicationHistoryParams {
-    page?: number
+    pageNumber?: number
     pageSize?: number
-    status?: string
+    stageFilter?: string
 }

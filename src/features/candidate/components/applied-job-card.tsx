@@ -1,13 +1,15 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import Image from 'next/image'
-import { MapPin, CheckCircle, Eye, Phone, ThumbsUp, ThumbsDown, Send } from 'lucide-react'
-import type { Application } from '@/features/candidate/types/application-types'
+import {
+    MapPin, CheckCircle, Eye, Phone, ThumbsUp, ThumbsDown,
+    Send, Briefcase, Clock, FileCheck, Award, UserCheck
+} from 'lucide-react'
+import type { CandidateApplicationDto } from '@/features/candidate/types/application-types'
 import { cn } from '@/lib/utils'
 
 interface AppliedJobCardProps {
-    application: Application
+    application: CandidateApplicationDto
 }
 
 const STAGE_CONFIG: Record<string, {
@@ -20,8 +22,8 @@ const STAGE_CONFIG: Record<string, {
         className: 'applied-job-card__status--applied',
         icon: Send,
     },
-    Screening: {
-        label: 'NTD đã xem',
+    Reviewing: {
+        label: 'Đang xem xét',
         className: 'applied-job-card__status--viewed',
         icon: Eye,
     },
@@ -30,25 +32,35 @@ const STAGE_CONFIG: Record<string, {
         className: 'applied-job-card__status--suitable',
         icon: ThumbsUp,
     },
-    Interview: {
-        label: 'Đã liên hệ',
+    InterviewScheduled: {
+        label: 'Lịch phỏng vấn',
+        className: 'applied-job-card__status--contacted',
+        icon: Clock,
+    },
+    Interviewed: {
+        label: 'Đã phỏng vấn',
         className: 'applied-job-card__status--contacted',
         icon: Phone,
     },
-    Offer: {
-        label: 'Đã liên hệ',
+    OfferProcessing: {
+        label: 'Đang xử lý offer',
         className: 'applied-job-card__status--contacted',
-        icon: Phone,
+        icon: FileCheck,
+    },
+    Offered: {
+        label: 'Đã nhận offer',
+        className: 'applied-job-card__status--suitable',
+        icon: Award,
+    },
+    Hired: {
+        label: 'Đã tuyển',
+        className: 'applied-job-card__status--suitable',
+        icon: UserCheck,
     },
     Rejected: {
         label: 'Không phù hợp',
         className: 'applied-job-card__status--unsuitable',
         icon: ThumbsDown,
-    },
-    Hired: {
-        label: 'Phù hợp',
-        className: 'applied-job-card__status--suitable',
-        icon: ThumbsUp,
     },
     Withdrawn: {
         label: 'Đã rút',
@@ -70,20 +82,15 @@ export const AppliedJobCard = memo(function AppliedJobCard({ application }: Appl
         return `Đã ứng tuyển: ${dd}/${mm}/${yyyy} - ${hh}:${min}`
     }, [application.appliedAt])
 
-    const displayLogo = application.enterpriseLogoUrl || '/placeholder-logo.png'
     const StatusIcon = stageInfo.icon
 
     return (
         <div className="applied-job-card">
-            {/* Company Logo */}
+            {/* Company Logo placeholder */}
             <div className="applied-job-card__logo">
-                <Image
-                    src={displayLogo}
-                    alt={`${application.enterpriseName} Logo`}
-                    fill
-                    sizes="80px"
-                    className="object-contain p-1"
-                />
+                <div className="flex items-center justify-center w-full h-full bg-gray-100 rounded-lg">
+                    <Briefcase className="w-8 h-8 text-gray-400" />
+                </div>
             </div>
 
             {/* Job Info — Middle */}
@@ -97,17 +104,23 @@ export const AppliedJobCard = memo(function AppliedJobCard({ application }: Appl
                 </div>
 
                 {/* Row 2: Company Name */}
-                <p className="applied-job-card__company">{application.enterpriseName}</p>
+                <p className="applied-job-card__company">{application.companyName}</p>
 
-                {/* Row 3: Department */}
-                {application.departmentName && (
-                    <div className="applied-job-card__meta">
+                {/* Row 3: Location & Employment Type */}
+                <div className="applied-job-card__meta">
+                    {application.location && (
                         <span className="applied-job-card__tag">
                             <MapPin className="w-3.5 h-3.5" />
-                            {application.departmentName}
+                            {application.location}
                         </span>
-                    </div>
-                )}
+                    )}
+                    {application.employmentType && (
+                        <span className="applied-job-card__tag">
+                            <Briefcase className="w-3.5 h-3.5" />
+                            {application.employmentType}
+                        </span>
+                    )}
+                </div>
 
                 {/* Row 4: Applied date */}
                 <p className="applied-job-card__applied-date">{appliedDateDisplay}</p>

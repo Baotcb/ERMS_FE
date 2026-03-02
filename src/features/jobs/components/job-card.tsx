@@ -5,14 +5,13 @@
 
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { MapPin, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Job } from '../types'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { cn } from '@/lib/utils'
-import { useToast } from '@/hooks/use-toast'
 
 interface JobCardProps extends Job {
   compact?: boolean
@@ -30,29 +29,25 @@ export const JobCard = memo(function JobCard(props: JobCardProps) {
     isHot,
     compact = false,
   } = props
-  const { toast } = useToast()
-  const { saveJob, removeJob, savedJobs } = useSavedJobsStore()
 
-  const isSaved = savedJobs.some((job) => job.id === props.id)
+  const { saveJob, removeJob, isSaved, fetchSavedJobIds, isLoaded } = useSavedJobsStore()
+
+  useEffect(() => {
+    if (!isLoaded) {
+      fetchSavedJobIds()
+    }
+  }, [isLoaded, fetchSavedJobIds])
+
+  const saved = isSaved(props.id)
 
   const handleSaveJob = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    if (isSaved) {
+    if (saved) {
       removeJob(props.id)
-      toast({
-        title: "Đã bỏ lưu công việc",
-        description: props.jobTitle,
-      })
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { compact, ...jobData } = props
-      saveJob(jobData)
-      toast({
-        title: "Đã lưu công việc",
-        description: "Bạn có thể xem lại trong mục Việc làm đã lưu",
-      })
+      saveJob(props.id)
     }
   }
 
@@ -150,7 +145,7 @@ export const JobCard = memo(function JobCard(props: JobCardProps) {
       >
         <Heart className={cn(
           "w-4 h-4 transition-colors",
-          isSaved ? "fill-[#e74c3c] text-[#e74c3c]" : ""
+          saved ? "fill-[#e74c3c] text-[#e74c3c]" : ""
         )} />
       </Button>
     </div>
