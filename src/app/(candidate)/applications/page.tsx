@@ -1,21 +1,27 @@
 import { Metadata } from 'next'
 import { ApplicationList } from '@/features/candidate/components/application-list'
+import { CandidateSidebar } from '@/features/candidate/components/candidate-sidebar'
+import '@/features/jobs/styles/Jobs.css'
 
 export const metadata: Metadata = {
-    title: 'Hồ sơ đã ứng tuyển | ERMS',
+    title: 'Việc làm đã ứng tuyển | ERMS',
     description: 'Quản lý danh sách các công việc đã ứng tuyển',
 }
 
 export default function ApplicationsPage() {
     return (
-        <div className="min-h-screen bg-slate-50 py-8">
-            <div className="container mx-auto px-4 max-w-6xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900">Việc làm đã ứng tuyển</h1>
-                    <p className="text-slate-500 mt-2">Theo dõi trạng thái và kết quả ứng tuyển của bạn</p>
+        <div className="topcv-page">
+            <div className="topcv-page__container">
+                {/* Main Content */}
+                <div className="topcv-page__main">
+                    <h1 className="topcv-page__title">Việc làm đã ứng tuyển</h1>
+                    <ApplicationList />
                 </div>
 
-                <ApplicationList />
+                {/* Sidebar */}
+                <aside>
+                    <CandidateSidebar />
+                </aside>
             </div>
         </div>
     )

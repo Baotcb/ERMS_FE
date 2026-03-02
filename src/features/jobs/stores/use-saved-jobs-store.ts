@@ -5,8 +5,12 @@ import type { Job } from '../types'
 import { STORAGE_KEYS } from '@/utils/constants'
 import { apiClient } from '@/lib/api-client'
 
+export interface SavedJob extends Job {
+    savedAt: string
+}
+
 interface SavedJobsState {
-    savedJobs: Job[]
+    savedJobs: SavedJob[]
     saveJob: (job: Job) => void
     removeJob: (jobId: string) => void
     isSaved: (jobId: string) => boolean
@@ -19,12 +23,15 @@ export const useSavedJobsStore = create<SavedJobsState>()(
             saveJob: (job) => {
                 const { savedJobs } = get()
                 if (!savedJobs.some((j) => j.id === job.id)) {
-                    set({ savedJobs: [job, ...savedJobs] })
+                    const savedJob: SavedJob = {
+                        ...job,
+                        savedAt: new Date().toISOString(),
+                    }
+                    set({ savedJobs: [savedJob, ...savedJobs] })
                     // Sync với backend (fire-and-forget, không block UI)
                     apiClient.post('/api/job-postings/savejob', { jobPostingId: job.id })
                         .catch(() => {
                             // Ignore errors - localStorage đã lưu rồi
-                            // API có thể fail nếu user chưa đăng nhập hoặc không phải Candidate
                         })
                 }
             },
