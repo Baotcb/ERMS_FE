@@ -1,159 +1,150 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Search, Briefcase } from 'lucide-react'
+import { Briefcase, Search } from 'lucide-react'
 
-import { JobCard } from './job-card'
-import { Button } from '@/components/ui/button'
+import { JobSearchBar } from './job-search-bar'
+import { JobFilterSidebar } from './job-filter-sidebar'
+import { ListingJobCard } from './listing-job-card'
+import { JobPagination } from './job-pagination'
 import { usePublicJobs } from '../hooks/use-public-jobs'
-import { cn } from '@/lib/utils'
+import '@/features/jobs/styles/Jobs.css'
 
+/* Skeleton khi đang loading */
+function ListingSkeleton() {
+    return (
+        <div className="job-listing__container">
+            <aside className="job-filter-sidebar" style={{ minHeight: 300 }}>
+                <div style={{ height: 20, background: '#f2f4f5', borderRadius: 4, marginBottom: 16 }} />
+                <div style={{ height: 16, background: '#f2f4f5', borderRadius: 4, marginBottom: 8, width: '80%' }} />
+                <div style={{ height: 16, background: '#f2f4f5', borderRadius: 4, marginBottom: 8, width: '60%' }} />
+            </aside>
+            <div className="job-listing__main">
+                <div className="topcv-page__list">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="listing-job-card" style={{ opacity: 0.5 }}>
+                            <div className="listing-job-card__logo" style={{ background: '#f2f4f5' }} />
+                            <div className="listing-job-card__info">
+                                <div style={{ height: 20, background: '#f2f4f5', borderRadius: 4, marginBottom: 8, width: '70%' }} />
+                                <div style={{ height: 14, background: '#f2f4f5', borderRadius: 4, width: '50%' }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+/* Nội dung chính */
 function PublicJobListContent() {
     const searchParams = useSearchParams()
     const [page, setPage] = useState(1)
-    const [pageSize] = useState(12)
+    const [experience, setExperience] = useState('')
+    const [salary, setSalary] = useState('')
+    const [employment, setEmployment] = useState('')
 
     const search = searchParams.get('q') || undefined
     const location = searchParams.get('location') || undefined
 
-    const { data, isLoading, error } = usePublicJobs({
-        page,
-        pageSize,
-        search,
-        location,
-    })
+    const { data, isLoading, error } = usePublicJobs({ page, pageSize: 10, search, location })
 
-    // Loading state
-    if (isLoading) {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="h-[140px] rounded-lg bg-white border border-[#e8e8e8] animate-pulse" />
-                ))}
-            </div>
-        )
-    }
+    const clearFilters = useCallback(() => {
+        setExperience('')
+        setSalary('')
+        setEmployment('')
+    }, [])
 
-    // Error state
+    const items = data?.items ?? []
+    const filteredJobs = employment
+        ? items.filter((j) => j.employmentType === employment)
+        : items
+
+    if (isLoading) return <ListingSkeleton />
+
     if (error) {
         return (
-            <div className="text-center py-16 bg-white rounded-lg border border-[#e8e8e8]">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#fff5f0] flex items-center justify-center">
-                    <Briefcase className="w-8 h-8 text-[#e74c3c]" />
+            <div className="job-listing__container" style={{ display: 'block' }}>
+                <div className="topcv-empty">
+                    <div className="topcv-empty__icon">
+                        <Briefcase className="w-14 h-14" style={{ color: '#e74c3c' }} />
+                    </div>
+                    <h3 className="topcv-empty__title">Không thể tải danh sách việc làm</h3>
+                    <p className="topcv-empty__text">Vui lòng thử lại sau</p>
+                    <button className="topcv-empty__button" onClick={() => window.location.reload()} type="button">Thử lại</button>
                 </div>
-                <p className="text-[#212f3f] font-semibold text-lg">Không thể tải danh sách việc làm</p>
-                <p className="text-[#6f7882] text-sm mt-1 mb-4">Vui lòng thử lại sau</p>
-                <Button
-                    variant="outline"
-                    className="border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white"
-                    onClick={() => window.location.reload()}
-                >
-                    Thử lại
-                </Button>
             </div>
         )
     }
 
-    // Empty state
     if (!data?.items || data.items.length === 0) {
         return (
-            <div className="text-center py-16 bg-white rounded-lg border border-[#e8e8e8]">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#f4f5f5] flex items-center justify-center">
-                    <Search className="w-8 h-8 text-[#a6acb2]" />
+            <div className="job-listing__container" style={{ display: 'block' }}>
+                <div className="topcv-empty">
+                    <div className="topcv-empty__icon">
+                        <Search className="w-14 h-14" style={{ color: '#00b14f' }} />
+                    </div>
+                    <h3 className="topcv-empty__title">Không tìm thấy việc làm nào</h3>
+                    <p className="topcv-empty__text">Vui lòng thử tìm kiếm với từ khoá khác</p>
                 </div>
-                <p className="text-[#212f3f] font-semibold text-lg">Không tìm thấy việc làm nào</p>
-                <p className="text-[#6f7882] text-sm mt-1">Vui lòng thử tìm kiếm với từ khóa khác.</p>
             </div>
         )
     }
 
     return (
-        <div className="space-y-6">
-            {/* Job Count Info */}
-            <div className="flex items-center justify-between">
-                <p className="text-sm text-[#6f7882]">
-                    Hiển thị <span className="font-semibold text-[#212f3f]">{data.items.length}</span> / <span className="font-semibold text-[#212f3f]">{data.totalCount}</span> việc làm
-                </p>
-            </div>
+        <div className="job-listing__container">
+            <JobFilterSidebar
+                experience={experience}
+                salary={salary}
+                employment={employment}
+                onExperienceChange={setExperience}
+                onSalaryChange={setSalary}
+                onEmploymentChange={setEmployment}
+                onClear={clearFilters}
+            />
 
-            {/* Job Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.items.map((job) => (
-                    <Link key={job.id} href={`/jobs/${job.id}`} className="block h-full">
-                        <JobCard {...job} />
-                    </Link>
-                ))}
-            </div>
-
-            {/* Pagination */}
-            {data.totalPages > 1 && (
-                <div className="flex justify-center items-center gap-3 pt-4">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(data.totalPages, 5) }, (_, i) => {
-                            const pageNum = i + 1
-                            return (
-                                <button
-                                    key={pageNum}
-                                    className={cn(
-                                        "h-9 w-9 rounded-lg text-sm font-medium transition-colors",
-                                        page === pageNum
-                                            ? "bg-[#1B5583] text-white"
-                                            : "text-[#6f7882] hover:bg-[#EDE8F0]"
-                                    )}
-                                    onClick={() => setPage(pageNum)}
-                                >
-                                    {pageNum}
-                                </button>
-                            )
-                        })}
-                        {data.totalPages > 5 && (
-                            <>
-                                <span className="text-[#a6acb2] px-1">...</span>
-                                <button
-                                    className={cn(
-                                        "h-9 w-9 rounded-lg text-sm font-medium transition-colors",
-                                        page === data.totalPages
-                                            ? "bg-[#1B5583] text-white"
-                                            : "text-[#6f7882] hover:bg-[#EDE8F0]"
-                                    )}
-                                    onClick={() => setPage(data.totalPages)}
-                                >
-                                    {data.totalPages}
-                                </button>
-                            </>
-                        )}
+            <div className="job-listing__main">
+                {/* Header */}
+                <div className="job-listing__header">
+                    <h2 className="job-listing__count">
+                        Tuyển dụng{' '}
+                        <span className="job-listing__count-number">{data.totalCount.toLocaleString('vi-VN')}</span>{' '}
+                        việc làm
+                    </h2>
+                    <div className="job-listing__sort">
+                        <span className="job-listing__sort-label">Sắp xếp theo:</span>
+                        <select className="job-listing__sort-select" defaultValue="newest">
+                            <option value="newest">Mới nhất</option>
+                            <option value="salary">Lương cao nhất</option>
+                            <option value="relevant">Phù hợp nhất</option>
+                        </select>
                     </div>
-
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg border-[#e8e8e8] text-[#6f7882] hover:border-[#1B5583] hover:text-[#1B5583]"
-                        onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                        disabled={page === data.totalPages}
-                    >
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
                 </div>
-            )}
+
+                {/* Job List */}
+                <div className="topcv-page__list">
+                    {filteredJobs.map((job) => (
+                        <ListingJobCard key={job.id} job={job} />
+                    ))}
+                </div>
+
+                <JobPagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
+            </div>
         </div>
     )
 }
+
+/* Public export */
 export function PublicJobList() {
     return (
-        <Suspense>
-            <PublicJobListContent />
-        </Suspense>
+        <>
+            <Suspense>
+                <JobSearchBar />
+            </Suspense>
+            <Suspense fallback={<ListingSkeleton />}>
+                <PublicJobListContent />
+            </Suspense>
+        </>
     )
 }
