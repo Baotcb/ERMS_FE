@@ -53,13 +53,13 @@ export function DirectorSidebar() {
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/director/dashboard" className="flex items-center gap-3">
                     {enterpriseInfo?.logoUrl ? (
-                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
                             <Image
                                 src={enterpriseInfo.logoUrl}
                                 alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
-                                fill
-                                sizes="40px"
-                                className="object-cover"
+                                width={32}
+                                height={32}
+                                className="object-contain"
                             />
                         </div>
                     ) : (
