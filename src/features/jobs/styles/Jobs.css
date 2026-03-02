@@ -281,6 +281,17 @@
     gap: 12px;
 }
 
+.saved-job-list__count {
+    font-size: 14px;
+    color: #6f7882;
+    margin: 0 0 12px;
+}
+
+.saved-job-list__count strong {
+    color: #00b14f;
+    font-weight: 700;
+}
+
 /* ----- Filter Bar (Applied Jobs) ----- */
 
 .topcv-filter-bar {

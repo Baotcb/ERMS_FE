@@ -1,32 +1,26 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useCallback } from 'react'
 import Image from 'next/image'
-import { MapPin, Clock, Heart, CheckCircle, Sparkles } from 'lucide-react'
-import type { SavedJob } from '../stores/use-saved-jobs-store'
+import { MapPin, Heart, Briefcase, Clock } from 'lucide-react'
+import type { EnrichedSavedPost } from './saved-job-list'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { cn } from '@/lib/utils'
 
 interface SavedJobCardProps {
-    job: SavedJob
+    job: EnrichedSavedPost
+    onUnsaved?: (jobPostingId: string) => void
 }
 
-export const SavedJobCard = memo(function SavedJobCard({ job }: SavedJobCardProps) {
-    const { removeJob } = useSavedJobsStore()
+const EMPLOYMENT_TYPE_MAP: Record<string, string> = {
+    FullTime: 'Toàn thời gian',
+    PartTime: 'Bán thời gian',
+    Contract: 'Hợp đồng',
+    Internship: 'Thực tập',
+}
 
-    const displaySalary = useMemo(() => {
-        if (!job.showSalary) return 'Thoả thuận'
-        if (job.salaryRangeMin && job.salaryRangeMax) {
-            return `${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} - ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
-        }
-        if (job.salaryRangeMin) {
-            return `Từ ${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} triệu`
-        }
-        if (job.salaryRangeMax) {
-            return `Đến ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
-        }
-        return 'Thoả thuận'
-    }, [job.showSalary, job.salaryRangeMin, job.salaryRangeMax])
+export const SavedJobCard = memo(function SavedJobCard({ job, onUnsaved }: SavedJobCardProps) {
+    const removeJob = useSavedJobsStore((s) => s.removeJob)
 
     const savedDateDisplay = useMemo(() => {
         if (!job.savedAt) return ''
@@ -39,64 +33,81 @@ export const SavedJobCard = memo(function SavedJobCard({ job }: SavedJobCardProp
         return `Đã lưu: ${dd}/${mm}/${yyyy} - ${hh}:${min}`
     }, [job.savedAt])
 
-    const timeAgoDisplay = useMemo(() => {
-        if (!job.publishedAt) return ''
-        const now = new Date()
-        const published = new Date(job.publishedAt)
-        const diffMs = now.getTime() - published.getTime()
-        const diffMin = Math.floor(diffMs / 60000)
-        if (diffMin < 60) return `Cập nhật ${diffMin} phút trước`
-        const diffHours = Math.floor(diffMin / 60)
-        if (diffHours < 24) return `Cập nhật ${diffHours} giờ trước`
-        const diffDays = Math.floor(diffHours / 24)
-        return `Cập nhật ${diffDays} ngày trước`
-    }, [job.publishedAt])
+    const displaySalary = useMemo(() => {
+        if (!job.showSalary) return 'Thoả thuận'
+        if (job.salaryRangeMin && job.salaryRangeMax) {
+            return `${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} - ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+        }
+        if (job.salaryRangeMin) return `Từ ${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} triệu`
+        if (job.salaryRangeMax) return `Đến ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+        return 'Thoả thuận'
+    }, [job.showSalary, job.salaryRangeMin, job.salaryRangeMax])
 
-    const displayLogo = job.enterpriseLogoUrl || '/placeholder-logo.png'
+    const employmentLabel = EMPLOYMENT_TYPE_MAP[job.employmentType] ?? job.employmentType
+    const displayLogo = job.enterpriseLogoUrl || ''
 
-    const handleRemoveSaved = (e: React.MouseEvent) => {
+    const handleRemoveSaved = useCallback((e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
-        removeJob(job.id)
-    }
+        removeJob(job.jobPostingId)
+        onUnsaved?.(job.jobPostingId)
+    }, [job.jobPostingId, removeJob, onUnsaved])
 
     return (
         <div className="saved-job-card">
             {/* Company Logo */}
             <div className="saved-job-card__logo">
-                <Image
-                    src={displayLogo}
-                    alt={`${job.enterpriseName} Logo`}
-                    fill
-                    sizes="80px"
-                    className="object-contain p-1"
-                />
+                {displayLogo ? (
+                    <Image
+                        src={displayLogo}
+                        alt={`${job.companyName} Logo`}
+                        fill
+                        sizes="80px"
+                        className="object-contain p-1"
+                    />
+                ) : (
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: '#f2f4f5',
+                            borderRadius: 6,
+                            fontSize: 24,
+                            fontWeight: 700,
+                            color: '#00b14f',
+                        }}
+                    >
+                        {(job.companyName ?? 'C').charAt(0).toUpperCase()}
+                    </div>
+                )}
             </div>
 
             {/* Job Info — Middle */}
             <div className="saved-job-card__info">
-                {/* Row 1: Title + Badges */}
+                {/* Row 1: Title */}
                 <div className="saved-job-card__title-row">
-                    {job.isHot && (
-                        <span className="saved-job-card__badge saved-job-card__badge--new">
-                            <Sparkles className="w-3 h-3" />
-                            Tin mới
-                        </span>
-                    )}
                     <h3 className="saved-job-card__title">
                         {job.jobTitle}
-                        <CheckCircle className="saved-job-card__verified" />
                     </h3>
                 </div>
 
                 {/* Row 2: Company Name */}
-                <p className="saved-job-card__company">{job.enterpriseName}</p>
+                <p className="saved-job-card__company">{job.companyName ?? 'Chưa cập nhật'}</p>
 
-                {/* Row 3: Location + Experience */}
+                {/* Row 3: Location + Employment Type + Experience */}
                 <div className="saved-job-card__meta">
+                    {job.location && (
+                        <span className="saved-job-card__tag">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {job.location}
+                        </span>
+                    )}
                     <span className="saved-job-card__tag">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {job.location || 'Chưa xác định'}
+                        <Briefcase className="w-3.5 h-3.5" />
+                        {employmentLabel}
                     </span>
                     {job.experienceLevel && (
                         <span className="saved-job-card__tag">
@@ -121,8 +132,8 @@ export const SavedJobCard = memo(function SavedJobCard({ job }: SavedJobCardProp
                     {displaySalary}
                 </span>
 
-                {timeAgoDisplay && (
-                    <span className="saved-job-card__update-time">{timeAgoDisplay}</span>
+                {job.jobCode && (
+                    <span className="saved-job-card__update-time">#{job.jobCode}</span>
                 )}
 
                 <button

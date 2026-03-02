@@ -1,21 +1,101 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { LazyMotion, m, domAnimation } from 'framer-motion'
-import { FileQuestion, Search, ArrowRight } from 'lucide-react'
+import { FileQuestion, Search, ArrowRight, Loader2 } from 'lucide-react'
 import { SavedJobCard } from './saved-job-card'
+import { getMySavedPosts, type SavedPostDto } from '../api/saved-job-service'
+import { getPublicJobById } from '../api/public-job-service'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import Link from 'next/link'
 
-const emptySubscribe = () => () => { }
+/** SavedPostDto enriched with extra fields from public API */
+export interface EnrichedSavedPost extends SavedPostDto {
+    enterpriseLogoUrl?: string
+    salaryRangeMin?: number
+    salaryRangeMax?: number
+    showSalary?: boolean
+    experienceLevel?: string
+}
 
 export function SavedJobList() {
-    const savedJobs = useSavedJobsStore((state) => state.savedJobs)
+    const [savedJobs, setSavedJobs] = useState<EnrichedSavedPost[]>([])
+    const [totalCount, setTotalCount] = useState(0)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false)
+    const fetchData = useCallback(async () => {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const response = await getMySavedPosts(1, 50)
+            setSavedJobs(response.items)
+            setTotalCount(response.totalCount)
 
-    if (!isMounted) {
-        return null
+            // Enrich with logo + salary from public API (parallel, non-blocking)
+            const enriched = await Promise.all(
+                response.items.map(async (item) => {
+                    try {
+                        const detail = await getPublicJobById(item.jobPostingId)
+                        if (detail) {
+                            return {
+                                ...item,
+                                enterpriseLogoUrl: detail.enterpriseLogoUrl,
+                                salaryRangeMin: detail.salaryRangeMin,
+                                salaryRangeMax: detail.salaryRangeMax,
+                                showSalary: detail.showSalary,
+                                experienceLevel: detail.experienceLevel,
+                            }
+                        }
+                    } catch {
+                        // Ignore — giữ nguyên data gốc nếu lỗi
+                    }
+                    return item
+                })
+            )
+            setSavedJobs(enriched)
+        } catch {
+            setError('Không thể tải danh sách việc làm đã lưu')
+        } finally {
+            setIsLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchData()
+    }, [fetchData])
+
+    const handleUnsaved = useCallback((jobPostingId: string) => {
+        setSavedJobs((prev) => prev.filter((j) => j.jobPostingId !== jobPostingId))
+        setTotalCount((prev) => Math.max(0, prev - 1))
+    }, [])
+
+    // Sync store khi data load xong
+    const fetchSavedJobIds = useSavedJobsStore((s) => s.fetchSavedJobIds)
+    useEffect(() => {
+        fetchSavedJobIds()
+    }, [fetchSavedJobIds])
+
+    if (isLoading) {
+        return (
+            <div className="topcv-empty">
+                <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#00b14f' }} />
+                <p className="topcv-empty__text" style={{ marginTop: 16 }}>
+                    Đang tải danh sách việc làm đã lưu...
+                </p>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="topcv-empty">
+                <p className="topcv-empty__title" style={{ color: '#e74c3c' }}>{error}</p>
+                <button className="topcv-empty__button" onClick={fetchData} type="button">
+                    Thử lại
+                </button>
+            </div>
+        )
     }
 
     if (savedJobs.length === 0) {
@@ -55,21 +135,26 @@ export function SavedJobList() {
     }
 
     return (
-        <LazyMotion features={domAnimation}>
-            <m.div
-                className="topcv-page__list"
-                variants={container}
-                initial="hidden"
-                animate="show"
-            >
-                {savedJobs.map((job) => (
-                    <m.div key={job.id} variants={item}>
-                        <Link href={`/jobs/${job.id}`} className="block" style={{ textDecoration: 'none' }}>
-                            <SavedJobCard job={job} />
-                        </Link>
-                    </m.div>
-                ))}
-            </m.div>
-        </LazyMotion>
+        <>
+            <p className="saved-job-list__count">
+                Hiển thị <strong>{savedJobs.length}</strong> / {totalCount} việc làm đã lưu
+            </p>
+            <LazyMotion features={domAnimation}>
+                <m.div
+                    className="topcv-page__list"
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                >
+                    {savedJobs.map((job) => (
+                        <m.div key={job.savedJobId} variants={item}>
+                            <Link href={`/jobs/${job.jobPostingId}`} className="block" style={{ textDecoration: 'none' }}>
+                                <SavedJobCard job={job} onUnsaved={handleUnsaved} />
+                            </Link>
+                        </m.div>
+                    ))}
+                </m.div>
+            </LazyMotion>
+        </>
     )
 }
