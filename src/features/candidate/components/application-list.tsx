@@ -1,90 +1,62 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { FolderOpen, Search, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { FolderOpen, Search, ArrowRight, Loader2 } from 'lucide-react'
 import { AppliedJobCard } from './applied-job-card'
-import type { Application } from '@/features/candidate/types/application-types'
+import { useMyApplications } from '@/features/candidate/hooks/use-applications'
 import Link from 'next/link'
 import '@/features/jobs/styles/Jobs.css'
 
-// ⚠️ Mock data — backend chưa có API GET /api/applications/my-applications
-const MOCK_APPLICATIONS: Application[] = [
-    {
-        id: 'mock-1',
-        jobPostingId: 'jp-1',
-        candidateId: 'c-1',
-        jobTitle: 'Frontend Developer (React/Next.js)',
-        jobCode: 'FE-001',
-        enterpriseName: 'CÔNG TY TNHH CÔNG NGHỆ ABC',
-        enterpriseLogoUrl: '',
-        departmentName: 'Phòng Công nghệ',
-        stage: 'Screening',
-        status: 'Active',
-        appliedAt: '2026-03-01T10:30:00Z',
-        createdAt: '2026-03-01T10:30:00Z',
-    },
-    {
-        id: 'mock-2',
-        jobPostingId: 'jp-2',
-        candidateId: 'c-1',
-        jobTitle: 'Chuyên viên Nhân sự (HR Executive)',
-        enterpriseName: 'CÔNG TY CỔ PHẦN XYZ VIỆT NAM',
-        enterpriseLogoUrl: '',
-        departmentName: 'Phòng Nhân sự',
-        stage: 'Applied',
-        status: 'Active',
-        appliedAt: '2026-02-28T14:15:00Z',
-        createdAt: '2026-02-28T14:15:00Z',
-    },
-    {
-        id: 'mock-3',
-        jobPostingId: 'jp-3',
-        candidateId: 'c-1',
-        jobTitle: 'Business Analyst - Fintech',
-        enterpriseName: 'NGÂN HÀNG TMCP QUỐC TẾ',
-        enterpriseLogoUrl: '',
-        departmentName: 'Phòng Phân tích',
-        stage: 'Shortlisted',
-        status: 'Active',
-        appliedAt: '2026-02-25T09:00:00Z',
-        createdAt: '2026-02-25T09:00:00Z',
-    },
-    {
-        id: 'mock-4',
-        jobPostingId: 'jp-4',
-        candidateId: 'c-1',
-        jobTitle: 'Product Manager',
-        enterpriseName: 'CÔNG TY TNHH PHẦN MỀM DEF',
-        enterpriseLogoUrl: '',
-        departmentName: 'Phòng Sản phẩm',
-        stage: 'Rejected',
-        status: 'Closed',
-        appliedAt: '2026-02-20T16:45:00Z',
-        createdAt: '2026-02-20T16:45:00Z',
-    },
-]
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
+const STAGE_OPTIONS: { value: string; label: string }[] = [
     { value: 'all', label: 'Tất cả trạng thái' },
     { value: 'Applied', label: 'Đã nộp' },
-    { value: 'Screening', label: 'NTD đã xem' },
+    { value: 'Reviewing', label: 'Đang xem xét' },
     { value: 'Shortlisted', label: 'Phù hợp' },
+    { value: 'InterviewScheduled', label: 'Lịch phỏng vấn' },
+    { value: 'Interviewed', label: 'Đã phỏng vấn' },
+    { value: 'OfferProcessing', label: 'Đang xử lý offer' },
+    { value: 'Offered', label: 'Đã nhận offer' },
+    { value: 'Hired', label: 'Đã tuyển' },
     { value: 'Rejected', label: 'Không phù hợp' },
-    { value: 'Interview', label: 'Đã liên hệ' },
+    { value: 'Withdrawn', label: 'Đã rút' },
 ]
 
 export function ApplicationList() {
-    const [statusFilter, setStatusFilter] = useState<string>('all')
+    const [stageFilter, setStageFilter] = useState<string>('all')
 
-    // TODO: Thay mock data bằng API call khi backend sẵn sàng
-    const applications = MOCK_APPLICATIONS
+    const { data, isLoading, error } = useMyApplications(
+        stageFilter !== 'all' ? { stageFilter } : undefined
+    )
 
-    const filteredApplications = useMemo(() => {
-        if (statusFilter === 'all') return applications
-        return applications.filter((app) => app.stage === statusFilter)
-    }, [applications, statusFilter])
+    const applications = data?.items ?? []
 
-    if (applications.length === 0) {
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="topcv-empty">
+                <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#00b14f' }} />
+                <h3 className="topcv-empty__title">Đang tải dữ liệu...</h3>
+            </div>
+        )
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="topcv-empty">
+                <div className="topcv-empty__icon">
+                    <FolderOpen className="w-14 h-14" style={{ color: '#ef4444' }} />
+                </div>
+                <h3 className="topcv-empty__title">Không thể tải dữ liệu</h3>
+                <p className="topcv-empty__text">
+                    {error.message || 'Đã xảy ra lỗi khi tải danh sách ứng tuyển.'}
+                </p>
+            </div>
+        )
+    }
+
+    // Empty state (no applications at all, no filter active)
+    if (applications.length === 0 && stageFilter === 'all') {
         return (
             <div className="topcv-empty">
                 <div className="topcv-empty__icon">
@@ -111,18 +83,18 @@ export function ApplicationList() {
             <div className="topcv-filter-bar">
                 <select
                     className="topcv-filter-bar__select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    value={stageFilter}
+                    onChange={(e) => setStageFilter(e.target.value)}
                     aria-label="Lọc theo trạng thái"
                 >
-                    {STATUS_OPTIONS.map((opt) => (
+                    {STAGE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                 </select>
             </div>
 
             {/* List */}
-            {filteredApplications.length === 0 ? (
+            {applications.length === 0 ? (
                 <div className="topcv-empty">
                     <div className="topcv-empty__icon">
                         <FolderOpen className="w-14 h-14" style={{ color: '#00b14f' }} />
@@ -134,8 +106,8 @@ export function ApplicationList() {
                 </div>
             ) : (
                 <div className="topcv-page__list">
-                    {filteredApplications.map((app) => (
-                        <AppliedJobCard key={app.id} application={app} />
+                    {applications.map((app) => (
+                        <AppliedJobCard key={app.applicationId} application={app} />
                     ))}
                 </div>
             )}

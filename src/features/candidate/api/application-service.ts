@@ -1,5 +1,10 @@
 import { apiClient } from '@/lib/api-client'
-import { CreateApplicationRequest, CVScreeningResult } from '../types/application-types'
+import type {
+    CreateApplicationRequest,
+    CVScreeningResult,
+    GetMyApplicationsResponse,
+    ApplicationHistoryParams,
+} from '../types/application-types'
 
 const BASE_URL = '/api/applications'
 
@@ -36,4 +41,23 @@ export async function createApplication(data: CreateApplicationRequest): Promise
     return response.json()
 }
 
-// ⚠️ Backend CHƯA CÓ endpoint getApplications và getApplicationById cho Candidate
+// GET /api/applications/my-applications — Candidate's own application history
+export async function getMyApplications(params?: ApplicationHistoryParams): Promise<GetMyApplicationsResponse> {
+    const searchParams = new URLSearchParams()
+    if (params?.pageNumber) searchParams.set('pageNumber', params.pageNumber.toString())
+    if (params?.pageSize) searchParams.set('pageSize', params.pageSize.toString())
+    if (params?.stageFilter) searchParams.set('stageFilter', params.stageFilter)
+
+    const qs = searchParams.toString()
+    const url = `${BASE_URL}/my-applications${qs ? `?${qs}` : ''}`
+
+    const response = await apiClient.get(url)
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
+        throw new Error(error.message || 'Không thể lấy danh sách ứng tuyển')
+    }
+
+    return response.json()
+}
+
