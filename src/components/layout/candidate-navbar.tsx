@@ -233,6 +233,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                             <div className="pl-6.5 space-y-1.5" style={{ paddingLeft: '26px' }}>
                                                 <Link href="/jobs/saved" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã lưu</Link>
                                                 <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã ứng tuyển</Link>
+                                                <Link href="/offers" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Đề nghị của tôi</Link>
                                                 <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm phù hợp</Link>
                                             </div>
                                         </div>

@@ -169,6 +169,8 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                         </DropdownMenuItem>
                                                     </>
                                                 )}
+
+
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -212,6 +214,8 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                     onSuccess={onRefresh}
                 />
             )}
+
+
         </>
     )
 }
