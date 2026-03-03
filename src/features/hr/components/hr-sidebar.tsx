@@ -15,7 +15,8 @@ import {
     X,
     User,
     CalendarRange,
-    CalendarCheck
+    CalendarCheck,
+    FileText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,12 @@ const NAV_ITEMS: NavItem[] = [
         label: 'Phỏng vấn',
         href: '/enterprise/hr/interviews',
         icon: <CalendarCheck className="w-5 h-5" />,
+        roles: ['HRManager']
+    },
+    {
+        label: 'Quản lý Offer',
+        href: '/enterprise/hr/offers',
+        icon: <FileText className="w-5 h-5" />,
         roles: ['HRManager']
     }
 ]
