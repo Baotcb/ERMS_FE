@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/dialog'
 
 import { usePublicJob } from '../hooks/use-public-jobs'
+import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { JobApplyForm } from '@/features/candidate/components/job-apply-form'
 
 interface PublicJobDetailProps {
@@ -46,9 +47,18 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
     const { toast } = useToast()
     const { data: job, isLoading, error } = usePublicJob(id)
     const [isApplyOpen, setIsApplyOpen] = useState(false)
-    const [isSaved, setIsSaved] = useState(false)
     const [showStickyBar, setShowStickyBar] = useState(false)
     const headerRef = useRef<HTMLDivElement>(null)
+
+    const { saveJob, removeJob, isSaved: checkIsSaved, fetchSavedJobIds, isLoaded: savedJobsLoaded } = useSavedJobsStore()
+
+    useEffect(() => {
+        if (!savedJobsLoaded) {
+            fetchSavedJobIds()
+        }
+    }, [savedJobsLoaded, fetchSavedJobIds])
+
+    const isSaved = job ? checkIsSaved(job.id) : false
 
     // Sticky apply bar on scroll
     useEffect(() => {
@@ -147,7 +157,12 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
     }
 
     const handleSaveJob = () => {
-        setIsSaved(!isSaved)
+        if (!job) return
+        if (isSaved) {
+            removeJob(job.id)
+        } else {
+            saveJob(job.id)
+        }
         toast({
             title: isSaved ? 'Đã bỏ lưu tin tuyển dụng' : 'Đã lưu tin tuyển dụng',
             description: isSaved ? undefined : 'Bạn có thể xem lại trong mục "Việc làm đã lưu"'
