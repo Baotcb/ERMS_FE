@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useCallback } from 'react'
+import { Suspense, useState, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Briefcase, Search } from 'lucide-react'
 
@@ -38,6 +38,9 @@ function ListingSkeleton() {
 }
 
 /* Nội dung chính */
+const FE_PAGE_SIZE = 10
+const API_FETCH_SIZE = 100
+
 function PublicJobListContent() {
     const searchParams = useSearchParams()
     const [page, setPage] = useState(1)
@@ -48,18 +51,80 @@ function PublicJobListContent() {
     const search = searchParams.get('q') || undefined
     const location = searchParams.get('location') || undefined
 
-    const { data, isLoading, error } = usePublicJobs({ page, pageSize: 10, search, location })
+    // Fetch nhiều data, filter + phân trang hoàn toàn ở FE
+    const { data, isLoading, error } = usePublicJobs({ page: 1, pageSize: API_FETCH_SIZE, search, location })
+
+    const handleFilterChange = useCallback((setter: (v: string) => void) => (v: string) => {
+        setter(v)
+        setPage(1)
+    }, [])
 
     const clearFilters = useCallback(() => {
         setExperience('')
         setSalary('')
         setEmployment('')
+        setPage(1)
     }, [])
 
-    const items = data?.items ?? []
-    const filteredJobs = employment
-        ? items.filter((j) => j.employmentType === employment)
-        : items
+    // Client-side filter
+    const filteredJobs = useMemo(() => {
+        const allItems = data?.items ?? []
+        let result = allItems
+
+        if (employment) {
+            result = result.filter((j) => j.employmentType === employment)
+        }
+
+        if (experience) {
+            result = result.filter((j) => {
+                if (!j.experienceLevel) return experience === '0'
+                // Parse số từ experienceLevel backend (ví dụ: "2-5 years", "3 years")
+                const nums = j.experienceLevel.match(/\d+/g)?.map(Number) ?? []
+                if (nums.length === 0) return experience === '0'
+
+                const jobMin = nums[0]
+                const jobMax = nums.length > 1 ? nums[1] : nums[0]
+
+                if (experience === '0') return jobMin === 0 && jobMax === 0
+                if (experience === '5+') return jobMax >= 5
+
+                // Parse filter range (ví dụ: "2-3" → filterMin=2, filterMax=3)
+                const [filterMin, filterMax] = experience.split('-').map(Number)
+                // Kiểm tra overlap: job range [jobMin, jobMax] có giao với filter range [filterMin, filterMax]
+                return jobMin <= filterMax && jobMax >= filterMin
+            })
+        }
+
+        if (salary) {
+            result = result.filter((j) => {
+                if (!j.showSalary) return false
+                const max = j.salaryRangeMax ?? 0
+                const min = j.salaryRangeMin ?? 0
+                const ref = max > 0 ? max : min
+
+                switch (salary) {
+                    case '0-10': return ref > 0 && ref <= 10_000_000
+                    case '10-15': return ref > 10_000_000 && ref <= 15_000_000
+                    case '15-20': return ref > 15_000_000 && ref <= 20_000_000
+                    case '20-30': return ref > 20_000_000 && ref <= 30_000_000
+                    case '30+': return ref > 30_000_000
+                    default: return true
+                }
+            })
+        }
+
+        return result
+    }, [data?.items, employment, experience, salary])
+
+    // FE pagination
+    const totalFiltered = filteredJobs.length
+    const totalPages = Math.max(1, Math.ceil(totalFiltered / FE_PAGE_SIZE))
+    const paginatedJobs = useMemo(() => {
+        const start = (page - 1) * FE_PAGE_SIZE
+        return filteredJobs.slice(start, start + FE_PAGE_SIZE)
+    }, [filteredJobs, page])
+
+    const hasFilters = employment || experience || salary
 
     if (isLoading) return <ListingSkeleton />
 
@@ -98,9 +163,9 @@ function PublicJobListContent() {
                 experience={experience}
                 salary={salary}
                 employment={employment}
-                onExperienceChange={setExperience}
-                onSalaryChange={setSalary}
-                onEmploymentChange={setEmployment}
+                onExperienceChange={handleFilterChange(setExperience)}
+                onSalaryChange={handleFilterChange(setSalary)}
+                onEmploymentChange={handleFilterChange(setEmployment)}
                 onClear={clearFilters}
             />
 
@@ -108,9 +173,19 @@ function PublicJobListContent() {
                 {/* Header */}
                 <div className="job-listing__header">
                     <h2 className="job-listing__count">
-                        Tuyển dụng{' '}
-                        <span className="job-listing__count-number">{data.totalCount.toLocaleString('vi-VN')}</span>{' '}
-                        việc làm
+                        {hasFilters ? (
+                            <>
+                                Tìm thấy{' '}
+                                <span className="job-listing__count-number">{totalFiltered.toLocaleString('vi-VN')}</span>{' '}
+                                việc làm phù hợp
+                            </>
+                        ) : (
+                            <>
+                                Tuyển dụng{' '}
+                                <span className="job-listing__count-number">{(data.totalCount).toLocaleString('vi-VN')}</span>{' '}
+                                việc làm
+                            </>
+                        )}
                     </h2>
                     <div className="job-listing__sort">
                         <span className="job-listing__sort-label">Sắp xếp theo:</span>
@@ -124,12 +199,24 @@ function PublicJobListContent() {
 
                 {/* Job List */}
                 <div className="topcv-page__list">
-                    {filteredJobs.map((job) => (
-                        <ListingJobCard key={job.id} job={job} />
-                    ))}
+                    {paginatedJobs.length > 0 ? (
+                        paginatedJobs.map((job) => (
+                            <ListingJobCard key={job.id} job={job} />
+                        ))
+                    ) : (
+                        <div className="topcv-empty" style={{ padding: '40px 0' }}>
+                            <div className="topcv-empty__icon">
+                                <Search className="w-10 h-10" style={{ color: '#a6acb2' }} />
+                            </div>
+                            <h3 className="topcv-empty__title" style={{ fontSize: '1rem' }}>Không tìm thấy việc làm phù hợp với bộ lọc</h3>
+                            <button className="topcv-empty__button" onClick={clearFilters} type="button">Xoá bộ lọc</button>
+                        </div>
+                    )}
                 </div>
 
-                <JobPagination page={page} totalPages={data.totalPages} onPageChange={setPage} />
+                {paginatedJobs.length > 0 && (
+                    <JobPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                )}
             </div>
         </div>
     )

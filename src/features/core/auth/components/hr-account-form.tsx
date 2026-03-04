@@ -42,14 +42,8 @@ function HRAccountFormContent() {
         setError(null)
         try {
             await createHRAccount({ ...data, enterpriseId })
-            // Store email in HttpOnly cookie for verify page via API route
-            await fetch('/api/auth/session/verify-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: data.email }),
-            })
-            // Redirect to verify email page (route group (auth) doesn't add /auth to URL)
-            router.push('/verify-email')
+            // Redirect to verify email page with email as query param
+            router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Tạo tài khoản thất bại')
         } finally {
