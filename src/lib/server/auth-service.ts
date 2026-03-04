@@ -3,7 +3,6 @@
  * Handles authentication operations from server
  */
 
-import { serverFetch } from '../server-fetch';
 
 export interface LoginRequest {
   email: string;
@@ -51,56 +50,3 @@ export interface ResetPasswordResponse {
   message: string;
 }
 
-/**
- * Login from server
- */
-export async function loginServer(data: LoginRequest): Promise<LoginResponse> {
-  return serverFetch<LoginResponse>('/api/Auth/login', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: data.email.trim(),
-      password: data.password,
-    }),
-  });
-}
-
-/**
- * Register from server
- */
-export async function registerServer(data: RegisterRequest): Promise<RegisterResponse> {
-  return serverFetch<RegisterResponse>('/api/Auth/register', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: data.email.trim(),
-      password: data.password,
-      fullName: data.fullName.trim(),
-      role: data.role || 'Candidate',
-    }),
-  });
-}
-
-/**
- * Forgot password from server
- */
-export async function forgotPasswordServer(data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
-  return serverFetch<ForgotPasswordResponse>('/api/Auth/forgot-password', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: data.email.trim(),
-    }),
-  });
-}
-
-/**
- * Reset password from server
- */
-export async function resetPasswordServer(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
-  return serverFetch<ResetPasswordResponse>('/api/Auth/reset-password', {
-    method: 'POST',
-    body: JSON.stringify({
-      email: data.email.trim(),
-      token: data.token,
-      newPassword: data.newPassword,
-    }),
-  });
-}

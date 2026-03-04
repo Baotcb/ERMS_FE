@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { memo, useMemo, useCallback } from 'react';
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BrandDecoration } from "@/components/layout/brand-decoration";
+import { useAuth } from "@/features/core/auth/hooks/use-auth";
+import { logoutAction } from "@/features/core/auth/actions/auth";
+import { NavItem } from "./nav-item";
 import {
     Bell,
     MessageSquare,
@@ -19,14 +26,14 @@ import {
     Shield,
     User,
     KeyRound,
-} from "lucide-react";
-import { memo, useMemo, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BrandDecoration } from "@/components/layout/brand-decoration";
-import { useAuth } from "@/features/core/auth/hooks/use-auth";
-import { logoutAction } from "@/features/core/auth/actions/auth";
-import { NavItem } from "./nav-item";
+} from 'lucide-react';
+
+// Direct imports — optimizePackageImports in next.config handles tree-shaking
+const Icons = {
+    Bell, MessageSquare, LogOut, Menu, Search, Bookmark,
+    FileCheck, ThumbsUp, Building2, BarChart3, Briefcase,
+    FileText, Mail, Shield, User, KeyRound,
+};
 
 const JOB_POSITIONS = [
     "Việc làm Nhân viên kinh doanh",
@@ -58,59 +65,55 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
     const userId = useMemo(() => user?.id || 'N/A', [user?.id]);
 
     return (
-        <nav className="sticky top-0 z-50 bg-white border-b border-sidebar-border h-20 transition-all">
-            <div className="w-full px-6 lg:px-10 h-full flex items-center justify-between">
+        <nav className="sticky top-0 z-50 bg-white border-b border-[#e8e8e8] h-16 shadow-sm">
+            <div className="container mx-auto px-4 lg:px-6 h-full flex items-center justify-between max-w-[1320px]">
                 {/* Left Side: Brand & Links */}
-                <div className="flex items-center gap-8 h-full">
-                    <Link href="/jobs" className="flex items-center gap-4 group">
-                        {/* Logo Container */}
-                        <div className="flex items-center justify-center">
-                            {/* Logo */}
-                            <div className="relative w-16 h-16 flex-shrink-0 transition-transform group-hover:scale-105">
-                                <Image
-                                    src="/logo.png"
-                                    alt="ERMS Logo"
-                                    fill
-                                    sizes="64px"
-                                    className="object-contain"
-                                />
-                            </div>
+                <div className="flex items-center gap-6 h-full">
+                    <Link href="/" className="flex items-center gap-3 group">
+                        {/* Logo */}
+                        <div className="relative w-10 h-10 flex-shrink-0 transition-transform group-hover:scale-105">
+                            <Image
+                                src="/logo.png"
+                                alt="ERMS Logo"
+                                fill
+                                sizes="40px"
+                                className="object-contain"
+                            />
                         </div>
-
-                        {/* Brand Decoration Icon - 70px wide */}
-                        <div className="w-[70px] h-full flex items-center justify-center">
-                            <BrandDecoration className="w-full h-auto drop-shadow-sm" />
+                        {/* Brand Text */}
+                        <div className="w-[60px] h-full flex items-center justify-center">
+                            <BrandDecoration className="w-full h-auto" />
                         </div>
                     </Link>
 
-                    <div className="hidden md:flex items-center gap-6 h-full">
+                    <div className="hidden md:flex items-center gap-1 h-full">
                         {/* VIỆC LÀM MEGA MENU */}
                         <NavItem
                             label="Việc làm"
                             href="/jobs"
-                            className="text-[13px] font-bold min-w-[70px] justify-center"
+                            className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]"
                         >
                             <div className="grid grid-cols-[200px_1fr] gap-5 w-[580px] p-4">
                                 {/* Column 1: Main Actions */}
                                 <div className="space-y-4">
                                     {/* Việc làm Section */}
                                     <div>
-                                        <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Việc làm</h3>
+                                        <h3 className="text-xs font-bold text-[#a6acb2] mb-2 uppercase tracking-wider">Việc làm</h3>
                                         <div className="space-y-0.5">
-                                            <Link href="/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors group">
-                                                <Search className="w-4 h-4 text-[#FF7E67]" />
-                                                <span className="text-sm font-bold text-[#FF7E67] group-hover:text-[#FF7E67]/80">Tìm việc làm</span>
+                                            <Link href="/jobs" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#B5D5F5]/20 transition-colors group/item">
+                                                <Icons.Search className="w-4 h-4 text-[#1B5583]" />
+                                                <span className="text-sm font-bold text-[#1B5583]">Tìm việc làm</span>
                                             </Link>
-                                            <Link href="/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <Bookmark className="w-4 h-4 text-slate-400" />
+                                            <Link href="/jobs/saved" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
+                                                <Icons.Bookmark className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm đã lưu</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <FileCheck className="w-4 h-4 text-slate-400" />
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
+                                                <Icons.FileCheck className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm đã ứng tuyển</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <ThumbsUp className="w-4 h-4 text-slate-400" />
+                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
+                                                <Icons.ThumbsUp className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm phù hợp</span>
                                             </Link>
                                         </div>
@@ -118,14 +121,14 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
 
                                     {/* Công ty Section */}
                                     <div>
-                                        <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Công ty</h3>
+                                        <h3 className="text-xs font-bold text-[#a6acb2] mb-2 uppercase tracking-wider">Công ty</h3>
                                         <div className="space-y-0.5">
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <Building2 className="w-4 h-4 text-slate-400" />
+                                            <Link href="/companies" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
+                                                <Icons.Building2 className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Danh sách công ty</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-50 transition-colors text-slate-600 hover:text-[#0F4C75]">
-                                                <BarChart3 className="w-4 h-4 text-slate-400" />
+                                            <Link href="/companies" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
+                                                <Icons.BarChart3 className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Top công ty</span>
                                             </Link>
                                         </div>
@@ -134,13 +137,13 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
 
                                 {/* Column 2 & 3: Jobs by Position */}
                                 <div>
-                                    <h3 className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Việc làm theo vị trí</h3>
+                                    <h3 className="text-xs font-bold text-[#a6acb2] mb-2 uppercase tracking-wider">Việc làm theo vị trí</h3>
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                                         {JOB_POSITIONS.map((job) => (
                                             <Link
                                                 key={job}
                                                 href="/not-found"
-                                                className="text-sm text-slate-600 hover:text-[#0F4C75] hover:translate-x-1 transition-all"
+                                                className="text-sm text-[#6f7882] hover:text-[#1B5583] hover:translate-x-0.5 transition-all"
                                             >
                                                 {job}
                                             </Link>
@@ -150,141 +153,146 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                             </div>
                         </NavItem>
 
-                        {/* Other Simple Links or Menus */}
-                        <NavItem label="Hồ sơ & CV" href="/not-found" className="text-[13px] font-bold min-w-[70px] justify-center" />
-                        <NavItem label="Công ty" href="/not-found" className="text-[13px] font-bold min-w-[70px] justify-center" />
-                        <NavItem label="Cẩm nang" href="/not-found" className="text-[13px] font-bold min-w-[70px] justify-center" />
+                        {/* Other Simple Links */}
+                        <NavItem label="Hồ sơ & CV" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]" />
+                        <NavItem label="Công ty" href="/companies" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]" />
+                        <NavItem label="Cẩm nang" href="/not-found" className="text-[13px] font-bold px-3 text-[#212f3f] hover:text-[#1B5583]" />
                     </div>
                 </div>
 
                 {/* Right Side: Actions & Profile */}
-                <div className="flex items-center gap-4 h-full">
-                    {/* Show skeleton while loading to prevent flash */}
+                <div className="flex items-center gap-3 h-full">
+                    {/* Show skeleton while loading */}
                     {isLoading ? (
                         <div className="flex items-center gap-2 animate-pulse">
-                            <div className="w-9 h-9 rounded-full bg-slate-200" />
-                            <div className="w-20 h-4 rounded bg-slate-200 hidden sm:block" />
+                            <div className="w-8 h-8 rounded-full bg-[#f4f5f5]" />
+                            <div className="w-16 h-4 rounded bg-[#f4f5f5] hidden sm:block" />
                         </div>
                     ) : isAuthenticated ? (
                         <>
                             {/* Notifications */}
-                            <div className="hidden sm:flex items-center gap-2">
-                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-primary hover:bg-slate-50 rounded-full">
-                                    <Bell className="w-5 h-5" />
+                            <div className="hidden sm:flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-[#6f7882] hover:text-[#1B5583] hover:bg-[#B5D5F5]/20 rounded-full h-9 w-9"
+                                >
+                                    <Icons.Bell className="w-5 h-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-primary hover:bg-slate-50 rounded-full">
-                                    <MessageSquare className="w-5 h-5" />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-[#6f7882] hover:text-[#1B5583] hover:bg-[#B5D5F5]/20 rounded-full h-9 w-9"
+                                >
+                                    <Icons.MessageSquare className="w-5 h-5" />
                                 </Button>
                             </div>
 
-                            <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                            <div className="h-5 w-px bg-[#e8e8e8] hidden sm:block" />
 
                             {/* User Profile Hover Menu */}
                             <NavItem
                                 align="right"
                                 label={
                                     <div className="flex items-center gap-2">
-                                        <Avatar className="w-9 h-9 border border-slate-200">
-                                            <AvatarImage src="https://github.com/shadcn.png" />
-                                            <AvatarFallback>{userInitial}</AvatarFallback>
+                                        <Avatar className="w-8 h-8 border border-[#e8e8e8]">
+                                            <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
+                                            <AvatarFallback className="bg-[#1B5583] text-white text-xs">{userInitial}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-sm font-medium text-slate-700 hidden sm:block">
+                                        <span className="text-sm font-medium text-[#212f3f] hidden sm:block">
                                             {displayName}
                                         </span>
                                     </div>
                                 }
                             >
-                                <div className="w-[320px]">
+                                <div className="w-[300px]">
                                     {/* Profile Header */}
-                                    <div className="p-5 bg-white flex items-start gap-4 border-b border-gray-100">
+                                    <div className="p-4 bg-white flex items-start gap-3 border-b border-[#EDE8F0]">
                                         <div className="relative">
-                                            <Avatar className="w-14 h-14 border-2 border-white shadow-sm">
-                                                <AvatarImage src="https://github.com/shadcn.png" />
-                                                <AvatarFallback>{userInitial}</AvatarFallback>
+                                            <Avatar className="w-12 h-12 border-2 border-white shadow-sm">
+                                                <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
+                                                <AvatarFallback className="bg-[#1B5583] text-white">{userInitial}</AvatarFallback>
                                             </Avatar>
-                                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#FF7E67] border-2 border-white rounded-full"></span>
+                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#1B5583] border-2 border-white rounded-full" />
                                         </div>
-                                        <div className="flex-1 min-w-0 pt-1">
-                                            <h4 className="text-base font-bold text-brand-dark truncate leading-tight">{displayName}</h4>
-                                            <p className="text-xs text-gray-500 font-medium mt-1">ID: {userId}</p>
-                                            <p className="text-xs text-gray-400 truncate mt-0.5">{userEmail}</p>
+                                        <div className="flex-1 min-w-0 pt-0.5">
+                                            <h4 className="text-sm font-bold text-[#212f3f] truncate">{displayName}</h4>
+                                            <p className="text-[11px] text-[#a6acb2] mt-0.5">ID: {userId}</p>
+                                            <p className="text-[11px] text-[#a6acb2] truncate">{userEmail}</p>
                                         </div>
                                     </div>
 
                                     {/* Menu Items */}
-                                    <div className="py-2 max-h-[60vh] overflow-y-auto">
-                                        {/* Section 1: Quản lý tìm việc */}
+                                    <div className="py-1 max-h-[60vh] overflow-y-auto">
+                                        {/* Section: Quản lý tìm việc */}
                                         <div className="px-4 py-2">
-                                            <div className="flex items-center justify-between text-brand-dark font-bold text-sm mb-2 cursor-pointer hover:text-brand-primary transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <Briefcase className="w-5 h-5 text-brand-primary" />
-                                                    <span>Quản lý tìm việc</span>
-                                                </div>
+                                            <div className="flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] mb-1.5">
+                                                <Icons.Briefcase className="w-4 h-4 text-[#1B5583]" />
+                                                <span>Quản lý tìm việc</span>
                                             </div>
-                                            <div className="pl-8 space-y-2">
-                                                <Link href="/jobs/saved" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã lưu</Link>
-                                                <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm đã ứng tuyển</Link>
-                                                <Link href="/not-found" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">Việc làm phù hợp</Link>
+                                            <div className="pl-6.5 space-y-1.5" style={{ paddingLeft: '26px' }}>
+                                                <Link href="/jobs/saved" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã lưu</Link>
+                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã ứng tuyển</Link>
+                                                <Link href="/offers" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Đề nghị của tôi</Link>
+                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm phù hợp</Link>
                                             </div>
                                         </div>
 
-                                        {/* Section 2: Quản lý CV */}
-                                        <div className="px-4 py-2 mt-2">
-                                            <div className="flex items-center justify-between text-brand-dark font-bold text-sm mb-2 cursor-pointer hover:text-brand-primary transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <FileText className="w-5 h-5 text-brand-primary" />
-                                                    <span>Quản lý CV</span>
-                                                </div>
+                                        {/* Section: Quản lý CV */}
+                                        <div className="px-4 py-2">
+                                            <div className="flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] mb-1.5">
+                                                <Icons.FileText className="w-4 h-4 text-[#1B5583]" />
+                                                <span>Quản lý CV</span>
                                             </div>
-                                            <div className="pl-8">
-                                                <Link href="/profile/cv" className="block text-sm text-gray-600 hover:text-brand-primary transition-colors">
+                                            <div style={{ paddingLeft: '26px' }}>
+                                                <Link href="/profile/cv" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">
                                                     CV của tôi
                                                 </Link>
                                             </div>
                                         </div>
 
-                                        {/* Section 3: Email & Thông báo */}
-                                        <div className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group mt-1">
-                                            <Link href="/not-found" className="flex items-center gap-3 text-brand-dark font-bold text-sm group-hover:text-brand-primary transition-colors">
-                                                <div className="w-5 flex justify-center"><Mail className="w-5 h-5 text-brand-primary" /></div>
-                                                <span>Email & Thông báo</span>
-                                            </Link>
-                                            <div className="w-4 h-4" /> {/* Spacer for alignment if no chevron */}
-                                        </div>
+                                        {/* Section: Email & Thông báo */}
+                                        <Link
+                                            href="/not-found"
+                                            className="px-4 py-2.5 flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] hover:bg-[#EDE8F0] transition-colors"
+                                        >
+                                            <Icons.Mail className="w-4 h-4 text-[#1B5583]" />
+                                            <span>Email & Thông báo</span>
+                                        </Link>
 
-                                        {/* Section 4: Cá nhân & Bảo mật - Dropdown */}
-                                        <div className="px-4 py-2 mt-1">
-                                            <div className="flex items-center gap-3 text-brand-dark font-bold text-sm mb-2">
-                                                <div className="w-5 flex justify-center"><Shield className="w-5 h-5 text-brand-primary" /></div>
+                                        {/* Section: Cá nhân & Bảo mật */}
+                                        <div className="px-4 py-2">
+                                            <div className="flex items-center gap-2.5 text-[#212f3f] font-semibold text-[13px] mb-1.5">
+                                                <Icons.Shield className="w-4 h-4 text-[#1B5583]" />
                                                 <span>Cá nhân & Bảo mật</span>
                                             </div>
-                                            <div className="pl-8 space-y-2">
+                                            <div style={{ paddingLeft: '26px' }} className="space-y-1.5">
                                                 <Link
                                                     href="/profile"
-                                                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
+                                                    className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5"
                                                 >
-                                                    <User className="w-4 h-4" />
+                                                    <Icons.User className="w-3.5 h-3.5" />
                                                     <span>Thông tin cá nhân</span>
                                                 </Link>
                                                 <Link
                                                     href="/settings/security"
-                                                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-primary transition-colors py-1"
+                                                    className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5"
                                                 >
-                                                    <KeyRound className="w-4 h-4" />
+                                                    <Icons.KeyRound className="w-3.5 h-3.5" />
                                                     <span>Đổi mật khẩu</span>
                                                 </Link>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Footer */}
-                                    <div className="p-4 border-t border-slate-100">
+                                    {/* Footer: Logout */}
+                                    <div className="p-3 border-t border-[#EDE8F0]">
                                         <Button
-                                            variant="destructive"
-                                            className="w-full bg-brand-coral hover:bg-brand-coral/90 text-white font-bold h-10 rounded-lg flex items-center justify-center gap-2"
+                                            variant="outline"
+                                            className="w-full border-[#e74c3c] text-[#e74c3c] hover:bg-[#e74c3c] hover:text-white font-semibold h-9 rounded-lg flex items-center justify-center gap-2 transition-colors"
                                             onClick={handleLogout}
                                         >
-                                            <LogOut className="w-4 h-4" />
+                                            <Icons.LogOut className="w-4 h-4" />
                                             Đăng xuất
                                         </Button>
                                     </div>
@@ -292,14 +300,17 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                             </NavItem>
                         </>
                     ) : (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             <Link href="/login">
-                                <Button variant="ghost" className="text-brand-dark font-semibold hover:text-brand-primary hover:bg-brand-light">
+                                <Button
+                                    variant="outline"
+                                    className="border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white font-semibold h-9 px-4 rounded-lg text-sm transition-colors"
+                                >
                                     Đăng nhập
                                 </Button>
                             </Link>
                             <Link href="/register">
-                                <Button className="bg-brand-coral hover:bg-brand-coral/90 text-white font-bold shadow-md shadow-brand-coral/20">
+                                <Button className="bg-[#1B5583] hover:bg-[#154360] text-white font-semibold h-9 px-4 rounded-lg text-sm shadow-none transition-colors">
                                     Đăng ký
                                 </Button>
                             </Link>
@@ -307,14 +318,11 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                     )}
 
                     {/* Mobile Menu Trigger */}
-                    <Button variant="ghost" size="icon" className="md:hidden text-slate-500">
-                        <Menu className="w-6 h-6" />
+                    <Button variant="ghost" size="icon" className="md:hidden text-[#6f7882] h-9 w-9">
+                        <Icons.Menu className="w-5 h-5" />
                     </Button>
                 </div>
             </div>
         </nav>
     );
 });
-
-
-

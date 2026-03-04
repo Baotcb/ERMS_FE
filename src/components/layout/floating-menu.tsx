@@ -1,6 +1,6 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Bookmark, MessageSquare, Headphones, UserPlus } from "lucide-react"
@@ -12,6 +12,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useAuth } from "@/features/core/auth/hooks/use-auth"
+import { useSavedJobsStore } from "@/features/jobs/stores/use-saved-jobs-store"
 
 interface FloatingMenuItemProps {
     href: string
@@ -63,6 +64,14 @@ const EXCLUDED_PATHS = [
 export function FloatingMenu() {
     const pathname = usePathname()
     const { user } = useAuth()
+    const { savedJobIds, fetchSavedJobIds, isLoaded } = useSavedJobsStore()
+
+    // Fetch saved jobs khi user là Candidate đã đăng nhập
+    useEffect(() => {
+        if (user?.role === 'Candidate' && !isLoaded) {
+            fetchSavedJobIds()
+        }
+    }, [user, isLoaded, fetchSavedJobIds])
 
     // Hide on auth pages
     if (pathname?.match(/^\/(login|register|forgot-password|reset-password|verify-email|confirm-email)/)) {
@@ -80,6 +89,8 @@ export function FloatingMenu() {
         return null
     }
 
+    const savedCount = savedJobIds.size
+
     return (
         <div className="fixed bottom-24 right-4 z-50 flex flex-col gap-[5px] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500 items-end">
             {/* Saved Jobs */}
@@ -88,7 +99,7 @@ export function FloatingMenu() {
                 icon={<Bookmark className="w-4 h-4 group-hover:fill-current" />}
                 label="Công việc đã lưu"
                 color="group-hover:text-brand-coral"
-                count={1}
+                count={savedCount}
             />
 
             {/* Job Connections */}

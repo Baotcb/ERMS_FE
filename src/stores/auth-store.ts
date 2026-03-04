@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { logger } from '@/lib/logger'
 import { getCookie } from '../features/core/auth/utils/auth-cookies'
 import { STORAGE_KEYS } from '../utils/constants'
 
@@ -101,7 +102,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                 })
             }
         } catch (error) {
-            console.error('Error initializing auth store:', error)
+            logger.error('Error initializing auth store:', error)
             set({
                 user: null,
                 isAuthenticated: false,

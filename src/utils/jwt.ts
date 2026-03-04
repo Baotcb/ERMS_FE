@@ -11,7 +11,18 @@ export interface DecodedToken {
 
 export function parseJwt(token: string): DecodedToken | null {
     try {
-        const base64Url = token.split('.')[1]
+        const parts = token.split('.')
+        if (parts.length !== 3) {
+            logger.error('Invalid JWT format: token does not have 3 parts')
+            return null
+        }
+
+        const base64Url = parts[1]
+        if (!base64Url) {
+            logger.error('Invalid JWT format: missing payload')
+            return null
+        }
+
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
         const jsonPayload = decodeURIComponent(
             atob(base64)

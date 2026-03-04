@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { HRSidebar } from '@/features/hr'
 
 export const metadata: Metadata = {
     title: 'Enterprise Portal - ERMS',
@@ -12,11 +11,8 @@ export default function EnterpriseLayout({
     children: React.ReactNode
 }) {
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            <HRSidebar />
-            <main className="flex-1 p-8 lg:ml-0">
-                {children}
-            </main>
+        <div className="min-h-screen bg-gray-50">
+            {children}
         </div>
     )
 }

@@ -1,0 +1,369 @@
+'use client'
+
+import { useState, useCallback, useEffect } from 'react'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import { FileText, Send, Loader2, Users } from 'lucide-react'
+import { useCreateOffer } from '../../hooks/use-offers'
+import { getJobPostings } from '../../api/job-posting-service'
+import { getApplicationsByJob } from '../../api/application-service'
+import type { ApplicationDto } from '../../types/application-types'
+
+interface CreateOfferDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    /** Pre-filled từ context (application table). Nếu có → bỏ qua picker */
+    applicationId?: string
+    candidateName?: string
+    position?: string
+}
+
+interface JobOption { id: string; title: string; code: string }
+
+const INITIAL_FORM = {
+    salary: '',
+    salaryFrequency: 'Monthly',
+    bonus: '',
+    benefits: '',
+    startDate: '',
+    expirationDate: '',
+}
+
+export function CreateOfferDialog({
+    open,
+    onOpenChange,
+    applicationId: propApplicationId,
+    candidateName: propCandidateName,
+    position: propPosition,
+}: CreateOfferDialogProps) {
+    const [form, setForm] = useState(INITIAL_FORM)
+    const { trigger, isMutating } = useCreateOffer()
+
+    // Two-step picker state (chỉ dùng khi không có props)
+    const hasContext = Boolean(propApplicationId)
+    const [jobs, setJobs] = useState<JobOption[]>([])
+    const [jobsLoading, setJobsLoading] = useState(false)
+    const [selectedJobId, setSelectedJobId] = useState('')
+    const [candidates, setCandidates] = useState<ApplicationDto[]>([])
+    const [candidatesLoading, setCandidatesLoading] = useState(false)
+    const [selectedAppId, setSelectedAppId] = useState('')
+
+    // Giá trị thực tế
+    const selectedCandidate = candidates.find((c) => c.id === selectedAppId)
+    const effectiveAppId = propApplicationId || selectedAppId
+    const effectivePosition = propPosition || (jobs.find((j) => j.id === selectedJobId)?.title ?? '')
+    const displayName = propCandidateName || selectedCandidate?.candidateName || 'Ứng viên'
+
+    // Load job postings khi dialog mở (standalone mode)
+    useEffect(() => {
+        if (!open || hasContext) return
+        setJobsLoading(true)
+        getJobPostings({ pageSize: 100 })
+            .then((res) =>
+                setJobs(res.data.map((j: { id: string; jobTitle: string; jobCode: string }) => ({
+                    id: j.id,
+                    title: j.jobTitle,
+                    code: j.jobCode,
+                })))
+            )
+            .catch(() => setJobs([]))
+            .finally(() => setJobsLoading(false))
+    }, [open, hasContext])
+
+    // Load OfferProcessing candidates khi chọn job
+    useEffect(() => {
+        if (!selectedJobId) { setCandidates([]); return }
+        setCandidatesLoading(true)
+        setSelectedAppId('')
+        getApplicationsByJob(selectedJobId, { stageFilter: 'OfferProcessing', pageSize: 100 })
+            .then((res) => setCandidates(res.data))
+            .catch(() => setCandidates([]))
+            .finally(() => setCandidatesLoading(false))
+    }, [selectedJobId])
+
+    // Reset khi đóng dialog
+    useEffect(() => {
+        if (!open) {
+            setForm(INITIAL_FORM)
+            setSelectedJobId('')
+            setSelectedAppId('')
+            setCandidates([])
+        }
+    }, [open])
+
+    const handleChange = useCallback(
+        (field: string, value: string) => {
+            setForm((prev) => ({ ...prev, [field]: value }))
+        },
+        []
+    )
+
+    const handleSubmit = useCallback(async () => {
+        if (!effectiveAppId || !effectivePosition || !form.salary || !form.startDate || !form.expirationDate) return
+        try {
+            await trigger({
+                applicationId: effectiveAppId,
+                position: effectivePosition,
+                salary: Number(form.salary),
+                salaryFrequency: form.salaryFrequency,
+                bonus: form.bonus || undefined,
+                benefits: form.benefits || undefined,
+                startDate: new Date(form.startDate).toISOString(),
+                expirationDate: new Date(form.expirationDate).toISOString(),
+            })
+            onOpenChange(false)
+        } catch {
+            // Error handled by SWR
+        }
+    }, [form, effectiveAppId, effectivePosition, trigger, onOpenChange])
+
+    const initials = displayName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+
+    const isFormValid = effectiveAppId && effectivePosition && form.salary && form.startDate && form.expirationDate
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[640px] p-0 gap-0">
+                {/* Header */}
+                <DialogHeader className="px-6 py-5 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center size-10 rounded-lg bg-[#0F4C75]/10 text-[#0F4C75]">
+                            <FileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-lg font-bold">
+                                Tạo Offer
+                            </DialogTitle>
+                            <DialogDescription className="text-sm mt-0.5">
+                                Gửi đề nghị công việc cho ứng viên
+                            </DialogDescription>
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                {/* Scrollable Body */}
+                <div className="overflow-y-auto max-h-[60vh] p-6">
+                    <div className="flex flex-col gap-5">
+                        {/* === STEP PICKER (standalone mode) === */}
+                        {!hasContext && (
+                            <CandidatePicker
+                                jobs={jobs}
+                                jobsLoading={jobsLoading}
+                                selectedJobId={selectedJobId}
+                                onSelectJob={setSelectedJobId}
+                                candidates={candidates}
+                                candidatesLoading={candidatesLoading}
+                                selectedAppId={selectedAppId}
+                                onSelectApp={setSelectedAppId}
+                            />
+                        )}
+
+                        {/* === CANDIDATE CARD (context mode) === */}
+                        {hasContext && propCandidateName && (
+                            <CandidateCard name={propCandidateName} position={propPosition} initials={initials} />
+                        )}
+
+                        {/* === SELECTED CANDIDATE (picker mode) === */}
+                        {!hasContext && selectedCandidate && (
+                            <CandidateCard
+                                name={selectedCandidate.candidateName}
+                                position={effectivePosition}
+                                initials={initials}
+                            />
+                        )}
+
+                        {/* Position (readonly) */}
+                        {effectivePosition && (
+                            <div className="flex flex-col gap-2">
+                                <Label>Vị trí đề nghị</Label>
+                                <Input value={effectivePosition} readOnly className="bg-slate-50 text-slate-500 cursor-not-allowed" />
+                            </div>
+                        )}
+
+                        {/* Salary + Frequency */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <Label>Mức lương <span className="text-red-500">*</span></Label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        placeholder="Nhập mức lương"
+                                        value={form.salary}
+                                        onChange={(e) => handleChange('salary', e.target.value)}
+                                        className="pr-12"
+                                    />
+                                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">VNĐ</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Label>Tần suất trả lương</Label>
+                                <Select value={form.salaryFrequency} onValueChange={(v) => handleChange('salaryFrequency', v)}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Monthly">Hàng tháng</SelectItem>
+                                        <SelectItem value="Yearly">Hàng năm</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Bonus */}
+                        <div className="flex flex-col gap-2">
+                            <Label>Thưởng (Tùy chọn)</Label>
+                            <Input placeholder="Nhập thông tin thưởng" value={form.bonus} onChange={(e) => handleChange('bonus', e.target.value)} />
+                        </div>
+
+                        {/* Benefits */}
+                        <div className="flex flex-col gap-2">
+                            <Label>Phúc lợi bổ sung</Label>
+                            <Textarea placeholder="Bảo hiểm sức khỏe, MacBook Pro M2..." rows={3} value={form.benefits} onChange={(e) => handleChange('benefits', e.target.value)} />
+                        </div>
+
+                        {/* Dates */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <Label>Ngày bắt đầu làm việc <span className="text-red-500">*</span></Label>
+                                <Input type="date" value={form.startDate} onChange={(e) => handleChange('startDate', e.target.value)} />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <Label>Hạn phản hồi offer <span className="text-red-500">*</span></Label>
+                                <Input type="date" value={form.expirationDate} onChange={(e) => handleChange('expirationDate', e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <DialogFooter className="px-6 py-4 border-t border-slate-100">
+                    <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isMutating}>Hủy</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isMutating || !isFormValid}
+                        className="bg-[#0F4C75] hover:bg-[#0a3857] text-white"
+                    >
+                        {isMutating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                        Tạo & Gửi Offer
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+/* ── Sub-components (< 200 lines tổng) ── */
+
+function CandidateCard({ name, position, initials }: { name: string; position?: string; initials: string }) {
+    return (
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div className="size-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-500 flex items-center justify-center shrink-0 shadow-sm">
+                <span className="text-white text-lg font-bold">{initials}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-slate-900 text-base font-bold truncate">{name}</p>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                        Đã qua phỏng vấn
+                    </span>
+                </div>
+                {position && <p className="text-slate-500 text-sm truncate">{position}</p>}
+            </div>
+        </div>
+    )
+}
+
+function CandidatePicker({
+    jobs, jobsLoading, selectedJobId, onSelectJob,
+    candidates, candidatesLoading, selectedAppId, onSelectApp,
+}: {
+    jobs: JobOption[]
+    jobsLoading: boolean
+    selectedJobId: string
+    onSelectJob: (id: string) => void
+    candidates: ApplicationDto[]
+    candidatesLoading: boolean
+    selectedAppId: string
+    onSelectApp: (id: string) => void
+}) {
+    return (
+        <div className="space-y-4 p-4 rounded-xl bg-blue-50/50 border border-blue-100">
+            <div className="flex items-center gap-2 text-[#0F4C75] font-semibold text-sm">
+                <Users className="w-4 h-4" />
+                Chọn ứng viên
+            </div>
+
+            {/* Step 1: Chọn tin tuyển dụng */}
+            <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-slate-500">Bước 1: Chọn tin tuyển dụng</Label>
+                <Select value={selectedJobId} onValueChange={onSelectJob} disabled={jobsLoading}>
+                    <SelectTrigger>
+                        <SelectValue placeholder={jobsLoading ? 'Đang tải...' : 'Chọn tin tuyển dụng'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {jobs.map((j) => (
+                            <SelectItem key={j.id} value={j.id}>
+                                <span className="font-medium">{j.title}</span>
+                                <span className="text-xs text-slate-400 ml-2">({j.code})</span>
+                            </SelectItem>
+                        ))}
+                        {jobs.length === 0 && !jobsLoading && (
+                            <div className="px-3 py-2 text-sm text-slate-400">Không có tin tuyển dụng nào</div>
+                        )}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* Step 2: Chọn ứng viên */}
+            {selectedJobId && (
+                <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs text-slate-500">Bước 2: Chọn ứng viên (OfferProcessing)</Label>
+                    {candidatesLoading ? (
+                        <div className="flex items-center gap-2 py-2 text-sm text-slate-400">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Đang tải ứng viên...
+                        </div>
+                    ) : candidates.length === 0 ? (
+                        <div className="py-2 text-sm text-amber-600 bg-amber-50 px-3 rounded-lg">
+                            Không có ứng viên nào ở giai đoạn tạo offer cho tin này.
+                        </div>
+                    ) : (
+                        <Select value={selectedAppId} onValueChange={onSelectApp}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Chọn ứng viên" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {candidates.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                        <span className="font-medium">{c.candidateName}</span>
+                                        <span className="text-xs text-slate-400 ml-2">({c.candidateEmail})</span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { mutate } from 'swr'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,7 +17,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import { getDepartments, createDepartment, updateDepartment } from '@/features/hr/api/department-service'
+import { getDepartments } from '@/features/hr/api/department-service'
+import { useCreateDepartment, useUpdateDepartment } from '@/features/hr/hooks/use-departments'
 import { getEmployees } from '@/features/hr/api/employee-service'
 import type { Department } from '@/features/hr/api/department-service'
 import type { Employee } from '@/features/hr/api/employee-service'
@@ -50,8 +50,7 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
     const [managers, setManagers] = useState<Employee[]>([])
 
     const form = useForm<DepartmentFormValues>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(departmentSchema) as any,
+        resolver: zodResolver(departmentSchema) as unknown as Resolver<DepartmentFormValues>,
         defaultValues: {
             departmentName: initialData?.departmentName || '',
             departmentCode: initialData?.departmentCode || '',
@@ -72,13 +71,72 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
                     getEmployees({ pageSize: 100 }) // Fetch employees for manager selection
                 ])
                 setDepartments(deptRes.items.filter(d => d.id !== initialData?.id)) // Exclude self from parent options
-                setManagers(empRes.items)
+
+                let loadedManagers = empRes.items
+
+                // If we have a managerId and it's not in the loaded list, fetch specifically
+                if (initialData?.managerId && !loadedManagers.find(m => m.id === initialData.managerId)) {
+                    try {
+                        // Check if we have the name available to fallback first (avoid flash)
+                        // Then fetch real data
+                        const fetchedManager = await getEmployees({ search: initialData.managerId, pageSize: 1 })
+                            .then(res => res.items[0]);
+
+                        if (fetchedManager) {
+                            // Remove if exists to avoid duplicates (though find check should prevent this)
+                            loadedManagers = [fetchedManager, ...loadedManagers.filter(m => m.id !== fetchedManager.id)]
+                        } else if (initialData.managerName) {
+                            // Absolute fallback if fetch fails but we have name
+                            const placeholderManager = {
+                                id: initialData.managerId,
+                                fullName: initialData.managerName,
+                                // ...required fields
+                                employeeCode: '',
+                                email: '',
+                                phone: null,
+                                departmentId: 0,
+                                departmentName: '',
+                                position: null,
+                                employmentType: '',
+                                hireDate: null,
+                                status: 'Active',
+                                createdAt: ''
+                            } as Employee
+                            loadedManagers = [placeholderManager, ...loadedManagers]
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch specific manager info", e)
+                        // Fallback to name if available
+                        if (initialData.managerName) {
+                            const placeholderManager = {
+                                id: initialData.managerId,
+                                fullName: initialData.managerName,
+                                // ...required fields
+                                employeeCode: '',
+                                email: '',
+                                phone: null,
+                                departmentId: 0,
+                                departmentName: '',
+                                position: null,
+                                employmentType: '',
+                                hireDate: null,
+                                status: 'Active',
+                                createdAt: ''
+                            } as Employee
+                            loadedManagers = [placeholderManager, ...loadedManagers]
+                        }
+                    }
+                }
+                setManagers(loadedManagers)
             } catch (error) {
                 console.error('Failed to load options', error)
             }
         }
         loadOptions()
-    }, [initialData?.id])
+    }, [initialData?.id, initialData?.managerId, initialData?.managerName])
+
+    const { trigger: createDepartmentFn } = useCreateDepartment()
+    const { trigger: updateDepartmentFn } = useUpdateDepartment()
 
     const onSubmit = async (data: DepartmentFormValues) => {
         setIsLoading(true)
@@ -90,21 +148,19 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
             }
 
             if (isEdit && initialData) {
-                await updateDepartment(initialData.id, { ...payload, id: initialData.id })
+                await updateDepartmentFn({ id: initialData.id, data: { ...payload, id: initialData.id } })
                 toast({
                     title: 'Thành công',
                     description: 'Cập nhật phòng ban thành công',
                 })
             } else {
-                await createDepartment(payload)
+                await createDepartmentFn(payload)
                 toast({
                     title: 'Thành công',
                     description: 'Tạo phòng ban thành công',
                 })
             }
 
-            // Revalidate SWR cache instead of full page refresh
-            mutate(() => true, undefined, { revalidate: true })
             if (onSuccess) {
                 onSuccess()
             } else {
@@ -131,79 +187,103 @@ export function DepartmentForm({ initialData, isEdit = false, onSuccess, onCance
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="departmentName">Tên phòng ban <span className="text-red-500">*</span></Label>
-                        <Input
-                            id="departmentName"
-                            placeholder="Ví dụ: Phòng Kỹ thuật"
-                            {...register('departmentName')}
-                            className={errors.departmentName ? 'border-red-500' : ''}
-                        />
-                        {errors.departmentName && (
-                            <p className="text-sm text-red-500">{errors.departmentName.message}</p>
-                        )}
+                {/* Section 1: General Information */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                        <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
+                        <h3 className="text-lg font-semibold text-gray-800">Thông tin chung</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="departmentName">Tên phòng ban <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="departmentName"
+                                placeholder="Ví dụ: Phòng Kỹ thuật"
+                                {...register('departmentName')}
+                                className={errors.departmentName ? 'border-red-500' : ''}
+                            />
+                            {errors.departmentName && (
+                                <p className="text-sm text-red-500">{errors.departmentName.message}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="departmentCode">Mã phòng ban</Label>
+                            <Input
+                                id="departmentCode"
+                                placeholder="Ví dụ: DEPT-01 (Tự động nếu để trống)"
+                                {...register('departmentCode')}
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="departmentCode">Mã phòng ban</Label>
-                        <Input
-                            id="departmentCode"
-                            placeholder="Ví dụ: DEPT-01 (Tự động nếu để trống)"
-                            {...register('departmentCode')}
+                        <Label htmlFor="description">Mô tả</Label>
+                        <Textarea
+                            id="description"
+                            placeholder="Mô tả chức năng, nhiệm vụ..."
+                            {...register('description')}
+                            className="min-h-[100px]"
                         />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label>Phòng ban cha</Label>
-                        <Select
-                            onValueChange={(value) => setValue('parentDepartmentId', value)}
-                            defaultValue={watch('parentDepartmentId')}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Chọn phòng ban cha (nếu có)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="0">Không có</SelectItem>
-                                {departments.map((dept) => (
-                                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                                        {dept.departmentName}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                {/* Section 2: Hierarchy & Management */}
+                <div className="space-y-6">
+                    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                        <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
+                        <h3 className="text-lg font-semibold text-gray-800">Phân cấp & Quản lý</h3>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Người quản lý</Label>
-                        <Select
-                            onValueChange={(value) => setValue('managerId', value)}
-                            defaultValue={watch('managerId')}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Chọn người quản lý" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {managers.map((emp) => (
-                                    <SelectItem key={emp.id} value={emp.id}>
-                                        {emp.fullName}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label>Phòng ban cha</Label>
+                            <Select
+                                onValueChange={(value) => setValue('parentDepartmentId', value)}
+                                defaultValue={watch('parentDepartmentId')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Chọn phòng ban cha (nếu có)">
+                                        {watch('parentDepartmentId') === '0'
+                                            ? 'Không có'
+                                            : departments.find(d => d.id.toString() === watch('parentDepartmentId'))?.departmentName
+                                            || (watch('parentDepartmentId') ? watch('parentDepartmentId') : "Chọn phòng ban cha (nếu có)")
+                                        }
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="0">Không có</SelectItem>
+                                    {departments.map((dept) => (
+                                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                                            {dept.departmentName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="description">Mô tả</Label>
-                    <Textarea
-                        id="description"
-                        placeholder="Mô tả chức năng, nhiệm vụ..."
-                        {...register('description')}
-                        className="min-h-[100px]"
-                    />
+                        <div className="space-y-2">
+                            <Label>Trưởng phòng</Label>
+                            <Select
+                                value={watch('managerId') || ""}
+                                onValueChange={(value) => setValue('managerId', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Chọn Trưởng phòng">
+                                        {managers.find(m => m.id === watch('managerId'))?.fullName || (watch('managerId') ? watch('managerId') : "Chọn Trưởng phòng")}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {managers.map((emp) => (
+                                        <SelectItem key={emp.id} value={emp.id}>
+                                            {emp.fullName}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

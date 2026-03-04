@@ -1,51 +1,20 @@
-import { config } from '@/config'
-import { useData, useMutation } from '@/lib/swr/hooks'
+import { useData, useMutation, mutate, type Fetcher } from '@/lib/swr/hooks'
+import { apiClient } from '@/lib/api-client'
 import type { Employee, GetEmployeesParams, CreateEmployeeData, UpdateEmployeeData, PaginatedResult, EmployeeImportItem, BulkCreateResult } from '../api/employee-service'
 import type { ImportEmployeesResult } from '../types/import-types'
-
-const API_BASE = config.apiUrl
 
 // SWR keys for cache management
 export const employeesKeys = {
     all: ['employees'] as const,
     lists: () => [...employeesKeys.all, 'list'] as const,
-    list: (params: GetEmployeesParams) => [...employeesKeys.lists(), params] as const,
+    list: (params: GetEmployeesParams) => [...employeesKeys.lists(), JSON.stringify(params)] as const,
     details: () => [...employeesKeys.all, 'detail'] as const,
     detail: (id: string) => [...employeesKeys.details(), id] as const,
 }
 
-// Helper: Get auth token
-async function getAuthHeaders(): Promise<HeadersInit> {
-    let authToken = ''
-    if (typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-
-    return {
-        'Content-Type': 'application/json',
-        ...(authToken && { Authorization: `Bearer ${authToken}` })
-    }
-}
-
-// Helper: Get auth token without Content-Type (for file upload)
-async function getAuthHeadersWithoutContentType(): Promise<HeadersInit> {
-    let authToken = ''
-    if (typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-    return authToken ? { Authorization: `Bearer ${authToken}` } : {}
-}
-
 // Fetcher for employees list
-async function fetchEmployees(key: string | readonly any[]): Promise<PaginatedResult<Employee>> {
-    // Key format: ['employees', 'list', params]
-    const params = Array.isArray(key) ? key[2] as GetEmployeesParams : {}
+async function fetchEmployees([, , paramsString]: readonly [string, string, string]): Promise<PaginatedResult<Employee>> {
+    const params = JSON.parse(paramsString) as GetEmployeesParams
 
     const searchParams = new URLSearchParams({
         page: String(params.page ?? 1),
@@ -56,18 +25,10 @@ async function fetchEmployees(key: string | readonly any[]): Promise<PaginatedRe
     if (params.departmentId) searchParams.set('departmentId', String(params.departmentId))
     if (params.status) searchParams.set('status', params.status)
 
-    const response = await fetch(`${API_BASE}/api/Employees?${searchParams}`, {
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.get(`/api/Employees?${searchParams}`)
 
     if (!response.ok) {
-        const errorText = await response.text()
-        try {
-            const errorJson = JSON.parse(errorText)
-            throw new Error(errorJson.message || errorText || 'Không thể tải danh sách nhân viên')
-        } catch {
-            throw new Error(errorText || 'Không thể tải danh sách nhân viên')
-        }
+        throw new Error('Không thể tải danh sách nhân viên')
     }
 
     return response.json()
@@ -75,12 +36,10 @@ async function fetchEmployees(key: string | readonly any[]): Promise<PaginatedRe
 
 // Hook: Get employees list with pagination and caching
 export function useEmployees(params: GetEmployeesParams = {}) {
-    const key = params.page !== undefined || params.search !== undefined || params.departmentId !== undefined
-        ? employeesKeys.list(params)
-        : null
+    const key = employeesKeys.list(params)
 
     const swr = useData<PaginatedResult<Employee>>(key, {
-        fetcher: fetchEmployees
+        fetcher: fetchEmployees as unknown as Fetcher<PaginatedResult<Employee>>
     })
 
     return {
@@ -89,15 +48,21 @@ export function useEmployees(params: GetEmployeesParams = {}) {
         totalCount: swr.data?.totalCount ?? 0,
         currentPage: swr.data?.page ?? 1,
         totalPages: swr.data?.totalPages ?? 1,
-        isLoading: !swr.error && !swr.data && key !== null,
+        isLoading: !swr.error && !swr.data,
     }
 }
 
 // Hook: Get employee by ID
 export function useEmployee(id: string | null) {
-    const key = id ? employeesKeys.detail(id) : null
+    const key = id ? employeesKeys.detail(id).join('/') : null
 
-    const swr = useData<Employee>(key)
+    const swr = useData<Employee>(key, {
+        fetcher: async () => {
+            const response = await apiClient.get(`/api/Employees/${id}`)
+            if (!response.ok) throw new Error('Không thể tải thông tin nhân viên')
+            return response.json()
+        }
+    })
 
     return {
         ...swr,
@@ -109,13 +74,9 @@ export function useEmployee(id: string | null) {
 // Mutation: Create employee
 export function useCreateEmployee() {
     return useMutation<{ employeeId: string }, CreateEmployeeData>(
-        employeesKeys.lists(),
+        employeesKeys.lists().join('/'),
         async (data) => {
-            const response = await fetch(`${API_BASE}/api/Employees`, {
-                method: 'POST',
-                headers: await getAuthHeaders(),
-                body: JSON.stringify(data),
-            })
+            const response = await apiClient.post(`/api/Employees`, data)
 
             if (!response.ok) {
                 const error = await response.json()
@@ -126,9 +87,11 @@ export function useCreateEmployee() {
         },
         {
             onSuccess: () => {
-                // Revalidate employees list
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(employeesKeys.lists())
+                mutate(
+                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )
@@ -137,13 +100,9 @@ export function useCreateEmployee() {
 // Mutation: Update employee
 export function useUpdateEmployee() {
     return useMutation<void, { id: string; data: UpdateEmployeeData }>(
-        employeesKeys.lists(),
+        employeesKeys.lists().join('/'),
         async ({ id, data }) => {
-            const response = await fetch(`${API_BASE}/api/Employees/${id}`, {
-                method: 'PUT',
-                headers: await getAuthHeaders(),
-                body: JSON.stringify(data),
-            })
+            const response = await apiClient.put('/api/Employees', { ...data, id })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -153,11 +112,12 @@ export function useUpdateEmployee() {
             return void 0
         },
         {
-            onSuccess: (_, { id }) => {
-                // Revalidate employees list and employee detail
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(employeesKeys.lists())
-                mutate(employeesKeys.detail(id))
+            onSuccess: () => {
+                mutate(
+                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )
@@ -166,12 +126,9 @@ export function useUpdateEmployee() {
 // Mutation: Delete employee
 export function useDeleteEmployee() {
     return useMutation<void, string>(
-        employeesKeys.lists(),
+        employeesKeys.lists().join('/'),
         async (id) => {
-            const response = await fetch(`${API_BASE}/api/Employees/${id}`, {
-                method: 'DELETE',
-                headers: await getAuthHeaders(),
-            })
+            const response = await apiClient.delete('/api/Employees', { id })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -182,8 +139,11 @@ export function useDeleteEmployee() {
         },
         {
             onSuccess: () => {
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(employeesKeys.lists())
+                mutate(
+                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )
@@ -192,13 +152,9 @@ export function useDeleteEmployee() {
 // Mutation: Bulk create employees
 export function useBulkCreateEmployees() {
     return useMutation<BulkCreateResult, EmployeeImportItem[]>(
-        employeesKeys.lists(),
+        employeesKeys.lists().join('/'),
         async (items) => {
-            const response = await fetch(`${API_BASE}/api/Employees/bulk`, {
-                method: 'POST',
-                headers: await getAuthHeaders(),
-                body: JSON.stringify({ items }),
-            })
+            const response = await apiClient.post(`/api/Employees/bulk`, { items })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -209,8 +165,11 @@ export function useBulkCreateEmployees() {
         },
         {
             onSuccess: () => {
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(employeesKeys.lists())
+                mutate(
+                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )
@@ -219,17 +178,13 @@ export function useBulkCreateEmployees() {
 // Mutation: Import employees from file
 export function useImportEmployeesFromFile() {
     return useMutation<ImportEmployeesResult, { file: File; commit?: boolean }>(
-        employeesKeys.lists(),
+        employeesKeys.lists().join('/'),
         async ({ file, commit = false }) => {
             const formData = new FormData()
             formData.append('file', file)
             formData.append('commit', commit.toString())
 
-            const response = await fetch(`${API_BASE}/api/Employees/import`, {
-                method: 'POST',
-                headers: await getAuthHeadersWithoutContentType(),
-                body: formData,
-            })
+            const response = await apiClient.post(`/api/Employees/import`, formData)
 
             if (!response.ok) {
                 try {
@@ -247,8 +202,11 @@ export function useImportEmployeesFromFile() {
         },
         {
             onSuccess: () => {
-                const { mutate } = require('@/lib/swr/hooks')
-                mutate(employeesKeys.lists())
+                mutate(
+                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'list',
+                    undefined,
+                    { revalidate: true }
+                )
             }
         }
     )

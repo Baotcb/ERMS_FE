@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { USER_ROLES, ROLE_DASHBOARD_MAP } from '@/utils/constants'
 
 /**
  * Security Middleware
@@ -27,6 +28,8 @@ const PROTECTED_ROUTE_PATTERNS = [
   '/profile',
   '/security',
   '/candidate',
+  '/enterprise',
+  '/hr',
 ] as const
 
 // Constant CSP header template (nonce will be injected dynamically)
@@ -56,6 +59,9 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
 }
+
+// CSRF cookie name: __Host- prefix requires HTTPS, use plain name in development
+const CSRF_COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Host-csrf-token' : 'csrf-token'
 
 /**
  * Check if a route is public
@@ -112,9 +118,56 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Generate nonce and CSRF token (these are lightweight operations)
-  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64')
-  const csrfToken = request.cookies.get('csrf_token')?.value || crypto.randomUUID()
+  // For public routes, skip heavy auth processing and only add security headers
+  const isPublic = isPublicRoute(pathname)
+  const method = request.method
+  const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)
+
+  // Only generate nonce for HTML pages (skip for API, assets, etc.)
+  const needsNonce = !pathname.startsWith('/api/') &&
+    !pathname.match(/\.(json|xml|txt)$/) &&
+    request.headers.get('accept')?.includes('text/html')
+
+  // Redirect authenticated non-candidate users away from '/'
+  // Home page is only for guests and Candidates
+  if (pathname === '/' && !isMutation) {
+    const token = request.cookies.get('auth_token')?.value
+    if (token && !isTokenExpired(token)) {
+      const role = request.cookies.get('user_role')?.value
+      if (role && role !== USER_ROLES.CANDIDATE) {
+        const dashboard = ROLE_DASHBOARD_MAP[role] || '/enterprise/hr/dashboard'
+        return NextResponse.redirect(new URL(dashboard, request.url))
+      }
+    }
+  }
+
+  // Generate minimal headers for public routes
+  if (isPublic && !isMutation && pathname !== '/enterprise') {
+    if (needsNonce) {
+      const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64')
+      const cspHeader = CSP_TEMPLATE.replace('{nonce}', nonce)
+
+      const response = NextResponse.next()
+      response.headers.set('Content-Security-Policy', cspHeader)
+      response.headers.set('x-nonce', nonce)
+      Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+        response.headers.set(key, value)
+      })
+
+      return response
+    }
+
+    const response = NextResponse.next()
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+      response.headers.set(key, value)
+    })
+
+    return response
+  }
+
+  // Generate nonce and CSRF token (only when needed)
+  const nonce = needsNonce ? Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString('base64') : ''
+  const csrfToken = request.cookies.get(CSRF_COOKIE_NAME)?.value || crypto.randomUUID()
 
   // Auth Logic (Route Protection) - Check early to avoid unnecessary processing
   const authCookie = request.cookies.get('auth_token')?.value
@@ -127,17 +180,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  if (isPublicRoute(pathname) && authCookie && !isExpired) {
+  if ((isPublicRoute(pathname) || pathname === '/enterprise' || pathname === '/enterprise/') && authCookie && !isExpired) {
     const role = request.cookies.get('user_role')?.value
-    if (role === 'Candidate') {
-      return NextResponse.redirect(new URL('/jobs', request.url))
-    } else {
-      return NextResponse.redirect(new URL('/enterprise/dashboard', request.url))
+    if (role === USER_ROLES.CANDIDATE) {
+      // Candidates stay on '/' — only redirect from other public routes (e.g. /login)
+      if (pathname !== '/') {
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    } else if (role) {
+      const dashboard = ROLE_DASHBOARD_MAP[role] || '/enterprise/hr/dashboard'
+      return NextResponse.redirect(new URL(dashboard, request.url))
     }
   }
 
   // CSRF Validation on mutations
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+  if (isMutation) {
     // Skip CSRF check for Server Actions
     if (!request.headers.has('next-action')) {
       const headerToken = request.headers.get('x-csrf-token')
@@ -150,8 +207,14 @@ export function middleware(request: NextRequest) {
 
   // Prepare request headers (only if needed for API routes)
   const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('x-csrf-token', csrfToken)
+
+  if (needsNonce) {
+    requestHeaders.set('x-nonce', nonce)
+  }
+
+  if (csrfToken) {
+    requestHeaders.set('x-csrf-token', csrfToken)
+  }
 
   if (pathname.startsWith('/api/') && authCookie) {
     requestHeaders.set('Authorization', `Bearer ${authCookie}`)
@@ -165,17 +228,26 @@ export function middleware(request: NextRequest) {
   })
 
   // Set CSRF cookie
-  response.cookies.set('csrf_token', csrfToken, {
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  })
+  // Set CSRF cookie with __Host- prefix for better security
+  if (csrfToken) {
+    response.cookies.set(CSRF_COOKIE_NAME, csrfToken, {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      httpOnly: false, // Allow client side to read it for x-csrf-token header
+    })
+  }
 
-  // Set CSP header with nonce (replace template placeholder)
-  const cspHeader = CSP_TEMPLATE.replace('{nonce}', nonce)
-  response.headers.set('Content-Security-Policy', cspHeader)
-  response.headers.set('x-nonce', nonce)
-  response.headers.set('x-csrf-token', csrfToken)
+  // Set CSP header with nonce (replace template placeholder) - only for HTML pages
+  if (needsNonce && nonce) {
+    const cspHeader = CSP_TEMPLATE.replace('{nonce}', nonce)
+    response.headers.set('Content-Security-Policy', cspHeader)
+    response.headers.set('x-nonce', nonce)
+  }
+
+  if (csrfToken) {
+    response.headers.set('x-csrf-token', csrfToken)
+  }
 
   // Set all security headers in one loop
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {

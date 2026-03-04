@@ -15,14 +15,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, LoadingSpinner } from '@/components/common'
-import { config } from '@/config'
 import { loginSchema } from '../schemas/auth-schemas'
 import { loginAction } from '../actions/auth'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
-import { User } from '@/stores/auth-store'
-import { setAuthCookies } from '../utils/auth-cookies'
 
 export function LoginForm() {
     const router = useRouter()
@@ -81,25 +78,10 @@ export function LoginForm() {
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 
-
-
                 // Redirect after short delay for UX
                 setTimeout(() => {
-                    const role = user.role
-                    if (role === 'Candidate') {
-                        router.push('/jobs')
-                    } else {
-                        // Route to role-specific dashboard
-                        const roleRoutes: Record<string, string> = {
-                            'HRManager': '/enterprise/dashboard',
-                            'Employee': '/enterprise/dashboard',
-                            'Trainer': '/enterprise/dashboard',
-                            'Director': '/enterprise/dashboard',
-                            'DepartmentHead': '/enterprise/dashboard',
-                        }
-                        const redirectPath = role && roleRoutes[role] ? roleRoutes[role] : '/enterprise/dashboard'
-                        router.push(redirectPath)
-                    }
+                    router.push('/')
+                    router.refresh()
                 }, 500)
             } catch (err) {
                 const errorMessage =

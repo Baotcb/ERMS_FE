@@ -25,21 +25,20 @@ interface EmployeeImportProps {
     onCancel?: () => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
     const { toast } = useToast()
 
-    const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const [fileName, setFileName] = useState<string | null>(null)
+    const [file, setFile] = useState<File | null>(null)
     const [importResult, setImportResult] = useState<ImportEmployeesResult | null>(null)
     const [isParsing, setIsParsing] = useState(false)
     const [step, setStep] = useState<'upload' | 'review' | 'importing'>('upload')
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
-        const file = acceptedFiles[0]
-        if (!file) return
+        const dropped = acceptedFiles[0]
+        if (!dropped) return
 
-        setSelectedFile(file)
-        setFileName(file.name)
+        setFile(dropped)
         setImportResult(null)
         setStep('upload')
     }, [])
@@ -55,12 +54,12 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
     })
 
     const handleAnalyze = async () => {
-        if (!selectedFile) return
+        if (!file) return
 
         setIsParsing(true)
         try {
             // Step 1: Analyze (commit=false)
-            const result = await importEmployeesFromFile(selectedFile, false)
+            const result = await importEmployeesFromFile(file, false)
             setImportResult(result)
             setStep('review')
 
@@ -94,14 +93,14 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
     }
 
     const handleConfirmImport = async () => {
-        if (!selectedFile) return
+        if (!file) return
 
         setIsParsing(true)
         setStep('importing')
         try {
             // Step 2: Import (commit=true)
-            const result = await importEmployeesFromFile(selectedFile, true)
-            setImportResult(result) // Update result with actual execution status
+            const result = await importEmployeesFromFile(file, true)
+            setImportResult(result)
 
             if (result.successCount > 0 && result.failedCount === 0) {
                 toast({
@@ -112,7 +111,6 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                 mutate(() => true, undefined, { revalidate: true })
                 onSuccess?.()
             } else {
-                // Partial failure or full failure (shouldn't happen with strict check but safety first)
                 toast({
                     title: 'Import hoàn tất với cảnh báo',
                     description: `Thành công: ${result.successCount}, Lỗi: ${result.failedCount}`,
@@ -134,8 +132,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
     }
 
     const reset = () => {
-        setSelectedFile(null)
-        setFileName(null)
+        setFile(null)
         setImportResult(null)
         setIsParsing(false)
         setStep('upload')
@@ -145,7 +142,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
 
     return (
         <div className="space-y-6">
-            {!fileName ? (
+            {!file ? (
                 <div
                     {...getRootProps()}
                     className={`
@@ -175,7 +172,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                                 <FileSpreadsheet className="w-5 h-5 text-green-600" />
                             </div>
                             <div>
-                                <p className="font-medium text-gray-700">{fileName}</p>
+                                <p className="font-medium text-gray-700">{file.name}</p>
                                 <p className="text-xs text-gray-500">
                                     {isParsing ? 'Đang xử lý...' : (step === 'upload' ? 'Sẵn sàng phân tích' : 'Đã phân tích')}
                                 </p>
@@ -244,8 +241,6 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                         </div>
                     </div>
 
-                    {/* Rest of the UI (Errors, Mappings) */}
-
                     {/* Columns Mapped */}
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                         <h3 className="font-medium text-green-800 flex items-center gap-2">
@@ -255,8 +250,8 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                         <ul className="mt-2 text-sm text-green-700 space-y-1">
                             {importResult.columnMappings
                                 .filter(c => c.mappedKey)
-                                .map((col, i) => (
-                                    <li key={i}>• &quot;{col.originalHeader}&quot; → {col.mappedKey}</li>
+                                .map((col) => (
+                                    <li key={col.originalHeader}>• &quot;{col.originalHeader}&quot; → {col.mappedKey}</li>
                                 ))}
                         </ul>
                     </div>
@@ -269,8 +264,8 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                                 Cột không được sử dụng ({importResult.unknownColumns.length})
                             </h3>
                             <ul className="mt-2 text-sm text-yellow-700 space-y-1">
-                                {importResult.unknownColumns.map((col, i) => (
-                                    <li key={i}>• &quot;{col}&quot; - sẽ bị bỏ qua</li>
+                                {importResult.unknownColumns.map((col) => (
+                                    <li key={col}>• &quot;{col}&quot; - sẽ bị bỏ qua</li>
                                 ))}
                             </ul>
                         </div>
@@ -285,7 +280,7 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
                             </h3>
                             <ul className="mt-2 text-sm text-red-700 space-y-1 max-h-64 overflow-auto scrollbar-thin">
                                 {importResult.errors.map((err, i) => (
-                                    <li key={i}>
+                                    <li key={`${err.rowNumber ?? i}-${i}`}>
                                         • <strong>Dòng {err.rowNumber}</strong>
                                         {err.email && <span className="text-red-600"> ({err.email})</span>}
                                         : {err.message}

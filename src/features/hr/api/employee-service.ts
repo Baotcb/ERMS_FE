@@ -1,6 +1,5 @@
-import { config } from '@/config'
-
-const API_BASE = config.apiUrl
+import { apiClient } from '@/lib/api-client'
+import type { ImportEmployeesResult } from '../types/import-types'
 
 // Types
 export interface Employee {
@@ -35,23 +34,6 @@ export interface PaginatedResult<T> {
     totalPages: number
 }
 
-// Helper
-async function getAuthHeaders(token?: string): Promise<HeadersInit> {
-    let authToken = token || ''
-
-    if (!authToken && typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-
-    return {
-        'Content-Type': 'application/json',
-        ...(authToken && { Authorization: `Bearer ${authToken}` })
-    }
-}
-
 // API Functions
 export async function getEmployees(params: GetEmployeesParams, token?: string): Promise<PaginatedResult<Employee>> {
     const searchParams = new URLSearchParams({
@@ -63,9 +45,12 @@ export async function getEmployees(params: GetEmployeesParams, token?: string): 
     if (params.departmentId) searchParams.set('departmentId', String(params.departmentId))
     if (params.status) searchParams.set('status', params.status)
 
-    const response = await fetch(`${API_BASE}/api/Employees?${searchParams}`, {
-        headers: await getAuthHeaders(token),
-    })
+    const headers: HeadersInit = {}
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+    }
+
+    const response = await apiClient.get(`/api/Employees?${searchParams}`, { headers })
 
     if (!response.ok) {
         let errorMessage = 'Không thể tải danh sách nhân viên'
@@ -87,9 +72,7 @@ export async function getEmployees(params: GetEmployeesParams, token?: string): 
 }
 
 export async function getEmployeeById(id: string): Promise<Employee> {
-    const response = await fetch(`${API_BASE}/api/Employees/${id}`, {
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.get(`/api/Employees/${id}`)
 
     if (!response.ok) {
         let errorMessage = 'Không thể tải thông tin nhân viên'
@@ -123,11 +106,7 @@ export interface CreateEmployeeData {
 }
 
 export async function createEmployee(data: CreateEmployeeData): Promise<{ employeeId: string }> {
-    const response = await fetch(`${API_BASE}/api/Employees`, {
-        method: 'POST',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(data),
-    })
+    const response = await apiClient.post(`/api/Employees`, data)
 
     if (!response.ok) {
         const error = await response.json()
@@ -147,11 +126,7 @@ export interface UpdateEmployeeData {
 }
 
 export async function updateEmployee(id: string, data: UpdateEmployeeData): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/Employees/${id}`, {
-        method: 'PUT',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(data),
-    })
+    const response = await apiClient.put('/api/Employees', { ...data, id })
 
     if (!response.ok) {
         const error = await response.json()
@@ -160,10 +135,7 @@ export async function updateEmployee(id: string, data: UpdateEmployeeData): Prom
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/Employees/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.delete('/api/Employees', { id })
 
     if (!response.ok) {
         const error = await response.json()
@@ -190,11 +162,7 @@ export interface BulkCreateResult {
 }
 
 export async function bulkCreateEmployees(items: EmployeeImportItem[]): Promise<BulkCreateResult> {
-    const response = await fetch(`${API_BASE}/api/Employees/bulk`, {
-        method: 'POST',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify({ items }),
-    })
+    const response = await apiClient.post(`/api/Employees/bulk`, { items })
 
     if (!response.ok) {
         const error = await response.json()
@@ -207,44 +175,27 @@ export async function bulkCreateEmployees(items: EmployeeImportItem[]): Promise<
 // Fetch wrapper with error handling (for SSR pages)
 // fetchEmployeeList moved to a server utility to avoid next/headers in client bundle
 
-// Helper function mới - không có Content-Type header
-async function getAuthHeadersWithoutContentType(): Promise<HeadersInit> {
-    let authToken = ''
-    if (typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-    return authToken ? { Authorization: `Bearer ${authToken}` } : {}
-}
-
-import type { ImportEmployeesResult } from '../types/import-types'
-
 // Function mới cho file upload
 export async function importEmployeesFromFile(file: File, commit: boolean = false): Promise<ImportEmployeesResult> {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('commit', commit.toString())
 
-    const response = await fetch(`${API_BASE}/api/Employees/import`, {
-        method: 'POST',
-        headers: await getAuthHeadersWithoutContentType(),
-        body: formData,
-    })
+    const response = await apiClient.post(`/api/Employees/import`, formData)
 
     // Nếu Backend trả về lỗi 400 cùng với cấu trúc ImportEmployeesResult (ví dụ lỗi validate)
     if (!response.ok) {
+        let errorResult
         try {
-            const errorResult = await response.json()
-            // Nếu response có cấu trúc lỗi chuẩn của import, trả về để hiển thị
-            if (errorResult.errors || errorResult.failedCount) {
-                return errorResult;
-            }
-            throw new Error(errorResult.message || 'Không thể import nhân viên')
+            errorResult = await response.json()
         } catch {
             throw new Error('Lỗi server không xác định')
         }
+        // Nếu response có cấu trúc lỗi chuẩn của import, trả về để hiển thị
+        if (errorResult.errors || errorResult.failedCount) {
+            return errorResult;
+        }
+        throw new Error(errorResult.message || 'Không thể import nhân viên')
     }
 
     return response.json()

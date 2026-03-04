@@ -1,163 +1,201 @@
 "use client"
 
-import { useState } from "react"
-import { Search, MapPin, Briefcase, Flame, ChevronRight } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Search, MapPin, ChevronRight, ChevronDown, Clock, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { HERO_CATEGORIES } from "../data/hero-categories"
 
-export function HeroSection() {
-    const [activeCategory, setActiveCategory] = useState<string>("marketing")
+const LOCATIONS = ['Tất cả địa điểm', 'Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Bình Dương', 'Đồng Nai']
+
+/* ==========================================
+   Location Dropdown (TopCV-style)
+   ========================================== */
+function LocationDropdown({
+    value,
+    onChange,
+}: {
+    value: string
+    onChange: (val: string) => void
+}) {
+    const [open, setOpen] = useState(false)
+    const ref = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [open])
 
     return (
-        <div className="relative overflow-hidden min-h-[500px] flex flex-col items-center pt-6 pb-8 bg-gradient-to-br from-[#0F4C75] via-[#0a3d5f] to-[#06263c]">
-            {/* Geometric Background Pattern - Enhanced Linear Gradient & Triangles */}
-            <div className="absolute inset-0 pointer-events-none">
-                {/* 1. Subtle Grid Overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(30deg,#ffffff08_1px,transparent_1px)] bg-[length:40px_40px] opacity-30" />
-
-                {/* 2. Prominent Left Chevrons (Triangle Patterns) */}
-                <div className="absolute top-0 bottom-0 left-0 w-1/3 overflow-hidden">
-                    {/* Large Outer Chevron - Faint */}
-                    <div
-                        className="absolute top-1/2 -left-20 w-[500px] h-[500px] border-[60px] border-r-white/5 border-b-white/5 border-t-transparent border-l-transparent rounded-br-[40px]"
-                        style={{ transform: 'translateY(-50%) rotate(-45deg)', filter: 'blur(2px)' }}
-                    />
-                    {/* Middle Chevron - Brighter */}
-                    <div
-                        className="absolute top-1/2 -left-10 w-[400px] h-[400px] border-[40px] border-r-white/10 border-b-white/10 border-t-transparent border-l-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(-45deg)' }}
-                    />
-                    {/* Inner Chevron - Glowing Highlight */}
-                    <div
-                        className="absolute top-1/2 left-0 w-[300px] h-[300px] border-[2px] border-r-white/20 border-b-white/20 border-t-transparent border-l-transparent bg-gradient-to-br from-transparent via-white/5 to-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(-45deg)', boxShadow: '0 0 40px rgba(255,255,255,0.1)' }}
-                    />
+        <div className="relative h-full" ref={ref}>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="flex items-center gap-2 px-4 h-full text-sm text-[#4a4a4a] hover:text-[#1B5583] whitespace-nowrap transition-colors"
+            >
+                <MapPin className="w-4 h-4 text-[#1B5583] flex-shrink-0" />
+                <span className="max-w-[120px] truncate">{value}</span>
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform text-[#a6acb2]", open && "rotate-180")} />
+            </button>
+            {open && (
+                <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-[#e8e8e8] py-1.5 z-50">
+                    {LOCATIONS.map((loc) => (
+                        <button
+                            key={loc}
+                            type="button"
+                            onClick={() => { onChange(loc); setOpen(false) }}
+                            className={cn(
+                                "w-full text-left px-4 py-2.5 text-sm transition-colors",
+                                value === loc
+                                    ? 'bg-[#B5D5F5]/20 text-[#1B5583] font-medium'
+                                    : 'text-[#4a4a4a] hover:bg-[#f4f5f5]'
+                            )}
+                        >
+                            {loc}
+                        </button>
+                    ))}
                 </div>
+            )}
+        </div>
+    )
+}
 
-                {/* 3. Prominent Right Chevrons (Mirrored) */}
-                <div className="absolute top-0 bottom-0 right-0 w-1/3 overflow-hidden">
-                    {/* Large Outer Chevron - Faint */}
-                    <div
-                        className="absolute top-1/2 -right-20 w-[500px] h-[500px] border-[60px] border-r-white/5 border-b-white/5 border-t-transparent border-l-transparent rounded-br-[40px]"
-                        style={{ transform: 'translateY(-50%) rotate(135deg)', filter: 'blur(2px)' }}
-                    />
-                    {/* Middle Chevron - Brighter */}
-                    <div
-                        className="absolute top-1/2 -right-10 w-[400px] h-[400px] border-[40px] border-r-white/10 border-b-white/10 border-t-transparent border-l-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(135deg)' }}
-                    />
-                    {/* Inner Chevron - Glowing Highlight */}
-                    <div
-                        className="absolute top-1/2 right-0 w-[300px] h-[300px] border-[2px] border-r-white/20 border-b-white/20 border-t-transparent border-l-transparent bg-gradient-to-br from-transparent via-white/5 to-transparent"
-                        style={{ transform: 'translateY(-50%) rotate(135deg)', boxShadow: '0 0 40px rgba(255,255,255,0.1)' }}
-                    />
-                </div>
+/* ==========================================
+   Main Hero Section
+   ========================================== */
+export function HeroSection() {
+    const [activeCategory, setActiveCategory] = useState<string>("marketing")
+    const [locationFilter, setLocationFilter] = useState('Tất cả địa điểm')
 
-                {/* 4. Right Side Glow */}
-                <div
-                    className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#00b14f]/10 to-transparent rounded-bl-full blur-3xl opacity-40"
-                    style={{ transform: 'translate(20%, -20%)' }}
-                />
-            </div>
+    return (
+        <div className="relative overflow-hidden">
+            {/* ===== Background Layers ===== */}
+            {/* Main gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0e3a5c] via-[#1B5583] to-[#1B5583]/90" />
 
-            <div className="container mx-auto px-4 relative z-10 flex flex-col items-center h-full">
-                {/* 1. Header Text - Positioned higher */}
-                <div className="text-center mb-5 animate-in fade-in zoom-in duration-700 flex flex-col justify-center max-w-3xl w-full">
-                    <h1 className="text-xl md:text-[22px] font-bold text-white leading-tight">
-                        Tìm việc làm nhanh 24h, việc làm mới nhất trên toàn quốc
-                    </h1>
-                </div>
+            {/* SVG cross pattern overlay */}
+            <div className="absolute inset-0 opacity-[0.06]" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
 
-                {/* 2. Search Box */}
-                <div className="bg-white rounded-full p-1 shadow-2xl flex items-center animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 w-full max-w-6xl h-12 md:h-14">
-                    {/* Keyword Input */}
-                    <div className="flex-1 flex items-center px-4 md:px-6 h-full border-r border-slate-100 relative">
-                        <Search className="w-5 h-5 text-slate-400 mr-2 md:mr-3 shrink-0" />
-                        <input
-                            placeholder="Vị trí tuyển dụng, tên công ty..."
-                            className="w-full text-sm text-slate-900 placeholder:text-slate-400 outline-none border-none bg-transparent truncate"
-                        />
+            {/* Glow circles */}
+            <div className="absolute -top-20 -left-20 w-72 h-72 bg-[#B5D5F5]/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-10 -right-10 w-96 h-96 bg-[#154360]/20 rounded-full blur-3xl" />
+
+            {/* ===== Content ===== */}
+            <div className="relative z-10 pt-10 pb-8">
+                <div className="container mx-auto px-4 max-w-5xl">
+
+                    {/* Title */}
+                    <div className="text-center mb-7">
+                        <h1 className="text-[22px] md:text-[28px] font-bold text-white leading-tight">
+                            Tìm việc làm nhanh 24h, việc làm mới nhất trên toàn quốc
+                        </h1>
+                        <p className="text-white/60 text-sm mt-2">
+                            Tiếp cận hàng nghìn tin tuyển dụng việc làm mới mỗi ngày từ hàng nghìn doanh nghiệp uy tín
+                        </p>
                     </div>
 
-                    {/* Location Select */}
-                    <div className="hidden md:flex items-center px-6 h-full min-w-[200px] cursor-pointer hover:bg-slate-50 transition-colors group">
-                        <MapPin className="w-5 h-5 text-slate-400 mr-2 group-hover:text-[#0F4C75]" />
-                        <Select defaultValue="">
-                            <SelectTrigger className="border-0 shadow-none focus:ring-0 w-full p-0 h-auto text-sm font-normal text-slate-700 bg-transparent">
-                                <SelectValue placeholder="Địa điểm" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tất cả địa điểm</SelectItem>
-                                <SelectItem value="hanoi">Hà Nội</SelectItem>
-                                <SelectItem value="hcm">Hồ Chí Minh</SelectItem>
-                                <SelectItem value="danang">Đà Nẵng</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Search Button */}
-                    <Button className="h-full px-6 md:px-8 rounded-full bg-[#00b14f] hover:bg-[#00b14f]/90 text-white font-bold text-sm md:text-base shadow-lg transition-all hover:scale-105 active:scale-95 ml-2 hidden md:flex">
-                        Tìm kiếm
-                    </Button>
-                </div>
-
-                {/* 3. Quick Selection Area */}
-                <div className="mt-6 flex flex-col md:flex-row gap-6 w-full max-w-6xl h-auto md:h-72 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
-                    {/* Left Panel: Categories */}
-                    <div className="bg-white rounded-lg shadow-lg overflow-y-auto scrollbar-hide py-2 w-full md:w-80 h-60 md:h-full shrink-0">
-                        {HERO_CATEGORIES.map((cat) => (
-                            <div
-                                key={cat.id}
-                                className={cn(
-                                    "px-6 py-3 cursor-pointer flex items-center justify-between text-base font-medium transition-colors hover:text-[#00b14f] hover:bg-[#E8F8EE]",
-                                    activeCategory === cat.id ? "text-[#00b14f] bg-[#E8F8EE]" : "text-slate-600"
-                                )}
-                                onMouseEnter={() => setActiveCategory(cat.id)}
-                            >
-                                <span>{cat.label}</span>
-                                {activeCategory === cat.id && <ChevronRight className="w-4 h-4" />}
+                    {/* ===== Search Bar - Pill shaped (TopCV exact style) ===== */}
+                    <div className="max-w-3xl mx-auto mb-5">
+                        <div className="flex items-center bg-white rounded-full shadow-lg shadow-black/10 h-[52px] pr-1.5">
+                            {/* Search Input */}
+                            <div className="flex-1 flex items-center h-full pl-5 min-w-0">
+                                <Search className="w-5 h-5 text-[#a6acb2] flex-shrink-0" />
+                                <input
+                                    placeholder="Vị trí tuyển dụng, tên công ty..."
+                                    className="flex-1 h-full px-3 text-sm text-[#212f3f] placeholder:text-[#a6acb2] bg-transparent outline-none border-none min-w-0"
+                                />
                             </div>
-                        ))}
+
+                            {/* Divider */}
+                            <div className="hidden md:block w-px h-7 bg-[#e8e8e8] flex-shrink-0" />
+
+                            {/* Location Dropdown */}
+                            <div className="hidden md:block h-full">
+                                <LocationDropdown value={locationFilter} onChange={setLocationFilter} />
+                            </div>
+
+                            {/* Search Button - pill shaped */}
+                            <Button className="h-[42px] px-7 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-full shadow-none text-sm transition-colors flex items-center gap-2 flex-shrink-0">
+                                <Search className="w-4 h-4" />
+                                <span className="hidden md:inline">Tìm kiếm</span>
+                            </Button>
+                        </div>
                     </div>
 
-                    {/* Right Panel: Job Tags / Sub-Categories */}
-                    <div className="bg-white rounded-lg shadow-lg overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent flex-1 h-60 md:h-full">
-                        {HERO_CATEGORIES.map((cat) => {
-                            if (cat.id !== activeCategory) return null;
+                    {/* ===== Quick Info Tags ===== */}
+                    <div className="flex items-center justify-center gap-6 md:gap-8 mb-7 text-sm text-white/80 flex-wrap">
+                        <span className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-[#2ecc71] rounded-full animate-pulse" />
+                            Việc làm đang tuyển
+                        </span>
+                        <span className="flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5" />
+                            Cập nhật hàng giờ
+                        </span>
+                        <span className="flex items-center gap-2">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Miễn phí cho ứng viên
+                        </span>
+                    </div>
 
-                            return (
-                                <div key={cat.id} className="animate-in fade-in duration-300 space-y-4">
-                                    {cat.subCategories?.map((sub, idx) => (
-                                        <div key={idx} className="flex flex-col sm:flex-row sm:items-start gap-2 md:gap-4 pb-4 border-b border-dashed border-slate-100 last:border-0 last:pb-0">
-                                            {/* Sub Category Title */}
-                                            <h4 className="text-sm font-bold text-slate-900 w-full sm:w-[180px] shrink-0 pt-1.5 leading-tight">
-                                                {sub.name}
-                                            </h4>
+                    {/* ===== Category Mega Menu (TopCV exact style) ===== */}
+                    <div className="flex flex-col md:flex-row gap-0 rounded-2xl overflow-hidden shadow-xl shadow-black/10 bg-white">
+                        {/* Left Sidebar */}
+                        <div className="w-full md:w-[270px] shrink-0 bg-[#fafbfc] border-r border-[#e8e8e8] max-h-[340px] overflow-y-auto">
+                            {HERO_CATEGORIES.map((cat) => (
+                                <button
+                                    key={cat.id}
+                                    type="button"
+                                    className={cn(
+                                        "w-full px-5 py-3.5 cursor-pointer flex items-center justify-between text-[13px] font-medium transition-all text-left",
+                                        activeCategory === cat.id
+                                            ? "text-[#1B5583] bg-white font-semibold border-r-2 border-[#1B5583] shadow-sm"
+                                            : "text-[#4a4a4a] hover:bg-white hover:text-[#1B5583] border-r-2 border-transparent"
+                                    )}
+                                    onMouseEnter={() => setActiveCategory(cat.id)}
+                                >
+                                    <span className="leading-snug">{cat.label}</span>
+                                    <ChevronRight className={cn(
+                                        "w-3.5 h-3.5 shrink-0 ml-2 text-[#a6acb2] transition-all",
+                                        activeCategory === cat.id && "text-[#1B5583]"
+                                    )} />
+                                </button>
+                            ))}
+                        </div>
 
-                                            {/* Tags Horizontal Flow */}
-                                            <div className="flex flex-wrap gap-2 flex-1">
-                                                {sub.tags.map((tag, tIdx) => (
-                                                    <div
-                                                        key={tIdx}
-                                                        className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-full text-xs md:text-sm hover:bg-[#E8F8EE] hover:text-[#00b14f] cursor-pointer transition-colors whitespace-nowrap"
-                                                    >
-                                                        {tag}
-                                                    </div>
-                                                ))}
+                        {/* Right Content Panel */}
+                        <div className="flex-1 p-6 max-h-[340px] overflow-y-auto">
+                            {HERO_CATEGORIES.map((cat) => {
+                                if (cat.id !== activeCategory) return null
+                                return (
+                                    <div key={cat.id} className="space-y-5">
+                                        {cat.subCategories?.map((sub) => (
+                                            <div key={sub.name} className="flex flex-col sm:flex-row sm:items-start gap-2 md:gap-4 pb-4 border-b border-dashed border-[#e8e8e8] last:border-0 last:pb-0">
+                                                <h4 className="text-[13px] font-bold text-[#212f3f] w-full sm:w-[160px] shrink-0 pt-0.5 leading-tight">
+                                                    {sub.name}
+                                                </h4>
+                                                <div className="flex flex-wrap gap-2 flex-1">
+                                                    {sub.tags.map((tag) => (
+                                                        <span
+                                                            key={tag}
+                                                            className="inline-block px-3 py-1.5 rounded-full text-[12px] border border-[#e8e8e8] text-[#6f7882] bg-white hover:border-[#1B5583] hover:text-[#1B5583] hover:bg-[#B5D5F5]/10 cursor-pointer transition-all whitespace-nowrap"
+                                                        >
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )
-                        })}
+                                        ))}
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>

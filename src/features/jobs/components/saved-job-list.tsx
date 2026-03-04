@@ -1,41 +1,119 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
+import { LazyMotion, m, domAnimation } from 'framer-motion'
+import { FileQuestion, Search, ArrowRight, Loader2 } from 'lucide-react'
+import { SavedJobCard } from './saved-job-card'
+import { getMySavedPosts, type SavedPostDto } from '../api/saved-job-service'
+import { getPublicJobById } from '../api/public-job-service'
+import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { FileQuestion, Search, Trash2 } from 'lucide-react'
-import { JobCard } from './job-card'
-import { Button } from '@/components/ui/button'
-import { MOCK_JOBS } from '../../../__tests__/fixtures/job-mock-data'
-import { useToast } from "@/hooks/use-toast"
+
+/** SavedPostDto enriched with extra fields from public API */
+export interface EnrichedSavedPost extends SavedPostDto {
+    enterpriseLogoUrl?: string
+    salaryRangeMin?: number
+    salaryRangeMax?: number
+    showSalary?: boolean
+    experienceLevel?: string
+}
 
 export function SavedJobList() {
-    const [savedJobs, setSavedJobs] = useState(MOCK_JOBS.slice(0, 3))
-    const { toast } = useToast()
+    const [savedJobs, setSavedJobs] = useState<EnrichedSavedPost[]>([])
+    const [totalCount, setTotalCount] = useState(0)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    const handleRemoveJob = (id: number, title: string) => {
-        setSavedJobs((prev) => prev.filter((job) => job.id !== id))
-        toast({
-            title: "Đã bỏ lưu công việc",
-            description: title,
-        })
+    const fetchData = useCallback(async () => {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const response = await getMySavedPosts(1, 50)
+            setSavedJobs(response.items)
+            setTotalCount(response.totalCount)
+
+            // Enrich with logo + salary from public API (parallel, non-blocking)
+            const enriched = await Promise.all(
+                response.items.map(async (item) => {
+                    try {
+                        const detail = await getPublicJobById(item.jobPostingId)
+                        if (detail) {
+                            return {
+                                ...item,
+                                enterpriseLogoUrl: detail.enterpriseLogoUrl,
+                                salaryRangeMin: detail.salaryRangeMin,
+                                salaryRangeMax: detail.salaryRangeMax,
+                                showSalary: detail.showSalary,
+                                experienceLevel: detail.experienceLevel,
+                            }
+                        }
+                    } catch {
+                        // Ignore — giữ nguyên data gốc nếu lỗi
+                    }
+                    return item
+                })
+            )
+            setSavedJobs(enriched)
+        } catch {
+            setError('Không thể tải danh sách việc làm đã lưu')
+        } finally {
+            setIsLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchData()
+    }, [fetchData])
+
+    const handleUnsaved = useCallback((jobPostingId: string) => {
+        setSavedJobs((prev) => prev.filter((j) => j.jobPostingId !== jobPostingId))
+        setTotalCount((prev) => Math.max(0, prev - 1))
+    }, [])
+
+    // Sync store khi data load xong
+    const fetchSavedJobIds = useSavedJobsStore((s) => s.fetchSavedJobIds)
+    useEffect(() => {
+        fetchSavedJobIds()
+    }, [fetchSavedJobIds])
+
+    if (isLoading) {
+        return (
+            <div className="topcv-empty">
+                <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#00b14f' }} />
+                <p className="topcv-empty__text" style={{ marginTop: 16 }}>
+                    Đang tải danh sách việc làm đã lưu...
+                </p>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="topcv-empty">
+                <p className="topcv-empty__title" style={{ color: '#e74c3c' }}>{error}</p>
+                <button className="topcv-empty__button" onClick={fetchData} type="button">
+                    Thử lại
+                </button>
+            </div>
+        )
     }
 
     if (savedJobs.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 px-4 bg-white rounded-xl shadow-sm border border-slate-100 text-center animate-in fade-in zoom-in-95 duration-300">
-                <div className="bg-slate-50 p-6 rounded-full mb-6">
-                    <FileQuestion className="w-16 h-16 text-slate-300" />
+            <div className="topcv-empty">
+                <div className="topcv-empty__icon">
+                    <FileQuestion className="w-14 h-14" style={{ color: '#00b14f' }} />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Chưa có công việc nào được lưu</h3>
-                <p className="text-slate-500 mb-8 max-w-md mx-auto text-lg">
+                <h3 className="topcv-empty__title">Bạn chưa lưu công việc nào!</h3>
+                <p className="topcv-empty__text">
                     Đừng bỏ lỡ cơ hội! Lưu các công việc bạn quan tâm để xem lại và ứng tuyển bất cứ lúc nào.
                 </p>
                 <Link href="/jobs">
-                    <Button className="bg-brand-primary hover:bg-brand-primary/90 font-bold text-lg h-12 px-8 shadow-lg shadow-brand-primary/20 transition-transform active:scale-95">
-                        <Search className="w-5 h-5 mr-2" />
-                        Tìm việc làm ngay
-                    </Button>
+                    <button className="topcv-empty__button" type="button">
+                        <Search className="w-5 h-5" />
+                        Tìm việc ngay
+                        <ArrowRight className="w-4 h-4" />
+                    </button>
                 </Link>
             </div>
         )
@@ -46,40 +124,37 @@ export function SavedJobList() {
         show: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.1
+                staggerChildren: 0.06
             }
         }
     }
 
     const item = {
-        hidden: { opacity: 0, y: 20 },
+        hidden: { opacity: 0, y: 12 },
         show: { opacity: 1, y: 0 }
     }
 
     return (
-        <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={container}
-            initial="hidden"
-            animate="show"
-        >
-            {savedJobs.map((job) => (
-                <motion.div key={job.id} variants={item} className="relative group h-full">
-                    <JobCard {...job} />
-
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleRemoveJob(job.id, job.title)
-                        }}
-                        className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm border border-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 z-10"
-                        title="Bỏ lưu công việc này"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                </motion.div>
-            ))}
-        </motion.div>
+        <>
+            <p className="saved-job-list__count">
+                Hiển thị <strong>{savedJobs.length}</strong> / {totalCount} việc làm đã lưu
+            </p>
+            <LazyMotion features={domAnimation}>
+                <m.div
+                    className="topcv-page__list"
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                >
+                    {savedJobs.map((job) => (
+                        <m.div key={job.savedJobId} variants={item}>
+                            <Link href={`/jobs/${job.jobPostingId}`} className="block" style={{ textDecoration: 'none' }}>
+                                <SavedJobCard job={job} onUnsaved={handleUnsaved} />
+                            </Link>
+                        </m.div>
+                    ))}
+                </m.div>
+            </LazyMotion>
+        </>
     )
 }

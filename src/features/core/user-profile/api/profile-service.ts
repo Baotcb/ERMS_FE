@@ -3,7 +3,6 @@
  * Handles user profile API calls with proper error handling and sanitization
  */
 
-import { config } from '@/config'
 import { handleApiResponse } from '@/utils/error-handler'
 import { apiClient } from '@/lib/api-client'
 

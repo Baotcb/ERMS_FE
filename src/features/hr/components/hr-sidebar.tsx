@@ -2,10 +2,10 @@
 
 import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
     LayoutDashboard,
-    Building2,
     Users,
     ChevronDown,
     ChevronRight,
@@ -14,12 +14,15 @@ import {
     Menu,
     X,
     User,
-    CalendarRange
+    CalendarRange,
+    CalendarCheck,
+    FileText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { logoutAction } from '@/features/core/auth/actions/auth'
+import { useEnterpriseInfo } from '@/features/enterprise'
 
 interface NavItem {
     label: string
@@ -33,7 +36,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
     {
         label: 'Dashboard',
-        href: '/enterprise/dashboard',
+        href: '/enterprise/hr/dashboard',
         icon: <LayoutDashboard className="w-5 h-5" />,
         roles: [] // All roles
     },
@@ -42,8 +45,8 @@ const NAV_ITEMS: NavItem[] = [
         icon: <Users className="w-5 h-5" />,
         roles: ['HRManager', 'Director', 'DepartmentHead'],
         children: [
-            { label: 'Phòng ban', href: '/enterprise/departments' },
-            { label: 'Nhân viên', href: '/enterprise/employees' }
+            { label: 'Phòng ban', href: '/enterprise/hr/departments' },
+            { label: 'Nhân viên', href: '/enterprise/hr/employees' }
         ]
     },
     {
@@ -51,8 +54,21 @@ const NAV_ITEMS: NavItem[] = [
         icon: <CalendarRange className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Kế hoạch tuyển dụng', href: '/enterprise/recruitment-plans' }
+            { label: 'Tin tuyển dụng', href: '/enterprise/hr/job-postings' },
+            { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
         ]
+    },
+    {
+        label: 'Phỏng vấn',
+        href: '/enterprise/hr/interviews',
+        icon: <CalendarCheck className="w-5 h-5" />,
+        roles: ['HRManager']
+    },
+    {
+        label: 'Quản lý Offer',
+        href: '/enterprise/hr/offers',
+        icon: <FileText className="w-5 h-5" />,
+        roles: ['HRManager']
     }
 ]
 
@@ -65,7 +81,7 @@ const NavMenuItem = memo(function NavMenuItem({
     item: NavItem
     isActive: boolean
     isExpanded: boolean
-    onToggle: () => void
+    onToggle: (label: string) => void
 }) {
     const hasChildren = item.children && item.children.length > 0
 
@@ -90,7 +106,7 @@ const NavMenuItem = memo(function NavMenuItem({
     return (
         <div>
             <button
-                onClick={onToggle}
+                onClick={() => onToggle(item.label)}
                 className={cn(
                     'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
@@ -138,7 +154,6 @@ const NavMenuItem = memo(function NavMenuItem({
 // Avatar Dropdown Component
 const AvatarDropdown = memo(function AvatarDropdown() {
     const { user, logout } = useAuth()
-    const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -162,7 +177,7 @@ const AvatarDropdown = memo(function AvatarDropdown() {
     const initials = useMemo(() => user?.fullName
         ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
         : 'U',
-    [user?.fullName])
+        [user])
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -224,6 +239,7 @@ export const HRSidebar = memo(function HRSidebar() {
     const { user } = useAuth()
     const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
+    const { enterpriseInfo } = useEnterpriseInfo()
 
     // Get user role for filtering navigation (memoized)
     const userRole = useMemo(() => user?.role || '', [user?.role])
@@ -256,10 +272,23 @@ export const HRSidebar = memo(function HRSidebar() {
         <div className="h-full flex flex-col bg-white border-r border-gray-200">
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
-                <Link href="/enterprise/dashboard" className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-lg">HR</span>
-                    </div>
+                <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
+                    {/* Placeholder logic for future logo integration */}
+                    {enterpriseInfo?.logoUrl ? (
+                        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
+                            <Image
+                                src={enterpriseInfo.logoUrl}
+                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
+                                width={32}
+                                height={32}
+                                className="object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
+                            <span className="text-white font-bold text-lg">HR</span>
+                        </div>
+                    )}
                     <div>
                         <h1 className="font-bold text-[#0F4C75] text-lg">ERMS</h1>
                         <p className="text-xs text-gray-400">HR Management</p>
@@ -275,7 +304,7 @@ export const HRSidebar = memo(function HRSidebar() {
                         item={item}
                         isActive={isItemActive(item)}
                         isExpanded={expandedItems.includes(item.label)}
-                        onToggle={() => toggleExpand(item.label)}
+                        onToggle={toggleExpand}
                     />
                 ))}
             </nav>
@@ -303,7 +332,11 @@ export const HRSidebar = memo(function HRSidebar() {
             {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close sidebar"
                     onClick={() => setIsMobileOpen(false)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsMobileOpen(false) } }}
                 />
             )}
 
@@ -311,7 +344,7 @@ export const HRSidebar = memo(function HRSidebar() {
             <aside
                 className={cn(
                     'fixed top-0 left-0 h-screen w-72 z-40 transition-transform duration-300',
-                    'lg:translate-x-0 lg:static lg:z-auto',
+                    'lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:z-auto',
                     isMobileOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >

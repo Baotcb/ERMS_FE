@@ -1,6 +1,4 @@
-import { config } from '@/config'
-
-const API_BASE = config.apiUrl
+import { apiClient } from '@/lib/api-client'
 
 // Types
 export interface Department {
@@ -32,23 +30,6 @@ export interface PaginatedResult<T> {
     totalPages: number
 }
 
-// Helper
-async function getAuthHeaders(token?: string): Promise<HeadersInit> {
-    let authToken = token || ''
-
-    if (!authToken && typeof window !== 'undefined') {
-        authToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_token='))
-            ?.split('=')[1] || ''
-    }
-
-    return {
-        'Content-Type': 'application/json',
-        ...(authToken && { Authorization: `Bearer ${authToken}` })
-    }
-}
-
 // API Functions
 export async function getDepartments(params: GetDepartmentsParams, token?: string): Promise<PaginatedResult<Department>> {
     const searchParams = new URLSearchParams({
@@ -59,9 +40,12 @@ export async function getDepartments(params: GetDepartmentsParams, token?: strin
     if (params.search) searchParams.set('search', params.search)
     if (params.isActive !== undefined) searchParams.set('isActive', String(params.isActive))
 
-    const response = await fetch(`${API_BASE}/api/Departments?${searchParams}`, {
-        headers: await getAuthHeaders(token),
-    })
+    const headers: HeadersInit = {}
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+    }
+
+    const response = await apiClient.get(`/api/Departments?${searchParams}`, { headers })
 
     if (!response.ok) {
         const text = await response.text()
@@ -89,9 +73,7 @@ export async function getDepartments(params: GetDepartmentsParams, token?: strin
 }
 
 export async function getDepartmentById(id: number): Promise<Department> {
-    const response = await fetch(`${API_BASE}/api/Departments/${id}`, {
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.get(`/api/Departments/${id}`)
 
     if (!response.ok) {
         const error = await response.json()
@@ -110,11 +92,7 @@ export interface CreateDepartmentData {
 }
 
 export async function createDepartment(data: CreateDepartmentData): Promise<{ departmentId: number }> {
-    const response = await fetch(`${API_BASE}/api/Departments`, {
-        method: 'POST',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(data),
-    })
+    const response = await apiClient.post(`/api/Departments`, data)
 
     if (!response.ok) {
         const error = await response.json()
@@ -130,11 +108,7 @@ export interface UpdateDepartmentData extends CreateDepartmentData {
 }
 
 export async function updateDepartment(id: number, data: UpdateDepartmentData): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/Departments/${id}`, {
-        method: 'PUT',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify(data),
-    })
+    const response = await apiClient.put('/api/Departments', { ...data, id })
 
     if (!response.ok) {
         const error = await response.json()
@@ -143,10 +117,7 @@ export async function updateDepartment(id: number, data: UpdateDepartmentData): 
 }
 
 export async function deleteDepartment(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/Departments/${id}`, {
-        method: 'DELETE',
-        headers: await getAuthHeaders(),
-    })
+    const response = await apiClient.delete('/api/Departments', { id })
 
     if (!response.ok) {
         const error = await response.json()
@@ -156,4 +127,3 @@ export async function deleteDepartment(id: number): Promise<void> {
 
 // Fetch wrapper with error handling (for SSR pages)
 // fetchDepartmentList moved to a server utility to avoid next/headers in client bundle
-

@@ -3,6 +3,7 @@
 import { useState, useCallback, memo, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
     LayoutDashboard,
     Building2,
@@ -22,6 +23,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { useEnterpriseInfo } from '@/features/enterprise'
 
 interface NavItem {
     label: string
@@ -102,7 +104,7 @@ const NavMenuItem = memo(function NavMenuItem({
     item: NavItem
     isActive: boolean
     isExpanded: boolean
-    onToggle: () => void
+    onToggle: (label: string) => void
 }) {
     const hasChildren = item.children && item.children.length > 0
 
@@ -127,7 +129,7 @@ const NavMenuItem = memo(function NavMenuItem({
     return (
         <div>
             <button
-                onClick={onToggle}
+                onClick={() => onToggle(item.label)}
                 className={cn(
                     'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
@@ -264,6 +266,7 @@ export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
     const { user } = useAuth()
     const [expandedItems, setExpandedItems] = useState<string[]>(['Phòng ban', 'Nhân viên'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
+    const { enterpriseInfo } = useEnterpriseInfo()
 
     const userRole = user?.role || ''
 
@@ -293,9 +296,21 @@ export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
             {/* Logo */}
             <div className="p-6 border-b border-gray-100">
                 <Link href="/dashboard" className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg">
-                        <span className="text-white font-bold text-sm">ER</span>
-                    </div>
+                    {enterpriseInfo?.logoUrl ? (
+                        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
+                            <Image
+                                src={enterpriseInfo.logoUrl}
+                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
+                                width={32}
+                                height={32}
+                                className="object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
+                            <span className="text-white font-bold text-sm">ER</span>
+                        </div>
+                    )}
                     <div>
                         <h1 className="font-bold text-[#0F4C75] text-lg">ERMS</h1>
                         <p className="text-xs text-gray-400">Enterprise Portal</p>
@@ -311,7 +326,7 @@ export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
                         item={item}
                         isActive={isItemActive(item)}
                         isExpanded={expandedItems.includes(item.label)}
-                        onToggle={() => toggleExpand(item.label)}
+                        onToggle={toggleExpand}
                     />
                 ))}
             </nav>
@@ -339,7 +354,11 @@ export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
             {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close sidebar"
                     onClick={() => setIsMobileOpen(false)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsMobileOpen(false) } }}
                 />
             )}
 

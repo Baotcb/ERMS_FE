@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { COOKIE_OPTIONS } from '@/utils/constants'
 
 const COOKIE_NAME = 'verify_email'
