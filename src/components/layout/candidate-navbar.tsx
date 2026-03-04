@@ -108,7 +108,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                                 <Icons.Bookmark className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm đã lưu</span>
                                             </Link>
-                                            <Link href="/not-found" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
+                                            <Link href="/applications" className="flex items-center gap-2 p-1.5 rounded-md hover:bg-[#EDE8F0] transition-colors text-[#6f7882] hover:text-[#1B5583]">
                                                 <Icons.FileCheck className="w-4 h-4 text-[#a6acb2]" />
                                                 <span className="text-sm">Việc làm đã ứng tuyển</span>
                                             </Link>
@@ -232,7 +232,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                             </div>
                                             <div className="pl-6.5 space-y-1.5" style={{ paddingLeft: '26px' }}>
                                                 <Link href="/jobs/saved" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã lưu</Link>
-                                                <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã ứng tuyển</Link>
+                                                <Link href="/applications" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm đã ứng tuyển</Link>
                                                 <Link href="/offers" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Đề nghị của tôi</Link>
                                                 <Link href="/not-found" className="block text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5">Việc làm phù hợp</Link>
                                             </div>
@@ -268,7 +268,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                             </div>
                                             <div style={{ paddingLeft: '26px' }} className="space-y-1.5">
                                                 <Link
-                                                    href="/profile"
+                                                    href="/settings/profile"
                                                     className="flex items-center gap-2 text-[13px] text-[#6f7882] hover:text-[#1B5583] transition-colors py-0.5"
                                                 >
                                                     <Icons.User className="w-3.5 h-3.5" />

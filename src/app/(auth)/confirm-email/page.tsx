@@ -1,69 +1,78 @@
-import { Metadata } from 'next'
-import { cookies } from 'next/headers'
+'use client'
+
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ConfirmEmailCard } from '@/features/core/auth'
-import { config } from '@/config'
+import { confirmEmail } from '@/features/core/auth/api/auth-service'
+import { LoadingSpinner } from '@/components/common'
 
-export const metadata: Metadata = {
-    title: 'Xác thực Email - ERMS',
-    description: 'Xác nhận địa chỉ email của bạn',
-}
+type ConfirmStatus = 'loading' | 'success' | 'error' | 'invalid'
 
-interface PageProps {
-    searchParams: Promise<{ userId?: string; token?: string; email?: string }>
-}
+function ConfirmEmailContent() {
+    const searchParams = useSearchParams()
+    const userId = searchParams.get('userId')
+    const rawToken = searchParams.get('token')
+    const email = searchParams.get('email') || undefined
+    const token = rawToken ? decodeURIComponent(rawToken) : null
 
-import { logger } from '@/lib/logger'
+    const isInvalidParams = !userId || !token
+    const [status, setStatus] = useState<ConfirmStatus>(isInvalidParams ? 'invalid' : 'loading')
+    const [message, setMessage] = useState(isInvalidParams ? 'Link xác thực không hợp lệ.' : '')
 
-async function verifyEmail(userId: string, token: string): Promise<{ success: boolean; message: string }> {
-    try {
-        // Remove trailing slash to avoid double-slash in URL
-        let apiUrl = config.apiUrl
-        while (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1)
+    useEffect(() => {
+        if (isInvalidParams) return
 
+        let cancelled = false
 
-        const response = await fetch(`${apiUrl}/api/Auth/confirm-email`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, token }),
-            cache: 'no-store',
-        })
-
-        // Handle empty response body gracefully
-        const text = await response.text()
-        let data: { message?: string } = {}
-        if (text) {
+        async function verify() {
             try {
-                data = JSON.parse(text)
-            } catch {
-                // Response is not JSON
+                const result = await confirmEmail(userId!, token!)
+                if (cancelled) return
+                setStatus('success')
+                setMessage(result.message || 'Xác thực email thành công!')
+            } catch (err) {
+                if (cancelled) return
+                setStatus('error')
+                setMessage(err instanceof Error ? err.message : 'Xác thực email thất bại')
             }
         }
 
-        if (!response.ok) {
-            return { success: false, message: data.message || `Xác thực email thất bại (${response.status})` }
+        verify()
+
+        return () => {
+            cancelled = true
         }
-        return { success: true, message: data.message || 'Xác thực email thành công!' }
-    } catch (err) {
-        logger.error('Verify email error:', err)
-        return { success: false, message: 'Không thể kết nối đến server' }
+    }, [userId, token, isInvalidParams])
+
+    if (status === 'loading') {
+        return (
+            <div className="w-full max-w-md mx-auto text-center py-16">
+                <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400">Đang xác thực email...</p>
+            </div>
+        )
     }
+
+    return (
+        <ConfirmEmailCard
+            status={status === 'invalid' ? 'invalid' : status === 'success' ? 'success' : 'error'}
+            message={message}
+            email={email}
+        />
+    )
 }
 
-export default async function ConfirmEmailPage({ searchParams }: PageProps) {
-    const { userId, token: rawToken, email: emailParam } = await searchParams
-    const token = rawToken ? decodeURIComponent(rawToken) : undefined
-
-    // Fallback to cookie if email not in search params
-    const cookieStore = await cookies()
-    const email = emailParam || cookieStore.get('verify_email')?.value
-
-    if (!userId || !token) {
-        return <ConfirmEmailCard status="invalid" message="Link xác thực không hợp lệ." email={email} />
-    }
-
-    const result = await verifyEmail(userId, token)
-    if (result.success) {
-        cookieStore.delete('verify_email')
-    }
-    return <ConfirmEmailCard status={result.success ? 'success' : 'error'} message={result.message} email={email} />
+export default function ConfirmEmailPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="w-full max-w-md mx-auto text-center py-16">
+                    <LoadingSpinner size="lg" className="mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">Đang tải...</p>
+                </div>
+            }
+        >
+            <ConfirmEmailContent />
+        </Suspense>
+    )
 }

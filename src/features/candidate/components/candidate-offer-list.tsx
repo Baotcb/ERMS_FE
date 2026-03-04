@@ -17,11 +17,9 @@ export function CandidateOfferList() {
         pageSize: PAGE_SIZE,
     })
 
-    const offers = data?.items ?? []
-    const totalPages = data ? Math.ceil(data.totalCount / data.pageSize) : 0
-
     // Client-side search filter
     const filteredOffers = useMemo(() => {
+        const offers = data?.items ?? []
         if (!searchTerm.trim()) return offers
         const keyword = searchTerm.toLowerCase()
         return offers.filter(
@@ -31,7 +29,10 @@ export function CandidateOfferList() {
                 (o.offerCode?.toLowerCase().includes(keyword) ?? false) ||
                 o.departmentName.toLowerCase().includes(keyword)
         )
-    }, [offers, searchTerm])
+    }, [data?.items, searchTerm])
+
+    const offers = data?.items ?? []
+    const totalPages = data ? Math.ceil(data.totalCount / data.pageSize) : 0
 
     // Loading state
     if (isLoading) {
@@ -137,8 +138,8 @@ export function CandidateOfferList() {
                                     key={p}
                                     onClick={() => setPage(p)}
                                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${p === page
-                                            ? 'bg-[#0F4C75] text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
+                                        ? 'bg-[#0F4C75] text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
                                         }`}
                                 >
                                     {p}

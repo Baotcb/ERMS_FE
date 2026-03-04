@@ -58,8 +58,8 @@ export function CreateOfferDialog({
 
     // Two-step picker state (chỉ dùng khi không có props)
     const hasContext = Boolean(propApplicationId)
-    const [jobs, setJobs] = useState<JobOption[]>([])
-    const [jobsLoading, setJobsLoading] = useState(false)
+    const [jobs, setJobs] = useState<JobOption[] | undefined>(undefined)
+    const jobsLoading = open && !hasContext && jobs === undefined
     const [selectedJobId, setSelectedJobId] = useState('')
     const [candidates, setCandidates] = useState<ApplicationDto[]>([])
     const [candidatesLoading, setCandidatesLoading] = useState(false)
@@ -68,45 +68,55 @@ export function CreateOfferDialog({
     // Giá trị thực tế
     const selectedCandidate = candidates.find((c) => c.id === selectedAppId)
     const effectiveAppId = propApplicationId || selectedAppId
-    const effectivePosition = propPosition || (jobs.find((j) => j.id === selectedJobId)?.title ?? '')
+    const effectivePosition = propPosition || (jobs?.find((j) => j.id === selectedJobId)?.title ?? '')
     const displayName = propCandidateName || selectedCandidate?.candidateName || 'Ứng viên'
 
     // Load job postings khi dialog mở (standalone mode)
     useEffect(() => {
         if (!open || hasContext) return
-        setJobsLoading(true)
+
+        let cancelled = false
         getJobPostings({ pageSize: 100 })
-            .then((res) =>
-                setJobs(res.data.map((j: { id: string; jobTitle: string; jobCode: string }) => ({
-                    id: j.id,
-                    title: j.jobTitle,
-                    code: j.jobCode,
-                })))
-            )
-            .catch(() => setJobs([]))
-            .finally(() => setJobsLoading(false))
+            .then((res) => {
+                if (!cancelled) {
+                    setJobs(res.data.map((j: { id: string; jobTitle: string; jobCode: string }) => ({
+                        id: j.id,
+                        title: j.jobTitle,
+                        code: j.jobCode,
+                    })))
+                }
+            })
+            .catch(() => { if (!cancelled) setJobs([]) })
+
+        return () => { cancelled = true }
     }, [open, hasContext])
 
     // Load OfferProcessing candidates khi chọn job
-    useEffect(() => {
-        if (!selectedJobId) { setCandidates([]); return }
-        setCandidatesLoading(true)
+    function handleSelectJob(jobId: string) {
+        setSelectedJobId(jobId)
         setSelectedAppId('')
-        getApplicationsByJob(selectedJobId, { stageFilter: 'OfferProcessing', pageSize: 100 })
+        if (!jobId) {
+            setCandidates([])
+            return
+        }
+        setCandidatesLoading(true)
+        getApplicationsByJob(jobId, { stageFilter: 'OfferProcessing', pageSize: 100 })
             .then((res) => setCandidates(res.data))
             .catch(() => setCandidates([]))
             .finally(() => setCandidatesLoading(false))
-    }, [selectedJobId])
+    }
 
-    // Reset khi đóng dialog
-    useEffect(() => {
-        if (!open) {
+    // Reset khi đóng dialog — dùng onOpenChange wrapper
+    const handleOpenChange = useCallback((nextOpen: boolean) => {
+        if (!nextOpen) {
             setForm(INITIAL_FORM)
             setSelectedJobId('')
             setSelectedAppId('')
             setCandidates([])
+            setJobs(undefined) // Reset để lần mở tiếp theo hiển thị loading
         }
-    }, [open])
+        onOpenChange(nextOpen)
+    }, [onOpenChange])
 
     const handleChange = useCallback(
         (field: string, value: string) => {
@@ -144,7 +154,7 @@ export function CreateOfferDialog({
     const isFormValid = effectiveAppId && effectivePosition && form.salary && form.startDate && form.expirationDate
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[640px] p-0 gap-0">
                 {/* Header */}
                 <DialogHeader className="px-6 py-5 border-b border-slate-100">
@@ -169,10 +179,10 @@ export function CreateOfferDialog({
                         {/* === STEP PICKER (standalone mode) === */}
                         {!hasContext && (
                             <CandidatePicker
-                                jobs={jobs}
+                                jobs={jobs ?? []}
                                 jobsLoading={jobsLoading}
                                 selectedJobId={selectedJobId}
-                                onSelectJob={setSelectedJobId}
+                                onSelectJob={handleSelectJob}
                                 candidates={candidates}
                                 candidatesLoading={candidatesLoading}
                                 selectedAppId={selectedAppId}
@@ -257,7 +267,7 @@ export function CreateOfferDialog({
 
                 {/* Footer */}
                 <DialogFooter className="px-6 py-4 border-t border-slate-100">
-                    <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isMutating}>Hủy</Button>
+                    <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={isMutating}>Hủy</Button>
                     <Button
                         onClick={handleSubmit}
                         disabled={isMutating || !isFormValid}
