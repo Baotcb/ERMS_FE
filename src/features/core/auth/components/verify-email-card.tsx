@@ -63,7 +63,7 @@ export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEm
 
     // Mask email for display (e.g., h***@gmail.com)
     const maskedEmail = email
-        ? email.replace(/^(.{1,2})(.*)(@.*)$/, (_, start, middle, end) =>
+        ? email.replace(/^(.{1,2})([^@]*)(@.*)$/, (_, start, middle, end) =>
             start + '*'.repeat(Math.min(middle.length, 5)) + end)
         : null
 

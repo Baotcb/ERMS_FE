@@ -17,7 +17,8 @@ import { logger } from '@/lib/logger'
 async function verifyEmail(userId: string, token: string): Promise<{ success: boolean; message: string }> {
     try {
         // Remove trailing slash to avoid double-slash in URL
-        const apiUrl = config.apiUrl.replace(/\/+$/, '')
+        let apiUrl = config.apiUrl
+        while (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1)
 
 
         const response = await fetch(`${apiUrl}/api/Auth/confirm-email`, {
