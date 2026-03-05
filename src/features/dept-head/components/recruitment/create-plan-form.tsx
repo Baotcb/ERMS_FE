@@ -28,6 +28,7 @@ import {
 } from './create-plan-types'
 import { PlanFormStep } from './plan-form-step'
 import { PlanDetailFormSection } from './plan-detail-form-section'
+import { getRecruitmentCampaignById } from '@/features/hr/api/recruitment-campaign-service'
 import { PlanDetailTableSection } from './plan-detail-table-section'
 
 // --- Component ---
@@ -60,6 +61,27 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
         }
     }, [])
 
+    const fetchBudgetInfo = useCallback(async (campaignId: string) => {
+        try {
+            const campaign = await getRecruitmentCampaignById(campaignId)
+            if (campaign.totalBudgetCeiling != null) {
+                dispatch({
+                    type: 'SET_BUDGET_INFO',
+                    budgetInfo: {
+                        totalBudgetCeiling: campaign.totalBudgetCeiling,
+                        usedBudget: campaign.usedBudget ?? 0,
+                        pendingBudget: campaign.pendingBudget ?? 0,
+                        remainingBudget: campaign.remainingBudget ?? campaign.totalBudgetCeiling,
+                    }
+                })
+            } else {
+                dispatch({ type: 'SET_BUDGET_INFO', budgetInfo: null })
+            }
+        } catch (e) {
+            console.error('Failed to fetch budget info:', e)
+        }
+    }, [])
+
     // --- Initialization Effect ---
 
     useEffect(() => {
@@ -83,6 +105,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                     console.error(error)
                     dispatch({ type: 'SET_LOADING', key: 'isLoadingCampaigns', value: false })
                 }
+            } else {
+                // Fetch budget info khi có defaultCampaignId
+                fetchBudgetInfo(defaultCampaignId)
             }
 
             if (!state.detectedDepartment) {
@@ -141,7 +166,17 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             dispatch({ type: 'SET_STEP', step: 'create-plan' })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, defaultCampaignId, editPlanId, fetchPlanDetails, planForm])
+    }, [open, defaultCampaignId, editPlanId, fetchPlanDetails, fetchBudgetInfo, planForm])
+
+    // Watch campaignId changes để fetch budget info khi user chọn campaign từ dropdown
+    useEffect(() => {
+        const subscription = planForm.watch((value, { name }) => {
+            if (name === 'campaignId' && value.campaignId && !defaultCampaignId) {
+                fetchBudgetInfo(value.campaignId)
+            }
+        })
+        return () => subscription.unsubscribe()
+    }, [planForm, defaultCampaignId, fetchBudgetInfo])
 
     useEffect(() => {
         if (state.detectedDepartment && !editPlanId && !planForm.getValues('departmentId')) {
@@ -294,6 +329,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                             isLoadingCampaigns={state.isLoadingCampaigns}
                             showCampaignField={!defaultCampaignId && !editPlanId}
                             onSubmit={onSubmitPlan}
+                            budgetInfo={state.budgetInfo}
                         />
                     ) : (
                         <div className="flex flex-col gap-6 h-full">
