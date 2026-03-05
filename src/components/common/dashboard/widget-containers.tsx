@@ -12,11 +12,11 @@ export interface DashboardListWidgetProps<T> {
 
 export function DashboardListWidget<T>({ title, subtitle, items, renderItem, keyExtractor, onRefresh }: DashboardListWidgetProps<T>) {
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[450px]">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                    <h3 className="font-bold text-[#0F4C75] text-lg uppercase">{title}</h3>
-                    {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
+            <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                <div className="min-w-0">
+                    <h3 className="font-bold text-[#0F4C75] text-xs uppercase truncate">{title}</h3>
+                    {subtitle && <p className="text-[10px] text-gray-400 truncate">{subtitle}</p>}
                 </div>
                 <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRefresh}>
@@ -27,9 +27,9 @@ export function DashboardListWidget<T>({ title, subtitle, items, renderItem, key
                     </Button>
                 </div>
             </div>
-            <div className="p-4 flex-1 overflow-y-auto space-y-4">
+            <div className="px-3 py-2 flex-1 overflow-y-auto">
                 {items.length > 0 ? items.map((item, index) => (
-                    <div key={keyExtractor ? keyExtractor(item, index) : index}>
+                    <div key={keyExtractor ? keyExtractor(item, index) : index} className="py-1.5 border-b border-gray-50 last:border-0">
                         {renderItem(item)}
                     </div>
                 )) : (
@@ -56,11 +56,11 @@ export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWi
     const maxValue = Math.max(...data.map(d => d.value), 1) * 1.1
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-[400px]">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                    <h3 className="font-bold text-[#0F4C75] text-lg uppercase">{title}</h3>
-                    {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
+            <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                <div className="min-w-0">
+                    <h3 className="font-bold text-[#0F4C75] text-xs uppercase truncate">{title}</h3>
+                    {subtitle && <p className="text-[10px] text-gray-400 truncate">{subtitle}</p>}
                 </div>
                 <div className="flex gap-1">
                     <Button variant="ghost" size="sm" className="h-8 text-xs text-gray-500">
@@ -71,29 +71,30 @@ export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWi
                     </Button>
                 </div>
             </div>
-            <div className="p-6 flex-1 flex flex-col justify-end">
-                <div className="flex items-end justify-between gap-4 h-[250px] w-full">
-                    {data.map((item) => (
-                        <div key={item.label} className="flex flex-col items-center flex-1 gap-2 group">
-                            <div className="relative w-full flex justify-center">
-                                <div
-                                    className="w-full max-w-[40px] rounded-t-sm transition-all duration-500 hover:opacity-80 relative group-hover:scale-105"
-                                    style={{
-                                        height: `${(item.value / maxValue) * 200}px`,
-                                        backgroundColor: item.color
-                                    }}
-                                >
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        {item.value}
-                                    </div>
+            <div className="p-4 flex-1 flex flex-col justify-end min-h-0">
+                {data.length > 0 ? (
+                    <div className="flex items-end justify-between gap-3 flex-1 w-full">
+                        {data.map((item) => (
+                            <div key={item.label} className="flex flex-col items-center flex-1 gap-1 group min-w-0">
+                                <span className="text-xs font-bold text-gray-700">{item.value}</span>
+                                <div className="relative w-full flex justify-center flex-1">
+                                    <div
+                                        className="w-full max-w-[48px] rounded-t-md transition-all duration-500 hover:opacity-80 group-hover:scale-105"
+                                        style={{
+                                            height: `${Math.max((item.value / maxValue) * 100, 8)}%`,
+                                            backgroundColor: item.color
+                                        }}
+                                    />
                                 </div>
+                                <span className="text-[10px] text-gray-500 text-center font-medium leading-tight w-full truncate" title={item.label}>
+                                    {item.label}
+                                </span>
                             </div>
-                            <span className="text-[10px] text-gray-500 text-center font-medium line-clamp-2 h-8 leading-3">
-                                {item.label}
-                            </span>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
+                )}
             </div>
         </div>
     )

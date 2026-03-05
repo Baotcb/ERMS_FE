@@ -39,17 +39,17 @@ export const HRDashboard = memo(function HRDashboard() {
     }
 
     return (
-        <div className="space-y-3">
+        <div className="flex flex-col h-[calc(100vh-7rem)] gap-3">
             {/* Header */}
-            <div>
+            <div className="shrink-0">
                 <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Dashboard</h1>
                 <p className="text-gray-500 text-sm">Tổng quan hoạt động HR</p>
             </div>
 
             {/* Top Row: 3 Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-[2] min-h-0">
                 <DashboardListWidget
-                    title="Danh sách Yêu cầu Tuyển dụng &amp; Đào tạo"
+                    title="Danh sách Yêu cầu Tuyển dụng"
                     subtitle="Phòng ban: Tất cả &bull; Chờ duyệt (Click để tạo tin)"
                     items={requests}
                     renderItem={(item) => (
@@ -65,8 +65,8 @@ export const HRDashboard = memo(function HRDashboard() {
                 />
 
                 <DashboardListWidget
-                    title="Danh sách Nhiệm vụ (Tasks)"
-                    subtitle="Cá nhân &amp; Team &bull; Hôm nay"
+                    title="Danh sách Yêu cầu Đào tạo"
+                    subtitle="Phòng ban: Tất cả &bull; Chờ duyệt"
                     items={tasks}
                     renderItem={(item) => (
                         <TaskItemRow
@@ -85,7 +85,7 @@ export const HRDashboard = memo(function HRDashboard() {
                     renderItem={(item) => (
                         <CandidateItemRow
                             title={`${item.name} - ${item.position}`}
-                            group="ỨNG VIÊN"
+                            group={item.status === 'offer' ? 'Offer' : item.status === 'interview' ? 'Phỏng vấn' : 'Sàng lọc'}
                             status={item.priority}
                         />
                     )}
@@ -93,10 +93,10 @@ export const HRDashboard = memo(function HRDashboard() {
             </div>
 
             {/* Bottom Row: 2 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[280px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 flex-[3] min-h-0">
                 <DashboardChartWidget
                     title="Hiệu suất Tuyển dụng (Theo phòng ban)"
-                    subtitle="Tỷ lệ đạt mục tiêu tuyển dụng (%)"
+                    subtitle="Tỷ lệ hoàn thành tuyển dụng (%)"
                     data={recruitmentData}
                 />
 
