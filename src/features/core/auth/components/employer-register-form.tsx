@@ -252,7 +252,9 @@ export const EmployerRegisterForm = memo(function EmployerRegisterForm() {
                             <Checkbox
                                 id="agreeTerms"
                                 checked={field.value}
-                                onCheckedChange={field.onChange}
+                                onCheckedChange={(checked) => {
+                                    field.onChange(checked === true)
+                                }}
                                 disabled={isLoading}
                                 className="mt-0.5"
                             />

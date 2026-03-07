@@ -558,15 +558,17 @@ export function JobPostingWizardDialog({
                                                             control={form.control}
                                                             name="showSalary"
                                                             render={({ field }) => (
-                                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-slate-200 p-4 shadow-sm bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => field.onChange(!field.value)}>
+                                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-slate-200 p-4 shadow-sm bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer">
                                                                     <FormControl>
                                                                         <Checkbox
                                                                             checked={field.value}
-                                                                            onCheckedChange={field.onChange}
+                                                                            onCheckedChange={(checked) => {
+                                                                                field.onChange(checked === true)
+                                                                            }}
                                                                             className="mt-1 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                                                                         />
                                                                     </FormControl>
-                                                                    <div className="space-y-1 leading-none select-none">
+                                                                    <div className="space-y-1 leading-none select-none" onClick={() => field.onChange(!field.value)}>
                                                                         <FormLabel className="font-semibold text-slate-800 cursor-pointer">
                                                                             Hiển thị mức lương công khai
                                                                         </FormLabel>
