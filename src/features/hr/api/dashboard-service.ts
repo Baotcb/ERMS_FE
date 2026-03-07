@@ -1,5 +1,26 @@
 import { apiClient } from '@/lib/api-client'
 import { logger } from '@/lib/logger'
+import type { Department } from './department-service'
+
+// Cache departments: managerName → departmentName
+let deptCachePromise: Promise<Record<string, string>> | null = null
+async function getDeptNameMap(): Promise<Record<string, string>> {
+    if (!deptCachePromise) {
+        deptCachePromise = (async () => {
+            try {
+                const res = await apiClient.get('/api/Departments?pageSize=100')
+                if (!res.ok) return {}
+                const data = await res.json() as { items: Department[] }
+                const map: Record<string, string> = {}
+                for (const d of data.items || []) {
+                    if (d.managerName) map[d.managerName] = d.departmentName
+                }
+                return map
+            } catch { return {} }
+        })()
+    }
+    return deptCachePromise
+}
 
 export interface DashboardStats {
     totalEmployees: number
@@ -81,13 +102,12 @@ export interface ChartData {
 }
 
 // TODO: Replace with actual API call when backend endpoint is available
-// Currently returns hardcoded mock data
 export async function getDashboardStats(): Promise<DashboardStats> {
     return {
-        totalEmployees: 156,
-        totalDepartments: 12,
-        newHires: 8,
-        turnoverRate: 3.2
+        totalEmployees: 0,
+        totalDepartments: 0,
+        newHires: 0,
+        turnoverRate: 0
     }
 }
 
@@ -148,10 +168,15 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
 
         // Process: plans có sẵn details + plans vừa fetch
         const allPlans = [...plansWithDetails, ...plansNeedingDetails]
+        const deptMap = await getDeptNameMap()
+
         for (const plan of allPlans) {
             const details = plan.planDetails && Array.isArray(plan.planDetails) && plan.planDetails.length > 0
                 ? plan.planDetails
                 : (fetchedDetailsMap[plan.id] || [])
+
+            const creatorName = plan.createdByName || ''
+            const deptName = deptMap[creatorName] || plan.campaignName || 'Phòng ban'
 
             if (details.length > 0) {
                 // Chỉ hiển thị planDetail status 'Approved' — chưa có JobPosting, sẵn sàng tạo tin
@@ -164,11 +189,11 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
                     requestItems.push({
                         id: detail.id,
                         title: title,
-                        requester: detail.requestedByName || plan.createdByName || 'Phòng ban',
+                        requester: deptName,
                         date: new Date(detail.createdAt || plan.createdAt || new Date()).toLocaleDateString('vi-VN'),
                         status: isUrgent ? 'urgent' : 'important',
                         type: 'request',
-                        avatar: (detail.requestedByName || plan.createdByName || 'U').substring(0, 2).toUpperCase(),
+                        avatar: deptName.substring(0, 2).toUpperCase(),
                         project: plan.planCode || plan.campaignName,
                         planDetailId: detail.id,
                         position: title,
@@ -182,11 +207,11 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
                 requestItems.push({
                     id: plan.id,
                     title: `Kế hoạch: ${plan.planName}`,
-                    requester: plan.createdByName || 'Phòng ban',
+                    requester: deptName,
                     date: new Date(plan.createdAt || new Date()).toLocaleDateString('vi-VN'),
                     status: 'important',
                     type: 'request',
-                    avatar: (plan.createdByName || 'U').substring(0, 2).toUpperCase(),
+                    avatar: deptName.substring(0, 2).toUpperCase(),
                     project: plan.planCode || plan.campaignName,
                     planDetailId: undefined,
                     position: plan.planName,
@@ -204,44 +229,129 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
     }
 }
 
+// TODO: Replace with actual API call when backend endpoint is available
 export async function getTasks(): Promise<TaskItem[]> {
-    return [
-        { id: '1', title: 'Sàng lọc CV vị trí Business Analyst', project: 'Tuyển dụng', dueDate: '05/02/2026', assignee: 'HR Executive' },
-        { id: '5', title: 'Tạo tin tuyển dụng: Senior Java Dev (Đã duyệt)', project: 'Tuyển dụng', dueDate: 'Hôm nay', assignee: 'HR Manager', link: '/enterprise/hr/job-postings/create?planId=123' },
-        { id: '6', title: 'Tạo tin tuyển dụng: QC Manual (Đã duyệt)', project: 'Tuyển dụng', dueDate: 'Hôm nay', assignee: 'HR Executive', link: '/enterprise/hr/job-postings/create?planId=124' },
-        { id: '2', title: 'Gửi thư mời nhận việc cho Nguyễn Văn A', project: 'Tuyển dụng', dueDate: '03/02/2026', assignee: 'HR Manager' },
-        { id: '3', title: 'Chuẩn bị tài liệu đào tạo tuần 1', project: 'Đào tạo', dueDate: '04/02/2026', assignee: 'Trainer' },
-        { id: '4', title: 'Đánh giá thử việc nhân viên QC', project: 'Đánh giá', dueDate: '10/02/2026', assignee: 'HR Executive' },
-    ]
+    return []
+}
+
+// Lấy danh sách ứng viên tiềm năng từ API thật
+// Fetch applications ở giai đoạn phỏng vấn hoặc offer
+interface EnterpriseApplicationDto {
+    applicationId: string
+    stage: string
+    status: string
+    appliedAt: string
+    candidateId: string
+    candidateName: string
+    candidateEmail?: string
+    jobPostingId: string
+    jobTitle: string
+    overallScore?: number
+}
+
+interface ApplicationsResponse {
+    items: EnterpriseApplicationDto[]
+    totalCount: number
 }
 
 export async function getCandidates(): Promise<CandidateItem[]> {
-    return [
-        { id: '1', name: 'Trần Minh Quang', position: 'Senior Java Dev', status: 'interview', priority: 'urgent' },
-        { id: '2', name: 'Nguyễn Thị Lan', position: 'Content Creator', status: 'screening', priority: 'normal' },
-        { id: '3', name: 'Lê Hoàng Nam', position: 'BA Leader', status: 'offer', priority: 'urgent' },
-        { id: '4', name: 'Phạm Thu Thủy', position: 'Tester', status: 'interview', priority: 'normal' },
-    ]
+    try {
+        // Fetch ứng viên đang ở giai đoạn phỏng vấn hoặc offer
+        const stages = ['Shortlisted', 'InterviewScheduled', 'Interviewing', 'OfferProcessing', 'Offered']
+        const results = await Promise.allSettled(
+            stages.map(async stage => {
+                const res = await apiClient.get(`/api/Applications/enterprise?stageFilter=${stage}&pageNumber=1&pageSize=5`)
+                if (!res.ok) return [] as EnterpriseApplicationDto[]
+                const data = await res.json() as ApplicationsResponse
+                return data.items || []
+            })
+        )
+
+        const allCandidates: CandidateItem[] = []
+        results.forEach(r => {
+            if (r.status !== 'fulfilled') return
+            (r.value as EnterpriseApplicationDto[]).forEach(app => {
+                const isInterview = ['Shortlisted', 'InterviewScheduled', 'Interviewing'].includes(app.stage)
+                const isOffer = ['OfferProcessing', 'Offered'].includes(app.stage)
+                allCandidates.push({
+                    id: app.applicationId,
+                    name: app.candidateName,
+                    position: app.jobTitle,
+                    status: isOffer ? 'offer' : isInterview ? 'interview' : 'screening',
+                    priority: app.overallScore && app.overallScore >= 80 ? 'urgent' : 'normal'
+                })
+            })
+        })
+
+        // Giới hạn 10 ứng viên, ưu tiên offer trước
+        return allCandidates
+            .sort((a, b) => {
+                const order = { offer: 0, interview: 1, screening: 2 }
+                return (order[a.status] ?? 2) - (order[b.status] ?? 2)
+            })
+            .slice(0, 10)
+    } catch {
+        return []
+    }
 }
+
+// Tỉ lệ hoàn thành tuyển dụng theo phòng ban
+// (Recruiting + Closed) / Total × 100
+const CHART_COLORS = ['#3282B8', '#0F4C75', '#1B9AAA', '#06D6A0', '#EF476F', '#FFD166', '#BBE1FA']
 
 export async function getRecruitmentPerformance(): Promise<ChartData[]> {
-    return [
-        { label: 'IT Software', value: 85, color: '#3282B8' },
-        { label: 'Marketing', value: 60, color: '#BBE1FA' },
-        { label: 'Sales', value: 45, color: '#0F4C75' },
-        { label: 'Kế toán', value: 90, color: '#3282B8' },
-        { label: 'Vận hành', value: 70, color: '#BBE1FA' },
-        { label: 'HR', value: 95, color: '#0F4C75' },
-    ]
+    try {
+        const response = await apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=50')
+        if (!response.ok) return []
+
+        const data = await response.json() as ApiResponse
+        if (!data.items || !Array.isArray(data.items) || data.items.length === 0) return []
+
+        const deptMap = await getDeptNameMap()
+
+        // Fetch details cho tất cả plans
+        const detailResults = await Promise.allSettled(
+            data.items.map(async (plan: RecruitmentPlan) => {
+                const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`)
+                if (!res.ok) return { creator: plan.createdByName || '', details: [] as RecruitmentPlanDetail[] }
+                const d = await res.json()
+                return {
+                    creator: plan.createdByName || '',
+                    details: (Array.isArray(d) ? d : (d.items || [])) as RecruitmentPlanDetail[]
+                }
+            })
+        )
+
+        // Group theo phòng ban
+        const grouped: Record<string, { total: number; done: number }> = {}
+        detailResults.forEach((r) => {
+            if (r.status !== 'fulfilled' || !r.value) return
+            const { creator, details } = r.value as { creator: string; details: RecruitmentPlanDetail[] }
+            const deptName = deptMap[creator] || creator || 'Khác'
+            if (!grouped[deptName]) grouped[deptName] = { total: 0, done: 0 }
+            details.forEach((d: RecruitmentPlanDetail) => {
+                const qty = d.quantity || 1
+                grouped[deptName].total += qty
+                if (d.status === 'Recruiting' || d.status === 'Closed') {
+                    grouped[deptName].done += qty
+                }
+            })
+        })
+
+        return Object.entries(grouped)
+            .filter(([, v]) => v.total > 0)
+            .map(([label, v], i) => ({
+                label,
+                value: Math.round((v.done / v.total) * 100),
+                color: CHART_COLORS[i % CHART_COLORS.length]
+            }))
+            .sort((a, b) => b.value - a.value)
+    } catch {
+        return []
+    }
 }
 
+// TODO: Replace with actual API call when backend endpoint is available
 export async function getTrainingPerformance(): Promise<ChartData[]> {
-    return [
-        { label: 'Hội nhập', value: 100, color: '#0F4C75' },
-        { label: 'Kỹ năng mềm', value: 75, color: '#0F4C75' },
-        { label: 'Chuyên môn', value: 60, color: '#0F4C75' },
-        { label: 'Leadership', value: 40, color: '#0F4C75' },
-        { label: 'Tiếng Anh', value: 30, color: '#0F4C75' },
-        { label: 'An toàn LĐ', value: 90, color: '#0F4C75' },
-    ]
+    return []
 }
