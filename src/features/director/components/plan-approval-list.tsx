@@ -41,6 +41,7 @@ interface CampaignBudgetMap {
         usedBudget: number
         pendingBudget: number
         remainingBudget: number
+        actualCost: number
         campaignName: string
     }
 }
@@ -79,6 +80,7 @@ export function PlanApprovalList() {
                                 usedBudget: campaign.usedBudget ?? 0,
                                 pendingBudget: campaign.pendingBudget ?? 0,
                                 remainingBudget: campaign.remainingBudget ?? campaign.totalBudgetCeiling,
+                                actualCost: campaign.actualCost ?? 0,
                                 campaignName: campaign.campaignName,
                             }
                         }
@@ -231,6 +233,9 @@ export function PlanApprovalList() {
                                                                 <p>Đã phân bổ: {formatVND(budget.usedBudget)}</p>
                                                                 <p>Đang chờ duyệt: {formatVND(budget.pendingBudget)}</p>
                                                                 <p className="font-semibold">Còn lại: {formatVND(budget.remainingBudget)}</p>
+                                                                {budget.actualCost > 0 && (
+                                                                    <p className="font-semibold text-green-600 border-t border-gray-200 pt-1 mt-1">Chi phí thực tế: {formatVND(budget.actualCost)}</p>
+                                                                )}
                                                             </div>
                                                         </TooltipContent>
                                                     </Tooltip>
@@ -278,7 +283,7 @@ export function PlanApprovalList() {
                             <strong> {selectedPlan?.planName}</strong> không?
                             {actionType === 'approve' && selectedPlan && isPlanOverBudget(selectedPlan) && (
                                 <span className="block mt-2 text-amber-600 text-sm">
-                                    ⚠️ Lưu ý: Ngân sách kế hoạch này vượt hạn mức còn lại của chiến dịch. Việc phê duyệt có thể bị từ chối bởi hệ thống.
+                                    ⚠️ Lưu ý: Ngân sách kế hoạch này vượt hạn mức còn lại của chiến dịch. Bạn vẫn có thể phê duyệt.
                                 </span>
                             )}
                         </DialogDescription>

@@ -153,9 +153,16 @@ export function RecruitmentCampaignTable({
                         </TableCell>
                         <TableCell className="px-6 py-4 align-middle text-right whitespace-nowrap">
                             {campaign.totalBudgetCeiling ? (
-                                <span className="text-[#0EA5E9] font-semibold text-sm">
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.totalBudgetCeiling)}
-                                </span>
+                                <div>
+                                    <span className="text-[#0EA5E9] font-semibold text-sm">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.totalBudgetCeiling)}
+                                    </span>
+                                    {(campaign.actualCost != null && campaign.actualCost > 0) && (
+                                        <div className="text-xs text-green-600 mt-0.5">
+                                            Thực tế: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.actualCost)}
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <span className="text-slate-400">-</span>
                             )}
