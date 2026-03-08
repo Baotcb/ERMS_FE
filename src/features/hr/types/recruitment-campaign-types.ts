@@ -17,6 +17,7 @@ export interface RecruitmentCampaign {
     usedBudget?: number
     pendingBudget?: number
     remainingBudget?: number
+    actualCost?: number
 }
 
 export interface CreateRecruitmentCampaignRequest {

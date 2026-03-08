@@ -1,4 +1,4 @@
-import { UseFormReturn, useWatch } from 'react-hook-form'
+﻿import { UseFormReturn, useWatch } from 'react-hook-form'
 import { CalendarIcon, DollarSign, AlertTriangle, Info } from 'lucide-react'
 import { format, startOfDay } from 'date-fns'
 
@@ -35,7 +35,7 @@ interface PlanFormStepProps {
 export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCampaigns, showCampaignField, onSubmit, budgetInfo }: PlanFormStepProps) {
     // Watch totalBudget field để kiểm tra realtime
     const totalBudget = useWatch({ control: form.control, name: 'totalBudget' })
-    const isOverBudget = budgetInfo && totalBudget && totalBudget > budgetInfo.remainingBudget
+    const isOverBudget = Boolean(budgetInfo && (totalBudget ?? 0) > budgetInfo.remainingBudget)
 
     return (
         <Form {...form}>
@@ -160,7 +160,7 @@ export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCam
                     )} />
 
                     <FormField control={form.control} name="totalBudget" render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="grid grid-rows-[auto_auto_minmax(1.25rem,_auto)] items-start">
                             <FormLabel>Ngân sách (VNĐ)</FormLabel>
                             <FormControl>
                                 <div className="relative">
@@ -173,20 +173,23 @@ export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCam
                                     />
                                 </div>
                             </FormControl>
-                            {isOverBudget && (
-                                <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                                    <AlertTriangle className="w-3 h-3" />
-                                    Vượt hạn mức còn lại {formatVND(budgetInfo?.remainingBudget ?? 0)}
-                                </p>
-                            )}
+                            <div className="min-h-5">
+                                {isOverBudget && (
+                                    <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        Vượt hạn mức còn lại {formatVND(budgetInfo?.remainingBudget ?? 0)}
+                                    </p>
+                                )}
+                            </div>
                         </FormItem>
                     )} />
 
-                    <FormItem>
+                    <FormItem className="grid grid-rows-[auto_auto_minmax(1.25rem,_auto)] items-start">
                         <FormLabel>Phòng ban</FormLabel>
                         <div className="h-10 px-3 py-2 border rounded-md bg-gray-100 text-sm text-gray-500 flex items-center">
                             {detectedDepartment?.departmentName || 'Không xác định'}
                         </div>
+                        <div className="min-h-5" aria-hidden="true" />
                     </FormItem>
 
                     <FormField control={form.control} name="description" render={({ field }) => (
