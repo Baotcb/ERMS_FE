@@ -16,7 +16,8 @@ import {
     User,
     CalendarRange,
     CalendarCheck,
-    FileText
+    FileText,
+    GraduationCap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -69,6 +70,15 @@ const NAV_ITEMS: NavItem[] = [
         href: '/enterprise/hr/offers',
         icon: <FileText className="w-5 h-5" />,
         roles: ['HRManager']
+    },
+    {
+        label: 'Đào tạo',
+        icon: <GraduationCap className="w-5 h-5" />,
+        roles: ['HRManager', 'Director'],
+        children: [
+            { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
+            { label: 'Yêu cầu từ phòng ban', href: '/enterprise/hr/training/requests' }
+        ]
     }
 ]
 
