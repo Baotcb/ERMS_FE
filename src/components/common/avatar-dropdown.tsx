@@ -80,7 +80,7 @@ export const AvatarDropdown = memo(function AvatarDropdown() {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-gray-800">
-                        {user?.fullName || 'Nguoi dung'}
+                        {user?.fullName || 'Người dùng'}
                     </p>
                     <p className="truncate text-xs text-gray-500">
                         {roleLabel}
@@ -91,6 +91,12 @@ export const AvatarDropdown = memo(function AvatarDropdown() {
 
             {isOpen && (
                 <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-gray-100 bg-white py-2 shadow-xl z-50">
+                    <div className="border-b border-gray-100 px-4 py-3">
+                        <p className="truncate font-semibold text-gray-800">{user?.fullName || 'Người dùng'}</p>
+                        <p className="truncate text-xs text-gray-500">{user?.email || 'user@erms.com'}</p>
+                        <p className="mt-1 text-xs font-medium text-[#0F4C75]">{roleLabel}</p>
+                    </div>
+
                     <div className="py-1">
                         <Link
                             href="/enterprise/settings"
