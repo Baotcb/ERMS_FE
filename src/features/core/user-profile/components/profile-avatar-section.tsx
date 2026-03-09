@@ -7,7 +7,6 @@ import { Camera } from 'lucide-react';
 
 interface ProfileAvatarSectionProps {
   displayName: string;
-  role?: string;
   location?: string;
   avatarUrl?: string;
   onChangeAvatar?: () => void;
@@ -16,7 +15,6 @@ interface ProfileAvatarSectionProps {
 
 export const ProfileAvatarSection = memo(function ProfileAvatarSection({
   displayName,
-  role = 'Candidate',
   location,
   avatarUrl = 'https://github.com/shadcn.png',
   onChangeAvatar,
@@ -43,7 +41,6 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
           </div>
           <div className="text-center sm:text-left">
             <h3 className="text-brand-dark text-xl font-bold">{displayName}</h3>
-            <p className="text-brand-primary text-sm font-medium">{role}</p>
             <p className="text-slate-500 text-sm flex items-center gap-1 justify-center sm:justify-start mt-1">
               {location || 'Chưa cập nhật địa điểm'}
             </p>

@@ -11,5 +11,9 @@ export default async function SecurityPage() {
     const session = await getServerSession()
     if (!session.token) redirect('/login')
 
-    return <SecurityPageView />
+    return (
+        <div className="max-w-3xl mx-auto px-4 py-8">
+            <SecurityPageView />
+        </div>
+    )
 }

@@ -9,7 +9,7 @@ import { FormField } from '@/components/ui/form-field';
 
 interface ProfileFormViewProps {
   initialData: UserProfileDto | null;
-  user: { id: string; email: string; fullName?: string; role?: string } | null;
+  user: { id: string; email: string; fullName?: string } | null;
 }
 
 export const ProfileFormView = memo(function ProfileFormView({ initialData, user }: ProfileFormViewProps) {
@@ -32,8 +32,8 @@ export const ProfileFormView = memo(function ProfileFormView({ initialData, user
     onSuccess: () => window.location.reload(),
   });
 
-  const displayName = fullName || user?.fullName || 'Chưa cập nhật tên';
-  const displayEmail = user?.email || '';
+  const displayName = fullName || initialData?.fullName || 'Chưa cập nhật tên';
+  const displayEmail = user?.email || initialData?.email || '';
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,7 +41,7 @@ export const ProfileFormView = memo(function ProfileFormView({ initialData, user
         <h1 className="text-2xl font-bold text-brand-dark">Thông tin cá nhân</h1>
         <p className="text-slate-500 text-sm">Cập nhật thông tin hồ sơ của bạn cho nhà tuyển dụng.</p>
       </div>
-      <ProfileAvatarSection displayName={displayName} role={user?.role} location={hometown} />
+      <ProfileAvatarSection displayName={displayName} location={hometown} />
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 md:p-8">
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           <FormField label="Họ và Tên" error={errors.fullName}>

@@ -113,6 +113,9 @@ export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions
           dateOfBirth: dob ? new Date(dob).toISOString() : undefined,
         });
 
+        // Update user_name cookie so navbar/sidebar show new name immediately
+        document.cookie = `user_name=${encodeURIComponent(fullName.trim())}; path=/; max-age=${7 * 24 * 60 * 60}`;
+
         setErrors({});
         toast({
           title: 'Thành công',

@@ -26,8 +26,10 @@ export async function POST(request: Request) {
 
         // Set Public Cookies
         response.cookies.set(STORAGE_KEYS.USER_ROLE, role, { ...cookieOptions, httpOnly: false })
-        const displayName = user.fullName || user.email?.split('@')[0] || 'User'
-        response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(displayName), { ...cookieOptions, httpOnly: false })
+        const displayName = user.fullName || ''
+        if (displayName) {
+            response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(displayName), { ...cookieOptions, httpOnly: false })
+        }
 
         return response
 

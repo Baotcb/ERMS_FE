@@ -73,7 +73,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
         // Parse token or use returned user data to get role/name
         let role = ''
-        let fullName = email.split('@')[0]
+        let fullName = ''
         let userId = ''
 
         if (resData.token) {
@@ -83,6 +83,8 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
                     const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
                     role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || ''
                     userId = payload.nameid || payload.sub || ''
+                    // Get fullName from JWT GivenName claim (set by TokenService)
+                    fullName = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] || ''
                 }
             } catch (e) {
                 logger.error('Token decode error', e)
@@ -94,17 +96,19 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
             cookieStore.set('user_role', role, cookieSettings)
         }
 
-        // Check if we need to fetch profile for full name
-        try {
-            const profileRes = await fetch(`${config.apiUrl}/api/UserProfile/me`, {
-                headers: { 'Authorization': `Bearer ${resData.token}` }
-            })
-            if (profileRes.ok) {
-                const profile = await profileRes.json()
-                if (profile.fullName) fullName = profile.fullName
+        // Fetch profile for full name if not available from JWT
+        if (!fullName) {
+            try {
+                const profileRes = await fetch(`${config.apiUrl}/api/User/profile`, {
+                    headers: { 'Authorization': `Bearer ${resData.token}` }
+                })
+                if (profileRes.ok) {
+                    const profile = await profileRes.json()
+                    if (profile.fullName) fullName = profile.fullName
+                }
+            } catch {
+                // ignore profile fetch error
             }
-        } catch {
-            // ignore profile fetch error
         }
 
         cookieStore.set('user_name', encodeURIComponent(fullName), cookieSettings)

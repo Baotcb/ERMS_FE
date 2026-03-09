@@ -127,12 +127,10 @@ export const getServerSession = cache(async () => {
       payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
       '';
 
-    // Priority: cookie > email prefix
+    // Only use user_name cookie - don't fallback to email prefix
     const fullName = userName
       ? decodeURIComponent(userName)
-      : email
-        ? email.split('@')[0]
-        : '';
+      : '';
 
     return {
       token,
