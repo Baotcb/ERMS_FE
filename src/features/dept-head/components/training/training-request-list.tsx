@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { format } from 'date-fns';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,10 +55,11 @@ const STATUS_LABELS: Record<string, string> = {
 export function TrainingRequestList() {
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const debouncedSearch = useDebouncedValue(search, 300);
 
     const { data, isLoading, mutate } = useSWR<TrainingRequestsResult>(
-        ['/api/TrainingRequest', search],
-        () => trainingService.getRequests({ search })
+        ['/api/TrainingRequest', debouncedSearch],
+        () => trainingService.getRequests({ search: debouncedSearch })
     );
 
     const renderUrgency = (urgency: string) => {

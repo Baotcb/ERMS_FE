@@ -53,6 +53,9 @@ export function TrainingPlansApprovalList() {
                 setIsApproveOpen(false);
                 mutate();
             }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -69,6 +72,9 @@ export function TrainingPlansApprovalList() {
                 setRejectReason('');
                 mutate();
             }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể từ chối kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }

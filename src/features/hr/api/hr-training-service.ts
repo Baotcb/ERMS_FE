@@ -8,20 +8,41 @@ export const hrTrainingService = {
         departmentId?: number;
         status?: string;
     }): Promise<TrainingRequestsResult> {
-        const searchParams = new URLSearchParams();
-        searchParams.set('pageSize', '100'); // Get all for consolidation
-        searchParams.set('status', params?.status || 'Pending');
+        const status = params?.status || 'Pending';
+        const allItems: TrainingRequestsResult['items'] = [];
+        let page = 1;
+        const pageSize = 20;
 
-        if (params?.search) searchParams.set('search', params.search);
-        if (params?.departmentId) searchParams.set('departmentId', String(params.departmentId));
+        while (true) {
+            const searchParams = new URLSearchParams({
+                page: String(page),
+                pageSize: String(pageSize),
+                status,
+            });
 
-        const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
+            if (params?.search) searchParams.set('search', params.search);
+            if (params?.departmentId) searchParams.set('departmentId', String(params.departmentId));
 
-        if (!response.ok) {
-            throw new Error('Không thể tải danh sách yêu cầu');
+            const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
+
+            if (!response.ok) {
+                throw new Error('Không thể tải danh sách yêu cầu');
+            }
+
+            const result: TrainingRequestsResult = await response.json();
+            allItems.push(...result.items);
+
+            if (page >= result.totalPages || result.items.length === 0) break;
+            page++;
         }
 
-        return response.json();
+        return {
+            items: allItems,
+            totalCount: allItems.length,
+            page: 1,
+            pageSize: allItems.length,
+            totalPages: 1,
+        };
     },
 
     async getPlans(params?: {

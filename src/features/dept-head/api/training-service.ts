@@ -23,8 +23,12 @@ export const trainingService = {
         const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Không thể tải danh sách yêu cầu đào tạo');
+            let message = 'Không thể tải danh sách yêu cầu đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch { /* response body is not JSON */ }
+            throw new Error(message);
         }
 
         return response.json();
@@ -34,8 +38,12 @@ export const trainingService = {
         const response = await apiClient.post('/api/TrainingRequest', data);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Không thể tạo yêu cầu đào tạo');
+            let message = 'Không thể tạo yêu cầu đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch { /* response body is not JSON */ }
+            throw new Error(message);
         }
 
         const result = await response.json();

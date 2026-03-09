@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { Plus, Search, MoreHorizontal, Eye, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,10 +45,11 @@ const STATUS_LABELS: Record<string, string> = {
 export function TrainingPlansList() {
     const router = useRouter();
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebouncedValue(search, 300);
 
     const { data, isLoading } = useSWR<{ items: TrainingPlan[] }>(
-        ['/api/TrainingPlan', search],
-        () => hrTrainingService.getPlans({ search })
+        ['/api/TrainingPlan', debouncedSearch],
+        () => hrTrainingService.getPlans({ search: debouncedSearch })
     );
 
     const plans = data?.items || [];
