@@ -11,6 +11,8 @@ export interface TrainingPlan {
     createdAt: string;
     updatedAt?: string;
     reviewNote?: string;
+    startDate: string;
+    endDate: string;
 }
 
 export interface CreateTrainingPlan {

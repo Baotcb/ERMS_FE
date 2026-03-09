@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api-client';
-import { TrainingRequest, TrainingRequestsResult } from '../../dept-head/types/training-types';
-import { TrainingPlan, CreateTrainingPlan, TrainingPlansResult } from '../types/training-plan-types';
+import { TrainingRequestsResult } from '../../dept-head/types/training-types';
+import { CreateTrainingPlan, TrainingPlansResult } from '../types/training-plan-types';
 
 export const hrTrainingService = {
     async getAllRequests(params?: {
@@ -18,8 +18,7 @@ export const hrTrainingService = {
         const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Không thể tải danh sách yêu cầu');
+            throw new Error('Không thể tải danh sách yêu cầu');
         }
 
         return response.json();
@@ -42,8 +41,7 @@ export const hrTrainingService = {
         const response = await apiClient.get(`/api/TrainingPlan?${searchParams}`);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Không thể tải danh sách kế hoạch');
+            throw new Error('Không thể tải danh sách kế hoạch');
         }
 
         return response.json();
@@ -53,14 +51,13 @@ export const hrTrainingService = {
         const response = await apiClient.post('/api/TrainingPlan', data);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Không thể tạo kế hoạch đào tạo');
+            throw new Error('Không thể tạo kế hoạch đào tạo');
         }
 
-        const result = await response.json();
+        const result = await response.json() as { id?: string; trainingRequestId?: string };
         return {
             ok: true,
-            planId: result.trainingRequestId
+            planId: result.id || result.trainingRequestId
         };
     }
 };

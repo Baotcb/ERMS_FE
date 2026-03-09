@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, DollarSign, Users, Info, Send } from 'lucide-react';
 
@@ -36,7 +36,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
     const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
 
     const form = useForm<TrainingRequestValues>({
-        resolver: zodResolver(trainingRequestSchema) as any,
+        resolver: zodResolver(trainingRequestSchema),
         defaultValues: TRAINING_REQUEST_DEFAULTS,
     });
 
@@ -71,7 +71,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
         form.reset(TRAINING_REQUEST_DEFAULTS);
     }, [open, form]);
 
-    const onSubmit = async (values: TrainingRequestValues) => {
+    const onSubmit: SubmitHandler<TrainingRequestValues> = async (values) => {
         setIsLoading(true);
         try {
             const res = await trainingService.createRequest(values);
@@ -90,11 +90,12 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                     description: 'Không thể gửi yêu cầu.',
                 });
             }
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
             toast({
                 variant: 'destructive',
                 title: 'Lỗi',
-                description: error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+                description: errorMessage,
             });
         } finally {
             setIsLoading(false);
@@ -117,7 +118,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
 
                 <div className="p-6 max-h-[70vh] overflow-y-auto">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="subject" render={({ field }) => (
                                     <FormItem className="col-span-2">
@@ -161,7 +162,13 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                         <FormControl>
                                             <div className="relative">
                                                 <Users className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                                                <Input type="number" className="pl-9 border-gray-200" placeholder="0" {...field} />
+                                                <Input
+                                                    type="number"
+                                                    className="pl-9 border-gray-200"
+                                                    placeholder="0"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                                                />
                                             </div>
                                         </FormControl>
                                         <FormMessage />
@@ -174,7 +181,13 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                         <FormControl>
                                             <div className="relative">
                                                 <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                                                <Input type="number" className="pl-9 border-gray-200" placeholder="0" {...field} />
+                                                <Input 
+                                                    type="number" 
+                                                    className="pl-9 border-gray-200" 
+                                                    placeholder="0" 
+                                                    {...field} 
+                                                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                                                />
                                             </div>
                                         </FormControl>
                                         <FormMessage />

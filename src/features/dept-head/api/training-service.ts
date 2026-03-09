@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { TrainingRequest, CreateTrainingRequest, TrainingRequestsResult } from '../types/training-types';
+import { CreateTrainingRequest, TrainingRequestsResult } from '../types/training-types';
 
 export const trainingService = {
     async getRequests(params?: {

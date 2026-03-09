@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { TrainingPlan, TrainingPlansResult } from '../../hr/types/training-plan-types';
+import { TrainingPlansResult } from '../../hr/types/training-plan-types';
 
 export const directorTrainingService = {
     async getPendingPlans(): Promise<TrainingPlansResult> {
@@ -11,8 +11,7 @@ export const directorTrainingService = {
         const response = await apiClient.get(`/api/TrainingPlan?${searchParams}`);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Không thể tải danh sách kế hoạch chờ duyệt');
+            throw new Error('Không thể tải danh sách kế hoạch chờ duyệt');
         }
 
         return response.json();

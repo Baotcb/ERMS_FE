@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Plus, Search, MoreHorizontal, Eye, Calendar, DollarSign, BookOpen, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export function TrainingPlansList() {
     const router = useRouter();
     const [search, setSearch] = useState('');
 
-    const { data, isLoading } = useSWR<any>(
+    const { data, isLoading } = useSWR<{ items: TrainingPlan[] }>(
         ['/api/TrainingPlan', search],
         () => hrTrainingService.getPlans({ search })
     );
@@ -108,7 +108,7 @@ export function TrainingPlansList() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            plans?.map((plan: any) => (
+                            plans?.map((plan: TrainingPlan) => (
                                 <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
                                     <TableCell className="font-medium text-gray-900">
                                         <div className="flex items-center gap-2">

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ import { TrainingRequestForm } from './training-request-form';
 import { trainingService } from '../../api/training-service';
 import type { TrainingRequestsResult } from '../../types/training-types';
 
-const URGENCY_ICONS: Record<string, any> = {
+const URGENCY_ICONS: Record<string, LucideIcon> = {
     Normal: Info,
     High: AlertTriangle,
     Urgent: AlertCircle,

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Check, X, Eye, BookOpen, Calendar, DollarSign, Info, AlertCircle } from 'lucide-react';
+import { Check, X, Info } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ export function TrainingPlansApprovalList() {
     const [rejectReason, setRejectReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { data, isLoading, mutate } = useSWR<any>(
+    const { data, isLoading, mutate } = useSWR<{ items: TrainingPlan[] }>(
         '/api/TrainingPlan?status=Pending',
         () => directorTrainingService.getPendingPlans()
     );
@@ -100,7 +100,7 @@ export function TrainingPlansApprovalList() {
                         ) : plans?.length === 0 ? (
                             <TableRow><TableCell colSpan={6} className="text-center py-10 italic text-gray-400">Không có kế hoạch nào cần phê duyệt</TableCell></TableRow>
                         ) : (
-                            plans?.map((plan: any) => (
+                            plans?.map((plan: TrainingPlan) => (
                                 <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
                                     <TableCell className="font-medium text-gray-900">
                                         <div className="flex flex-col">

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { ChevronLeft, Info, CheckCircle, Save, Filter, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Save, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ export function ConsolidateRequests() {
     const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { data, isLoading, mutate } = useSWR<any>(
+    const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
         '/api/TrainingRequest?status=Pending',
         () => hrTrainingService.getAllRequests({ status: 'Pending' })
     );
@@ -74,9 +74,10 @@ export function ConsolidateRequests() {
                 router.push('/enterprise/hr/training/plans');
             }
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể tạo kế hoạch.';
             toast({
                 title: 'Lỗi',
-                description: 'Không thể tạo kế hoạch.',
+                description: errorMessage,
                 variant: 'destructive',
             });
         } finally {
@@ -85,8 +86,8 @@ export function ConsolidateRequests() {
     };
 
     const totalSelectedBudget = pendingRequests
-        .filter((r: any) => selectedIds.includes(r.id))
-        .reduce((sum: number, r: any) => sum + (r.estimatedBudget || 0), 0);
+        .filter((r: TrainingRequest) => selectedIds.includes(r.id))
+        .reduce((sum: number, r: TrainingRequest) => sum + (r.estimatedBudget || 0), 0);
 
     return (
         <div className="space-y-6">
@@ -112,7 +113,7 @@ export function ConsolidateRequests() {
                             <span className="text-sm font-medium text-gray-600">Đã chọn: {selectedIds.length}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedIds(pendingRequests.map((r: any) => r.id))}>Chọn tất cả</Button>
+                            <Button variant="outline" size="sm" onClick={() => setSelectedIds(pendingRequests.map((r: TrainingRequest) => r.id))}>Chọn tất cả</Button>
                             <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>Bỏ chọn</Button>
                         </div>
                     </div>
@@ -135,7 +136,7 @@ export function ConsolidateRequests() {
                                 ) : pendingRequests.length === 0 ? (
                                     <TableRow><TableCell colSpan={6} className="text-center py-8 italic text-gray-400">Không có yêu cầu nào đang chờ xử lý</TableCell></TableRow>
                                 ) : (
-                                    pendingRequests.map((request: any) => (
+                                    pendingRequests.map((request: TrainingRequest) => (
                                         <TableRow key={request.id} className={selectedIds.includes(request.id) ? 'bg-blue-50/30' : ''}>
                                             <TableCell>
                                                 <Checkbox 
@@ -215,7 +216,7 @@ export function ConsolidateRequests() {
 
                             <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
                                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                                <p>Các yêu cầu được chọn sẽ được chuyển sang trạng thái "Đã duyệt" và gán vào kế hoạch này.</p>
+                                <p>Các yêu cầu được chọn sẽ được chuyển sang trạng thái &quot;Đã duyệt&quot; và gán vào kế hoạch này.</p>
                             </div>
 
                             <Button 
