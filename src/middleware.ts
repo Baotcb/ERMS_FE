@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { USER_ROLES, ROLE_DASHBOARD_MAP } from '@/utils/constants'
+import { parseJwt } from '@/utils/jwt'
 
 /**
  * Security Middleware
@@ -91,12 +92,11 @@ function requiresAuth(pathname: string): boolean {
  */
 function isTokenExpired(token: string): boolean {
   try {
-    const base64Url = token.split('.')[1]
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-    const jsonPayload = atob(base64)
-    const payload = JSON.parse(jsonPayload)
+    const payload = parseJwt(token)
 
-    if (!payload.exp) return false
+    if (!payload?.exp || typeof payload.exp !== 'number') {
+      return true
+    }
 
     // Add 10s leeway for clock skew
     const currentTime = Math.floor(Date.now() / 1000)
