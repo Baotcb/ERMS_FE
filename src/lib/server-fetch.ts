@@ -97,6 +97,7 @@ export const getServerSession = cache(async () => {
   const token = cookieStore.get('auth_token')?.value;
   const userRole = cookieStore.get('user_role')?.value;
   const userName = cookieStore.get('user_name')?.value;
+  const userAvatar = cookieStore.get('user_avatar')?.value;
 
   if (!token) {
     return { token: null, user: null, role: null };
@@ -138,6 +139,7 @@ export const getServerSession = cache(async () => {
         id: payload.nameid || payload.sub || '',
         email,
         fullName,
+        avatarUrl: userAvatar ? decodeURIComponent(userAvatar) : undefined,
         role:
           payload.role ||
           payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||

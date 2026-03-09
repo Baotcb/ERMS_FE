@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { useToast } from '@/hooks/use-toast'
 
 interface ImageUploadProps {
-    onUploadComplete: (url: string) => void
+    onUploadComplete: (url: string) => void | Promise<void>
     defaultImage?: string
     className?: string
     disabled?: boolean
@@ -66,7 +66,7 @@ export function ImageUpload({
 
         try {
             const url = await uploadImage(file)
-            onUploadComplete(url)
+            await onUploadComplete(url)
         } catch (error) {
             console.error('Upload failed:', error)
             setPreview(null) // Revert on error

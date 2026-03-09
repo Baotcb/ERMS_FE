@@ -2,6 +2,25 @@ import { NextResponse } from 'next/server'
 import { config } from '@/config'
 import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
 
+async function fetchProfileSnapshot(token: string) {
+    try {
+        const response = await fetch(`${config.apiUrl}/api/User/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!response.ok) {
+            return null
+        }
+
+        return await response.json() as {
+            fullName?: string
+            avatarUrl?: string | null
+        }
+    } catch {
+        return null
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const body = await request.json()
@@ -32,6 +51,7 @@ export async function POST(request: Request) {
         let userRole = 'User'
         let userName = ''
         let userEmail = email
+        let userAvatar = ''
         try {
             const payload = JSON.parse(atob(token.split('.')[1]))
             userRole = payload.role
@@ -45,6 +65,12 @@ export async function POST(request: Request) {
                 || email
         } catch { /* fallback to defaults */ }
 
+        const profile = await fetchProfileSnapshot(token)
+        if (profile?.fullName) {
+            userName = profile.fullName
+        }
+        userAvatar = profile?.avatarUrl || ''
+
         // Prepare response with user info for FE auth store
         const response = NextResponse.json({
             success: true,
@@ -53,6 +79,7 @@ export async function POST(request: Request) {
                     email: userEmail,
                     fullName: userName,
                     role: userRole,
+                    avatarUrl: userAvatar,
                 },
             }
         })
@@ -70,6 +97,11 @@ export async function POST(request: Request) {
         response.cookies.set(STORAGE_KEYS.USER_ROLE, userRole, { ...cookieOptions, httpOnly: false })
         if (userName) {
             response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(userName), { ...cookieOptions, httpOnly: false })
+        }
+        if (userAvatar) {
+            response.cookies.set(STORAGE_KEYS.USER_AVATAR, encodeURIComponent(userAvatar), { ...cookieOptions, httpOnly: false })
+        } else {
+            response.cookies.delete(STORAGE_KEYS.USER_AVATAR)
         }
 
         return response

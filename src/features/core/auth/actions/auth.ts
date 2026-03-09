@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { LoginFormData, EmployerRegisterFormData } from '../schemas/auth-schemas'
 import { config } from '@/config'
 import { logger } from '@/lib/logger'
-import { COOKIE_OPTIONS } from '@/utils/constants'
+import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
 
 interface LoginResult {
     success: boolean
@@ -15,6 +15,26 @@ interface LoginResult {
         fullName?: string
         id?: string
         email?: string
+        avatarUrl?: string
+    }
+}
+
+async function fetchProfileSnapshot(token: string) {
+    try {
+        const response = await fetch(`${config.apiUrl}/api/User/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!response.ok) {
+            return null
+        }
+
+        return await response.json() as {
+            fullName?: string
+            avatarUrl?: string | null
+        }
+    } catch {
+        return null
     }
 }
 
@@ -66,7 +86,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         }
 
         // Store Auth Token
-        cookieStore.set('auth_token', resData.token, {
+        cookieStore.set(STORAGE_KEYS.AUTH_TOKEN, resData.token, {
             ...cookieSettings,
             httpOnly: true,
         })
@@ -75,6 +95,7 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
         let role = ''
         let fullName = ''
         let userId = ''
+        let avatarUrl = ''
 
         if (resData.token) {
             try {
@@ -93,25 +114,24 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
         // Store minimal user info for middleware/client
         if (role) {
-            cookieStore.set('user_role', role, cookieSettings)
+            cookieStore.set(STORAGE_KEYS.USER_ROLE, role, cookieSettings)
         }
 
-        // Fetch profile for full name if not available from JWT
-        if (!fullName) {
-            try {
-                const profileRes = await fetch(`${config.apiUrl}/api/User/profile`, {
-                    headers: { 'Authorization': `Bearer ${resData.token}` }
-                })
-                if (profileRes.ok) {
-                    const profile = await profileRes.json()
-                    if (profile.fullName) fullName = profile.fullName
-                }
-            } catch {
-                // ignore profile fetch error
-            }
+        const profile = await fetchProfileSnapshot(resData.token)
+        if (profile?.fullName) {
+            fullName = profile.fullName
+        }
+        avatarUrl = profile?.avatarUrl || ''
+
+        if (fullName) {
+            cookieStore.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(fullName), cookieSettings)
         }
 
-        cookieStore.set('user_name', encodeURIComponent(fullName), cookieSettings)
+        if (avatarUrl) {
+            cookieStore.set(STORAGE_KEYS.USER_AVATAR, encodeURIComponent(avatarUrl), cookieSettings)
+        } else {
+            cookieStore.delete(STORAGE_KEYS.USER_AVATAR)
+        }
 
         return {
             success: true,
@@ -119,7 +139,8 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
                 id: userId,
                 email,
                 fullName,
-                role
+                role,
+                avatarUrl,
             }
         }
     } catch (error) {
@@ -130,9 +151,10 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
 export async function logoutAction() {
     const cookieStore = await cookies()
-    cookieStore.delete('auth_token')
-    cookieStore.delete('user_role')
-    cookieStore.delete('user_name')
+    cookieStore.delete(STORAGE_KEYS.AUTH_TOKEN)
+    cookieStore.delete(STORAGE_KEYS.USER_ROLE)
+    cookieStore.delete(STORAGE_KEYS.USER_NAME)
+    cookieStore.delete(STORAGE_KEYS.USER_AVATAR)
     redirect('/login')
 }
 

@@ -73,7 +73,8 @@ export function LoginForm() {
                     id: user.id || 'unknown',
                     email: user.email || data.email,
                     fullName: user.fullName,
-                    role: user.role
+                    role: user.role,
+                    avatarUrl: user.avatarUrl,
                 })
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
