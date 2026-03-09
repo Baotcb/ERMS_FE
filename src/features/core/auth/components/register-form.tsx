@@ -214,7 +214,9 @@ export const RegisterForm = memo(function RegisterForm() {
                             <Checkbox
                                 id="agreeTerms"
                                 checked={field.value}
-                                onCheckedChange={field.onChange}
+                                onCheckedChange={(checked) => {
+                                    field.onChange(checked === true)
+                                }}
                                 disabled={isLoading}
                                 className="mt-0.5"
                             />

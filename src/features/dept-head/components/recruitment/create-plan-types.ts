@@ -46,6 +46,15 @@ export interface CreatePlanFormProps {
     editPlanId?: string | null
 }
 
+// --- Budget Info ---
+
+export interface CampaignBudgetInfo {
+    totalBudgetCeiling: number
+    usedBudget: number
+    pendingBudget: number
+    remainingBudget: number
+}
+
 // --- Reducer ---
 
 export interface PlanFormState {
@@ -60,6 +69,7 @@ export interface PlanFormState {
     isLoading: boolean
     isLoadingCampaigns: boolean
     isAddingDetail: boolean
+    budgetInfo: CampaignBudgetInfo | null
 }
 
 export type PlanFormAction =
@@ -73,6 +83,7 @@ export type PlanFormAction =
     | { type: 'SET_LOADING'; key: 'isLoading' | 'isLoadingCampaigns' | 'isAddingDetail'; value: boolean }
     | { type: 'PLAN_CREATED'; id: string; name: string }
     | { type: 'INIT_EDIT_MODE'; planId: string; planName: string; planCode: string }
+    | { type: 'SET_BUDGET_INFO'; budgetInfo: CampaignBudgetInfo | null }
 
 export const ITEMS_PER_PAGE = 5
 
@@ -88,6 +99,7 @@ export const initialPlanFormState: PlanFormState = {
     isLoading: false,
     isLoadingCampaigns: false,
     isAddingDetail: false,
+    budgetInfo: null,
 }
 
 export function planFormReducer(state: PlanFormState, action: PlanFormAction): PlanFormState {
@@ -118,6 +130,8 @@ export function planFormReducer(state: PlanFormState, action: PlanFormAction): P
             return { ...state, createdPlanId: action.id, createdPlanName: action.name, step: 'add-details', isLoading: false }
         case 'INIT_EDIT_MODE':
             return { ...state, step: 'add-details', createdPlanId: action.planId, createdPlanName: action.planName, planCode: action.planCode, isLoading: false }
+        case 'SET_BUDGET_INFO':
+            return { ...state, budgetInfo: action.budgetInfo }
         default:
             return state
     }

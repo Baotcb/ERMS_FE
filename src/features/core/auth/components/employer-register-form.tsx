@@ -59,15 +59,9 @@ export const EmployerRegisterForm = memo(function EmployerRegisterForm() {
 
                 if (result.success) {
                     setSuccess('Đăng ký thành công! Đang chuyển hướng...')
-                    // Store email in HttpOnly cookie for verify page via API route
-                    await fetch('/api/auth/session/verify-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: data.email }),
-                    })
 
                     setTimeout(() => {
-                        router.push(`/verify-email`)
+                        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`)
                     }, 1500)
                 } else {
                     // Handle specifically if the error is "form unmounted" related? No, result.success check handles it.
@@ -258,7 +252,9 @@ export const EmployerRegisterForm = memo(function EmployerRegisterForm() {
                             <Checkbox
                                 id="agreeTerms"
                                 checked={field.value}
-                                onCheckedChange={field.onChange}
+                                onCheckedChange={(checked) => {
+                                    field.onChange(checked === true)
+                                }}
                                 disabled={isLoading}
                                 className="mt-0.5"
                             />

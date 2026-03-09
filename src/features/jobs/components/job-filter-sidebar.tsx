@@ -4,12 +4,12 @@ import { Filter, X } from 'lucide-react'
 
 const EXPERIENCE_OPTIONS = [
     { value: '', label: 'Tất cả kinh nghiệm' },
-    { value: 'Chưa có kinh nghiệm', label: 'Chưa có kinh nghiệm' },
-    { value: 'Dưới 1 năm', label: 'Dưới 1 năm' },
-    { value: '1 năm', label: '1 năm' },
-    { value: '2 năm', label: '2 năm' },
-    { value: '3-5 năm', label: '3 - 5 năm' },
-    { value: 'Trên 5 năm', label: 'Trên 5 năm' },
+    { value: '0', label: 'Chưa có kinh nghiệm' },
+    { value: '0-1', label: 'Dưới 1 năm' },
+    { value: '1-2', label: '1 - 2 năm' },
+    { value: '2-3', label: '2 - 3 năm' },
+    { value: '3-5', label: '3 - 5 năm' },
+    { value: '5+', label: 'Trên 5 năm' },
 ]
 
 const SALARY_OPTIONS = [

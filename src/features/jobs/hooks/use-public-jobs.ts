@@ -8,9 +8,10 @@ export function usePublicJobs(params?: {
     search?: string
     departmentId?: string
     location?: string
+    employmentType?: string
 }, fallbackData?: PublicJobsResponse) {
     const key = params
-        ? ['/api/public/jobs', params.page, params.pageSize, params.search, params.departmentId, params.location]
+        ? ['/api/public/jobs', params.page, params.pageSize, params.search, params.departmentId, params.location, params.employmentType]
         : '/api/public/jobs'
     return useData(key, {
         fetcher: () => service.getPublicJobs({
@@ -18,7 +19,8 @@ export function usePublicJobs(params?: {
             pageSize: params?.pageSize,
             searchTerm: params?.search,
             departmentId: params?.departmentId,
-            location: params?.location
+            location: params?.location,
+            employmentType: params?.employmentType,
         }),
         fallbackData,
     })
