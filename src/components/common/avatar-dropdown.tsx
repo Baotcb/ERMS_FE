@@ -1,17 +1,40 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { User, Settings, LogOut } from 'lucide-react'
+import { ChevronUp, LogOut, Settings, User } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { logoutAction } from '@/features/core/auth/actions/auth'
+import { USER_ROLES } from '@/utils/constants'
+
+function getRoleLabel(role?: string) {
+    switch (role) {
+        case USER_ROLES.ADMIN:
+            return 'Admin'
+        case USER_ROLES.HR_MANAGER:
+            return 'HR Manager'
+        case USER_ROLES.HR:
+            return 'HR'
+        case USER_ROLES.DIRECTOR:
+            return 'Director'
+        case USER_ROLES.DEPARTMENT_HEAD:
+            return 'Dept Head'
+        case USER_ROLES.EMPLOYEE:
+            return 'Employee'
+        case USER_ROLES.TRAINER:
+            return 'Trainer'
+        default:
+            return 'Enterprise user'
+    }
+}
 
 export const AvatarDropdown = memo(function AvatarDropdown() {
     const { user, logout } = useAuth()
     const [isOpen, setIsOpen] = useState(false)
+    const [failedImageSrc, setFailedImageSrc] = useState<string | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         if (!isOpen) return
         const handleClickOutside = (event: MouseEvent) => {
@@ -28,57 +51,72 @@ export const AvatarDropdown = memo(function AvatarDropdown() {
         logout()
     }, [logout])
 
-    const initials = useMemo(() => user?.fullName
-        ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-        : 'U',
-        [user])
+    const initials = user?.fullName
+        ? user.fullName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+        : 'U'
+
+    const roleLabel = getRoleLabel(user?.role)
+    const canRenderAvatarImage = Boolean(user?.avatarUrl) && failedImageSrc !== user?.avatarUrl
 
     return (
         <div className="relative" ref={dropdownRef}>
-            {/* Avatar Button */}
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center text-white font-semibold text-sm hover:shadow-lg transition-shadow cursor-pointer"
+                type="button"
+                onClick={() => setIsOpen((prev) => !prev)}
+                className="flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-left transition-all hover:border-[#0F4C75]/20 hover:bg-slate-50"
             >
-                {initials}
+                <Avatar className="h-11 w-11 shrink-0 border border-white shadow-sm">
+                    {canRenderAvatarImage ? (
+                        <AvatarImage
+                            src={user?.avatarUrl}
+                            alt={user?.fullName || 'User avatar'}
+                            className="object-cover"
+                            onError={() => setFailedImageSrc(user?.avatarUrl || null)}
+                        />
+                    ) : null}
+                    <AvatarFallback className="bg-[#0F4C75] text-white">
+                        {initials}
+                    </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-gray-800">
+                        {user?.fullName || 'Nguoi dung'}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                        {roleLabel}
+                    </p>
+                </div>
+                <ChevronUp className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${isOpen ? '' : 'rotate-180'}`} />
             </button>
 
-            {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="font-semibold text-gray-800 truncate">{user?.fullName || 'Người dùng'}</p>
-                        <p className="text-xs text-gray-500 truncate">{user?.email || 'user@erms.com'}</p>
-                    </div>
-
-                    {/* Menu Items */}
+                <div className="absolute bottom-full left-0 mb-2 w-64 rounded-xl border border-gray-100 bg-white py-2 shadow-xl z-50">
                     <div className="py-1">
-                        <Link
-                            href="/enterprise/profile"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <User className="w-4 h-4" />
-                            <span>Hồ sơ cá nhân</span>
-                        </Link>
                         <Link
                             href="/enterprise/settings"
                             onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-50"
                         >
-                            <Settings className="w-4 h-4" />
-                            <span>Cài đặt</span>
+                            <User className="h-4 w-4" />
+                            <span>Hồ sơ cá nhân</span>
+                        </Link>
+                        <Link
+                            href="/enterprise/settings/security"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                            <Settings className="h-4 w-4" />
+                            <span>Bảo mật</span>
                         </Link>
                     </div>
 
-                    {/* Logout */}
                     <div className="border-t border-gray-100 pt-1">
                         <button
+                            type="button"
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-red-600 transition-colors hover:bg-red-50"
                         >
-                            <LogOut className="w-4 h-4" />
+                            <LogOut className="h-4 w-4" />
                             <span>Đăng xuất</span>
                         </button>
                     </div>

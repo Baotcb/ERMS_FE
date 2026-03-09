@@ -6,6 +6,7 @@ import { LoginFormData, EmployerRegisterFormData } from '../schemas/auth-schemas
 import { config } from '@/config'
 import { logger } from '@/lib/logger'
 import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
+import { parseJwt } from '@/utils/jwt'
 
 interface LoginResult {
     success: boolean
@@ -99,13 +100,12 @@ export async function loginAction(data: LoginFormData): Promise<LoginResult> {
 
         if (resData.token) {
             try {
-                const parts = resData.token.split('.')
-                if (parts.length === 3) {
-                    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
-                    role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || ''
-                    userId = payload.nameid || payload.sub || ''
+                const payload = parseJwt(resData.token)
+                if (payload) {
+                    role = String(payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || '')
+                    userId = String(payload.nameid || payload.sub || '')
                     // Get fullName from JWT GivenName claim (set by TokenService)
-                    fullName = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] || ''
+                    fullName = String(payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] || '')
                 }
             } catch (e) {
                 logger.error('Token decode error', e)

@@ -24,6 +24,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
   onRemoveAvatar,
 }: ProfileAvatarSectionProps) {
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const [failedImageSrc, setFailedImageSrc] = useState<string | null>(null);
 
   const toggleUploader = useCallback(() => {
     setIsUploaderOpen((prev) => !prev);
@@ -42,15 +43,28 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
     setIsUploaderOpen(false);
   }, [onRemoveAvatar]);
 
+  const handleImageError = useCallback(() => {
+    setFailedImageSrc(avatarUrl || null);
+  }, [avatarUrl]);
+
+  const canRenderAvatarImage = Boolean(avatarUrl) && failedImageSrc !== avatarUrl;
+
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start justify-between">
           <div className="flex flex-col sm:flex-row gap-5 items-center">
             <div className="relative group">
-              <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                <AvatarImage src={avatarUrl || undefined} />
-                <AvatarFallback>
+              <Avatar className="w-24 h-24 border-4 border-white bg-slate-100 shadow-md">
+                {canRenderAvatarImage ? (
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={`${displayName} avatar`}
+                    className="object-cover"
+                    onError={handleImageError}
+                  />
+                ) : null}
+                <AvatarFallback className={canRenderAvatarImage ? 'hidden' : ''}>
                   {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -66,7 +80,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
             <div className="text-center sm:text-left">
               <h3 className="text-brand-dark text-xl font-bold">{displayName}</h3>
               <p className="text-slate-500 text-sm flex items-center gap-1 justify-center sm:justify-start mt-1">
-                {location || 'ChÆ°a cáº­p nháº­t Ä‘á»‹a Ä‘iá»ƒm'}
+                {location || 'Chưa cập nhật địa điểm'}
               </p>
             </div>
           </div>
@@ -78,7 +92,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
               onClick={handleRemoveAvatar}
               disabled={isAvatarUpdating || !avatarUrl}
             >
-              XÃ³a áº£nh
+              Xóa ảnh
             </Button>
             <Button
               type="button"
@@ -86,7 +100,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
               onClick={toggleUploader}
               disabled={isAvatarUpdating}
             >
-              Äá»•i áº£nh
+              Đổi ảnh
             </Button>
           </div>
         </div>

@@ -31,6 +31,9 @@ export interface ChangeProfileRequest {
  * Get user profile from server
  */
 export async function getProfileServer(): Promise<UserProfileDto> {
-  return serverFetch<UserProfileDto>('/api/User/profile', { requireAuth: true });
+  return serverFetch<UserProfileDto>('/api/User/profile', {
+    requireAuth: true,
+    cache: 'no-store',
+  });
 }
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/core/auth/hooks/use-auth';
 import { STORAGE_KEYS } from '@/utils/constants';
@@ -45,7 +44,6 @@ function clearPublicCookie(name: string) {
 }
 
 export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions) {
-  const router = useRouter();
   const { toast } = useToast();
   const { updateUser } = useAuth();
 
@@ -139,42 +137,50 @@ export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions
     async (nextAvatarUrl?: string | null) => {
       if (!savedProfile.fullName?.trim()) {
         toast({
-          title: 'Lá»—i',
-          description: 'KhÃ´ng thá»ƒ cáº­p nháº­t áº£nh Ä‘áº¡i diá»‡n khi thiáº¿u thÃ´ng tin há» tÃªn',
+          title: 'Lỗi',
+          description: 'Không thể cập nhật ảnh đại diện khi thiếu thông tin họ tên',
           variant: 'destructive',
         });
         return;
       }
 
+      const previousAvatarUrl = avatarUrl || null;
+
       setAvatarUpdating(true);
+      setAvatarUrl(nextAvatarUrl || '');
+      syncSessionProfile(savedProfile.fullName, nextAvatarUrl || null);
+
       try {
         const updatedProfile = await updateProfile({
           ...savedProfile,
           avatarUrl: nextAvatarUrl || null,
         });
 
-        applyUpdatedProfile(updatedProfile);
+        applyUpdatedProfile({
+          ...updatedProfile,
+          avatarUrl: updatedProfile.avatarUrl ?? nextAvatarUrl ?? null,
+        });
         toast({
-          title: 'ThÃ nh cÃ´ng',
+          title: 'Thành công',
           description: nextAvatarUrl
-            ? 'ÄÃ£ cáº­p nháº­t áº£nh Ä‘áº¡i diá»‡n'
-            : 'ÄÃ£ xÃ³a áº£nh Ä‘áº¡i diá»‡n',
+            ? 'Đã cập nhật ảnh đại diện'
+            : 'Đã xóa ảnh đại diện',
           className: 'bg-green-500 text-white',
         });
-
-        router.refresh();
       } catch (error) {
+        setAvatarUrl(previousAvatarUrl || '');
+        syncSessionProfile(savedProfile.fullName, previousAvatarUrl);
         toast({
-          title: 'Lá»—i',
+          title: 'Lỗi',
           description:
-            error instanceof Error ? error.message : 'Cáº­p nháº­t áº£nh Ä‘áº¡i diá»‡n tháº¥t báº¡i',
+            error instanceof Error ? error.message : 'Cập nhật ảnh đại diện thất bại',
           variant: 'destructive',
         });
       } finally {
         setAvatarUpdating(false);
       }
     },
-    [applyUpdatedProfile, router, savedProfile, toast]
+    [applyUpdatedProfile, avatarUrl, savedProfile, syncSessionProfile, toast]
   );
 
   const handleSubmit = useCallback(
@@ -186,8 +192,8 @@ export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions
 
       if (Object.values(newErrors).some((error) => error !== undefined)) {
         toast({
-          title: 'Lá»—i',
-          description: 'Vui lÃ²ng kiá»ƒm tra láº¡i thÃ´ng tin Ä‘Ã£ nháº­p',
+          title: 'Lỗi',
+          description: 'Vui lòng kiểm tra lại thông tin đã nhập',
           variant: 'destructive',
         });
         return;
@@ -206,25 +212,24 @@ export function useProfileForm({ initialData, onSuccess }: UseProfileFormOptions
         applyUpdatedProfile(updatedProfile);
         setErrors({});
         toast({
-          title: 'ThÃ nh cÃ´ng',
-          description: 'ÄÃ£ cáº­p nháº­t há»“ sÆ¡ thÃ nh cÃ´ng',
+          title: 'Thành công',
+          description: 'Đã cập nhật hồ sơ thành công',
           className: 'bg-green-500 text-white',
         });
 
-        router.refresh();
         onSuccess?.();
       } catch (error) {
         toast({
-          title: 'Lá»—i',
+          title: 'Lỗi',
           description:
-            error instanceof Error ? error.message : 'Cáº­p nháº­t há»“ sÆ¡ tháº¥t báº¡i',
+            error instanceof Error ? error.message : 'Cập nhật hồ sơ thất bại',
           variant: 'destructive',
         });
       } finally {
         setUpdating(false);
       }
     },
-    [applyUpdatedProfile, avatarUrl, dob, fullName, hometown, onSuccess, phone, router, toast]
+    [applyUpdatedProfile, avatarUrl, dob, fullName, hometown, onSuccess, phone, toast]
   );
 
   const handleAvatarUpload = useCallback(

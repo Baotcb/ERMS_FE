@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { config } from '@/config'
 import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
+import { parseJwt } from '@/utils/jwt'
 
 async function fetchProfileSnapshot(token: string) {
     try {
@@ -53,16 +54,24 @@ export async function POST(request: Request) {
         let userEmail = email
         let userAvatar = ''
         try {
-            const payload = JSON.parse(atob(token.split('.')[1]))
-            userRole = payload.role
-                || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-                || 'User'
-            userName = payload.given_name
-                || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']
-                || ''
-            userEmail = payload.email
-                || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
-                || email
+            const payload = parseJwt(token)
+            if (payload) {
+                userRole = String(
+                    payload.role
+                    || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+                    || 'User'
+                )
+                userName = String(
+                    payload.given_name
+                    || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']
+                    || ''
+                )
+                userEmail = String(
+                    payload.email
+                    || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
+                    || email
+                )
+            }
         } catch { /* fallback to defaults */ }
 
         const profile = await fetchProfileSnapshot(token)

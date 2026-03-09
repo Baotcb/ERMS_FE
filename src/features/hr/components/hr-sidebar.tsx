@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react'
+import { useState, useCallback, memo, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
@@ -9,19 +9,16 @@ import {
     Users,
     ChevronDown,
     ChevronRight,
-    Settings,
-    LogOut,
     Menu,
     X,
-    User,
     CalendarRange,
     CalendarCheck,
     FileText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
-import { logoutAction } from '@/features/core/auth/actions/auth'
 import { useEnterpriseInfo } from '@/features/enterprise'
 
 interface NavItem {
@@ -29,43 +26,42 @@ interface NavItem {
     href?: string
     icon: React.ReactNode
     children?: { label: string; href: string }[]
-    roles?: string[] // Which roles can see this item. Empty = all roles
+    roles?: string[]
 }
 
-// Navigation items with role-based visibility
 const NAV_ITEMS: NavItem[] = [
     {
         label: 'Dashboard',
         href: '/enterprise/hr/dashboard',
         icon: <LayoutDashboard className="w-5 h-5" />,
-        roles: [] // All roles
+        roles: []
     },
     {
-        label: 'Nhân sự',
+        label: 'Nhan su',
         icon: <Users className="w-5 h-5" />,
         roles: ['HRManager', 'Director', 'DepartmentHead'],
         children: [
-            { label: 'Phòng ban', href: '/enterprise/hr/departments' },
-            { label: 'Nhân viên', href: '/enterprise/hr/employees' }
+            { label: 'Phong ban', href: '/enterprise/hr/departments' },
+            { label: 'Nhan vien', href: '/enterprise/hr/employees' }
         ]
     },
     {
-        label: 'Tuyển dụng',
+        label: 'Tuyen dung',
         icon: <CalendarRange className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Tin tuyển dụng', href: '/enterprise/hr/job-postings' },
-            { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
+            { label: 'Tin tuyen dung', href: '/enterprise/hr/job-postings' },
+            { label: 'Chien dich tuyen dung', href: '/enterprise/hr/recruitment-campaigns' }
         ]
     },
     {
-        label: 'Phỏng vấn',
+        label: 'Phong van',
         href: '/enterprise/hr/interviews',
         icon: <CalendarCheck className="w-5 h-5" />,
         roles: ['HRManager']
     },
     {
-        label: 'Quản lý Offer',
+        label: 'Quan ly Offer',
         href: '/enterprise/hr/offers',
         icon: <FileText className="w-5 h-5" />,
         roles: ['HRManager']
@@ -92,9 +88,7 @@ const NavMenuItem = memo(function NavMenuItem({
                 className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
-                    isActive
-                        ? 'bg-[#0F4C75] text-white shadow-md'
-                        : 'text-gray-600'
+                    isActive ? 'bg-[#0F4C75] text-white shadow-md' : 'text-gray-600'
                 )}
             >
                 {item.icon}
@@ -106,6 +100,7 @@ const NavMenuItem = memo(function NavMenuItem({
     return (
         <div>
             <button
+                type="button"
                 onClick={() => onToggle(item.label)}
                 className={cn(
                     'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200',
@@ -117,14 +112,9 @@ const NavMenuItem = memo(function NavMenuItem({
                     {item.icon}
                     <span className="font-medium">{item.label}</span>
                 </div>
-                {isExpanded ? (
-                    <ChevronDown className="w-4 h-4" />
-                ) : (
-                    <ChevronRight className="w-4 h-4" />
-                )}
+                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
 
-            {/* Submenu */}
             <div
                 className={cn(
                     'overflow-hidden transition-all duration-300',
@@ -136,11 +126,7 @@ const NavMenuItem = memo(function NavMenuItem({
                         <Link
                             key={child.href}
                             href={child.href}
-                            className={cn(
-                                'block px-4 py-2 rounded-lg text-sm transition-all duration-200',
-                                'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
-                                'text-gray-500 hover:text-[#0F4C75]'
-                            )}
+                            className="block px-4 py-2 rounded-lg text-sm text-gray-500 transition-all duration-200 hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]"
                         >
                             {child.label}
                         </Link>
@@ -151,103 +137,18 @@ const NavMenuItem = memo(function NavMenuItem({
     )
 })
 
-// Avatar Dropdown Component
-const AvatarDropdown = memo(function AvatarDropdown() {
-    const { user, logout } = useAuth()
-    const [isOpen, setIsOpen] = useState(false)
-    const dropdownRef = useRef<HTMLDivElement>(null)
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        if (!isOpen) return
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [isOpen])
-
-    const handleLogout = useCallback(async () => {
-        await logoutAction()
-        logout()
-    }, [logout])
-
-    const initials = useMemo(() => user?.fullName
-        ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-        : 'U',
-        [user])
-
-    return (
-        <div className="relative" ref={dropdownRef}>
-            {/* Avatar Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center text-white font-semibold text-sm hover:shadow-lg transition-shadow cursor-pointer"
-            >
-                {initials}
-            </button>
-
-            {/* Dropdown Menu */}
-            {isOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="font-semibold text-gray-800 truncate">{user?.fullName || 'User'}</p>
-                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-1">
-                        <Link
-                            href="/enterprise/profile"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <User className="w-4 h-4" />
-                            <span>Hồ sơ cá nhân</span>
-                        </Link>
-                        <Link
-                            href="/enterprise/settings"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            <Settings className="w-4 h-4" />
-                            <span>Cài đặt</span>
-                        </Link>
-                    </div>
-
-                    {/* Logout */}
-                    <div className="border-t border-gray-100 pt-1">
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            <span>Đăng xuất</span>
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-})
-
 export const HRSidebar = memo(function HRSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhan su'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const { enterpriseInfo } = useEnterpriseInfo()
 
-    // Get user role for filtering navigation (memoized)
     const userRole = useMemo(() => user?.role || '', [user?.role])
 
-    // Filter navigation items based on user role (memoized)
     const visibleNavItems = useMemo(() => {
-        return NAV_ITEMS.filter(item => {
-            if (!item.roles || item.roles.length === 0) return true // Empty = visible to all
+        return NAV_ITEMS.filter((item) => {
+            if (!item.roles || item.roles.length === 0) return true
             return item.roles.includes(userRole)
         })
     }, [userRole])
@@ -255,12 +156,11 @@ export const HRSidebar = memo(function HRSidebar() {
     const toggleExpand = useCallback((label: string) => {
         setExpandedItems((prev) =>
             prev.includes(label)
-                ? prev.filter((l) => l !== label)
+                ? prev.filter((itemLabel) => itemLabel !== label)
                 : [...prev, label]
         )
     }, [])
 
-    // Memoize isItemActive function to prevent recreation
     const isItemActive = useCallback((item: NavItem): boolean => {
         if (item.href) {
             return pathname === item.href
@@ -270,15 +170,13 @@ export const HRSidebar = memo(function HRSidebar() {
 
     const sidebarContent = (
         <div className="h-full flex flex-col bg-white border-r border-gray-200">
-            {/* Logo */}
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
-                    {/* Placeholder logic for future logo integration */}
                     {enterpriseInfo?.logoUrl ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
                             <Image
                                 src={enterpriseInfo.logoUrl}
-                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
+                                alt={enterpriseInfo.enterpriseName || 'Enterprise Logo'}
                                 width={32}
                                 height={32}
                                 className="object-contain"
@@ -296,7 +194,6 @@ export const HRSidebar = memo(function HRSidebar() {
                 </Link>
             </div>
 
-            {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                 {visibleNavItems.map((item) => (
                     <NavMenuItem
@@ -309,7 +206,6 @@ export const HRSidebar = memo(function HRSidebar() {
                 ))}
             </nav>
 
-            {/* Footer with Avatar */}
             <div className="p-4 border-t border-gray-100">
                 <AvatarDropdown />
             </div>
@@ -318,7 +214,6 @@ export const HRSidebar = memo(function HRSidebar() {
 
     return (
         <>
-            {/* Mobile Toggle */}
             <Button
                 variant="ghost"
                 size="icon"
@@ -328,7 +223,6 @@ export const HRSidebar = memo(function HRSidebar() {
                 {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
 
-            {/* Mobile Overlay */}
             {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -336,11 +230,15 @@ export const HRSidebar = memo(function HRSidebar() {
                     tabIndex={0}
                     aria-label="Close sidebar"
                     onClick={() => setIsMobileOpen(false)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsMobileOpen(false) } }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setIsMobileOpen(false)
+                        }
+                    }}
                 />
             )}
 
-            {/* Sidebar */}
             <aside
                 className={cn(
                     'fixed top-0 left-0 h-screen w-72 z-40 transition-transform duration-300',
@@ -353,4 +251,3 @@ export const HRSidebar = memo(function HRSidebar() {
         </>
     )
 })
-

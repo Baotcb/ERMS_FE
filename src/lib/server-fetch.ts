@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { config } from '@/config';
 import { logger } from '@/lib/logger';
 import { cache } from 'react';
+import { parseJwt } from '@/utils/jwt';
 
 export interface ServerFetchOptions extends RequestInit {
   requireAuth?: boolean;
@@ -105,12 +106,10 @@ export const getServerSession = cache(async () => {
 
   // Basic token validation
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
+    const payload = parseJwt(token);
+    if (!payload) {
       return { token: null, user: null, role: null };
     }
-
-    const payload = JSON.parse(atob(parts[1]));
     // Validate required fields
     if (!payload.exp || typeof payload.exp !== 'number') {
       return { token: null, user: null, role: null };
@@ -123,10 +122,10 @@ export const getServerSession = cache(async () => {
       return { token: null, user: null, role: null };
     }
 
-    const email =
+    const email = String(
       payload.email ||
       payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
-      '';
+      '');
 
     // Only use user_name cookie - don't fallback to email prefix
     const fullName = userName
@@ -136,21 +135,21 @@ export const getServerSession = cache(async () => {
     return {
       token,
       user: {
-        id: payload.nameid || payload.sub || '',
+        id: String(payload.nameid || payload.sub || ''),
         email,
         fullName,
         avatarUrl: userAvatar ? decodeURIComponent(userAvatar) : undefined,
-        role:
+        role: String(
           payload.role ||
           payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
           userRole ||
-          '',
+          ''),
       },
-      role:
+      role: String(
         payload.role ||
         payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
         userRole ||
-        '',
+        ''),
     };
   } catch (error) {
     logger.error('Token parsing failed', error);
