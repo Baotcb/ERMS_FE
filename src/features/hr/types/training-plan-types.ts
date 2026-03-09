@@ -1,31 +1,30 @@
-import { TrainingRequest } from '../../dept-head/types/training-types';
-
 export interface TrainingPlan {
     id: string;
+    planCode: string; // From backend DTO
     planName: string;
+    description: string;
     year: number;
-    description: string;
-    status: 'Draft' | 'Pending' | 'Approved' | 'Rejected';
-    totalBudget: number;
     totalCourses: number;
+    totalBudget: number;
+    status: string;
+    createdBy: string;
     createdAt: string;
-    updatedAt: string;
-}
-
-export interface TrainingPlanCourse {
-    id: string;
-    trainingPlanId: string;
-    subject: string;
-    description: string;
-    targetAudience: string;
-    estimatedParticipants: number;
-    estimatedBudget: number;
-    trainingRequestId?: string; // Link back to original request if any
+    updatedAt?: string;
+    reviewNote?: string;
 }
 
 export interface CreateTrainingPlan {
+    planCode: string;
     planName: string;
-    year: number;
-    description: string;
-    courseIds: string[]; // Selected requests to include
+    description?: string;
+    startDate: string;
+    endDate: string;
+    totalBudget?: number;
+    status?: string;
+    trainingRequestIds: string[];
+}
+
+export interface TrainingPlansResult {
+    items: TrainingPlan[];
+    totalCount: number;
 }

@@ -55,8 +55,8 @@ export function TrainingRequestList() {
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-    const { data, isLoading, mutate } = useSWR<TrainingRequestsResult | null>(
-        ['mock_training_requests', search],
+    const { data, isLoading, mutate } = useSWR<TrainingRequestsResult>(
+        ['/api/TrainingRequest', search],
         () => trainingService.getRequests({ search })
     );
 

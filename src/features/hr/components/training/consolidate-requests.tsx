@@ -26,14 +26,16 @@ export function ConsolidateRequests() {
     const { toast } = useToast();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${new Date().getFullYear() + 1}`);
+    const [startDate, setStartDate] = useState(`${new Date().getFullYear() + 1}-01-01`);
+    const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { data: requests, isLoading, mutate } = useSWR<TrainingRequest[]>(
-        'all_pending_requests',
-        () => hrTrainingService.getAllRequests()
+    const { data, isLoading, mutate } = useSWR<any>(
+        '/api/TrainingRequest?status=Pending',
+        () => hrTrainingService.getAllRequests({ status: 'Pending' })
     );
 
-    const pendingRequests = requests?.filter(r => r.status === 'Pending') || [];
+    const pendingRequests = data?.items || [];
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => 
@@ -54,10 +56,14 @@ export function ConsolidateRequests() {
         setIsSubmitting(true);
         try {
             const res = await hrTrainingService.createPlan({
+                planCode: `TP-${new Date().getFullYear() + 1}-${Math.floor(1000 + Math.random() * 9000)}`,
                 planName,
-                year: new Date().getFullYear() + 1,
                 description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
-                courseIds: selectedIds,
+                startDate: new Date(startDate).toISOString(),
+                endDate: new Date(endDate).toISOString(),
+                totalBudget: totalSelectedBudget,
+                status: 'Pending',
+                trainingRequestIds: selectedIds,
             });
 
             if (res.ok) {
@@ -79,8 +85,8 @@ export function ConsolidateRequests() {
     };
 
     const totalSelectedBudget = pendingRequests
-        .filter(r => selectedIds.includes(r.id))
-        .reduce((sum, r) => sum + (r.estimatedBudget || 0), 0);
+        .filter((r: any) => selectedIds.includes(r.id))
+        .reduce((sum: number, r: any) => sum + (r.estimatedBudget || 0), 0);
 
     return (
         <div className="space-y-6">
@@ -106,7 +112,7 @@ export function ConsolidateRequests() {
                             <span className="text-sm font-medium text-gray-600">Đã chọn: {selectedIds.length}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedIds(pendingRequests.map(r => r.id))}>Chọn tất cả</Button>
+                            <Button variant="outline" size="sm" onClick={() => setSelectedIds(pendingRequests.map((r: any) => r.id))}>Chọn tất cả</Button>
                             <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>Bỏ chọn</Button>
                         </div>
                     </div>
@@ -129,7 +135,7 @@ export function ConsolidateRequests() {
                                 ) : pendingRequests.length === 0 ? (
                                     <TableRow><TableCell colSpan={6} className="text-center py-8 italic text-gray-400">Không có yêu cầu nào đang chờ xử lý</TableCell></TableRow>
                                 ) : (
-                                    pendingRequests.map((request) => (
+                                    pendingRequests.map((request: any) => (
                                         <TableRow key={request.id} className={selectedIds.includes(request.id) ? 'bg-blue-50/30' : ''}>
                                             <TableCell>
                                                 <Checkbox 
@@ -171,6 +177,27 @@ export function ConsolidateRequests() {
                                     onChange={(e) => setPlanName(e.target.value)}
                                     className="mt-1"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Từ ngày</label>
+                                    <Input 
+                                        type="date"
+                                        value={startDate} 
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Đến ngày</label>
+                                    <Input 
+                                        type="date"
+                                        value={endDate} 
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="mt-1"
+                                    />
+                                </div>
                             </div>
 
                             <div className="p-4 bg-gray-50 rounded-lg space-y-3">

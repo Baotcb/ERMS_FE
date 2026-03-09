@@ -45,14 +45,12 @@ export function TrainingPlansList() {
     const router = useRouter();
     const [search, setSearch] = useState('');
 
-    const { data: plans, isLoading } = useSWR<TrainingPlan[]>(
-        ['mock_training_plans', search],
-        () => hrTrainingService.getPlans()
+    const { data, isLoading } = useSWR<any>(
+        ['/api/TrainingPlan', search],
+        () => hrTrainingService.getPlans({ search })
     );
 
-    const filteredPlans = plans?.filter(p => 
-        p.planName.toLowerCase().includes(search.toLowerCase())
-    );
+    const plans = data?.items || [];
 
     return (
         <div className="space-y-6">
@@ -103,14 +101,14 @@ export function TrainingPlansList() {
                                     Đang tải dữ liệu...
                                 </TableCell>
                             </TableRow>
-                        ) : filteredPlans?.length === 0 ? (
+                        ) : plans?.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
                                     Chưa có kế hoạch đào tạo nào
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredPlans?.map((plan) => (
+                            plans?.map((plan: any) => (
                                 <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
                                     <TableCell className="font-medium text-gray-900">
                                         <div className="flex items-center gap-2">

@@ -1,8 +1,8 @@
 import * as z from 'zod';
 
 export const trainingRequestSchema = z.object({
-    departmentId: z.string().min(1, 'Vui lòng chọn phòng ban'),
-    subject: z.string().min(5, 'Chủ đề đào tạo phải có ít nhất 5 ký tự'),
+    requestedById: z.string().uuid('ID người yêu cầu không hợp lệ'),
+    subject: z.string().min(5, 'Chul đề đào tạo phải có ít nhất 5 ký tự'),
     urgency: z.enum(['Normal', 'High', 'Urgent']),
     description: z.string().optional(),
     targetAudience: z.string().optional(),
@@ -19,7 +19,7 @@ export interface TrainingRequestFormProps {
 }
 
 export const TRAINING_REQUEST_DEFAULTS: TrainingRequestValues = {
-    departmentId: '',
+    requestedById: '',
     subject: '',
     urgency: 'Normal',
     description: '',

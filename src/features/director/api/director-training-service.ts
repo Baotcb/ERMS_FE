@@ -1,53 +1,36 @@
-import { TrainingPlan } from '../../hr/types/training-plan-types';
-
-const PLANS_STORAGE_KEY = 'mock_training_plans';
-
-const getStoredPlans = (): TrainingPlan[] => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem(PLANS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-};
-
-const savePlans = (plans: TrainingPlan[]) => {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(PLANS_STORAGE_KEY, JSON.stringify(plans));
-    }
-};
+import { apiClient } from '@/lib/api-client';
+import { TrainingPlan, TrainingPlansResult } from '../../hr/types/training-plan-types';
 
 export const directorTrainingService = {
-    async getPendingPlans(): Promise<TrainingPlan[]> {
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const plans = getStoredPlans();
-        return plans.filter(p => p.status === 'Pending');
+    async getPendingPlans(): Promise<TrainingPlansResult> {
+        const searchParams = new URLSearchParams({
+            status: 'Pending',
+            pageSize: '100'
+        });
+
+        const response = await apiClient.get(`/api/TrainingPlan?${searchParams}`);
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Không thể tải danh sách kế hoạch chờ duyệt');
+        }
+
+        return response.json();
     },
 
-    async approvePlan(planId: string): Promise<{ ok: boolean }> {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const plans = getStoredPlans();
-        const index = plans.findIndex(p => p.id === planId);
-        if (index !== -1) {
-            plans[index].status = 'Approved';
-            plans[index].updatedAt = new Date().toISOString();
-            savePlans(plans);
-
-            // In a real app, this would also trigger "Notify & Open Course Schedule"
-            // For now, we mock the side effect or just update the plan status
-            return { ok: true };
-        }
-        return { ok: false };
+    async approvePlan(planId: string, reviewNote?: string): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/approve', {
+            trainingPlanId: planId,
+            reviewNote
+        });
+        return { ok: response.status === 200 };
     },
 
-    async rejectPlan(planId: string, reason: string): Promise<{ ok: boolean }> {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const plans = getStoredPlans();
-        const index = plans.findIndex(p => p.id === planId);
-        if (index !== -1) {
-            plans[index].status = 'Rejected';
-            plans[index].description += `\nLý do từ chối: ${reason}`;
-            plans[index].updatedAt = new Date().toISOString();
-            savePlans(plans);
-            return { ok: true };
-        }
-        return { ok: false };
+    async rejectPlan(planId: string, reviewNote: string): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/reject', {
+            trainingPlanId: planId,
+            reviewNote
+        });
+        return { ok: response.status === 200 };
     }
 };

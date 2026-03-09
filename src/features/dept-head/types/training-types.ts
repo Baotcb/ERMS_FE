@@ -8,16 +8,16 @@ export interface TrainingRequest {
     estimatedParticipants?: number;
     estimatedBudget?: number;
     requestedById: string;
-    requestedByName?: string;
-    departmentId: number;
-    departmentName?: string;
+    requestedByName: string;
+    departmentName: string;
     createdAt: string;
 }
 
 export interface CreateTrainingRequest {
-    departmentId: number;
+    trainingPlanId?: string;
+    requestedById: string;
     subject: string;
-    urgency: string;
+    urgency?: string;
     description?: string;
     targetAudience?: string;
     estimatedParticipants?: number;

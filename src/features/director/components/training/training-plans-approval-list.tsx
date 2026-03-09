@@ -36,10 +36,12 @@ export function TrainingPlansApprovalList() {
     const [rejectReason, setRejectReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { data: plans, isLoading, mutate } = useSWR<TrainingPlan[]>(
-        'pending_training_plans',
+    const { data, isLoading, mutate } = useSWR<any>(
+        '/api/TrainingPlan?status=Pending',
         () => directorTrainingService.getPendingPlans()
     );
+
+    const plans = data?.items || [];
 
     const handleApprove = async () => {
         if (!selectedPlan) return;
@@ -85,9 +87,8 @@ export function TrainingPlansApprovalList() {
                 <Table>
                     <TableHeader className="bg-gray-50">
                         <TableRow>
-                            <TableHead className="font-bold text-[#0F4C75]">Tên kế hoạch</TableHead>
+                            <TableHead className="font-bold text-[#0F4C75]">Kế hoạch</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Năm</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Số khóa</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Tổng ngân sách</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Ngày gửi</TableHead>
                             <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
@@ -99,16 +100,15 @@ export function TrainingPlansApprovalList() {
                         ) : plans?.length === 0 ? (
                             <TableRow><TableCell colSpan={6} className="text-center py-10 italic text-gray-400">Không có kế hoạch nào cần phê duyệt</TableCell></TableRow>
                         ) : (
-                            plans?.map((plan) => (
+                            plans?.map((plan: any) => (
                                 <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
                                     <TableCell className="font-medium text-gray-900">
-                                        <div className="flex items-center gap-2">
-                                            <BookOpen className="w-4 h-4 text-blue-500" />
-                                            {plan.planName}
+                                        <div className="flex flex-col">
+                                            <span className="font-bold">{plan.planName}</span>
+                                            <span className="text-xs text-gray-400">{plan.planCode}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell><Badge variant="outline">{plan.year}</Badge></TableCell>
-                                    <TableCell>{plan.totalCourses} khóa</TableCell>
+                                    <TableCell><Badge variant="outline">{new Date(plan.startDate).getFullYear()}</Badge></TableCell>
                                     <TableCell className="font-semibold text-[#0F4C75]">
                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
                                     </TableCell>

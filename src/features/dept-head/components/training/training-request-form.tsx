@@ -33,18 +33,18 @@ import {
 export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingRequestFormProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const [detectedDept, setDetectedDept] = useState<{ id: number; departmentName: string } | null>(null);
+    const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
 
     const form = useForm<TrainingRequestValues>({
-        resolver: zodResolver(trainingRequestSchema),
+        resolver: zodResolver(trainingRequestSchema) as any,
         defaultValues: TRAINING_REQUEST_DEFAULTS,
     });
 
-    // Detect Department
+    // Detect Employee & Department
     useEffect(() => {
         if (!open) return;
         
-        const detectDepartment = async () => {
+        const detectUser = async () => {
             try {
                 const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME);
                 if (userNameEncoded) {
@@ -53,31 +53,28 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                     if (res.ok) {
                         const data = await res.json();
                         const employee = data.items?.[0];
-                        if (employee?.departmentId) {
-                            setDetectedDept({ 
-                                id: employee.departmentId, 
+                        if (employee?.id) {
+                            setDetectedEmp({ 
+                                id: employee.id, 
                                 departmentName: employee.departmentName 
                             });
-                            form.setValue('departmentId', employee.departmentId.toString());
+                            form.setValue('requestedById', employee.id);
                         }
                     }
                 }
             } catch (e) {
-                console.error('Failed to detect department', e);
+                console.error('Failed to detect user employee profile', e);
             }
         };
 
-        detectDepartment();
+        detectUser();
         form.reset(TRAINING_REQUEST_DEFAULTS);
     }, [open, form]);
 
     const onSubmit = async (values: TrainingRequestValues) => {
         setIsLoading(true);
         try {
-            const res = await trainingService.createRequest({
-                ...values,
-                departmentId: Number(values.departmentId),
-            });
+            const res = await trainingService.createRequest(values);
 
             if (res.ok) {
                 toast({
@@ -90,14 +87,14 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                 toast({
                     variant: 'destructive',
                     title: 'Lỗi',
-                    description: res.message || 'Không thể gửi yêu cầu.',
+                    description: 'Không thể gửi yêu cầu.',
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 variant: 'destructive',
                 title: 'Lỗi',
-                description: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+                description: error.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.',
             });
         } finally {
             setIsLoading(false);
@@ -120,7 +117,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
 
                 <div className="p-6 max-h-[70vh] overflow-y-auto">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField control={form.control} name="subject" render={({ field }) => (
                                     <FormItem className="col-span-2">
@@ -154,7 +151,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                 <FormItem>
                                     <FormLabel className="text-[#0F4C75] font-semibold">Phòng ban</FormLabel>
                                     <div className="h-10 px-3 py-2 border border-gray-100 rounded-md bg-gray-50 text-sm text-gray-600 flex items-center font-medium">
-                                        {detectedDept?.departmentName || 'Đang xác định...'}
+                                        {detectedEmp?.departmentName || 'Đang xác định...'}
                                     </div>
                                 </FormItem>
 
