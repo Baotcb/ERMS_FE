@@ -15,7 +15,14 @@ import {
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
 
-const sidebarItems = [
+interface SidebarItem {
+    title: string
+    href?: string
+    icon: React.ElementType
+    children?: { label: string; href: string }[]
+}
+
+const sidebarItems: SidebarItem[] = [
     {
         title: 'Tổng quan',
         href: '/enterprise/director/dashboard',
@@ -42,9 +49,13 @@ const sidebarItems = [
         icon: FileText,
     },
     {
-        title: 'Duyệt kế hoạch đào tạo',
-        href: '/enterprise/director/training-approval',
+        title: 'Đào tạo',
         icon: GraduationCap,
+        children: [
+            { label: 'Duyệt kế hoạch', href: '/enterprise/director/training-approval' },
+            { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
+            { label: 'Thiết lập lịch trình', href: '/enterprise/hr/training/schedule' }
+        ]
     },
 ]
 
@@ -84,12 +95,40 @@ export function DirectorSidebar() {
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                 {sidebarItems.map((item) => {
                     const Icon = item.icon
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+                    const hasChildren = 'children' in item && item.children && item.children.length > 0
+                    const isActive = item.href ? (pathname === item.href || pathname?.startsWith(item.href + '/')) : false
+
+                    if (hasChildren) {
+                        return (
+                            <div key={item.title} className="space-y-1">
+                                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600">
+                                    <Icon className="w-5 h-5 text-gray-400" />
+                                    {item.title}
+                                </div>
+                                <div className="ml-8 space-y-1">
+                                    {item.children?.map((child) => (
+                                        <Link
+                                            key={child.href}
+                                            href={child.href}
+                                            className={cn(
+                                                "block px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                                                pathname === child.href
+                                                    ? "bg-blue-50 text-[#0F4C75]"
+                                                    : "text-gray-500 hover:bg-gray-50 hover:text-[#0F4C75]"
+                                            )}
+                                        >
+                                            {child.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    }
 
                     return (
                         <Link
                             key={item.href}
-                            href={item.href}
+                            href={item.href!}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                                 isActive

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Plus, Search, MoreHorizontal, Eye, BookOpen } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, BookOpen, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
@@ -27,6 +27,7 @@ import {
 import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan } from '../../types/training-plan-types';
 import { useRouter } from 'next/navigation';
+import { TrainingPlanDetail } from './training-plan-detail';
 
 const STATUS_COLORS: Record<string, string> = {
     Draft: 'bg-gray-100 text-gray-800',
@@ -42,17 +43,40 @@ const STATUS_LABELS: Record<string, string> = {
     Rejected: 'Từ chối',
 };
 
-export function TrainingPlansList() {
+import { useToast } from '@/hooks/use-toast';
+
+export function TrainingPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const router = useRouter();
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
 
-    const { data, isLoading } = useSWR<{ items: TrainingPlan[] }>(
+    const { data, isLoading, mutate } = useSWR<{ items: TrainingPlan[] }>(
         ['/api/TrainingPlan', debouncedSearch],
-        () => hrTrainingService.getPlans({ search: debouncedSearch })
+        () => hrTrainingService.getPlans({ search: debouncedSearch }),
+        { fallbackData: initialData }
     );
 
     const plans = data?.items || [];
+    const [isDeploying, setIsDeploying] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const { toast } = useToast();
+
+    const handleDeploy = async (plan: TrainingPlan) => {
+        setIsDeploying(true);
+        try {
+            toast({
+                title: 'Chưa thể triển khai',
+                description: `Tính năng triển khai kế hoạch ${plan.planName} chưa được kết nối API.`,
+                variant: 'destructive'
+            });
+        } catch (error: unknown) {
+            void error;
+            toast({ title: 'Lỗi', description: 'Không thể xử lý thao tác triển khai. Vui lòng thử lại.', variant: 'destructive' });
+        } finally {
+            setIsDeploying(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -146,9 +170,23 @@ export function TrainingPlansList() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-48">
                                                 <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                                <DropdownMenuItem className="cursor-pointer">
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelectedPlan(plan);
+                                                        setIsDetailOpen(true);
+                                                    }}
+                                                >
                                                     <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                                                 </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        className="cursor-pointer text-blue-600 focus:text-blue-700 focus:bg-blue-50"
+                                                        onClick={() => handleDeploy(plan)}
+                                                        disabled={isDeploying}
+                                                    >
+                                                        {isDeploying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />} 
+                                                        Triển khai & Thông báo
+                                                    </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -158,6 +196,12 @@ export function TrainingPlansList() {
                     </TableBody>
                 </Table>
             </div>
+
+            <TrainingPlanDetail
+                plan={selectedPlan}
+                open={isDetailOpen}
+                onOpenChange={setIsDetailOpen}
+            />
         </div>
     );
 }

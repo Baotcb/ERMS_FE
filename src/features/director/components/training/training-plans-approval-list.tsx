@@ -52,10 +52,12 @@ export function TrainingPlansApprovalList() {
                 toast({ title: 'Đã phê duyệt', description: 'Kế hoạch đào tạo đã được phê duyệt thành công.' });
                 setIsApproveOpen(false);
                 mutate();
+            } else {
+                toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch.', variant: 'destructive' });
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
+            void error;
+            toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -71,10 +73,12 @@ export function TrainingPlansApprovalList() {
                 setIsRejectOpen(false);
                 setRejectReason('');
                 mutate();
+            } else {
+                toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch.', variant: 'destructive' });
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Không thể từ chối kế hoạch. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
+            void error;
+            toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }

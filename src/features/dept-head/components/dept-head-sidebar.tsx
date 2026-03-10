@@ -39,7 +39,10 @@ const NAV_ITEMS: NavItem[] = [
     {
         icon: <GraduationCap className="w-5 h-5" />,
         label: 'Đào tạo',
-        href: '/enterprise/dept-head/training'
+        children: [
+            { label: 'Yêu cầu của tôi', href: '/enterprise/dept-head/training' },
+            { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' }
+        ]
     },
     {
         icon: <ClipboardList className="w-5 h-5" />,
@@ -133,7 +136,7 @@ import { useEnterpriseInfo } from '@/features/enterprise'
 
 export function DeptHeadSidebar() {
     const pathname = usePathname()
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Tuyển dụng'])
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Tuyển dụng', 'Đào tạo'])
 
     const { enterpriseInfo } = useEnterpriseInfo()
 

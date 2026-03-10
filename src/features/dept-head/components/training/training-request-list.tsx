@@ -52,14 +52,20 @@ const STATUS_LABELS: Record<string, string> = {
     Rejected: 'Từ chối',
 };
 
-export function TrainingRequestList() {
+import { TrainingRequestDetail } from './training-request-detail';
+import { TrainingRequest } from '../../types/training-types';
+
+export function TrainingRequestList({ initialData }: { initialData?: TrainingRequestsResult }) {
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState<TrainingRequest | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
     const debouncedSearch = useDebouncedValue(search, 300);
 
     const { data, isLoading, mutate } = useSWR<TrainingRequestsResult>(
         ['/api/TrainingRequest', debouncedSearch],
-        () => trainingService.getRequests({ search: debouncedSearch })
+        () => trainingService.getRequests({ search: debouncedSearch }),
+        { fallbackData: initialData }
     );
 
     const renderUrgency = (urgency: string) => {
@@ -173,7 +179,13 @@ export function TrainingRequestList() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-48">
                                                 <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                                <DropdownMenuItem className="cursor-pointer">
+                                                <DropdownMenuItem 
+                                                    className="cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelectedRequest(request);
+                                                        setIsDetailOpen(true);
+                                                    }}
+                                                >
                                                     <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -190,6 +202,12 @@ export function TrainingRequestList() {
                 open={isCreateOpen}
                 onOpenChange={setIsCreateOpen}
                 onSuccess={() => mutate()}
+            />
+
+            <TrainingRequestDetail
+                request={selectedRequest}
+                open={isDetailOpen}
+                onOpenChange={setIsDetailOpen}
             />
         </div>
     );

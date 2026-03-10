@@ -38,7 +38,17 @@ export const directorTrainingService = {
             trainingPlanId: planId,
             reviewNote
         });
-        return { ok: response.status === 200 };
+        if (!response.ok) {
+            let message = 'Không thể phê duyệt kế hoạch';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch {
+                // Keep fallback message when response is not JSON
+            }
+            throw new Error(message);
+        }
+        return { ok: true };
     },
 
     async rejectPlan(planId: string, reviewNote: string): Promise<{ ok: boolean }> {
@@ -46,6 +56,16 @@ export const directorTrainingService = {
             trainingPlanId: planId,
             reviewNote
         });
-        return { ok: response.status === 200 };
+        if (!response.ok) {
+            let message = 'Không thể từ chối kế hoạch';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch {
+                // Keep fallback message when response is not JSON
+            }
+            throw new Error(message);
+        }
+        return { ok: true };
     }
 };

@@ -109,7 +109,16 @@ export const getServerSession = cache(async () => {
       return { token: null, user: null, role: null };
     }
 
-    const payload = JSON.parse(atob(parts[1]));
+    let payload;
+    try {
+      // Decode base64url payload safely on the server
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const decodedPadded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+      payload = JSON.parse(Buffer.from(decodedPadded, 'base64').toString());
+    } catch (e) {
+      console.error('Failed to parse token payload:', e);
+      return { token: null, user: null, role: null };
+    }
     // Validate required fields
     if (!payload.exp || typeof payload.exp !== 'number') {
       return { token: null, user: null, role: null };
