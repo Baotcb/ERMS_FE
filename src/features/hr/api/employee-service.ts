@@ -15,7 +15,8 @@ export interface Employee {
     hireDate: string | null
     status: string
     createdAt: string
-    managerId?: number | null
+    managerId?: string | null
+    roles?: string[]
 }
 
 export interface GetEmployeesParams {
@@ -117,12 +118,12 @@ export async function createEmployee(data: CreateEmployeeData): Promise<{ employ
 }
 
 export interface UpdateEmployeeData {
-    id: string
     departmentId: number
     position?: string
     employmentType?: string
     managerId?: string
     status?: string
+    role?: string
 }
 
 export async function updateEmployee(id: string, data: UpdateEmployeeData): Promise<void> {
