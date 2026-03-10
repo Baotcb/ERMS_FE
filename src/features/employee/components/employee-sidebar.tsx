@@ -9,6 +9,9 @@ import {
     CalendarDays,
     Menu,
     X,
+    User,
+    Settings,
+    LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'

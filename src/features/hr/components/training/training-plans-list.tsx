@@ -50,7 +50,7 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
 
-    const { data, isLoading, mutate } = useSWR<{ items: TrainingPlan[] }>(
+    const { data, isLoading } = useSWR<{ items: TrainingPlan[] }>(
         ['/api/TrainingPlan', debouncedSearch],
         () => hrTrainingService.getPlans({ search: debouncedSearch }),
         { fallbackData: initialData }

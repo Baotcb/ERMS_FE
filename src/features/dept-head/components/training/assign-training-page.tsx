@@ -74,7 +74,7 @@ export function AssignTrainingPage({
     );
 
     // Fetch Current Course Assignment if selected
-    const { data: currentCourse, mutate: mutateCourse } = useSWR<Course>(
+    const { data: currentCourse } = useSWR<Course>(
         selectedCourseId ? `/api/Course/${selectedCourseId}` : null,
         () => courseService.getCourseDetails(selectedCourseId)
     );
@@ -124,12 +124,6 @@ export function AssignTrainingPage({
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    const getScoreColor = (score: number) => {
-        if (score >= 80) return 'text-green-600 bg-green-50 px-2 py-1 rounded font-medium';
-        if (score >= 70) return 'text-orange-600 bg-orange-50 px-2 py-1 rounded font-medium';
-        return 'text-red-600 bg-red-50 px-2 py-1 rounded font-medium';
     };
 
     const courses = coursesData?.items || [];
