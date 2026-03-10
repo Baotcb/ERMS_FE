@@ -8,8 +8,8 @@ export interface Employee {
     fullName: string
     email: string
     phone: string | null
-    departmentId: number
-    departmentName: string
+    departmentId: number | null
+    departmentName: string | null
     position: string | null
     employmentType: string
     hireDate: string | null
@@ -149,7 +149,7 @@ export interface EmployeeImportItem {
     fullName: string
     email: string
     phone?: string
-    departmentCode: string
+    departmentCode?: string
     position?: string
     password?: string
     role?: string // Optional: Employee, Trainer, Director, DepartmentHead

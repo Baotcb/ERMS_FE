@@ -1,24 +1,17 @@
 'use client'
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Search, RefreshCw, Upload, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { EmployeeTable } from '@/features/hr/components/employee/employee-table'
-import { EmployeeForm } from '@/features/hr/components/employee/employee-form'
-import { EmployeeImport } from '@/features/hr/components/employee/employee-import'
 import { mutate } from 'swr'
+import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogDescription,
 } from '@/components/ui/dialog'
-import { getEmployeeById, type Employee } from '@/features/hr/api/employee-service'
-import { useEmployees } from '@/features/hr/hooks/use-employees'
-import { useDepartmentOptions } from '@/features/hr/hooks/use-departments'
-import { useDebounce } from '@/hooks/use-debounce'
+import { Input } from '@/components/ui/input'
 import {
     Select,
     SelectContent,
@@ -26,6 +19,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { getEmployeeById, type Employee } from '@/features/hr/api/employee-service'
+import { EmployeeForm } from '@/features/hr/components/employee/employee-form'
+import { EmployeeImport } from '@/features/hr/components/employee/employee-import'
+import { EmployeeTable } from '@/features/hr/components/employee/employee-table'
+import { useDepartmentOptions } from '@/features/hr/hooks/use-departments'
+import { useEmployees } from '@/features/hr/hooks/use-employees'
+import { useDebounce } from '@/hooks/use-debounce'
 import { useToast } from '@/hooks/use-toast'
 
 const STATUS_OPTIONS = [
@@ -37,6 +37,11 @@ const STATUS_OPTIONS = [
 ]
 
 const PAGE_SIZE = 7
+const FILTER_OPTIONS_PAGE_SIZE = 1000
+
+function normalizePosition(position: string | null | undefined) {
+    return position?.trim().toLocaleLowerCase('vi-VN') ?? ''
+}
 
 function revalidateEmployeeLists() {
     return mutate(
@@ -52,6 +57,7 @@ export const EmployeeList = memo(function EmployeeList() {
     const [searchQuery, setSearchQuery] = useState('')
     const [prevSearch, setPrevSearch] = useState('')
     const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined)
+    const [positionFilter, setPositionFilter] = useState<string | undefined>(undefined)
     const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isImportOpen, setIsImportOpen] = useState(false)
@@ -72,13 +78,70 @@ export const EmployeeList = memo(function EmployeeList() {
         }
     }, [debouncedSearch, page, prevSearch])
 
+    const baseFilterParams = useMemo(
+        () => ({
+            search: debouncedSearch || undefined,
+            departmentId: departmentFilter,
+            status: statusFilter,
+        }),
+        [debouncedSearch, departmentFilter, statusFilter]
+    )
+
     const { employees, totalCount, totalPages, isLoading } = useEmployees({
         page,
         pageSize: PAGE_SIZE,
-        search: debouncedSearch || undefined,
-        departmentId: departmentFilter,
-        status: statusFilter,
+        ...baseFilterParams,
     })
+
+    const {
+        employees: employeesForFilters,
+        isLoading: isFilterOptionsLoading,
+    } = useEmployees({
+        page: 1,
+        pageSize: FILTER_OPTIONS_PAGE_SIZE,
+        ...baseFilterParams,
+    })
+
+    const positionOptions = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    employeesForFilters
+                        .map((employee) => employee.position?.trim())
+                        .filter((position): position is string => Boolean(position))
+                )
+            ).sort((left, right) => left.localeCompare(right, 'vi', { sensitivity: 'base' })),
+        [employeesForFilters]
+    )
+
+    const filteredEmployeesForPosition = useMemo(() => {
+        if (!positionFilter) {
+            return employees
+        }
+
+        const normalizedFilter = normalizePosition(positionFilter)
+
+        return employeesForFilters.filter(
+            (employee) => normalizePosition(employee.position) === normalizedFilter
+        )
+    }, [employees, employeesForFilters, positionFilter])
+
+    const effectiveTotalCount = positionFilter
+        ? filteredEmployeesForPosition.length
+        : totalCount
+    const effectiveTotalPages = positionFilter
+        ? Math.max(1, Math.ceil(filteredEmployeesForPosition.length / PAGE_SIZE))
+        : totalPages
+    const effectiveEmployees = positionFilter
+        ? filteredEmployeesForPosition.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+        : employees
+    const isTableLoading = isLoading || (Boolean(positionFilter) && isFilterOptionsLoading)
+
+    useEffect(() => {
+        if (page > effectiveTotalPages) {
+            setPage(effectiveTotalPages)
+        }
+    }, [effectiveTotalPages, page])
 
     const handleCreate = useCallback(() => {
         editRequestIdRef.current = 0
@@ -99,7 +162,6 @@ export const EmployeeList = memo(function EmployeeList() {
         try {
             const detailedEmployee = await getEmployeeById(employee.id)
 
-            // Ignore stale response: another edit was triggered while this was in-flight
             if (requestId !== editRequestIdRef.current) return
 
             setSelectedEmployee(detailedEmployee)
@@ -122,10 +184,6 @@ export const EmployeeList = memo(function EmployeeList() {
 
     const handleImport = useCallback(() => {
         setIsImportOpen(true)
-    }, [])
-
-    const handleDelete = useCallback((employee: Employee) => {
-        console.log('Delete', employee)
     }, [])
 
     const handleSuccess = useCallback(() => {
@@ -162,131 +220,149 @@ export const EmployeeList = memo(function EmployeeList() {
                 <h1 className="text-3xl font-bold tracking-tight text-[#0C4A6E]">
                     Nhân viên
                 </h1>
-                <p className="text-[#0C4A6E]/70 text-base">
-                    Quản lý {totalCount} nhân viên trong doanh nghiệp.
+                <p className="text-base text-[#0C4A6E]/70">
+                    Quản lý {effectiveTotalCount} nhân viên trong doanh nghiệp.
                 </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
-                    <div className="relative w-full md:w-80">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        <Input
-                            type="text"
-                            placeholder="Tìm kiếm theo tên, mã NV..."
-                            value={searchQuery}
-                            onChange={(event) => setSearchQuery(event.target.value)}
-                            className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-sky-200 focus-visible:border-sky-300"
-                        />
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div className="flex flex-1 flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center">
+                        <div className="relative w-full xl:max-w-80">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <Input
+                                type="text"
+                                placeholder="Tìm kiếm theo tên, mã NV..."
+                                value={searchQuery}
+                                onChange={(event) => setSearchQuery(event.target.value)}
+                                className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10 focus-visible:border-sky-300 focus-visible:ring-sky-200"
+                            />
+                        </div>
+
+                        <Select
+                            value={departmentFilter ? String(departmentFilter) : 'all'}
+                            onValueChange={(value) => {
+                                setDepartmentFilter(value === 'all' ? undefined : Number(value))
+                                setPage(1)
+                            }}
+                        >
+                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[190px]">
+                                <SelectValue placeholder="Tất cả phòng ban" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả phòng ban</SelectItem>
+                                {departmentOptions.map((department) => (
+                                    <SelectItem key={department.id} value={String(department.id)}>
+                                        {department.departmentName}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select
+                            value={positionFilter || 'all'}
+                            onValueChange={(value) => {
+                                setPositionFilter(value === 'all' ? undefined : value)
+                                setPage(1)
+                            }}
+                        >
+                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[190px]">
+                                <SelectValue placeholder="Tất cả chức vụ" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả chức vụ</SelectItem>
+                                {positionOptions.map((position) => (
+                                    <SelectItem key={position} value={position}>
+                                        {position}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select
+                            value={statusFilter || 'all'}
+                            onValueChange={(value) => {
+                                setStatusFilter(value === 'all' ? undefined : value)
+                                setPage(1)
+                            }}
+                        >
+                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[170px]">
+                                <SelectValue placeholder="Trạng thái" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {STATUS_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value || 'all'} value={option.value || 'all'}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <button
+                            type="button"
+                            onClick={handleRefresh}
+                            disabled={isTableLoading}
+                            className="self-start rounded-full p-2.5 text-slate-400 transition-colors hover:bg-sky-50 hover:text-[#0369A1] disabled:opacity-50 lg:self-auto"
+                            title="Làm mới"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isTableLoading ? 'animate-spin' : ''}`} />
+                        </button>
                     </div>
 
-                    <Select
-                        value={departmentFilter ? String(departmentFilter) : 'all'}
-                        onValueChange={(value) => {
-                            setDepartmentFilter(value === 'all' ? undefined : Number(value))
-                            setPage(1)
-                        }}
-                    >
-                        <SelectTrigger className="w-[180px] h-10 rounded-xl bg-slate-50 border-slate-200 text-sm text-slate-700">
-                            <SelectValue placeholder="Tất cả phòng ban" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả phòng ban</SelectItem>
-                            {departmentOptions.map((department) => (
-                                <SelectItem key={department.id} value={String(department.id)}>
-                                    {department.departmentName}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select
-                        value={statusFilter || 'all'}
-                        onValueChange={(value) => {
-                            setStatusFilter(value === 'all' ? undefined : value)
-                            setPage(1)
-                        }}
-                    >
-                        <SelectTrigger className="w-[160px] h-10 rounded-xl bg-slate-50 border-slate-200 text-sm text-slate-700">
-                            <SelectValue placeholder="Trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {STATUS_OPTIONS.map((option) => (
-                                <SelectItem key={option.value || 'all'} value={option.value || 'all'}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <button
-                        type="button"
-                        onClick={handleRefresh}
-                        disabled={isLoading}
-                        className="p-2.5 text-slate-400 hover:text-[#0369A1] hover:bg-sky-50 rounded-full transition-colors cursor-pointer disabled:opacity-50"
-                        title="Làm mới"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    </button>
-                </div>
-
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <Button
-                        variant="outline"
-                        onClick={handleImport}
-                        className="rounded-xl h-10 px-4 border-slate-200 text-slate-700 font-semibold text-sm cursor-pointer"
-                    >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Import Excel
-                    </Button>
-                    <Button
-                        onClick={handleCreate}
-                        className="bg-[#22C55E] hover:bg-green-600 text-white rounded-xl h-10 px-6 font-semibold text-sm shadow-md shadow-green-200 active:scale-95 transition-all cursor-pointer"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Thêm nhân viên
-                    </Button>
+                    <div className="flex w-full flex-col gap-3 sm:flex-row xl:w-auto">
+                        <Button
+                            variant="outline"
+                            onClick={handleImport}
+                            className="h-10 rounded-xl border-slate-200 px-4 text-sm font-semibold text-slate-700 cursor-pointer"
+                        >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Import Excel
+                        </Button>
+                        <Button
+                            onClick={handleCreate}
+                            className="h-10 rounded-xl bg-[#22C55E] px-6 text-sm font-semibold text-white shadow-md shadow-green-200 transition-all active:scale-95 hover:bg-green-600 cursor-pointer"
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Thêm nhân viên
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[500px]">
+            <div className="flex min-h-[500px] flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
                 <div className="flex-1 overflow-x-auto">
-                    <EmployeeTable
-                        employees={employees}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                    />
+                    <EmployeeTable employees={effectiveEmployees} onEdit={handleEdit} />
                 </div>
 
-                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                <div className="mt-auto flex items-center justify-between border-t border-slate-100 px-6 py-4">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
                         disabled={page === 1}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                        className="flex items-center gap-1 text-slate-500 hover:bg-slate-50 hover:text-[#0369A1] cursor-pointer"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="h-4 w-4" />
                         Trước
                     </Button>
                     <span className="text-sm font-medium text-slate-600">
-                        Trang {page} / {totalPages}
+                        Trang {page} / {effectiveTotalPages}
                     </span>
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
-                        disabled={page === totalPages}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                        onClick={() => setPage((currentPage) => Math.min(effectiveTotalPages, currentPage + 1))}
+                        disabled={page === effectiveTotalPages}
+                        className="flex items-center gap-1 text-slate-500 hover:bg-slate-50 hover:text-[#0369A1] cursor-pointer"
                     >
                         Tiếp
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
 
             <Dialog open={isCreateOpen} onOpenChange={handleEmployeeDialogChange}>
-                <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl">
+                <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{selectedEmployee ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'}</DialogTitle>
                         <DialogDescription className="hidden">
@@ -319,7 +395,7 @@ export const EmployeeList = memo(function EmployeeList() {
             </Dialog>
 
             <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-                <DialogContent className="max-h-[90vh] overflow-y-auto max-w-4xl">
+                <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Import nhân viên</DialogTitle>
                         <DialogDescription className="hidden">
