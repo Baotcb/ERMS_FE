@@ -3,6 +3,7 @@ import { loginByGoogle } from '@/features/core/auth/api/auth-service';
 import { exchangeCodeForTokens } from '@/features/core/auth/utils/google-auth';
 import { config } from '@/config';
 import { parseJwt } from '@/utils/jwt';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 /**
  * Google Callback API Route
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
             decodedToken?.unique_name ||
             'User'
         );
+        let avatarUrl = '';
 
         // Fetch full profile to get correct display name (consistent with regular login)
         try {
@@ -53,6 +55,7 @@ export async function GET(request: NextRequest) {
                 if (profile?.fullName) {
                     fullName = profile.fullName;
                 }
+                avatarUrl = profile?.avatarUrl || '';
             }
         } catch (e) {
             console.error('Failed to fetch profile in Google callback', e);
@@ -68,9 +71,14 @@ export async function GET(request: NextRequest) {
         };
 
         // Set auth cookies correctly in the response object
-        response.cookies.set('auth_token', authResult.token, cookieOptions);
-        response.cookies.set('user_role', role, cookieOptions);
-        response.cookies.set('user_name', encodeURIComponent(fullName), cookieOptions);
+        response.cookies.set(STORAGE_KEYS.AUTH_TOKEN, authResult.token, cookieOptions);
+        response.cookies.set(STORAGE_KEYS.USER_ROLE, role, cookieOptions);
+        response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(fullName), cookieOptions);
+        if (avatarUrl) {
+            response.cookies.set(STORAGE_KEYS.USER_AVATAR, encodeURIComponent(avatarUrl), cookieOptions);
+        } else {
+            response.cookies.delete(STORAGE_KEYS.USER_AVATAR);
+        }
 
         return response;
 

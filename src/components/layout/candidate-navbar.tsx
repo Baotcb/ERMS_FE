@@ -63,6 +63,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
     const displayName = useMemo(() => user?.fullName || 'Ứng viên', [user?.fullName]);
     const userEmail = useMemo(() => user?.email || 'email@example.com', [user?.email]);
     const userId = useMemo(() => user?.id || 'N/A', [user?.id]);
+    const userAvatar = useMemo(() => user?.avatarUrl || undefined, [user?.avatarUrl]);
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-[#e8e8e8] h-16 shadow-sm">
@@ -196,7 +197,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                 label={
                                     <div className="flex items-center gap-2">
                                         <Avatar className="w-8 h-8 border border-[#e8e8e8]">
-                                            <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
+                                            <AvatarImage src={userAvatar} loading="lazy" />
                                             <AvatarFallback className="bg-[#1B5583] text-white text-xs">{userInitial}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm font-medium text-[#212f3f] hidden sm:block">
@@ -210,7 +211,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                     <div className="p-4 bg-white flex items-start gap-3 border-b border-[#EDE8F0]">
                                         <div className="relative">
                                             <Avatar className="w-12 h-12 border-2 border-white shadow-sm">
-                                                <AvatarImage src="https://github.com/shadcn.png" loading="lazy" />
+                                                <AvatarImage src={userAvatar} loading="lazy" />
                                                 <AvatarFallback className="bg-[#1B5583] text-white">{userInitial}</AvatarFallback>
                                             </Avatar>
                                             <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#1B5583] border-2 border-white rounded-full" />

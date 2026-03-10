@@ -15,6 +15,7 @@ export interface UserProfileDto {
   departmentId?: number;
   departmentName?: string;
   status: number;
+  avatarUrl?: string | null;
   dateJoined: string;
 }
 
@@ -23,12 +24,16 @@ export interface ChangeProfileRequest {
   dateOfBirth?: string;
   hometown?: string;
   phones?: string;
+  avatarUrl?: string | null;
 }
 
 /**
  * Get user profile from server
  */
 export async function getProfileServer(): Promise<UserProfileDto> {
-  return serverFetch<UserProfileDto>('/api/User/profile', { requireAuth: true });
+  return serverFetch<UserProfileDto>('/api/User/profile', {
+    requireAuth: true,
+    cache: 'no-store',
+  });
 }
 

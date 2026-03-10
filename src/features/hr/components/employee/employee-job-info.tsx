@@ -25,6 +25,10 @@ interface EmployeeJobInfoProps {
 export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
     const { register, setValue, watch, formState: { errors } } = useFormContext<EmployeeFormValues>()
 
+    const selectedDepartmentId = watch('departmentId')
+    const selectedDepartment = departments.find((department) => department.id.toString() === selectedDepartmentId)
+    const hireDate = watch('hireDate')
+
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
@@ -36,25 +40,24 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
                 <div className="space-y-2">
                     <Label>Phòng ban <span className="text-red-500">*</span></Label>
                     <Select
-                        value={watch('departmentId')}
+                        value={selectedDepartmentId}
                         onValueChange={(value) => setValue('departmentId', value)}
                     >
                         <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
                             <SelectValue placeholder="Chọn phòng ban">
-                                {(() => {
-                                    const deptId = watch('departmentId');
-                                    const found = departments.find(d => d.id.toString() === deptId);
-                                    if (found) {
-                                        return found.departmentCode ? `${found.departmentName} (${found.departmentCode})` : found.departmentName;
-                                    }
-                                    return deptId ? deptId : "Chọn phòng ban";
-                                })()}
+                                {selectedDepartment
+                                    ? selectedDepartment.departmentCode
+                                        ? `${selectedDepartment.departmentName} (${selectedDepartment.departmentCode})`
+                                        : selectedDepartment.departmentName
+                                    : selectedDepartmentId || 'Chọn phòng ban'}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            {departments.map((dept) => (
-                                <SelectItem key={dept.id} value={dept.id.toString()}>
-                                    {dept.departmentCode ? `${dept.departmentName} (${dept.departmentCode})` : dept.departmentName}
+                            {departments.map((department) => (
+                                <SelectItem key={department.id} value={department.id.toString()}>
+                                    {department.departmentCode
+                                        ? `${department.departmentName} (${department.departmentCode})`
+                                        : department.departmentName}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -78,8 +81,8 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
                 <div className="space-y-2">
                     <Label>Loại hợp đồng</Label>
                     <Select
+                        value={watch('employmentType')}
                         onValueChange={(value) => setValue('employmentType', value)}
-                        defaultValue={watch('employmentType')}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Chọn loại hợp đồng" />
@@ -92,26 +95,30 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
                         </SelectContent>
                     </Select>
                 </div>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label>Ngày vào làm</Label>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
+                                type="button"
                                 variant="outline"
                                 className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !watch('hireDate') && "text-muted-foreground"
+                                    'w-full justify-start text-left font-normal',
+                                    !hireDate && 'text-muted-foreground'
                                 )}
+                                disabled={isEdit}
                             >
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {watch('hireDate') ? format(watch('hireDate')!, 'dd/MM/yyyy') : <span>Chọn ngày</span>}
+                                {hireDate ? format(hireDate, 'dd/MM/yyyy') : <span>Chọn ngày</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                                 mode="single"
-                                selected={watch('hireDate')}
+                                selected={hireDate}
                                 onSelect={(date) => setValue('hireDate', date)}
                                 initialFocus
                             />
@@ -121,22 +128,42 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
             </div>
 
             {isEdit && (
-                <div className="max-w-[50%] space-y-2">
-                    <Label>Trạng thái</Label>
-                    <Select
-                        onValueChange={(value) => setValue('status', value)}
-                        defaultValue={watch('status')}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Chọn trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Active">Đang hoạt động</SelectItem>
-                            <SelectItem value="Inactive">Ngừng hoạt động</SelectItem>
-                            <SelectItem value="OnLeave">Nghỉ phép</SelectItem>
-                            <SelectItem value="Terminated">Đã nghỉ việc</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>Trạng thái</Label>
+                        <Select
+                            value={watch('status')}
+                            onValueChange={(value) => setValue('status', value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Chọn trạng thái" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Active">Đang hoạt động</SelectItem>
+                                <SelectItem value="Inactive">Ngưng hoạt động</SelectItem>
+                                <SelectItem value="OnLeave">Nghỉ phép</SelectItem>
+                                <SelectItem value="Terminated">Đã nghỉ việc</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Vai trò</Label>
+                        <Select
+                            value={watch('role') || '__none__'}
+                            onValueChange={(value) => setValue('role', value === '__none__' ? '' : value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Chọn vai trò" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__none__">Không thay đổi</SelectItem>
+                                <SelectItem value="Employee">Nhân viên</SelectItem>
+                                <SelectItem value="Trainer">Đào tạo viên</SelectItem>
+                                <SelectItem value="DepartmentHead">Trưởng phòng</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             )}
         </div>

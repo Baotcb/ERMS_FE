@@ -7,5 +7,9 @@ export default async function ProfilePage() {
   const session = await getServerSession();
   if (!session.token) redirect('/login');
   const profile = await getProfileServer().catch(() => null);
-  return <ProfileFormView initialData={profile} user={session.user} />;
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <ProfileFormView initialData={profile} user={session.user} />
+    </div>
+  );
 }

@@ -16,6 +16,7 @@ export interface UserProfileDto {
   departmentId?: number
   departmentName?: string
   status: number
+  avatarUrl?: string | null
   dateJoined: string
 }
 
@@ -24,6 +25,7 @@ export interface ChangeProfileRequest {
   dateOfBirth?: string
   hometown?: string
   phones?: string
+  avatarUrl?: string | null
 }
 
 
@@ -48,6 +50,7 @@ export async function updateProfile(
     dateOfBirth: data.dateOfBirth,
     hometown: data.hometown?.trim(),
     phones: data.phones?.trim(),
+    avatarUrl: data.avatarUrl?.trim() || null,
   }
 
   const response = await apiClient.put('/api/User/profile', sanitizedData)

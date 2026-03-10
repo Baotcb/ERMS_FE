@@ -85,7 +85,7 @@ const EmployeeRow = memo(function EmployeeRow({
 
             {/* Department */}
             <div className="w-48 px-6 py-4 flex-shrink-0">
-                <span className="text-sm text-gray-600">{emp.departmentName}</span>
+                <span className="text-sm text-gray-600">{emp.departmentName || '-'}</span>
             </div>
 
             {/* Position */}

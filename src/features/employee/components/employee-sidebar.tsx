@@ -1,22 +1,18 @@
 'use client'
 
-import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react'
+import { useState, memo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import {
     LayoutDashboard,
     CalendarDays,
-    Settings,
-    LogOut,
     Menu,
     X,
-    User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/features/core/auth/hooks/use-auth'
-import { logoutAction } from '@/features/core/auth/actions/auth'
+import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
 
 interface NavItem {
@@ -35,7 +31,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <LayoutDashboard className="w-5 h-5" />,
     },
     {
-        label: 'Lịch phỏng vấn',
+        label: 'Lich phong van',
         href: '/enterprise/employee/interviews',
         icon: <CalendarDays className="w-5 h-5" />,
     },
@@ -134,14 +130,13 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
 
     const sidebarContent = (
         <div className="h-full flex flex-col bg-white border-r border-gray-200">
-            {/* Logo */}
             <div className="p-6 border-b border-gray-100">
                 <Link href="/enterprise/employee/dashboard" className="flex items-center gap-3">
                     {enterpriseInfo?.logoUrl ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
                             <Image
                                 src={enterpriseInfo.logoUrl}
-                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
+                                alt={enterpriseInfo.enterpriseName || 'Enterprise Logo'}
                                 width={32}
                                 height={32}
                                 className="object-contain"
@@ -159,7 +154,6 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                 </Link>
             </div>
 
-            {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                 <div className="space-y-1">
                     {NAV_ITEMS.map((item) => {
@@ -210,9 +204,25 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                         })}
                     </div>
                 )}
+                {NAV_ITEMS.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                                'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
+                                isActive ? 'bg-[#0F4C75] text-white shadow-md' : 'text-gray-600'
+                            )}
+                        >
+                            {item.icon}
+                            <span className="font-medium">{item.label}</span>
+                        </Link>
+                    )
+                })}
             </nav>
 
-            {/* Footer with Avatar */}
             <div className="p-4 border-t border-gray-100">
                 <AvatarDropdown />
             </div>
@@ -221,7 +231,6 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
 
     return (
         <>
-            {/* Mobile Toggle */}
             <Button
                 variant="ghost"
                 size="icon"
@@ -231,7 +240,6 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                 {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
 
-            {/* Mobile Overlay */}
             {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -239,11 +247,15 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                     tabIndex={0}
                     aria-label="Close sidebar"
                     onClick={() => setIsMobileOpen(false)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsMobileOpen(false) } }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setIsMobileOpen(false)
+                        }
+                    }}
                 />
             )}
 
-            {/* Sidebar */}
             <aside
                 className={cn(
                     'fixed top-0 left-0 h-screen w-72 z-40 transition-transform duration-300',

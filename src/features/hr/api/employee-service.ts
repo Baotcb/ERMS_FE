@@ -8,14 +8,15 @@ export interface Employee {
     fullName: string
     email: string
     phone: string | null
-    departmentId: number
-    departmentName: string
+    departmentId: number | null
+    departmentName: string | null
     position: string | null
     employmentType: string
     hireDate: string | null
     status: string
     createdAt: string
-    managerId?: number | null
+    managerId?: string | null
+    roles?: string[]
 }
 
 export interface GetEmployeesParams {
@@ -117,12 +118,12 @@ export async function createEmployee(data: CreateEmployeeData): Promise<{ employ
 }
 
 export interface UpdateEmployeeData {
-    id: string
     departmentId: number
     position?: string
     employmentType?: string
     managerId?: string
     status?: string
+    role?: string
 }
 
 export async function updateEmployee(id: string, data: UpdateEmployeeData): Promise<void> {
@@ -148,7 +149,7 @@ export interface EmployeeImportItem {
     fullName: string
     email: string
     phone?: string
-    departmentCode: string
+    departmentCode?: string
     position?: string
     password?: string
     role?: string // Optional: Employee, Trainer, Director, DepartmentHead

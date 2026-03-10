@@ -9,6 +9,24 @@ export interface DecodedToken {
     [key: string]: string | number
 }
 
+function decodeBase64Url(value: string): string {
+    const normalized = value
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(value.length / 4) * 4, '=')
+
+    if (typeof Buffer !== 'undefined') {
+        return Buffer.from(normalized, 'base64').toString('utf-8')
+    }
+
+    return decodeURIComponent(
+        atob(normalized)
+            .split('')
+            .map((char) => `%${('00' + char.charCodeAt(0).toString(16)).slice(-2)}`)
+            .join('')
+    )
+}
+
 export function parseJwt(token: string): DecodedToken | null {
     try {
         const parts = token.split('.')
@@ -23,17 +41,7 @@ export function parseJwt(token: string): DecodedToken | null {
             return null
         }
 
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-        const jsonPayload = decodeURIComponent(
-            atob(base64)
-                .split('')
-                .map(function (c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-                })
-                .join('')
-        )
-
-        return JSON.parse(jsonPayload)
+        return JSON.parse(decodeBase64Url(base64Url))
     } catch (error) {
         logger.error('Failed to parse JWT token', error)
         return null
