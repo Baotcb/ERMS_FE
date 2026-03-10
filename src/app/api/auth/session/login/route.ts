@@ -49,6 +49,7 @@ export async function POST(request: Request) {
         const token = data.token
 
         // Decode JWT payload
+        let userId = ''
         let userRole = 'User'
         let userName = ''
         let userEmail = email
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
         try {
             const payload = parseJwt(token)
             if (payload) {
+                userId = String(payload.nameid || payload.sub || '')
                 userRole = String(
                     payload.role
                     || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
@@ -85,6 +87,7 @@ export async function POST(request: Request) {
             success: true,
             data: {
                 user: {
+                    id: userId,
                     email: userEmail,
                     fullName: userName,
                     role: userRole,

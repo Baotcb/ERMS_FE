@@ -41,5 +41,8 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
     [USER_ROLES.TRAINER]: '/enterprise/dept-head/dashboard',
 } as const
 
+export const DEFAULT_ENTERPRISE_DASHBOARD =
+    ROLE_DASHBOARD_MAP[USER_ROLES.HR_MANAGER]
+
 // Roles that access /enterprise/hr/* portal
 export const HR_ROLES = [USER_ROLES.HR_MANAGER, USER_ROLES.HR, USER_ROLES.ADMIN] as const

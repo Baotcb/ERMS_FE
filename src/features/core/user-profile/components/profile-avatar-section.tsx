@@ -53,7 +53,7 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start justify-between">
-          <div className="flex flex-col sm:flex-row gap-5 items-center">
+          <div className="flex min-w-0 flex-col gap-5 items-center sm:flex-row">
             <div className="relative group">
               <Avatar className="w-24 h-24 border-4 border-white bg-slate-100 shadow-md">
                 {canRenderAvatarImage ? (
@@ -77,14 +77,16 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
                 <Camera className="w-4 h-4" />
               </button>
             </div>
-            <div className="text-center sm:text-left">
-              <h3 className="text-brand-dark text-xl font-bold">{displayName}</h3>
-              <p className="text-slate-500 text-sm flex items-center gap-1 justify-center sm:justify-start mt-1">
+            <div className="min-w-0 text-center sm:text-left">
+              <h3 className="max-w-full text-brand-dark text-xl font-bold [overflow-wrap:anywhere]">
+                {displayName}
+              </h3>
+              <p className="text-slate-500 text-sm flex items-center gap-1 justify-center sm:justify-start mt-1 [overflow-wrap:anywhere]">
                 {location || 'Chưa cập nhật địa điểm'}
               </p>
             </div>
           </div>
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="flex gap-3 w-full sm:w-auto sm:shrink-0">
             <Button
               type="button"
               variant="outline"
