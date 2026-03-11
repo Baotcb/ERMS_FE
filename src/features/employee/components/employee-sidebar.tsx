@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <LayoutDashboard className="w-5 h-5" />,
     },
     {
-        label: 'Lich phong van',
+        label: 'Lịch phỏng vấn',
         href: '/enterprise/employee/interviews',
         icon: <CalendarDays className="w-5 h-5" />,
     },

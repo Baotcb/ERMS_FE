@@ -38,31 +38,31 @@ const NAV_ITEMS: NavItem[] = [
         roles: []
     },
     {
-        label: 'Nhan su',
+        label: 'Nhân sự',
         icon: <Users className="w-5 h-5" />,
         roles: ['HRManager', 'Director', 'DepartmentHead'],
         children: [
-            { label: 'Phong ban', href: '/enterprise/hr/departments' },
-            { label: 'Nhan vien', href: '/enterprise/hr/employees' }
+            { label: 'Phòng ban', href: '/enterprise/hr/departments' },
+            { label: 'Nhân viên', href: '/enterprise/hr/employees' }
         ]
     },
     {
-        label: 'Tuyen dung',
+        label: 'Tuyển dụng',
         icon: <CalendarRange className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Tin tuyen dung', href: '/enterprise/hr/job-postings' },
-            { label: 'Chien dich tuyen dung', href: '/enterprise/hr/recruitment-campaigns' }
+            { label: 'Tin tuyển dụng', href: '/enterprise/hr/job-postings' },
+            { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
         ]
     },
     {
-        label: 'Phong van',
+        label: 'Phỏng vấn',
         href: '/enterprise/hr/interviews',
         icon: <CalendarCheck className="w-5 h-5" />,
         roles: ['HRManager']
     },
     {
-        label: 'Quan ly Offer',
+        label: 'Quản lý Offer',
         href: '/enterprise/hr/offers',
         icon: <FileText className="w-5 h-5" />,
         roles: ['HRManager']
@@ -150,7 +150,7 @@ const NavMenuItem = memo(function NavMenuItem({
 export const HRSidebar = memo(function HRSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhan su'])
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const { enterpriseInfo } = useEnterpriseInfo()
 

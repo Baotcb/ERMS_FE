@@ -39,53 +39,53 @@ const NAV_ITEMS: NavItem[] = [
         roles: []
     },
     {
-        label: 'Phong ban',
+        label: 'Phòng ban',
         icon: <Building2 className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Danh sach', href: '/departments' },
-            { label: 'Them moi', href: '/departments/create' }
+            { label: 'Danh sách', href: '/departments' },
+            { label: 'Thêm mới', href: '/departments/create' }
         ]
     },
     {
-        label: 'Nhan vien',
+        label: 'Nhân viên',
         icon: <Users className="w-5 h-5" />,
         roles: ['HRManager', 'Director'],
         children: [
-            { label: 'Danh sach', href: '/employees' },
-            { label: 'Them moi', href: '/employees/create' },
+            { label: 'Danh sách', href: '/employees' },
+            { label: 'Thêm mới', href: '/employees/create' },
             { label: 'Import Excel', href: '/employees/import' }
         ]
     },
     {
-        label: 'Dao tao',
+        label: 'Đào tạo',
         icon: <GraduationCap className="w-5 h-5" />,
         roles: ['Trainer', 'HRManager', 'Director'],
         children: [
-            { label: 'Khoa hoc', href: '/training/courses' },
-            { label: 'Lich dao tao', href: '/training/schedule' }
+            { label: 'Khóa học', href: '/training/courses' },
+            { label: 'Lịch đào tạo', href: '/training/schedule' }
         ]
     },
     {
-        label: 'Bao cao',
+        label: 'Báo cáo',
         icon: <BarChart3 className="w-5 h-5" />,
         roles: ['Director', 'DepartmentHead'],
         children: [
-            { label: 'Tong quan', href: '/reports/overview' },
-            { label: 'Nhan su', href: '/reports/hr' }
+            { label: 'Tổng quan', href: '/reports/overview' },
+            { label: 'Nhân sự', href: '/reports/hr' }
         ]
     },
     {
-        label: 'Cong viec',
+        label: 'Công việc',
         icon: <FileText className="w-5 h-5" />,
         roles: ['Employee'],
         children: [
-            { label: 'Nhiem vu', href: '/tasks' },
-            { label: 'Cham cong', href: '/attendance' }
+            { label: 'Nhiệm vụ', href: '/tasks' },
+            { label: 'Chấm công', href: '/attendance' }
         ]
     },
     {
-        label: 'Lich',
+        label: 'Lịch',
         href: '/calendar',
         icon: <Calendar className="w-5 h-5" />,
         roles: []
@@ -164,7 +164,7 @@ const NavMenuItem = memo(function NavMenuItem({
 export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Phong ban', 'Nhan vien'])
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Phòng ban', 'Nhân viên'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const { enterpriseInfo } = useEnterpriseInfo()
 
