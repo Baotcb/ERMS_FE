@@ -9,9 +9,13 @@ export function usePublicJobs(params?: {
     departmentId?: string
     location?: string
     employmentType?: string
+    experienceBucket?: string
+    minSalary?: number
+    maxSalary?: number
+    sortBy?: string
 }, fallbackData?: PublicJobsResponse) {
     const key = params
-        ? ['/api/public/jobs', params.page, params.pageSize, params.search, params.departmentId, params.location, params.employmentType]
+        ? ['/api/public/jobs', params.page, params.pageSize, params.search, params.departmentId, params.location, params.employmentType, params.experienceBucket, params.minSalary, params.maxSalary, params.sortBy]
         : '/api/public/jobs'
     return useData(key, {
         fetcher: () => service.getPublicJobs({
@@ -21,6 +25,10 @@ export function usePublicJobs(params?: {
             departmentId: params?.departmentId,
             location: params?.location,
             employmentType: params?.employmentType,
+            experienceBucket: params?.experienceBucket,
+            minSalary: params?.minSalary,
+            maxSalary: params?.maxSalary,
+            sortBy: params?.sortBy,
         }),
         fallbackData,
     })
@@ -30,5 +38,11 @@ export function usePublicJob(id: string, fallbackData?: PublicJobPostingDto) {
     return useData(id ? `/api/public/jobs/${id}` : null, {
         fetcher: () => service.getPublicJobById(id),
         fallbackData,
+    })
+}
+
+export function usePublicJobFilterOptions() {
+    return useData('/api/public/jobs/filter-options', {
+        fetcher: () => service.getPublicJobFilterOptions(),
     })
 }
