@@ -215,15 +215,24 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             <Heart className={`h-4 w-4 mr-1.5 ${isSaved ? 'fill-[#e74c3c]' : ''}`} />
                             {isSaved ? 'Đã lưu' : 'Lưu'}
                         </Button>
-                        <Button
-                            size="sm"
-                            type="button"
-                            onClick={handleOpenApply}
-                            className="h-9 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-lg px-5 transition-colors shadow-none"
-                        >
-                            <Send className="h-4 w-4 mr-1.5" />
-                            Ứng tuyển ngay
-                        </Button>
+                        <Dialog open={showStickyBar && isApplyOpen} onOpenChange={setIsApplyOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="sm" className="h-9 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-lg px-5 transition-colors shadow-none">
+                                    <Send className="h-4 w-4 mr-1.5" />
+                                    Ứng tuyển ngay
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl">Ứng tuyển: {job.jobTitle}</DialogTitle>
+                                </DialogHeader>
+                                <JobApplyForm
+                                    jobId={job.id}
+                                    jobTitle={job.jobTitle}
+                                    onSuccess={() => setIsApplyOpen(false)}
+                                />
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </div>
             </div>
@@ -312,15 +321,27 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
 
                                 {/* Action Buttons Row */}
                                 <div className="flex gap-3">
-                                    <Button
-                                        size="lg"
-                                        type="button"
-                                        onClick={handleOpenApply}
-                                        className="flex-1 bg-[#1B5583] hover:bg-[#154360] text-white font-bold h-[48px] text-[15px] rounded-lg transition-colors shadow-none"
-                                    >
-                                        <Send className="mr-2 h-5 w-5" />
-                                        Ứng tuyển ngay
-                                    </Button>
+                                    <Dialog open={!showStickyBar && isApplyOpen} onOpenChange={setIsApplyOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                size="lg"
+                                                className="flex-1 bg-[#1B5583] hover:bg-[#154360] text-white font-bold h-[48px] text-[15px] rounded-lg transition-colors shadow-none"
+                                            >
+                                                <Send className="mr-2 h-5 w-5" />
+                                                Ứng tuyển ngay
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-xl">Ứng tuyển: {job.jobTitle}</DialogTitle>
+                                            </DialogHeader>
+                                            <JobApplyForm
+                                                jobId={job.id}
+                                                jobTitle={job.jobTitle}
+                                                onSuccess={() => setIsApplyOpen(false)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
 
                                     <Button
                                         variant="outline"
