@@ -77,11 +77,17 @@ export const ProfileAvatarSection = memo(function ProfileAvatarSection({
                 <Camera className="w-4 h-4" />
               </button>
             </div>
-            <div className="min-w-0 text-center sm:text-left">
-              <h3 className="max-w-full text-brand-dark text-xl font-bold [overflow-wrap:anywhere]">
+            <div className="min-w-0 max-w-full text-center sm:text-left">
+              <h3
+                className="max-w-full truncate text-brand-dark text-xl font-bold"
+                title={displayName}
+              >
                 {displayName}
               </h3>
-              <p className="text-slate-500 text-sm flex items-center gap-1 justify-center sm:justify-start mt-1 [overflow-wrap:anywhere]">
+              <p
+                className="text-slate-500 text-sm flex items-center gap-1 justify-center sm:justify-start mt-1 truncate"
+                title={location || 'Chưa cập nhật địa điểm'}
+              >
                 {location || 'Chưa cập nhật địa điểm'}
               </p>
             </div>
