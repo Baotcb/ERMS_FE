@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
 import { Search, CheckCircle2, PlusCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
@@ -27,7 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { getEmployees, Employee, PaginatedResult } from '@/features/hr/api/employee-service';
 
@@ -42,7 +42,10 @@ export function AssignTrainingPage({
 }) {
     const { toast } = useToast();
     const router = useRouter();
-    const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+    const searchParams = useSearchParams();
+    const selectedPlanId = searchParams.get('planId') || '';
+    const preselectedCourseId = searchParams.get('courseId') || '';
+    const [selectedCourseId, setSelectedCourseId] = useState<string>(preselectedCourseId);
     const [trainerSearch, setTrainerSearch] = useState('');
     const [traineeSearch, setTraineeSearch] = useState('');
     const [selectedTrainerId, setSelectedTrainerId] = useState<string>('');
@@ -81,9 +84,42 @@ export function AssignTrainingPage({
 
     useEffect(() => {
         if (currentCourse) {
-            setSelectedTrainerId(currentCourse.trainerId || '');
+            const trainerId = currentCourse.trainerId || '';
+            setSelectedTrainerId(trainerId);
+            // Remove trainer from trainee selection if already selected
+            if (trainerId) {
+                setSelectedTraineeIds(prev => prev.filter(id => id !== trainerId));
+            }
         }
     }, [currentCourse]);
+
+    const courses = useMemo(() => {
+        const allCourses = coursesData?.items || [];
+
+        if (!selectedPlanId) {
+            return allCourses;
+        }
+
+        return allCourses.filter((course) => course.trainingPlanId === selectedPlanId);
+    }, [coursesData?.items, selectedPlanId]);
+
+    useEffect(() => {
+        if (!preselectedCourseId) {
+            return;
+        }
+
+        setSelectedCourseId(preselectedCourseId);
+    }, [preselectedCourseId]);
+
+    useEffect(() => {
+        if (selectedCourseId && courses.some((course) => course.id === selectedCourseId)) {
+            return;
+        }
+
+        if (selectedPlanId && courses.length > 0) {
+            setSelectedCourseId(courses[0].id);
+        }
+    }, [courses, selectedCourseId, selectedPlanId]);
 
     const handleSaveAssignment = async () => {
         if (!selectedCourseId) {
@@ -116,8 +152,8 @@ export function AssignTrainingPage({
 
             toast({ title: 'Thành công', description: 'Đã lưu phân công đào tạo' });
             
-            // Navigate to step 2: Setup Schedule
-            router.push(`/enterprise/hr/training/schedule?courseId=${selectedCourseId}`);
+            // Navigate to step 2: Setup Schedule (Dept Head flow)
+            router.push(`/enterprise/dept-head/training/schedule?courseId=${selectedCourseId}`);
         } catch (error: unknown) {
             void error;
             toast({ title: 'Lỗi', description: 'Không thể lưu phân công đào tạo. Vui lòng thử lại.', variant: 'destructive' });
@@ -126,8 +162,10 @@ export function AssignTrainingPage({
         }
     };
 
-    const courses = coursesData?.items || [];
-    const potentialTrainers = trainersData?.items || [];
+    const potentialTrainers = useMemo(() => {
+        const employees = trainersData?.items || [];
+        return employees;
+    }, [trainersData?.items]);
     const potentialTrainees = traineesData?.items || [];
 
     return (
@@ -149,6 +187,25 @@ export function AssignTrainingPage({
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-6 space-y-8">
+                {selectedPlanId && (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-[#0F4C75]">
+                        {courses.length > 0
+                            ? 'Danh sách khóa học đang được giới hạn theo kế hoạch đào tạo bạn vừa chọn.'
+                            : 'Chưa tìm thấy khóa học nháp nào gắn với kế hoạch này. Nếu kế hoạch đã duyệt nhưng chưa có course, cần backend hoặc luồng tạo course riêng để sinh dữ liệu.'}
+                        {courses.length === 0 && (
+                            <div className="mt-3">
+                                <Button
+                                    size="sm"
+                                    className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
+                                    onClick={() => router.push('/enterprise/dept-head/training/plans')}
+                                >
+                                    Quay lại tạo khóa học
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Step 1 */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
@@ -201,6 +258,10 @@ export function AssignTrainingPage({
                             />
                         </div>
 
+                        <p className="text-xs text-gray-500">
+                            Bạn có thể chọn bất kỳ nhân viên nào làm người đào tạo; hệ thống sẽ tự nâng thành giảng viên khi lưu phân công.
+                        </p>
+
                         <div className="space-y-3 mt-4 min-h-[300px]">
                             {isLoadingTrainers ? (
                                 <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -212,7 +273,11 @@ export function AssignTrainingPage({
                                             ? 'border-[#0F4C75] bg-blue-50/30' 
                                             : 'border-gray-200 hover:border-blue-200 bg-white'
                                     }`}
-                                    onClick={() => setSelectedTrainerId(trainer.id)}
+                                    onClick={() => {
+                                        setSelectedTrainerId(trainer.id);
+                                        // Automatically remove this person from trainee list
+                                        setSelectedTraineeIds(prev => prev.filter(id => id !== trainer.id));
+                                    }}
                                 >
                                     {selectedTrainerId === trainer.id && (
                                         <Badge variant="secondary" className="absolute -top-3 right-4 bg-[#0F4C75] text-white hover:bg-[#155A8A] text-[10px] px-2 py-0">ĐÃ CHỌN</Badge>
@@ -235,6 +300,9 @@ export function AssignTrainingPage({
                                                 )}
                                             </div>
                                             <p className="text-[11px] text-gray-500 mb-2 truncate font-medium">{trainer.position || 'Nhân viên'}</p>
+                                            <p className="text-[10px] text-[#0F4C75] mb-2">
+                                                {trainer.isTrainer ? 'Giảng viên hiện có' : 'Nhân viên sẽ được nâng thành giảng viên'}
+                                            </p>
                                             <div className="flex flex-wrap gap-1">
                                                 {trainer.departmentName && (
                                                     <Badge key={trainer.departmentName} variant="secondary" className="text-[9px] text-[#0F4C75] font-bold bg-blue-50 border-0 px-2 py-0">
@@ -286,9 +354,9 @@ export function AssignTrainingPage({
                                     <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
                                         <TableHead className="w-[50px]">
                                             <Checkbox 
-                                                checked={potentialTrainees.length > 0 && selectedTraineeIds.length === potentialTrainees.length}
+                                                checked={potentialTrainees.filter((p: Employee) => p.id !== selectedTrainerId).length > 0 && selectedTraineeIds.length === potentialTrainees.filter((p: Employee) => p.id !== selectedTrainerId).length}
                                                 onCheckedChange={(checked) => {
-                                                    if (checked) setSelectedTraineeIds(potentialTrainees.map((p: Employee) => p.id));
+                                                    if (checked) setSelectedTraineeIds(potentialTrainees.filter((p: Employee) => p.id !== selectedTrainerId).map((p: Employee) => p.id));
                                                     else setSelectedTraineeIds([]);
                                                 }}
                                             />
@@ -302,34 +370,44 @@ export function AssignTrainingPage({
                                 <TableBody>
                                     {isLoadingTrainees ? (
                                         <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" /></TableCell></TableRow>
-                                    ) : potentialTrainees.map((trainee: Employee) => (
-                                        <TableRow key={trainee.id}>
-                                            <TableCell>
-                                                <Checkbox 
-                                                    checked={selectedTraineeIds.includes(trainee.id)}
-                                                    onCheckedChange={(checked) => {
-                                                        if (checked) setSelectedTraineeIds([...selectedTraineeIds, trainee.id]);
-                                                        else setSelectedTraineeIds(selectedTraineeIds.filter(id => id !== trainee.id));
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="w-8 h-8 border-2 border-white shadow-sm ring-1 ring-gray-100">
-                                                        <AvatarFallback className="bg-[#0F4C75] text-white text-[10px] font-bold">
-                                                            {trainee.fullName?.split(' ').pop()?.[0]}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="font-medium text-gray-900">{trainee.fullName}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-sm text-gray-500">{trainee.departmentName}</TableCell>
-                                            <TableCell className="text-sm text-gray-500">{trainee.position}</TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge variant="outline" className="font-normal text-gray-500">{trainee.status}</Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    ) : potentialTrainees.map((trainee: Employee) => {
+                                        const isTrainer = trainee.id === selectedTrainerId;
+                                        return (
+                                            <TableRow key={trainee.id} className={isTrainer ? 'opacity-50 bg-gray-50/80' : ''}>
+                                                <TableCell>
+                                                    <Checkbox
+                                                        checked={selectedTraineeIds.includes(trainee.id)}
+                                                        disabled={isTrainer}
+                                                        onCheckedChange={(checked) => {
+                                                            if (isTrainer) return;
+                                                            if (checked) setSelectedTraineeIds([...selectedTraineeIds, trainee.id]);
+                                                            else setSelectedTraineeIds(selectedTraineeIds.filter(id => id !== trainee.id));
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="w-8 h-8 border-2 border-white shadow-sm ring-1 ring-gray-100">
+                                                            <AvatarFallback className="bg-[#0F4C75] text-white text-[10px] font-bold">
+                                                                {trainee.fullName?.split(' ').pop()?.[0]}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <span className="font-medium text-gray-900">{trainee.fullName}</span>
+                                                            {isTrainer && (
+                                                                <span className="ml-2 text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">Trainer</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-sm text-gray-500">{trainee.departmentName}</TableCell>
+                                                <TableCell className="text-sm text-gray-500">{trainee.position}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge variant="outline" className="font-normal text-gray-500">{trainee.status}</Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                     {potentialTrainees.length === 0 && !isLoadingTrainees && (
                                         <TableRow><TableCell colSpan={5} className="text-center py-20 text-gray-400 italic">Không tìm thấy nhân viên</TableCell></TableRow>
                                     )}

@@ -133,6 +133,18 @@ export const getServerSession = cache(async () => {
       ? decodeURIComponent(userName)
       : '';
 
+    const isTrainerClaim = payload.isTrainer ?? payload.istrainer ?? payload.IsTrainer;
+    const isTrainer =
+      isTrainerClaim === 'true' ||
+      isTrainerClaim === 'True' ||
+      isTrainerClaim === 1 ||
+      String(
+        payload.role ||
+        payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+        userRole ||
+        ''
+      ) === 'Trainer';
+
     return {
       token,
       user: {
@@ -140,6 +152,7 @@ export const getServerSession = cache(async () => {
         email,
         fullName,
         avatarUrl: userAvatar ? decodeURIComponent(userAvatar) : undefined,
+        isTrainer,
         role: String(
           payload.role ||
           payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||

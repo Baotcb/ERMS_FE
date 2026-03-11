@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { 
     PlusCircle, GripVertical, FileText, Video, 
-    Trash2, Edit3, Loader2, MoreVertical, Clock, Layers, Upload
+    Trash2, Loader2, MoreVertical, Clock, Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
@@ -15,15 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
+import { CourseSection } from '@/features/hr/types/course-content-types';
 import { courseContentService } from '@/features/hr/api/course-content-service';
 import { useToast } from '@/hooks/use-toast';
 
 interface CurriculumManagerProps {
     courseId: string;
 }
-
-import { FileUpload } from '@/components/common/file-upload';
 
 export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const { toast } = useToast();
@@ -35,6 +32,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     // Lesson addition state
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
     const [lessonTitle, setLessonTitle] = useState('');
+    const [lessonVideoUrl, setLessonVideoUrl] = useState('');
     const [lessonDuration, setLessonDuration] = useState(15);
     const [isAddingLesson, setIsAddingLesson] = useState(false);
 
@@ -48,8 +46,8 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             const data = await courseContentService.getCourseCurriculum(courseId);
             setSections(data || []);
         } catch (error) {
-            console.error('Error loading curriculum:', error);
-            // Fallback for demo
+            const message = error instanceof Error ? error.message : 'Không thể tải chương trình học.';
+            toast({ title: 'Lỗi tải dữ liệu', description: message, variant: 'destructive' });
             setSections([]);
         } finally {
             setIsLoading(false);
@@ -61,7 +59,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         setIsAddingSection(true);
         try {
             const newSection: CourseSection = {
-                id: Math.random().toString(36).substr(2, 9),
+                id: `local-${Math.random().toString(36).substr(2, 9)}`,
                 courseId,
                 title: newSectionTitle,
                 orderIndex: sections.length + 1,
@@ -77,32 +75,54 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         }
     };
 
+    const handleDeleteSection = (sectionId: string) => {
+        setSections(prev => prev.filter(s => s.id !== sectionId));
+        toast({ description: 'Đã xóa học phần.' });
+    };
+
     const handleAddLesson = async () => {
         if (!lessonTitle.trim() || !activeSectionId) return;
         setIsAddingLesson(true);
         try {
-            const newLesson: Lesson = {
-                id: Math.random().toString(36).substr(2, 9),
+            const orderIndex = (sections.find(s => s.id === activeSectionId)?.lessons.length || 0) + 1;
+            const newLesson = await courseContentService.createLesson({
                 courseId,
-                sectionId: activeSectionId,
                 title: lessonTitle,
-                durationMinutes: lessonDuration,
-                orderIndex: (sections.find(s => s.id === activeSectionId)?.lessons.length || 0) + 1,
-            };
+                videoUrl: lessonVideoUrl.trim() || undefined,
+                durationMinutes: lessonDuration || 15,
+                orderIndex,
+            });
 
-            setSections(prev => prev.map(s => 
-                s.id === activeSectionId 
+            setSections(prev => prev.map(s =>
+                s.id === activeSectionId
                     ? { ...s, lessons: [...s.lessons, newLesson] }
                     : s
             ));
 
             setLessonTitle('');
+            setLessonVideoUrl('');
             setActiveSectionId(null);
             toast({ title: 'Thành công', description: 'Đã thêm bài giảng mới.' });
-        } catch {
-            toast({ title: 'Lỗi', description: 'Không thể thêm bài giảng.', variant: 'destructive' });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Không thể thêm bài giảng.';
+            toast({ title: 'Lỗi', description: message, variant: 'destructive' });
         } finally {
             setIsAddingLesson(false);
+        }
+    };
+
+    const handleDeleteLesson = async (sectionId: string, lessonId: string) => {
+        try {
+            await courseContentService.deleteLesson(lessonId);
+            setSections(prev => prev.map(s =>
+                s.id === sectionId
+                    ? { ...s, lessons: s.lessons.filter(l => l.id !== lessonId) }
+                    : s
+            ));
+            toast({ description: 'Đã xóa bài giảng.' });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Không thể xóa bài giảng.';
+            toast({ title: 'Lỗi', description: message, variant: 'destructive' });
         }
     };
 
@@ -174,10 +194,12 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" className="rounded-xl h-9 w-9 p-0 hover:bg-blue-50 hover:text-[#3282B8]">
-                                        <Edit3 className="w-4 h-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="rounded-xl h-9 w-9 p-0 text-red-500 hover:text-red-600 hover:bg-red-50">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="rounded-xl h-9 w-9 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                        onClick={() => handleDeleteSection(section.id)}
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -215,13 +237,10 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="rounded-xl min-w-[160px]">
-                                                <DropdownMenuItem className="gap-2 font-medium">
-                                                    <Edit3 className="w-4 h-4" /> Chỉnh sửa
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="gap-2 font-medium">
-                                                    <Upload className="w-4 h-4" /> Tải lên tài liệu
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem className="gap-2 font-medium text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                <DropdownMenuItem
+                                                    className="gap-2 font-medium text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                    onClick={() => handleDeleteLesson(section.id, lesson.id)}
+                                                >
                                                     <Trash2 className="w-4 h-4" /> Xóa bài giảng
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -244,8 +263,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                         <DialogHeader>
                                             <DialogTitle className="text-[#0F4C75] font-bold text-xl">Thêm bài giảng mới</DialogTitle>
                                         </DialogHeader>
-                                        <div className="py-6 grid grid-cols-2 gap-8">
-                                            <div className="space-y-6">
+                                        <div className="py-6 space-y-4">
                                                 <div className="space-y-2">
                                                     <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tiêu đề bài giảng</Label>
                                                     <Input 
@@ -264,11 +282,15 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                                         className="rounded-xl border-gray-200 h-11"
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tài liệu đính kèm</Label>
-                                                <FileUpload onUploadComplete={(url) => console.log(url)} />
-                                            </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Video bài giảng (URL)</Label>
+                                                    <Input
+                                                        placeholder="https://..."
+                                                        value={lessonVideoUrl}
+                                                        onChange={(e) => setLessonVideoUrl(e.target.value)}
+                                                        className="rounded-xl border-gray-200 h-11"
+                                                    />
+                                                </div>
                                         </div>
                                         <DialogFooter>
                                             <Button 

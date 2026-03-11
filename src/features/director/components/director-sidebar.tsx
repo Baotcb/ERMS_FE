@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
+import { useAuth } from '@/features/core/auth/hooks/use-auth'
 
 interface SidebarItem {
     title: string
@@ -52,17 +53,34 @@ const sidebarItems: SidebarItem[] = [
         title: 'Đào tạo',
         icon: GraduationCap,
         children: [
-            { label: 'Duyệt kế hoạch', href: '/enterprise/director/training-approval' },
-            { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
-            { label: 'Thiết lập lịch trình', href: '/enterprise/hr/training/schedule' }
+            { label: 'Duyệt kế hoạch', href: '/enterprise/director/training-approval' }
         ]
     },
 ]
 
 export function DirectorSidebar() {
     const pathname = usePathname()
+    const { user } = useAuth()
 
     const { enterpriseInfo } = useEnterpriseInfo()
+
+    const dynamicSidebarItems: SidebarItem[] = user?.isTrainer
+        ? sidebarItems.map((item) => {
+            if (item.title !== 'Đào tạo' || !item.children) {
+                return item
+            }
+
+            const hasTrainerLink = item.children.some((child) => child.href === '/enterprise/director/teaching')
+            if (hasTrainerLink) {
+                return item
+            }
+
+            return {
+                ...item,
+                children: [...item.children, { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' }]
+            }
+        })
+        : sidebarItems
 
     return (
         <div className="flex bg-white h-screen flex-col w-64 border-r border-gray-200">
@@ -93,7 +111,7 @@ export function DirectorSidebar() {
 
             {/* Navigation Section */}
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                {sidebarItems.map((item) => {
+                {dynamicSidebarItems.map((item) => {
                     const Icon = item.icon
                     const hasChildren = 'children' in item && item.children && item.children.length > 0
                     const isActive = item.href ? (pathname === item.href || pathname?.startsWith(item.href + '/')) : false

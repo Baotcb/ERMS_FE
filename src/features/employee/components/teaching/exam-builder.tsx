@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import { 
     PlusCircle, Trash2, 
-    CheckCircle2, Clock, Award, Save, Loader2
+    CheckCircle2, Clock, Award, Save, Loader2, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
@@ -61,12 +60,29 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
     };
 
     const handleSave = async () => {
+        if (questions.length === 0) {
+            toast({ title: 'Chưa có câu hỏi', description: 'Vui lòng thêm ít nhất một câu hỏi.', variant: 'destructive' });
+            return;
+        }
+
+        const invalid = questions.find(q =>
+            !q.text.trim() || q.options.some(o => !o.trim())
+        );
+        if (invalid) {
+            toast({ title: 'Dữ liệu chưa đầy đủ', description: 'Vui lòng điền nội dung cho tất cả câu hỏi và các lựa chọn.', variant: 'destructive' });
+            return;
+        }
+
+        if (passingScore < 0 || passingScore > 100) {
+            toast({ title: 'Điểm đạt không hợp lệ', description: 'Điểm đạt phải từ 0 đến 100.', variant: 'destructive' });
+            return;
+        }
+
         setIsSaving(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            toast({ title: 'Thành công', description: 'Đã lưu cấu hình bài thi.' });
-        } catch (error) {
-            toast({ title: 'Lỗi', description: 'Không thể lưu bài thi.', variant: 'destructive' });
+            // TODO: Integrate with exam API endpoint when backend is available
+            // await examService.saveExam(courseId, { questions, passingScore, timeLimit });
+            toast({ title: 'Đã ghi nhận', description: `Bài thi ${questions.length} câu hỏi, điểm đạt ${passingScore}%. Lưu vĩnh viễn sẽ khả dụng khi backend tích hợp endpoint exam.` });
         } finally {
             setIsSaving(false);
         }
@@ -74,6 +90,10 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
 
     return (
         <div className="space-y-8">
+            <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>Tính năng bài thi đang chờ tích hợp backend. Câu hỏi được cấu hình ở đây chưa được lưu vĩnh viễn.</span>
+            </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
                 <div className="space-y-1">
                     <h3 className="text-xl font-bold text-[#0F4C75]">Bài thi cuối khóa</h3>

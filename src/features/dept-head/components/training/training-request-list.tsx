@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
@@ -44,18 +45,21 @@ const STATUS_COLORS: Record<string, string> = {
     Pending: 'bg-yellow-100 text-yellow-800',
     Approved: 'bg-green-100 text-green-800',
     Rejected: 'bg-red-100 text-red-800',
+    AddedToPlan: 'bg-blue-100 text-blue-800',
 };
 
 const STATUS_LABELS: Record<string, string> = {
     Pending: 'Chờ duyệt',
     Approved: 'Đã duyệt',
     Rejected: 'Từ chối',
+    AddedToPlan: 'Đã thêm vào KH',
 };
 
 import { TrainingRequestDetail } from './training-request-detail';
 import { TrainingRequest } from '../../types/training-types';
 
 export function TrainingRequestList({ initialData }: { initialData?: TrainingRequestsResult }) {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<TrainingRequest | null>(null);
@@ -90,16 +94,42 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Yêu cầu đào tạo</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Theo dõi và quản lý các yêu cầu đào tạo của phòng ban (Bản mô phỏng)
+                        Theo dõi và quản lý các yêu cầu đào tạo của phòng ban
                     </p>
                 </div>
-                <Button 
-                    onClick={() => setIsCreateOpen(true)} 
-                    className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white shadow-lg shadow-blue-900/10 transition-all hover:scale-[1.02]"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Gửi yêu cầu mới
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => router.push('/enterprise/dept-head/training/plans')}
+                        className="border-[#0F4C75] text-[#0F4C75] hover:bg-blue-50"
+                    >
+                        <ArrowRight className="mr-2 h-4 w-4" /> Kế hoạch đào tạo
+                    </Button>
+                    <Button 
+                        onClick={() => setIsCreateOpen(true)} 
+                        className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white shadow-lg shadow-blue-900/10 transition-all hover:scale-[1.02]"
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Gửi yêu cầu mới
+                    </Button>
+                </div>
             </div>
+
+            {data?.items?.some((r) => r.status === 'AddedToPlan') && (
+                <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-[#0F4C75]">
+                    <ArrowRight className="h-5 w-5 shrink-0 text-blue-500" />
+                    <span className="flex-1">
+                        Một số yêu cầu của bạn đã được thêm vào kế hoạch đào tạo và được Giám đốc phê duyệt.
+                        Hãy vào <strong>Kế hoạch đào tạo</strong> để tạo khóa học và mở phân công.
+                    </span>
+                    <Button
+                        size="sm"
+                        onClick={() => router.push('/enterprise/dept-head/training/plans')}
+                        className="shrink-0 bg-[#0F4C75] text-white hover:bg-[#1A5F8C]"
+                    >
+                        Xem kế hoạch
+                    </Button>
+                </div>
+            )}
 
             <div className="flex items-center bg-white px-4 py-3 rounded-lg border border-gray-100 shadow-sm">
                 <div className="relative flex-1 max-w-sm">

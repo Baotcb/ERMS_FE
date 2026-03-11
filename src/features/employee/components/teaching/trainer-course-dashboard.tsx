@@ -38,9 +38,10 @@ type CourseFormValues = z.infer<typeof courseSchema>;
 
 interface TrainerCourseDashboardProps {
     initialCourse: Course;
+    teachingBasePath?: string;
 }
 
-export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboardProps) {
+export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/enterprise/employee/teaching' }: TrainerCourseDashboardProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [course, setCourse] = useState<Course>(initialCourse);
@@ -63,7 +64,7 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
         setIsSaving(true);
         try {
             await courseService.updateCourse(course.id, {
-                ...initialCourse,
+                ...course,
                 ...values
             });
             setCourse(prev => ({ ...prev, ...values }));
@@ -76,14 +77,36 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
         }
     };
 
+    const handleSaveDraft = async () => {
+        const values = form.getValues();
+        if (!values.courseName) {
+            toast({ title: 'Thiếu tên khóa học', description: 'Vui lòng nhập tên khóa học trước khi lưu.', variant: 'destructive' });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await courseService.updateCourse(course.id, {
+                ...course,
+                ...values,
+            });
+            setCourse(prev => ({ ...prev, ...values }));
+            toast({ title: 'Đã lưu bản nháp', description: 'Thông tin khóa học đã được lưu.' });
+        } catch {
+            toast({ title: 'Lỗi', description: 'Không thể lưu bản nháp.', variant: 'destructive' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handlePublish = async () => {
         setIsSaving(true);
         try {
             await courseService.publishCourse(course.id);
             setCourse(prev => ({ ...prev, status: 'Published' }));
-            toast({ title: 'Chúc mừng!', description: 'Khóa học của bạn đã được xuất bản thành công.' });
-            router.push('/enterprise/employee/teaching');
+            toast({ title: 'Chúc mừng!', description: 'Khóa học đã được xuất bản theo luồng nhiệm vụ giảng viên.' });
+            router.push(teachingBasePath);
         } catch (error) {
+            void error;
             toast({ title: 'Lỗi', description: 'Không thể xuất bản khóa học.', variant: 'destructive' });
         } finally {
             setIsSaving(false);
@@ -113,7 +136,7 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
                     <Badge className={course.status === 'Published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
                         {course.status === 'Published' ? 'Đã xuất bản' : 'Đang thiết lập'}
                     </Badge>
-                    <Button variant="outline" className="rounded-xl border-gray-200">
+                    <Button variant="outline" className="rounded-xl border-gray-200" onClick={handleSaveDraft} disabled={isSaving}>
                         <Save className="w-4 h-4 mr-2" />
                         Lưu bản nháp
                     </Button>
@@ -124,13 +147,13 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 gap-1">
                     <TabsTrigger value="basics" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <Layout className="w-4 h-4" /> 1. Cơ bản
+                        <Layout className="w-4 h-4" /> 1. Nhận nhiệm vụ
                     </TabsTrigger>
                     <TabsTrigger value="curriculum" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <Layers className="w-4 h-4" /> 2. Chương trình
+                        <Layers className="w-4 h-4" /> 2. Tài liệu
                     </TabsTrigger>
                     <TabsTrigger value="exam" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <FileText className="w-4 h-4" /> 3. Đánh giá
+                        <FileText className="w-4 h-4" /> 3. Lộ trình & Thi cuối khóa
                     </TabsTrigger>
                     <TabsTrigger value="publish" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
                         <Send className="w-4 h-4" /> 4. Xuất bản
@@ -142,8 +165,8 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
                     <TabsContent value="basics" className="m-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="max-w-3xl space-y-8">
                             <div className="space-y-2">
-                                <h2 className="text-xl font-bold text-[#0F4C75]">Tiếp nhận nhiệm vụ & Thiết lập cơ bản</h2>
-                                <p className="text-gray-500 text-sm">Xác nhận thông tin khóa học và cập nhật mô tả chi tiết để học viên nắm bắt được mục tiêu học tập.</p>
+                                <h2 className="text-xl font-bold text-[#0F4C75]">Nhận nhiệm vụ & Khởi tạo khóa học</h2>
+                                <p className="text-gray-500 text-sm">Giảng viên tiếp nhận khóa học được giao và hoàn thiện thông tin khởi tạo trước khi bổ sung tài liệu.</p>
                             </div>
 
                             <Form {...form}>
@@ -235,8 +258,8 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
 
                     <TabsContent value="curriculum" className="m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="space-y-1 mb-8">
-                            <h2 className="text-xl font-bold text-[#0F4C75]">Chương trình học</h2>
-                            <p className="text-gray-500 text-sm">Tổ chức các học phần, bài giảng và tài liệu cho khóa học này.</p>
+                            <h2 className="text-xl font-bold text-[#0F4C75]">Tải lên tài liệu</h2>
+                            <p className="text-gray-500 text-sm">Tổ chức học phần, bài giảng và tài liệu để chuẩn bị cho lộ trình học.</p>
                         </div>
 
                         <CurriculumManager courseId={course.id} />
@@ -259,8 +282,8 @@ export function TrainerCourseDashboard({ initialCourse }: TrainerCourseDashboard
                     <TabsContent value="publish" className="m-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="max-w-2xl space-y-8">
                             <div className="space-y-1">
-                                <h2 className="text-2xl font-bold text-[#0F4C75]">Xác nhận & Xuất bản</h2>
-                                <p className="text-gray-500 font-medium">Kiểm tra lại toàn bộ nội dung trước khi công khai khóa học cho học viên.</p>
+                                <h2 className="text-2xl font-bold text-[#0F4C75]">Xuất bản khóa học</h2>
+                                <p className="text-gray-500 font-medium">Kiểm tra lại toàn bộ nội dung trước khi chính thức mở khóa học cho học viên.</p>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">

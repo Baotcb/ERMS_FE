@@ -31,13 +31,38 @@ export const courseService = {
 
     async createCourse(data: CreateCourseCommand): Promise<{ courseId: string }> {
         const response = await apiClient.post('/api/Course', data);
-        if (!response.ok) throw new Error('Không thể tạo khóa học');
-        return response.json();
+        if (!response.ok) {
+            let message = `Không thể tạo khóa học (HTTP ${response.status})`;
+            try {
+                const body = await response.text();
+                if (!body) {
+                    message = `Không thể tạo khóa học (HTTP ${response.status}). Backend không trả chi tiết lỗi.`;
+                } else {
+                    const json = JSON.parse(body);
+                    message = json.message ?? json.title ?? json.detail ?? body ?? message;
+                }
+            } catch { /* ignore parse error */ }
+            throw new Error(message);
+        }
+        const result = await response.json() as { courseId?: string; CourseId?: string };
+        const courseId = result.courseId ?? result.CourseId;
+        if (!courseId) {
+            throw new Error('Tạo khóa học thành công nhưng không nhận được CourseId từ backend.');
+        }
+        return { courseId };
     },
 
     async updateCourse(id: string, data: UpdateCourseCommand): Promise<{ ok: boolean }> {
         const response = await apiClient.put(`/api/Course/${id}`, data);
-        if (!response.ok) throw new Error('Không thể cập nhật khóa học');
+        if (!response.ok) {
+            let message = 'Không thể cập nhật khóa học';
+            try {
+                const body = await response.text();
+                const json = JSON.parse(body);
+                message = json.message ?? json.title ?? json.detail ?? body ?? message;
+            } catch { /* ignore parse error */ }
+            throw new Error(message);
+        }
         return { ok: true };
     },
 
@@ -48,8 +73,22 @@ export const courseService = {
     },
 
     async publishCourse(id: string): Promise<{ ok: boolean }> {
-        const response = await apiClient.post(`/api/Course/${id}/publish`, {});
-        if (!response.ok) throw new Error('Không thể công khai khóa học');
+        const response = await apiClient.post(`/api/Course/${id}/publish`, {}, { retries: 0 });
+        if (!response.ok) {
+            let message = `Không thể công khai khóa học (HTTP ${response.status})`;
+            try {
+                const body = await response.text();
+                if (body) {
+                    const json = JSON.parse(body);
+                    message = json.message ?? json.title ?? json.detail ?? body ?? message;
+                }
+            } catch {
+                // ignore parsing errors and keep default message
+            }
+            const error = new Error(message) as Error & { status?: number };
+            error.status = response.status;
+            throw error;
+        }
         return { ok: true };
     }
 };

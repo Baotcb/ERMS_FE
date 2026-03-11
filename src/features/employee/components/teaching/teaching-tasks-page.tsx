@@ -1,28 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import useSWR from 'swr';
+import { useMemo, useState } from 'react';
 import { 
     Clock, Users, ArrowRight, CheckCircle2, AlertCircle, Search, GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/features/core/auth/hooks/use-auth';
-import { courseService } from '@/features/hr/api/course-service';
 import { Course } from '@/features/hr/types/course-types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 
-export function TeachingTasksPage() {
+export function TeachingTasksPage({
+    teachingBasePath = '/enterprise/employee/teaching',
+    initialCourses = [],
+}: {
+    teachingBasePath?: string;
+    initialCourses?: Course[];
+}) {
     const { user } = useAuth();
     const [search, setSearch] = useState('');
 
-    const { data, isLoading } = useSWR(
-        user ? ['/api/Course', 'trainer', user.id, search] : null,
-        () => courseService.getAllCourses({ trainerId: user?.id, search })
-    );
+    const courses = useMemo(() => {
+        if (!user) {
+            return [];
+        }
 
-    const courses = data?.items || [];
+        const normalizedSearch = search.trim().toLowerCase();
+
+        return initialCourses.filter((course) => {
+            const matchesOwnership = course.trainerId === user.id || (
+                Boolean(user.fullName) &&
+                Boolean(course.trainerName) &&
+                course.trainerName!.trim().toLowerCase() === user.fullName!.trim().toLowerCase()
+            );
+
+            if (!matchesOwnership) {
+                return false;
+            }
+
+            if (!normalizedSearch) {
+                return true;
+            }
+
+            return (
+                course.courseName.toLowerCase().includes(normalizedSearch) ||
+                course.courseCode.toLowerCase().includes(normalizedSearch) ||
+                (course.description || '').toLowerCase().includes(normalizedSearch)
+            );
+        });
+    }, [initialCourses, search, user]);
 
     const getStatusStep = (course: Course) => {
         if (course.status === 'Published') return 4;
@@ -33,10 +60,10 @@ export function TeachingTasksPage() {
 
     const getStepLabel = (step: number) => {
         switch (step) {
-            case 1: return 'Tiếp nhận & Tạo khóa';
+            case 1: return 'Nhận nhiệm vụ & Khởi tạo';
             case 2: return 'Tải lên tài liệu';
-            case 3: return 'Cấu hình lộ trình & Thi';
-            case 4: return 'Hoàn tất & Xuất bản';
+            case 3: return 'Lộ trình học & Bài thi cuối khóa';
+            case 4: return 'Xuất bản khóa học';
             default: return 'Khởi tạo';
         }
     };
@@ -64,11 +91,7 @@ export function TeachingTasksPage() {
 
             {/* Task Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {isLoading ? (
-                    Array(3).fill(0).map((_, i) => (
-                        <div key={i} className="h-80 bg-gray-100 animate-pulse rounded-3xl" />
-                    ))
-                ) : courses.length === 0 ? (
+                {courses.length === 0 ? (
                     <div className="col-span-full bg-white p-12 rounded-3xl border border-dashed border-gray-200 text-center space-y-4">
                         <div className="w-16 h-16 bg-blue-50 text-blue-400 rounded-full flex items-center justify-center mx-auto">
                             <GraduationCap className="w-8 h-8" />
@@ -142,7 +165,7 @@ export function TeachingTasksPage() {
                                         className="w-full bg-[#0F4C75] hover:bg-[#1B262C] text-white rounded-xl py-6 font-bold flex items-center justify-center gap-2 group/btn"
                                         asChild
                                     >
-                                        <a href={`/enterprise/employee/teaching/course/${course.id}`}>
+                                        <a href={`${teachingBasePath}/course/${course.id}`}>
                                             Tiếp tục xử lý
                                             <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                                         </a>

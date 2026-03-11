@@ -31,10 +31,18 @@ function isValidHttpUrl(value: string): boolean {
 
 export function SetupTrainingSchedulePage({ 
     initialCourses, 
-    initialCourseDetails 
+    initialCourseDetails,
+    headingTitle = 'Thông báo & Mở lịch đào tạo',
+    headingDescription = 'HR cấu hình thời gian, địa điểm và mở lịch đào tạo để các bên tiếp tục triển khai.',
+    stepTwoLabel = 'Bước 2: HR mở lịch & thông báo',
+    publishRedirectPath = '/enterprise/hr/training/requests'
 }: { 
     initialCourses?: CourseResult; 
     initialCourseDetails?: Course;
+    headingTitle?: string;
+    headingDescription?: string;
+    stepTwoLabel?: string;
+    publishRedirectPath?: string;
 }) {
     const { toast } = useToast();
     const router = useRouter();
@@ -45,9 +53,11 @@ export function SetupTrainingSchedulePage({
     const [locationType, setLocationType] = useState<'online' | 'offline'>('online');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
     const [meetingLink, setMeetingLink] = useState('https://meet.google.com/');
+    const [offlineLocation, setOfflineLocation] = useState('');
+    const [notifyTrainer, setNotifyTrainer] = useState(true);
+    const [notifyTrainees, setNotifyTrainees] = useState(true);
+    const [remindBefore15m, setRemindBefore15m] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch Courses
@@ -85,17 +95,19 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (startDate && endDate && startDate === endDate && startTime && endTime && endTime <= startTime) {
-            toast({ title: 'Lỗi', description: 'Giờ kết thúc phải sau giờ bắt đầu', variant: 'destructive' });
+        if (locationType === 'offline' && !offlineLocation.trim()) {
+            toast({ title: 'Lỗi', description: 'Vui lòng nhập phòng họp/địa điểm tổ chức', variant: 'destructive' });
             return;
         }
 
         setIsSubmitting(true);
         try {
             const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
+            const locationValue = locationType === 'online' ? meetingLink : offlineLocation.trim();
+            const notificationConfig = `\nThông báo: giảng viên=${notifyTrainer ? 'on' : 'off'}, học viên=${notifyTrainees ? 'on' : 'off'}, nhắc_15_phút=${remindBefore15m ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
-                description: `${baseDescription}\n[DRAFT] Lịch trình: ${startDate} to ${endDate}, ${startTime}-${endTime}. Địa điểm: ${locationType === 'online' ? meetingLink : 'Tại văn phòng'}`
+                description: `${baseDescription}\n[DRAFT] Lịch trình: ${startDate} đến ${endDate}. Địa điểm: ${locationValue}${notificationConfig}`
             } as UpdateCourseCommand);
             toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
         } catch (error: unknown) {
@@ -117,8 +129,8 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (!startDate || !endDate || !startTime || !endTime) {
-            toast({ title: 'Lỗi', description: 'Vui lòng điền đầy đủ thông tin thời gian', variant: 'destructive' });
+        if (!startDate || !endDate) {
+            toast({ title: 'Lỗi', description: 'Vui lòng điền đầy đủ thông tin ngày bắt đầu/kết thúc', variant: 'destructive' });
             return;
         }
 
@@ -127,8 +139,8 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (startDate === endDate && endTime <= startTime) {
-            toast({ title: 'Lỗi', description: 'Giờ kết thúc phải sau giờ bắt đầu', variant: 'destructive' });
+        if (locationType === 'offline' && !offlineLocation.trim()) {
+            toast({ title: 'Lỗi', description: 'Vui lòng nhập phòng họp/địa điểm tổ chức', variant: 'destructive' });
             return;
         }
 
@@ -141,19 +153,21 @@ export function SetupTrainingSchedulePage({
         try {
             // 1. Update Course Schedule info
             const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
+            const locationValue = locationType === 'online' ? meetingLink : offlineLocation.trim();
+            const notificationConfig = `\nThông báo: giảng viên=${notifyTrainer ? 'on' : 'off'}, học viên=${notifyTrainees ? 'on' : 'off'}, nhắc_15_phút=${remindBefore15m ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
-                description: `${baseDescription}\nLịch trình: ${startDate} to ${endDate}, ${startTime}-${endTime}. Địa điểm: ${locationType === 'online' ? meetingLink : 'Tại văn phòng'}`
+                description: `${baseDescription}\nLịch trình: ${startDate} đến ${endDate}. Địa điểm: ${locationValue}${notificationConfig}`
             } as UpdateCourseCommand);
 
-            // 2. Publish (Finalize and notify)
-            await courseService.publishCourse(selectedCourseId);
-
+            // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).
             toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình và gửi thông báo cho tất cả học viên.' });
-            router.push('/enterprise/hr/training/requests'); 
+            router.push(publishRedirectPath);
         } catch (error: unknown) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể hoàn tất thiết lập lịch trình. Vui lòng thử lại.', variant: 'destructive' });
+            const errorMessage = error instanceof Error
+                ? error.message
+                : 'Không thể hoàn tất thiết lập lịch trình. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -166,8 +180,8 @@ export function SetupTrainingSchedulePage({
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#0F4C75] mb-1">Thiết lập Lịch trình Đào tạo</h1>
-                    <p className="text-gray-500">Cấu hình thời gian, địa điểm và gửi thông báo cho khóa học.</p>
+                    <h1 className="text-2xl font-bold text-[#0F4C75] mb-1">{headingTitle}</h1>
+                    <p className="text-gray-500">{headingDescription}</p>
                 </div>
             </div>
 
@@ -181,13 +195,13 @@ export function SetupTrainingSchedulePage({
                                 <div className="w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center border border-green-200 shadow-sm">
                                     <CheckIcon className="w-4 h-4" />
                                 </div>
-                                <span className="font-semibold text-sm text-gray-500">Bước 1: Phân công</span>
+                                <span className="font-semibold text-sm text-gray-500">Bước 1: Trưởng bộ phận phân công</span>
                             </div>
                             <div className="flex items-center gap-3 bg-white pl-4">
                                 <div className="w-7 h-7 rounded-full bg-[#0F4C75] text-white flex items-center justify-center text-sm font-bold border-2 border-[#BBE1FA] shadow-md">
                                     2
                                 </div>
-                                <span className="font-bold text-sm text-[#0F4C75] tracking-tight">Bước 2: Thiết lập</span>
+                                <span className="font-bold text-sm text-[#0F4C75] tracking-tight">{stepTwoLabel}</span>
                             </div>
                         </div>
                         <div className="absolute top-3.5 left-0 w-full h-[2px] bg-gray-100 rounded-full -z-0">
@@ -248,30 +262,6 @@ export function SetupTrainingSchedulePage({
                                         <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-600">Giờ bắt đầu buổi học</label>
-                                    <div className="relative">
-                                        <Input 
-                                            type="time"
-                                            value={startTime}
-                                            onChange={(e) => setStartTime(e.target.value)}
-                                            className="bg-white border-gray-200" 
-                                        />
-                                        <Clock className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-600">Giờ kết thúc buổi học</label>
-                                    <div className="relative">
-                                        <Input 
-                                            type="time"
-                                            value={endTime}
-                                            onChange={(e) => setEndTime(e.target.value)}
-                                            className="bg-white border-gray-200" 
-                                        />
-                                        <Clock className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -316,7 +306,12 @@ export function SetupTrainingSchedulePage({
                             ) : (
                                 <div className="space-y-2 mt-4 animate-in fade-in duration-300">
                                     <label className="text-sm font-semibold text-gray-600">Phòng họp / Địa điểm</label>
-                                    <Input placeholder="Nhập tên phòng hoặc địa chỉ..." className="bg-gray-50/50 border-gray-200 font-medium" />
+                                    <Input
+                                        value={offlineLocation}
+                                        onChange={(e) => setOfflineLocation(e.target.value)}
+                                        placeholder="Nhập tên phòng hoặc địa chỉ..."
+                                        className="bg-gray-50/50 border-gray-200 font-medium"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -336,7 +331,7 @@ export function SetupTrainingSchedulePage({
                                         </div>
                                         <span className="font-semibold text-gray-700">Gửi email cho giảng viên</span>
                                     </div>
-                                    <Switch defaultChecked className="data-[state=checked]:bg-[#0F4C75]" />
+                                    <Switch checked={notifyTrainer} onCheckedChange={setNotifyTrainer} className="data-[state=checked]:bg-[#0F4C75]" />
                                 </div>
                                 <Separator className="bg-gray-200" />
                                 <div className="flex items-center justify-between">
@@ -346,7 +341,7 @@ export function SetupTrainingSchedulePage({
                                         </div>
                                         <span className="font-semibold text-gray-700">Gửi email cho học viên</span>
                                     </div>
-                                    <Switch defaultChecked className="data-[state=checked]:bg-[#0F4C75]" />
+                                    <Switch checked={notifyTrainees} onCheckedChange={setNotifyTrainees} className="data-[state=checked]:bg-[#0F4C75]" />
                                 </div>
                                 <Separator className="bg-gray-200" />
                                 <div className="flex items-center justify-between">
@@ -356,7 +351,7 @@ export function SetupTrainingSchedulePage({
                                         </div>
                                         <span className="font-semibold text-gray-700">Nhắc nhở trước 15 phút</span>
                                     </div>
-                                    <Switch className="data-[state=checked]:bg-[#0F4C75]" />
+                                    <Switch checked={remindBefore15m} onCheckedChange={setRemindBefore15m} className="data-[state=checked]:bg-[#0F4C75]" />
                                 </div>
                             </div>
                         </div>

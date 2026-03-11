@@ -13,6 +13,7 @@ import {
     ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/features/core/auth/hooks/use-auth'
 
 interface NavItem {
     label: string
@@ -41,7 +42,10 @@ const NAV_ITEMS: NavItem[] = [
         label: 'Đào tạo',
         children: [
             { label: 'Yêu cầu của tôi', href: '/enterprise/dept-head/training' },
-            { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' }
+            { label: 'Kế hoạch đào tạo', href: '/enterprise/dept-head/training/plans' },
+            { label: 'Khóa học khả dụng', href: '/enterprise/dept-head/training/courses' },
+            { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' },
+            { label: 'Thiết lập lịch trình', href: '/enterprise/dept-head/training/schedule' }
         ]
     },
     {
@@ -136,6 +140,7 @@ import { useEnterpriseInfo } from '@/features/enterprise'
 
 export function DeptHeadSidebar() {
     const pathname = usePathname()
+    const { user } = useAuth()
     const [expandedItems, setExpandedItems] = useState<string[]>(['Tuyển dụng', 'Đào tạo'])
 
     const { enterpriseInfo } = useEnterpriseInfo()
@@ -154,6 +159,24 @@ export function DeptHeadSidebar() {
         }
         return item.children?.some((child) => pathname === child.href) ?? false
     }, [pathname])
+
+    const navItems = user?.isTrainer
+        ? NAV_ITEMS.map((item) => {
+            if (item.label !== 'Đào tạo' || !item.children) {
+                return item
+            }
+
+            const hasTrainerLink = item.children.some((child) => child.href === '/enterprise/dept-head/teaching')
+            if (hasTrainerLink) {
+                return item
+            }
+
+            return {
+                ...item,
+                children: [...item.children, { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' }]
+            }
+        })
+        : NAV_ITEMS
 
     return (
         <aside className="w-72 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col z-40 shrink-0">
@@ -185,7 +208,7 @@ export function DeptHeadSidebar() {
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-                {NAV_ITEMS.map((item) => (
+                {navItems.map((item) => (
                     <NavMenuItem
                         key={item.label}
                         item={item}

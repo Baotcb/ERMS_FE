@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
 import { getCookie } from '@/features/core/auth/utils/auth-cookies';
+import { useAuth } from '@/features/core/auth/hooks/use-auth';
 import { STORAGE_KEYS } from '@/utils/constants';
 
 import { trainingService } from '../../api/training-service';
@@ -32,6 +33,7 @@ import {
 
 export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingRequestFormProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
     const [detectError, setDetectError] = useState<string | null>(null);
@@ -40,6 +42,21 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
         resolver: zodResolver(trainingRequestSchema),
         defaultValues: TRAINING_REQUEST_DEFAULTS,
     });
+
+    const detectEmployeeFromItems = (
+        items: Array<{ id?: string; email?: string; fullName?: string; departmentName?: string }>,
+        email?: string,
+        fullName?: string
+    ) => {
+        const normalizedEmail = email?.trim().toLowerCase();
+        const normalizedName = fullName?.trim().toLowerCase();
+
+        return items.find((item) =>
+            normalizedEmail && item.email?.trim().toLowerCase() === normalizedEmail
+        ) || items.find((item) =>
+            normalizedName && item.fullName?.trim().toLowerCase() === normalizedName
+        ) || null;
+    };
 
     // Detect Employee & Department
     useEffect(() => {
@@ -50,32 +67,56 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                 setDetectError(null);
                 setDetectedEmp(null);
                 const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME);
-                if (userNameEncoded) {
-                    const userName = decodeURIComponent(userNameEncoded);
-                    const res = await apiClient.get(`/api/Employees?search=${encodeURIComponent(userName)}&pageSize=20`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const employee = (data.items || []).find((item: { fullName?: string }) => item.fullName === userName) || data.items?.[0];
-                        if (employee?.id) {
-                            setDetectedEmp({ 
-                                id: employee.id, 
-                                departmentName: employee.departmentName 
-                            });
-                            form.setValue('requestedById', employee.id);
-                            return;
-                        }
+                const cookieFullName = userNameEncoded ? decodeURIComponent(userNameEncoded) : '';
+                const emailCandidates = [user?.email].filter(Boolean) as string[];
+                const nameCandidates = [user?.fullName, cookieFullName].filter(Boolean) as string[];
+
+                for (const email of emailCandidates) {
+                    const res = await apiClient.get(`/api/Employees?search=${encodeURIComponent(email)}&pageSize=20`);
+                    if (!res.ok) {
+                        continue;
+                    }
+
+                    const data = await res.json();
+                    const employee = detectEmployeeFromItems(data.items || [], email, user?.fullName || cookieFullName);
+                    if (employee?.id) {
+                        setDetectedEmp({
+                            id: employee.id,
+                            departmentName: employee.departmentName || '',
+                        });
+                        form.setValue('requestedById', employee.id);
+                        return;
                     }
                 }
+
+                for (const fullName of nameCandidates) {
+                    const res = await apiClient.get(`/api/Employees?search=${encodeURIComponent(fullName)}&pageSize=20`);
+                    if (!res.ok) {
+                        continue;
+                    }
+
+                    const data = await res.json();
+                    const employee = detectEmployeeFromItems(data.items || [], user?.email, fullName);
+                    if (employee?.id) {
+                        setDetectedEmp({
+                            id: employee.id,
+                            departmentName: employee.departmentName || '',
+                        });
+                        form.setValue('requestedById', employee.id);
+                        return;
+                    }
+                }
+
                 setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng đăng nhập lại.');
             } catch (e) {
-                console.error('Failed to detect user employee profile', e);
+                void e;
                 setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng thử lại.');
             }
         };
 
         detectUser();
         form.reset(TRAINING_REQUEST_DEFAULTS);
-    }, [open, form]);
+    }, [open, form, user?.email, user?.fullName]);
 
     const onSubmit: SubmitHandler<TrainingRequestValues> = async (values) => {
         if (!detectedEmp?.id) {

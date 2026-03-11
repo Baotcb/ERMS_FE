@@ -102,7 +102,7 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                 </div>
 
                 {/* Trainer Section */}
-                {user?.role === USER_ROLES.TRAINER && (
+                {(user?.isTrainer || user?.role === USER_ROLES.TRAINER) && (
                     <div className="mt-8 pt-6 border-t border-gray-100 space-y-1">
                         <p className="px-4 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                             Giảng vụ

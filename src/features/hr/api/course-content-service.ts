@@ -4,13 +4,32 @@ import { CourseSection, Lesson, CreateLessonCommand, Material } from '../types/c
 export const courseContentService = {
     async getCourseCurriculum(courseId: string): Promise<CourseSection[]> {
         const response = await apiClient.get(`/api/Course/${courseId}/curriculum`);
-        if (!response.ok) throw new Error('Không thể tải chương trình học');
+        if (!response.ok) {
+            const error = new Error(`Không thể tải chương trình học (HTTP ${response.status})`) as Error & { status?: number };
+            error.status = response.status;
+            throw error;
+        }
         return response.json();
     },
 
     async createLesson(data: CreateLessonCommand): Promise<Lesson> {
         const response = await apiClient.post('/api/Lesson', data);
-        if (!response.ok) throw new Error('Không thể tạo bài học');
+        if (!response.ok) {
+            let message = `Không thể tạo bài học (HTTP ${response.status})`;
+            try {
+                const body = await response.text();
+                if (body) {
+                    const json = JSON.parse(body);
+                    message = json.message ?? json.title ?? json.detail ?? body ?? message;
+                }
+            } catch {
+                // keep default message
+            }
+
+            const error = new Error(message) as Error & { status?: number };
+            error.status = response.status;
+            throw error;
+        }
         return response.json();
     },
 
