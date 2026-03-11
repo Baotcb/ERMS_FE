@@ -9,7 +9,8 @@ import {
     CheckSquare,
     CreditCard,
     BookOpen,
-    FileText
+    FileText,
+    GraduationCap
 } from 'lucide-react'
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
@@ -39,6 +40,11 @@ const sidebarItems = [
         title: 'Báo cáo tuyển dụng',
         href: '/enterprise/director/recruitment-report',
         icon: FileText,
+    },
+    {
+        title: 'Duyệt kế hoạch đào tạo',
+        href: '/enterprise/director/training-approval',
+        icon: GraduationCap,
     },
 ]
 

@@ -15,11 +15,12 @@ export function useCreateApplication() {
     )
 }
 
-export function useMyApplications(params?: ApplicationHistoryParams) {
-    // Build SWR key bao gồm params để tự refetch khi filter thay đổi
-    const key = params?.stageFilter
-        ? `${MY_APPLICATIONS_KEY}?stageFilter=${params.stageFilter}`
-        : MY_APPLICATIONS_KEY
+export function useMyApplications(params?: ApplicationHistoryParams, enabled = true) {
+    const key = !enabled
+        ? null
+        : params?.stageFilter
+            ? `${MY_APPLICATIONS_KEY}?stageFilter=${params.stageFilter}`
+            : MY_APPLICATIONS_KEY
 
     return useSWR(
         key,

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useCreateApplication } from '@/features/candidate/hooks/use-applications'
+import { useCandidateAccess } from '@/features/core/auth/hooks'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_COVER_LETTER_LENGTH = 2000
@@ -200,6 +201,10 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
     }
 
     const onSubmit = async (data: ApplicationFormValues) => {
+        if (!requireCandidate({ action: 'ứng tuyển công việc', redirectTo: `/jobs/${jobId}` })) {
+            return
+        }
+
         try {
             await applyJob({
                 jobId,

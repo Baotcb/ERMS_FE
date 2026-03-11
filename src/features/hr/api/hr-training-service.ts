@@ -1,0 +1,84 @@
+import { apiClient } from '@/lib/api-client';
+import { TrainingRequestsResult } from '../../dept-head/types/training-types';
+import { CreateTrainingPlan, TrainingPlansResult } from '../types/training-plan-types';
+
+export const hrTrainingService = {
+    async getAllRequests(params?: {
+        search?: string;
+        departmentId?: number;
+        status?: string;
+    }): Promise<TrainingRequestsResult> {
+        const status = params?.status || 'Pending';
+        const allItems: TrainingRequestsResult['items'] = [];
+        let page = 1;
+        const pageSize = 20;
+
+        while (true) {
+            const searchParams = new URLSearchParams({
+                page: String(page),
+                pageSize: String(pageSize),
+                status,
+            });
+
+            if (params?.search) searchParams.set('search', params.search);
+            if (params?.departmentId) searchParams.set('departmentId', String(params.departmentId));
+
+            const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
+
+            if (!response.ok) {
+                throw new Error('Không thể tải danh sách yêu cầu');
+            }
+
+            const result: TrainingRequestsResult = await response.json();
+            allItems.push(...result.items);
+
+            if (page >= result.totalPages || result.items.length === 0) break;
+            page++;
+        }
+
+        return {
+            items: allItems,
+            totalCount: allItems.length,
+            page: 1,
+            pageSize: allItems.length,
+            totalPages: 1,
+        };
+    },
+
+    async getPlans(params?: {
+        page?: number;
+        pageSize?: number;
+        search?: string;
+        status?: string;
+    }): Promise<TrainingPlansResult> {
+        const searchParams = new URLSearchParams({
+            page: String(params?.page ?? 1),
+            pageSize: String(params?.pageSize ?? 20),
+        });
+
+        if (params?.search) searchParams.set('search', params.search);
+        if (params?.status) searchParams.set('status', params.status);
+
+        const response = await apiClient.get(`/api/TrainingPlan?${searchParams}`);
+
+        if (!response.ok) {
+            throw new Error('Không thể tải danh sách kế hoạch');
+        }
+
+        return response.json();
+    },
+
+    async createPlan(data: CreateTrainingPlan): Promise<{ ok: boolean; planId?: string }> {
+        const response = await apiClient.post('/api/TrainingPlan', data);
+
+        if (!response.ok) {
+            throw new Error('Không thể tạo kế hoạch đào tạo');
+        }
+
+        const result = await response.json() as { id?: string; trainingRequestId?: string };
+        return {
+            ok: true,
+            planId: result.id || result.trainingRequestId
+        };
+    }
+};

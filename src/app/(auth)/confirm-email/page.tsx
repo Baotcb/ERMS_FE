@@ -13,7 +13,7 @@ function ConfirmEmailContent() {
     const userId = searchParams.get('userId')
     const rawToken = searchParams.get('token')
     const email = searchParams.get('email') || undefined
-    const token = rawToken ? decodeURIComponent(rawToken) : null
+    const token = rawToken ? rawToken.replace(/ /g, '+') : null
 
     const isInvalidParams = !userId || !token
     const [status, setStatus] = useState<ConfirmStatus>(isInvalidParams ? 'invalid' : 'loading')
