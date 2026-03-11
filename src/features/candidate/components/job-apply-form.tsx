@@ -114,6 +114,7 @@ interface JobApplyFormProps {
 export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) {
     const { toast } = useToast()
     const { trigger: applyJob, isMutating } = useCreateApplication()
+    const { requireCandidate } = useCandidateAccess()
     const [isSuccess, setIsSuccess] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const minAvailableStartDate = getTomorrowDateString()
