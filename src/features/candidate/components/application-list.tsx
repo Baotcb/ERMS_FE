@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { FolderOpen, Search, ArrowRight, Loader2 } from 'lucide-react'
+import { FolderOpen, Search, ArrowRight, Loader2, LogIn, ShieldAlert } from 'lucide-react'
 import { AppliedJobCard } from './applied-job-card'
 import { useMyApplications } from '@/features/candidate/hooks/use-applications'
+import { useCandidateAccess } from '@/features/core/auth/hooks'
 import Link from 'next/link'
 import '@/features/jobs/styles/Jobs.css'
 
@@ -23,14 +24,58 @@ const STAGE_OPTIONS: { value: string; label: string }[] = [
 
 export function ApplicationList() {
     const [stageFilter, setStageFilter] = useState<string>('all')
+    const { isAuthenticated, isCandidate, isLoading: authLoading } = useCandidateAccess()
 
     const { data, isLoading, error } = useMyApplications(
-        stageFilter !== 'all' ? { stageFilter } : undefined
+        stageFilter !== 'all' ? { stageFilter } : undefined,
+        isCandidate
     )
 
     const applications = data?.items ?? []
 
-    // Loading state
+    if (authLoading) {
+        return (
+            <div className="topcv-empty">
+                <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#00b14f' }} />
+                <h3 className="topcv-empty__title">Đang kiểm tra phiên đăng nhập...</h3>
+            </div>
+        )
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="topcv-empty">
+                <div className="topcv-empty__icon">
+                    <LogIn className="w-14 h-14" style={{ color: '#00b14f' }} />
+                </div>
+                <h3 className="topcv-empty__title">Hãy đăng nhập để xem công việc đã ứng tuyển</h3>
+                <p className="topcv-empty__text">
+                    Bạn cần tài khoản ứng viên để theo dõi trạng thái hồ sơ và các bước tuyển dụng.
+                </p>
+                <Link href="/login?redirect=%2Fapplications">
+                    <button className="topcv-empty__button" type="button">
+                        <LogIn className="w-5 h-5" />
+                        Đăng nhập
+                    </button>
+                </Link>
+            </div>
+        )
+    }
+
+    if (!isCandidate) {
+        return (
+            <div className="topcv-empty">
+                <div className="topcv-empty__icon">
+                    <ShieldAlert className="w-14 h-14" style={{ color: '#f59e0b' }} />
+                </div>
+                <h3 className="topcv-empty__title">Trang này chỉ dành cho ứng viên</h3>
+                <p className="topcv-empty__text">
+                    Tài khoản hiện tại không có quyền xem lịch sử ứng tuyển của ứng viên.
+                </p>
+            </div>
+        )
+    }
+
     if (isLoading) {
         return (
             <div className="topcv-empty">
@@ -40,7 +85,6 @@ export function ApplicationList() {
         )
     }
 
-    // Error state
     if (error) {
         return (
             <div className="topcv-empty">
@@ -55,7 +99,6 @@ export function ApplicationList() {
         )
     }
 
-    // Empty state (no applications at all, no filter active)
     if (applications.length === 0 && stageFilter === 'all') {
         return (
             <div className="topcv-empty">
@@ -79,7 +122,6 @@ export function ApplicationList() {
 
     return (
         <div>
-            {/* Filter Bar */}
             <div className="topcv-filter-bar">
                 <select
                     className="topcv-filter-bar__select"
@@ -93,7 +135,6 @@ export function ApplicationList() {
                 </select>
             </div>
 
-            {/* List */}
             {applications.length === 0 ? (
                 <div className="topcv-empty">
                     <div className="topcv-empty__icon">

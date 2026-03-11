@@ -18,6 +18,8 @@ type SendAction =
     | { type: 'error'; message: string }
     | { type: 'done' }
 
+const RESEND_COOLDOWN_MS = 15_000
+
 function sendReducer(state: SendState, action: SendAction): SendState {
     switch (action.type) {
         case 'start': return { isResending: true, resendSuccess: false, error: null }
@@ -28,40 +30,79 @@ function sendReducer(state: SendState, action: SendAction): SendState {
     }
 }
 
+function getAutoSendStorageKey(email: string) {
+    return `verify-email:auto-send:${email}`
+}
+
 export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEmailCardProps) {
     const [{ isResending, resendSuccess, error }, dispatch] = useReducer(sendReducer, {
         isResending: false,
         resendSuccess: false,
         error: null,
     })
-    const autoSentRef = useRef(false)
+    const inFlightRef = useRef(false)
+    const lastRequestedAtRef = useRef(0)
 
-    // Auto-send verification email on first mount
-    useEffect(() => {
-        if (email && !autoSentRef.current) {
-            autoSentRef.current = true
-            dispatch({ type: 'start' })
-            resendConfirmation(email)
-                .then(() => dispatch({ type: 'success' }))
-                .catch((err) => dispatch({ type: 'error', message: err instanceof Error ? err.message : 'Gửi email xác thực thất bại' }))
-                .finally(() => dispatch({ type: 'done' }))
+    const sendVerificationEmail = useCallback(async (trigger: 'auto' | 'manual') => {
+        if (!email || inFlightRef.current) {
+            return
         }
-    }, [email])
 
-    const handleResend = useCallback(async () => {
-        if (!email) return
+        const now = Date.now()
+        if (trigger === 'manual' && now - lastRequestedAtRef.current < RESEND_COOLDOWN_MS) {
+            dispatch({
+                type: 'error',
+                message: 'Vui lòng chờ ít giây trước khi gửi lại email xác thực.',
+            })
+            return
+        }
+
+        inFlightRef.current = true
+        lastRequestedAtRef.current = now
         dispatch({ type: 'start' })
+
         try {
             await resendConfirmation(email)
             dispatch({ type: 'success' })
+
+            if (trigger === 'auto' && typeof window !== 'undefined') {
+                sessionStorage.setItem(getAutoSendStorageKey(email), 'sent')
+            }
         } catch (err) {
-            dispatch({ type: 'error', message: err instanceof Error ? err.message : 'Gửi lại email thất bại' })
+            dispatch({
+                type: 'error',
+                message: err instanceof Error ? err.message : 'Gửi email xác thực thất bại',
+            })
+
+            if (trigger === 'auto' && typeof window !== 'undefined') {
+                sessionStorage.removeItem(getAutoSendStorageKey(email))
+            }
         } finally {
+            inFlightRef.current = false
             dispatch({ type: 'done' })
         }
     }, [email])
 
-    // Mask email for display (e.g., h***@gmail.com)
+    useEffect(() => {
+        if (!email || typeof window === 'undefined') {
+            return
+        }
+
+        const storageKey = getAutoSendStorageKey(email)
+        const autoSendState = sessionStorage.getItem(storageKey)
+
+        if (autoSendState === 'pending' || autoSendState === 'sent') {
+            return
+        }
+
+        sessionStorage.setItem(storageKey, 'pending')
+        void sendVerificationEmail('auto')
+    }, [email, sendVerificationEmail])
+
+    const handleResend = useCallback(async () => {
+        await sendVerificationEmail('manual')
+    }, [sendVerificationEmail])
+
     const maskedEmail = email
         ? email.replace(/^(.{1,2})([^@]*)(@.*)$/, (_, start, middle, end) =>
             start + '*'.repeat(Math.min(middle.length, 5)) + end)
@@ -70,15 +111,12 @@ export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEm
     return (
         <div className="w-full max-w-md mx-auto">
             <div className="bg-white dark:bg-slate-800 shadow-xl rounded-2xl p-8 border border-gray-100 dark:border-gray-700 relative overflow-hidden text-center">
-                {/* Accent bar */}
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-coral" />
 
-                {/* Icon */}
                 <div className="w-20 h-20 mx-auto mb-6 bg-brand-secondary/30 rounded-full flex items-center justify-center">
                     <Mail className="w-10 h-10 text-brand-primary" />
                 </div>
 
-                {/* Title */}
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                     Kiểm tra Email của bạn
                 </h1>
@@ -91,7 +129,6 @@ export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEm
                     {maskedEmail || 'Email đã đăng ký'}
                 </p>
 
-                {/* Instructions */}
                 <div className="bg-brand-light dark:bg-slate-700/50 rounded-lg p-4 mb-6 text-left">
                     <p className="text-sm text-gray-700 dark:text-gray-300 font-semibold mb-2">
                         Hướng dẫn:
@@ -104,10 +141,8 @@ export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEm
                     </ul>
                 </div>
 
-                {/* Error alert */}
                 {error && <Alert type="error" message={error} className="mb-4" />}
 
-                {/* Resend button */}
                 {resendSuccess ? (
                     <div className="flex items-center justify-center gap-2 text-green-600 py-2 mb-4">
                         <CheckCircle className="w-5 h-5" />
@@ -136,7 +171,6 @@ export const VerifyEmailCard = memo(function VerifyEmailCard({ email }: VerifyEm
                     )
                 )}
 
-                {/* Back to login */}
                 <Link
                     href="/login"
                     className="inline-flex items-center text-sm text-gray-500 hover:text-brand-primary transition-colors cursor-pointer"

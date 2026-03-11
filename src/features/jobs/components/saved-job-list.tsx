@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { LazyMotion, m, domAnimation } from 'framer-motion'
-import { FileQuestion, Search, ArrowRight, Loader2 } from 'lucide-react'
+import { FileQuestion, Search, ArrowRight, Loader2, LogIn, ShieldAlert } from 'lucide-react'
 import { SavedJobCard } from './saved-job-card'
 import { getMySavedPosts, type SavedPostDto } from '../api/saved-job-service'
 import { getPublicJobById } from '../api/public-job-service'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
+import { useCandidateAccess } from '@/features/core/auth/hooks'
 import Link from 'next/link'
 
-/** SavedPostDto enriched with extra fields from public API */
 export interface EnrichedSavedPost extends SavedPostDto {
     enterpriseLogoUrl?: string
     salaryRangeMin?: number
@@ -23,16 +23,17 @@ export function SavedJobList() {
     const [totalCount, setTotalCount] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const { isAuthenticated, isCandidate, isLoading: authLoading } = useCandidateAccess()
 
     const fetchData = useCallback(async () => {
         setIsLoading(true)
         setError(null)
+
         try {
             const response = await getMySavedPosts(1, 50)
             setSavedJobs(response.items)
             setTotalCount(response.totalCount)
 
-            // Enrich with logo + salary from public API (parallel, non-blocking)
             const enriched = await Promise.all(
                 response.items.map(async (item) => {
                     try {
@@ -48,11 +49,13 @@ export function SavedJobList() {
                             }
                         }
                     } catch {
-                        // Ignore — giữ nguyên data gốc nếu lỗi
+                        // Keep the saved-job data even if the enrichment request fails.
                     }
+
                     return item
                 })
             )
+
             setSavedJobs(enriched)
         } catch {
             setError('Không thể tải danh sách việc làm đã lưu')
@@ -62,26 +65,74 @@ export function SavedJobList() {
     }, [])
 
     useEffect(() => {
+        if (authLoading) {
+            return
+        }
+
+        if (!isCandidate) {
+            setSavedJobs([])
+            setTotalCount(0)
+            setError(null)
+            setIsLoading(false)
+            return
+        }
+
         fetchData()
-    }, [fetchData])
+    }, [authLoading, fetchData, isCandidate])
 
     const handleUnsaved = useCallback((jobPostingId: string) => {
         setSavedJobs((prev) => prev.filter((j) => j.jobPostingId !== jobPostingId))
         setTotalCount((prev) => Math.max(0, prev - 1))
     }, [])
 
-    // Sync store khi data load xong
     const fetchSavedJobIds = useSavedJobsStore((s) => s.fetchSavedJobIds)
-    useEffect(() => {
-        fetchSavedJobIds()
-    }, [fetchSavedJobIds])
 
-    if (isLoading) {
+    useEffect(() => {
+        if (isCandidate) {
+            fetchSavedJobIds()
+        }
+    }, [fetchSavedJobIds, isCandidate])
+
+    if (authLoading || isLoading) {
         return (
             <div className="topcv-empty">
                 <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#00b14f' }} />
                 <p className="topcv-empty__text" style={{ marginTop: 16 }}>
                     Đang tải danh sách việc làm đã lưu...
+                </p>
+            </div>
+        )
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="topcv-empty">
+                <div className="topcv-empty__icon">
+                    <LogIn className="w-14 h-14" style={{ color: '#00b14f' }} />
+                </div>
+                <h3 className="topcv-empty__title">Hãy đăng nhập để xem việc làm đã lưu</h3>
+                <p className="topcv-empty__text">
+                    Bạn cần tài khoản ứng viên để lưu và theo dõi những vị trí quan tâm.
+                </p>
+                <Link href="/login?redirect=%2Fjobs%2Fsaved">
+                    <button className="topcv-empty__button" type="button">
+                        <LogIn className="w-5 h-5" />
+                        Đăng nhập
+                    </button>
+                </Link>
+            </div>
+        )
+    }
+
+    if (!isCandidate) {
+        return (
+            <div className="topcv-empty">
+                <div className="topcv-empty__icon">
+                    <ShieldAlert className="w-14 h-14" style={{ color: '#f59e0b' }} />
+                </div>
+                <h3 className="topcv-empty__title">Trang này chỉ dành cho ứng viên</h3>
+                <p className="topcv-empty__text">
+                    Tài khoản hiện tại không có quyền xem danh sách công việc đã lưu.
                 </p>
             </div>
         )
