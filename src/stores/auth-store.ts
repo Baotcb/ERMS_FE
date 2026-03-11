@@ -8,6 +8,9 @@ export interface User {
     email: string
     fullName?: string
     role?: string
+    isTrainer?: boolean
+    departmentId?: number
+    departmentName?: string
     avatarUrl?: string
 }
 

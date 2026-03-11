@@ -6,8 +6,8 @@ export const trainingRequestSchema = z.object({
     urgency: z.enum(['Normal', 'High', 'Urgent']),
     description: z.string().optional(),
     targetAudience: z.string().optional(),
-    estimatedParticipants: z.number().optional(),
-    estimatedBudget: z.number().optional(),
+    estimatedParticipants: z.number().int('Số lượng học viên phải là số nguyên').min(1, 'Số lượng học viên phải lớn hơn 0').optional(),
+    estimatedBudget: z.number().min(0, 'Ngân sách không được âm').optional(),
 });
 
 export type TrainingRequestValues = z.infer<typeof trainingRequestSchema>;

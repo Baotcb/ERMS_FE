@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Plus, Search, MoreHorizontal, Eye, BookOpen } from 'lucide-react';
+import { Search, MoreHorizontal, Eye, BookOpen, ArrowRight, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
@@ -24,10 +24,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { hrTrainingService } from '../../api/hr-training-service';
-import { TrainingPlan } from '../../types/training-plan-types';
 import { useRouter } from 'next/navigation';
-import { TrainingPlanDetail } from './training-plan-detail';
+import { useToast } from '@/hooks/use-toast';
+import { hrTrainingService } from '@/features/hr/api/hr-training-service';
+import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
+import { TrainingPlanDetail } from '@/features/hr/components/training/training-plan-detail';
+import { CreateCourseDialog } from '@/features/hr/components/training/create-course-dialog';
 
 const STATUS_COLORS: Record<string, string> = {
     Draft: 'bg-gray-100 text-gray-800',
@@ -43,36 +45,58 @@ const STATUS_LABELS: Record<string, string> = {
     Rejected: 'Từ chối',
 };
 
-export function TrainingPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
+export function DeptHeadPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const router = useRouter();
+    const { toast } = useToast();
     const [search, setSearch] = useState('');
+    const [navigatingPlanId, setNavigatingPlanId] = useState<string | null>(null);
+    const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
+    const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
+    const [planForCourse, setPlanForCourse] = useState<TrainingPlan | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
     const debouncedSearch = useDebouncedValue(search, 300);
 
-    const { data, isLoading } = useSWR<{ items: TrainingPlan[] }>(
-        ['/api/TrainingPlan', debouncedSearch],
-        () => hrTrainingService.getPlans({ search: debouncedSearch }),
+    const { data, isLoading, error } = useSWR<{ items: TrainingPlan[] }>(
+        ['/api/TrainingPlan', 'dept-head', debouncedSearch],
+        () => hrTrainingService.getPlans({ search: debouncedSearch, status: 'Approved' }),
         { fallbackData: initialData }
     );
 
     const plans = data?.items || [];
-    const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    const handleCreateCourse = (plan: TrainingPlan) => {
+        if (plan.status !== 'Approved') {
+            toast({
+                title: 'Kế hoạch chưa được duyệt',
+                description: 'Chỉ kế hoạch đã được Giám đốc phê duyệt mới có thể tạo khóa học.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        setPlanForCourse(plan);
+        setIsCreateCourseOpen(true);
+    };
+
+    const handleCourseCreated = (courseId: string, planId: string) => {
+        if (planId) {
+            setNavigatingPlanId(planId);
+            router.push(`/enterprise/dept-head/training/assign?planId=${planId}&courseId=${courseId}`);
+            return;
+        }
+
+        router.push(`/enterprise/dept-head/training/assign?courseId=${courseId}`);
+    };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Kế hoạch đào tạo năm</h2>
+                    <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Kế hoạch đào tạo</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Quản lý các kế hoạch đào tạo tổng thể của doanh nghiệp
+                        Xem kế hoạch đào tạo đã được duyệt và tạo khóa học để phân công
                     </p>
                 </div>
-                <Button 
-                    onClick={() => router.push('/enterprise/hr/training/requests')}
-                    className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white shadow-lg shadow-blue-900/10 transition-all"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Tổng hợp & Lập kế hoạch
-                </Button>
             </div>
 
             <div className="flex items-center bg-white px-4 py-3 rounded-lg border border-gray-100 shadow-sm">
@@ -86,6 +110,30 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                     />
                 </div>
             </div>
+
+            {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 space-y-3">
+                    <div>
+                        Không thể tải danh sách kế hoạch đào tạo đã duyệt. Vui lòng kiểm tra quyền DepartmentHead trên API hoặc đăng nhập lại.
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            size="sm"
+                            className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
+                            onClick={() => setIsQuickCreateOpen(true)}
+                        >
+                            Tạo khóa học nhanh
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => router.push('/enterprise/dept-head/training/assign')}
+                        >
+                            Tiếp tục phân công
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <Table>
@@ -107,14 +155,14 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                                     Đang tải dữ liệu...
                                 </TableCell>
                             </TableRow>
-                        ) : plans?.length === 0 ? (
+                        ) : plans.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
-                                    Chưa có kế hoạch đào tạo nào
+                                    Chưa có kế hoạch đào tạo nào ở trạng thái đã duyệt
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            plans?.map((plan: TrainingPlan) => (
+                            plans.map((plan: TrainingPlan) => (
                                 <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
                                     <TableCell className="font-medium text-gray-900">
                                         <div className="flex items-center gap-2">
@@ -137,7 +185,10 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                                         {format(new Date(plan.createdAt), 'dd/MM/yyyy')}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[plan.status] || 'bg-gray-100'}`}>
+                                        <Badge
+                                            variant="outline"
+                                            className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[plan.status] || 'bg-gray-100'}`}
+                                        >
                                             {STATUS_LABELS[plan.status] || plan.status}
                                         </Badge>
                                     </TableCell>
@@ -148,9 +199,9 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuContent align="end" className="w-52">
                                                 <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer"
                                                     onClick={() => {
                                                         setSelectedPlan(plan);
@@ -158,6 +209,15 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                                                     }}
                                                 >
                                                     <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="cursor-pointer text-blue-600 focus:text-blue-700 focus:bg-blue-50"
+                                                    onClick={() => handleCreateCourse(plan)}
+                                                >
+                                                    {navigatingPlanId === plan.id
+                                                        ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        : <ArrowRight className="mr-2 h-4 w-4" />}
+                                                    Tạo khóa học & Phân công
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -173,6 +233,20 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                 plan={selectedPlan}
                 open={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
+            />
+
+            <CreateCourseDialog
+                plan={planForCourse}
+                open={isCreateCourseOpen}
+                onOpenChange={setIsCreateCourseOpen}
+                onCreated={handleCourseCreated}
+            />
+
+            <CreateCourseDialog
+                plan={null}
+                open={isQuickCreateOpen}
+                onOpenChange={setIsQuickCreateOpen}
+                onCreated={handleCourseCreated}
             />
         </div>
     );
