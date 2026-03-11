@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { useState, useCallback, memo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react'
@@ -16,21 +16,36 @@ interface ConfirmEmailCardProps {
     email?: string
 }
 
+const RESEND_COOLDOWN_MS = 15_000
+
 export const ConfirmEmailCard = memo(function ConfirmEmailCard({ status, message, email }: ConfirmEmailCardProps) {
     const router = useRouter()
     const [isResending, setIsResending] = useState(false)
     const [resendMessage, setResendMessage] = useState<string | null>(null)
+    const inFlightRef = useRef(false)
+    const lastRequestedAtRef = useRef(0)
 
     const handleResend = useCallback(async () => {
-        if (!email) return
+        if (!email || inFlightRef.current) return
+
+        const now = Date.now()
+        if (now - lastRequestedAtRef.current < RESEND_COOLDOWN_MS) {
+            setResendMessage('Vui lòng chờ ít giây trước khi gửi lại email xác thực.')
+            return
+        }
+
+        inFlightRef.current = true
+        lastRequestedAtRef.current = now
         setIsResending(true)
         setResendMessage(null)
+
         try {
             await resendConfirmation(email)
             setResendMessage('Email xác thực mới đã được gửi!')
         } catch (err) {
             setResendMessage(err instanceof Error ? err.message : 'Gửi lại email thất bại')
         } finally {
+            inFlightRef.current = false
             setIsResending(false)
         }
     }, [email])
@@ -77,32 +92,26 @@ export const ConfirmEmailCard = memo(function ConfirmEmailCard({ status, message
     return (
         <div className="w-full max-w-md mx-auto">
             <div className="bg-white dark:bg-slate-800 shadow-xl rounded-2xl p-8 border border-gray-100 dark:border-gray-700 relative overflow-hidden text-center">
-                {/* Accent bar */}
                 <div className={`absolute top-0 left-0 w-full h-1.5 ${config.barColor}`} />
 
-                {/* Icon */}
                 <div className={`w-20 h-20 mx-auto mb-6 ${config.bgColor} rounded-full flex items-center justify-center`}>
                     <IconComponent className={`w-10 h-10 ${config.iconColor}`} />
                 </div>
 
-                {/* Title */}
                 <h1 className={`text-2xl font-bold mb-3 ${config.titleColor}`}>
                     {config.title}
                 </h1>
 
-                {/* Message */}
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                     {message}
                 </p>
 
-                {/* Resend message */}
                 {resendMessage && (
                     <p className={`text-sm mb-4 ${resendMessage.includes('thất bại') ? 'text-red-500' : 'text-green-600'}`}>
                         {resendMessage}
                     </p>
                 )}
 
-                {/* Actions based on status */}
                 {status === 'success' ? (
                     <Button
                         className="w-full h-12 bg-brand-primary hover:bg-brand-primary/90 text-white font-bold cursor-pointer transition-colors"

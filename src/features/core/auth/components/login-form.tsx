@@ -7,7 +7,7 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
@@ -16,13 +16,32 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, LoadingSpinner } from '@/components/common'
 import { loginSchema } from '../schemas/auth-schemas'
-import { loginAction } from '../actions/auth'
+import { login } from '../api/auth-service'
+import { DEFAULT_ENTERPRISE_DASHBOARD, ROLE_DASHBOARD_MAP, USER_ROLES } from '@/utils/constants'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
 
+function resolvePostLoginDestination(role: string | undefined, redirectTarget: string | null) {
+    const dashboard = ROLE_DASHBOARD_MAP[role || ''] || DEFAULT_ENTERPRISE_DASHBOARD
+
+    if (!redirectTarget || !redirectTarget.startsWith('/') || redirectTarget.startsWith('//')) {
+        return role === USER_ROLES.CANDIDATE ? '/' : dashboard
+    }
+
+    if (redirectTarget.startsWith('/api')) {
+        return role === USER_ROLES.CANDIDATE ? '/' : dashboard
+    }
+
+    if (role === USER_ROLES.CANDIDATE) {
+        return redirectTarget.startsWith('/enterprise') ? '/' : redirectTarget
+    }
+
+    return redirectTarget.startsWith('/enterprise') ? redirectTarget : dashboard
+}
+
 export function LoginForm() {
-    const router = useRouter()
+    const searchParams = useSearchParams()
     const { login: authLogin } = useAuth()
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -55,20 +74,11 @@ export function LoginForm() {
             setIsLoading(true)
 
             try {
-                // Call Server Action
-                const result = await loginAction(data)
-
-                if (!result.success || !result.user) {
-                    throw new Error(result.error || 'Đăng nhập thất bại')
-                }
-
+                const result = await login({
+                    email: data.email,
+                    password: data.password,
+                })
                 const { user } = result
-
-                // Update global auth state (client store)
-                // Note: The token is now HttpOnly cookie, so we don't pass it to the store's "token" field 
-                // OR we pass a dummy/flag, because the store might expect a token string for API calls.
-                // WE NEED TO UPDATE AUTH STORE TO NOT REQUIRE TOKEN STRING OR HANDLE COOKIE-BASED AUTH.
-                // For now, we update the user info.
                 authLogin('COOKIE_AUTH', {
                     id: user.id || 'unknown',
                     email: user.email || data.email,
@@ -79,10 +89,11 @@ export function LoginForm() {
 
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 
-                // Redirect after short delay for UX
+                const redirectTarget = searchParams.get('redirect')
+                const destination = resolvePostLoginDestination(user.role, redirectTarget)
+
                 setTimeout(() => {
-                    router.push('/')
-                    router.refresh()
+                    window.location.assign(destination)
                 }, 500)
             } catch (err) {
                 const errorMessage =
@@ -92,7 +103,7 @@ export function LoginForm() {
                 setIsLoading(false)
             }
         },
-        [router, authLogin]
+        [authLogin, searchParams]
     )
 
     const onSubmit = useCallback(async (data: LoginFormData) => {

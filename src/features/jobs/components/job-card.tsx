@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import type { Job } from '../types'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { cn } from '@/lib/utils'
+import { useCandidateAccess } from '@/features/core/auth/hooks'
 
 interface JobCardProps extends Job {
   compact?: boolean
@@ -31,18 +32,23 @@ export const JobCard = memo(function JobCard(props: JobCardProps) {
   } = props
 
   const { saveJob, removeJob, isSaved, fetchSavedJobIds, isLoaded } = useSavedJobsStore()
+  const { isCandidate, requireCandidate } = useCandidateAccess()
 
   useEffect(() => {
-    if (!isLoaded) {
+    if (isCandidate && !isLoaded) {
       fetchSavedJobIds()
     }
-  }, [isLoaded, fetchSavedJobIds])
+  }, [fetchSavedJobIds, isCandidate, isLoaded])
 
   const saved = isSaved(props.id)
 
   const handleSaveJob = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+
+    if (!requireCandidate({ action: 'lưu công việc', redirectTo: `/jobs/${props.id}` })) {
+      return
+    }
 
     if (saved) {
       removeJob(props.id)

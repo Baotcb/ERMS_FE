@@ -195,12 +195,12 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                             <NavItem
                                 align="right"
                                 label={
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex min-w-0 items-center gap-2">
                                         <Avatar className="w-8 h-8 border border-[#e8e8e8]">
                                             <AvatarImage src={userAvatar} loading="lazy" />
                                             <AvatarFallback className="bg-[#1B5583] text-white text-xs">{userInitial}</AvatarFallback>
                                         </Avatar>
-                                        <span className="text-sm font-medium text-[#212f3f] hidden sm:block">
+                                        <span className="hidden max-w-40 truncate text-sm font-medium text-[#212f3f] sm:block" title={displayName}>
                                             {displayName}
                                         </span>
                                     </div>

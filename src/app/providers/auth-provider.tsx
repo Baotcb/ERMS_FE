@@ -8,8 +8,9 @@
 
 'use client';
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
+import { useSavedJobsStore } from '@/features/jobs/stores/use-saved-jobs-store';
 import type { User } from '@/stores/auth-store';
 
 interface ServerAuthData {
@@ -28,29 +29,33 @@ export function AuthProvider({
   serverAuthData: ServerAuthData;
   children: React.ReactNode;
 }) {
-  const hasHydrated = useRef(false);
+  const user = serverAuthData.user;
+  const authSignature = useMemo(
+    () => `${serverAuthData.isAuthenticated}:${user?.id ?? ''}:${user?.role ?? ''}:${user?.fullName ?? ''}:${user?.avatarUrl ?? ''}`,
+    [serverAuthData.isAuthenticated, user?.avatarUrl, user?.fullName, user?.id, user?.role]
+  );
 
-  // Hydrate store synchronously before first render to prevent flash
+  // Keep client auth state aligned with the latest server session snapshot.
   useIsomorphicLayoutEffect(() => {
-    if (hasHydrated.current) return;
-    hasHydrated.current = true;
+    useSavedJobsStore.setState({
+      savedJobIds: new Set<string>(),
+      isLoaded: false,
+    });
 
-    if (serverAuthData.user && serverAuthData.isAuthenticated) {
-      // Server says authenticated - use server data
+    if (user && serverAuthData.isAuthenticated) {
       useAuthStore.setState({
-        user: serverAuthData.user,
+        user,
         isAuthenticated: true,
         isLoading: false,
       });
     } else {
-      // No server session - ensure logged out state
       useAuthStore.setState({
         user: null,
         isAuthenticated: false,
         isLoading: false,
       });
     }
-  }, [serverAuthData]);
+  }, [authSignature, serverAuthData.isAuthenticated]);
 
   return <>{children}</>;
 }

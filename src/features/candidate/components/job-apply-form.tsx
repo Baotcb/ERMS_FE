@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { FieldErrors, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2, UploadCloud, X, CheckCircle2 } from 'lucide-react'
-import { useDropzone } from 'react-dropzone'
+import { FileRejection, useDropzone } from 'react-dropzone'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,22 +21,86 @@ import {
 } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useCreateApplication } from '@/features/candidate/hooks/use-applications'
+import { useCandidateAccess } from '@/features/core/auth/hooks'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_COVER_LETTER_LENGTH = 2000
+const APPLY_FORM_VALIDATION_TOAST_ID = 'job-apply-validation-error'
+const ISO_DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
+const MAX_AVAILABLE_START_DATE = '2100-12-31'
 
-// Backend only accepts PDF
+const getTodayDateString = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
+const getTomorrowDateString = () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    const year = tomorrow.getFullYear()
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0')
+    const day = String(tomorrow.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
+const isValidAvailableStartDate = (value: string) => {
+    if (!ISO_DATE_ONLY_REGEX.test(value)) {
+        return false
+    }
+
+    const [year, month, day] = value.split('-').map(Number)
+
+    if (year < 1900 || year > 2100) {
+        return false
+    }
+
+    const date = new Date(Date.UTC(year, month - 1, day))
+
+    return date.getUTCFullYear() === year
+        && date.getUTCMonth() === month - 1
+        && date.getUTCDate() === day
+}
+
+const isFutureAvailableStartDate = (value: string) => {
+    if (!isValidAvailableStartDate(value)) {
+        return false
+    }
+
+    return value > getTodayDateString()
+}
+
+const optionalNonNegativeNumberString = z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || Number.isFinite(Number(value)), 'Mức lương mong muốn phải là số hợp lệ')
+    .refine((value) => !value || Number(value) >= 0, 'Mức lương mong muốn không được là số âm')
+
 const applicationSchema = z.object({
-    coverLetter: z.string().optional(),
-    expectedSalary: z.string().optional(),
-    availableStartDate: z.string().optional(),
+    coverLetter: z
+        .string()
+        .max(MAX_COVER_LETTER_LENGTH, 'Thư giới thiệu không được vượt quá 2000 ký tự')
+        .optional(),
+    expectedSalary: optionalNonNegativeNumberString,
+    availableStartDate: z
+        .string()
+        .trim()
+        .optional()
+        .refine(
+            (value) => !value || isFutureAvailableStartDate(value),
+            'Ngày có thể bắt đầu phải là một ngày trong tương lai'
+        ),
     cvFile: z
         .any()
         .refine((file) => file instanceof File, 'Vui lòng tải lên CV')
         .refine((file) => file?.size <= MAX_FILE_SIZE, 'Kích thước file tối đa là 5MB')
-        .refine(
-            (file) => file?.type === 'application/pdf',
-            'Chỉ chấp nhận file PDF'
-        ),
+        .refine((file) => file?.type === 'application/pdf', 'Chỉ chấp nhận file PDF'),
 })
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>
@@ -50,7 +114,10 @@ interface JobApplyFormProps {
 export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) {
     const { toast } = useToast()
     const { trigger: applyJob, isMutating } = useCreateApplication()
+    const { requireCandidate } = useCandidateAccess()
     const [isSuccess, setIsSuccess] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const minAvailableStartDate = getTomorrowDateString()
 
     const form = useForm<ApplicationFormValues>({
         resolver: zodResolver(applicationSchema),
@@ -61,18 +128,62 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         },
     })
 
-    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const showValidationToast = (description: string) => {
+        toast({
+            id: APPLY_FORM_VALIDATION_TOAST_ID,
+            title: 'Thông tin ứng tuyển chưa hợp lệ',
+            description,
+            variant: 'destructive',
+        })
+    }
+
+    const getFirstErrorMessage = (errors: FieldErrors<ApplicationFormValues>): string | null => {
+        const queue = Object.values(errors) as unknown[]
+
+        while (queue.length > 0) {
+            const current = queue.shift()
+
+            if (!current || typeof current !== 'object') {
+                continue
+            }
+
+            if ('message' in current && typeof current.message === 'string' && current.message.trim()) {
+                return current.message
+            }
+
+            queue.push(...Object.values(current))
+        }
+
+        return null
+    }
 
     const onDrop = (acceptedFiles: File[]) => {
-        if (acceptedFiles?.[0]) {
-            const file = acceptedFiles[0]
-            setSelectedFile(file)
-            form.setValue('cvFile', file, { shouldValidate: true })
+        if (!acceptedFiles[0]) {
+            return
         }
+
+        const file = acceptedFiles[0]
+        setSelectedFile(file)
+        form.clearErrors('cvFile')
+        form.setValue('cvFile', file, { shouldValidate: true })
+    }
+
+    const onDropRejected = (fileRejections: FileRejection[]) => {
+        const firstError = fileRejections[0]?.errors[0]
+
+        const message = firstError?.code === 'file-too-large'
+            ? 'CV vượt quá 5MB. Vui lòng chọn file nhỏ hơn.'
+            : firstError?.code === 'file-invalid-type'
+                ? 'CV phải là file PDF hợp lệ.'
+                : 'CV chưa hợp lệ. Vui lòng kiểm tra lại file tải lên.'
+
+        form.setError('cvFile', { type: 'manual', message })
+        showValidationToast(message)
     }
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
+        onDropRejected,
         accept: {
             'application/pdf': ['.pdf'],
         },
@@ -85,16 +196,23 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         form.setValue('cvFile', undefined, { shouldValidate: true })
     }
 
+    const onInvalidSubmit = (errors: FieldErrors<ApplicationFormValues>) => {
+        const message = getFirstErrorMessage(errors) ?? 'Vui lòng kiểm tra lại thông tin ứng tuyển.'
+        showValidationToast(message)
+    }
+
     const onSubmit = async (data: ApplicationFormValues) => {
+        if (!requireCandidate({ action: 'ứng tuyển công việc', redirectTo: `/jobs/${jobId}` })) {
+            return
+        }
+
         try {
             await applyJob({
                 jobId,
                 cvFile: data.cvFile,
-                coverLetter: data.coverLetter || undefined,
-                expectedSalary: data.expectedSalary
-                    ? parseFloat(data.expectedSalary)
-                    : undefined,
-                availableStartDate: data.availableStartDate || undefined,
+                coverLetter: data.coverLetter?.trim() || undefined,
+                expectedSalary: data.expectedSalary?.trim() ? Number(data.expectedSalary) : undefined,
+                availableStartDate: data.availableStartDate?.trim() || undefined,
             })
 
             setIsSuccess(true)
@@ -113,15 +231,14 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
         }
     }
 
-    // Success state - simple notification only
     if (isSuccess) {
         return (
-            <div className="flex flex-col items-center justify-center space-y-4 py-8 animate-in fade-in zoom-in duration-300">
-                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+            <div className="animate-in fade-in zoom-in duration-300 flex flex-col items-center justify-center space-y-4 py-8">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800">Ứng tuyển thành công!</h3>
-                <p className="text-slate-500 text-center max-w-md">
+                <p className="max-w-md text-center text-slate-500">
                     Hồ sơ của bạn đã được gửi cho vị trí <strong>{jobTitle}</strong>. Nhà tuyển dụng sẽ xem xét và liên hệ với bạn sớm nhất.
                 </p>
                 <Button onClick={onSuccess} className="mt-4 min-w-[150px]">
@@ -133,8 +250,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* CV Upload - PDF only */}
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
                 <div className="space-y-2">
                     <FormLabel>CV / Hồ sơ năng lực <span className="text-red-500">*</span></FormLabel>
                     {!selectedFile ? (
@@ -147,7 +263,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                         >
                             <input {...getInputProps()} />
                             <div className="flex flex-col items-center justify-center gap-2 text-slate-500">
-                                <div className="p-3 bg-slate-100 rounded-full">
+                                <div className="rounded-full bg-slate-100 p-3">
                                     <UploadCloud className="h-6 w-6 text-slate-400" />
                                 </div>
                                 <p className="text-sm font-medium">
@@ -157,13 +273,13 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between p-3 border rounded-lg bg-slate-50">
+                        <div className="flex items-center justify-between rounded-lg border bg-slate-50 p-3">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="p-2 bg-blue-100 rounded text-blue-600">
+                                <div className="rounded bg-blue-100 p-2 text-blue-600">
                                     <UploadCloud className="h-4 w-4" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium">{selectedFile.name}</p>
                                     <p className="text-xs text-slate-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                                 </div>
                             </div>
@@ -185,7 +301,6 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                     )}
                 </div>
 
-                {/* Cover Letter */}
                 <FormField
                     control={form.control}
                     name="coverLetter"
@@ -196,16 +311,19 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                                 <Textarea
                                     placeholder="Viết đôi lời giới thiệu về bản thân và lý do bạn phù hợp với vị trí này..."
                                     className="min-h-[120px]"
+                                    maxLength={MAX_COVER_LETTER_LENGTH}
                                     {...field}
                                 />
                             </FormControl>
+                            <FormDescription className="text-xs text-right">
+                                {(field.value?.length ?? 0)}/{MAX_COVER_LETTER_LENGTH}
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
-                {/* Expected Salary & Available Start Date */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FormField
                         control={form.control}
                         name="expectedSalary"
@@ -215,6 +333,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                                 <FormControl>
                                     <Input
                                         type="number"
+                                        min={0}
                                         placeholder="VD: 15000000"
                                         {...field}
                                     />
@@ -235,6 +354,8 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
                                 <FormControl>
                                     <Input
                                         type="date"
+                                        min={minAvailableStartDate}
+                                        max={MAX_AVAILABLE_START_DATE}
                                         {...field}
                                     />
                                 </FormControl>
@@ -249,7 +370,7 @@ export function JobApplyForm({ jobId, jobTitle, onSuccess }: JobApplyFormProps) 
 
                 <div className="flex justify-end gap-3 pt-4">
                     <Button type="button" variant="outline" onClick={onSuccess}>Hủy</Button>
-                    <Button type="submit" disabled={isMutating} className="bg-[#1B5583] hover:bg-[#154360] min-w-[120px] text-white">
+                    <Button type="submit" disabled={isMutating} className="min-w-[120px] bg-[#1B5583] text-white hover:bg-[#154360]">
                         {isMutating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Nộp hồ sơ
                     </Button>

@@ -37,6 +37,7 @@ import {
 import { usePublicJob } from '../hooks/use-public-jobs'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { JobApplyForm } from '@/features/candidate/components/job-apply-form'
+import { useCandidateAccess } from '@/features/core/auth/hooks'
 
 interface PublicJobDetailProps {
     id: string
@@ -51,12 +52,13 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
     const headerRef = useRef<HTMLDivElement>(null)
 
     const { saveJob, removeJob, isSaved: checkIsSaved, fetchSavedJobIds, isLoaded: savedJobsLoaded } = useSavedJobsStore()
+    const { isCandidate, requireCandidate } = useCandidateAccess()
 
     useEffect(() => {
-        if (!savedJobsLoaded) {
+        if (isCandidate && !savedJobsLoaded) {
             fetchSavedJobIds()
         }
-    }, [savedJobsLoaded, fetchSavedJobIds])
+    }, [fetchSavedJobIds, isCandidate, savedJobsLoaded])
 
     const isSaved = job ? checkIsSaved(job.id) : false
 
@@ -158,6 +160,11 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
 
     const handleSaveJob = () => {
         if (!job) return
+
+        if (!requireCandidate({ action: 'lưu công việc', redirectTo: `/jobs/${job.id}` })) {
+            return
+        }
+
         if (isSaved) {
             removeJob(job.id)
         } else {
@@ -167,6 +174,16 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
             title: isSaved ? 'Đã bỏ lưu tin tuyển dụng' : 'Đã lưu tin tuyển dụng',
             description: isSaved ? undefined : 'Bạn có thể xem lại trong mục "Việc làm đã lưu"'
         })
+    }
+
+    const handleOpenApply = () => {
+        if (!job) return
+
+        if (!requireCandidate({ action: 'ứng tuyển công việc', redirectTo: `/jobs/${job.id}` })) {
+            return
+        }
+
+        setIsApplyOpen(true)
     }
 
     const deadlineText = job.applicationDeadline
@@ -199,7 +216,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             <Heart className={`h-4 w-4 mr-1.5 ${isSaved ? 'fill-[#e74c3c]' : ''}`} />
                             {isSaved ? 'Đã lưu' : 'Lưu'}
                         </Button>
-                        <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
+                        <Dialog open={showStickyBar && isApplyOpen} onOpenChange={setIsApplyOpen}>
                             <DialogTrigger asChild>
                                 <Button size="sm" className="h-9 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-lg px-5 transition-colors shadow-none">
                                     <Send className="h-4 w-4 mr-1.5" />
@@ -220,6 +237,19 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
+                <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl">Ứng tuyển: {job.jobTitle}</DialogTitle>
+                    </DialogHeader>
+                    <JobApplyForm
+                        jobId={job.id}
+                        jobTitle={job.jobTitle}
+                        onSuccess={() => setIsApplyOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
 
             {/* Breadcrumb Bar */}
             <div className="bg-white border-b border-[#e8e8e8]">
@@ -292,7 +322,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
 
                                 {/* Action Buttons Row */}
                                 <div className="flex gap-3">
-                                    <Dialog open={isApplyOpen} onOpenChange={setIsApplyOpen}>
+                                    <Dialog open={!showStickyBar && isApplyOpen} onOpenChange={setIsApplyOpen}>
                                         <DialogTrigger asChild>
                                             <Button
                                                 size="lg"

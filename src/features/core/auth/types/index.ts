@@ -7,10 +7,12 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string
     user: User
-    expiration?: string
-    refreshToken?: string
+    success?: boolean
+}
+
+export interface GoogleLoginResponse {
+    token: string
 }
 
 export interface RegisterRequest {
