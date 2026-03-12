@@ -70,7 +70,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
             setCourse(prev => ({ ...prev, ...values }));
             toast({ title: 'Thành công', description: 'Đã lưu thông tin cơ bản.' });
             setActiveTab('curriculum');
-        } catch (error) {
+        } catch {
             toast({ title: 'Lỗi', description: 'Không thể lưu thông tin.', variant: 'destructive' });
         } finally {
             setIsSaving(false);

@@ -34,12 +34,6 @@ const STATUS_COLORS: Record<string, string> = {
     Archived: 'bg-slate-100 text-slate-700',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-    Published: 'Khả dụng',
-    Draft: 'Nháp',
-    Archived: 'Lưu trữ',
-};
-
 function getDeploymentLabel(course: Course): string {
     const hasTrainer = Boolean(course.trainerId);
     const hasTrainees = (course.enrollmentCount || 0) > 0;

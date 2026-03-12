@@ -25,11 +25,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '@/features/hr/api/hr-training-service';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 import { TrainingPlanDetail } from '@/features/hr/components/training/training-plan-detail';
-import { CreateCourseDialog } from '@/features/hr/components/training/create-course-dialog';
 
 const STATUS_COLORS: Record<string, string> = {
     Draft: 'bg-gray-100 text-gray-800',
@@ -47,12 +45,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function DeptHeadPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const router = useRouter();
-    const { toast } = useToast();
     const [search, setSearch] = useState('');
     const [navigatingPlanId, setNavigatingPlanId] = useState<string | null>(null);
-    const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
-    const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
-    const [planForCourse, setPlanForCourse] = useState<TrainingPlan | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const debouncedSearch = useDebouncedValue(search, 300);
@@ -65,27 +59,9 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
 
     const plans = data?.items || [];
 
-    const handleCreateCourse = (plan: TrainingPlan) => {
-        if (plan.status !== 'Approved') {
-            toast({
-                title: 'Kế hoạch chưa được duyệt',
-                description: 'Chỉ kế hoạch đã được Giám đốc phê duyệt mới có thể tạo khóa học.',
-                variant: 'destructive',
-            });
-            return;
-        }
-        setPlanForCourse(plan);
-        setIsCreateCourseOpen(true);
-    };
-
-    const handleCourseCreated = (courseId: string, planId: string) => {
-        if (planId) {
-            setNavigatingPlanId(planId);
-            router.push(`/enterprise/dept-head/training/assign?planId=${planId}&courseId=${courseId}`);
-            return;
-        }
-
-        router.push(`/enterprise/dept-head/training/assign?courseId=${courseId}`);
+    const handleGoAssignTrainer = (planId: string) => {
+        setNavigatingPlanId(planId);
+        router.push(`/enterprise/dept-head/training/assign?planId=${planId}`);
     };
 
     return (
@@ -94,7 +70,7 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Kế hoạch đào tạo</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Xem kế hoạch đào tạo đã được duyệt và tạo khóa học để phân công
+                        Xem kế hoạch đào tạo đã được duyệt và phân công trainer cho khóa học do HR khởi tạo
                     </p>
                 </div>
             </div>
@@ -119,17 +95,10 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                     <div className="flex flex-wrap gap-2">
                         <Button
                             size="sm"
-                            className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
-                            onClick={() => setIsQuickCreateOpen(true)}
-                        >
-                            Tạo khóa học nhanh
-                        </Button>
-                        <Button
-                            size="sm"
                             variant="outline"
                             onClick={() => router.push('/enterprise/dept-head/training/assign')}
                         >
-                            Tiếp tục phân công
+                            Đi tới phân công trainer
                         </Button>
                     </div>
                 </div>
@@ -212,12 +181,12 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="cursor-pointer text-blue-600 focus:text-blue-700 focus:bg-blue-50"
-                                                    onClick={() => handleCreateCourse(plan)}
+                                                    onClick={() => handleGoAssignTrainer(plan.id)}
                                                 >
                                                     {navigatingPlanId === plan.id
                                                         ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                         : <ArrowRight className="mr-2 h-4 w-4" />}
-                                                    Tạo khóa học & Phân công
+                                                    Phân công trainer
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -233,20 +202,6 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                 plan={selectedPlan}
                 open={isDetailOpen}
                 onOpenChange={setIsDetailOpen}
-            />
-
-            <CreateCourseDialog
-                plan={planForCourse}
-                open={isCreateCourseOpen}
-                onOpenChange={setIsCreateCourseOpen}
-                onCreated={handleCourseCreated}
-            />
-
-            <CreateCourseDialog
-                plan={null}
-                open={isQuickCreateOpen}
-                onOpenChange={setIsQuickCreateOpen}
-                onCreated={handleCourseCreated}
             />
         </div>
     );

@@ -25,6 +25,7 @@ interface ExamBuilderProps {
 
 export function ExamBuilder({ courseId }: ExamBuilderProps) {
     const { toast } = useToast();
+    const courseLabel = courseId.slice(0, 8).toUpperCase();
     const [questions, setQuestions] = useState<Question[]>([]);
     const [passingScore, setPassingScore] = useState(80);
     const [timeLimit, setTimeLimit] = useState(30);
@@ -82,7 +83,7 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
         try {
             // TODO: Integrate with exam API endpoint when backend is available
             // await examService.saveExam(courseId, { questions, passingScore, timeLimit });
-            toast({ title: 'Đã ghi nhận', description: `Bài thi ${questions.length} câu hỏi, điểm đạt ${passingScore}%. Lưu vĩnh viễn sẽ khả dụng khi backend tích hợp endpoint exam.` });
+            toast({ title: 'Đã ghi nhận', description: `Bài thi cho khóa ${courseLabel} có ${questions.length} câu hỏi, điểm đạt ${passingScore}%. Lưu vĩnh viễn sẽ khả dụng khi backend tích hợp endpoint exam.` });
         } finally {
             setIsSaving(false);
         }

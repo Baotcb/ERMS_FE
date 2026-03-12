@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { 
     PlusCircle, GripVertical, FileText, Video, 
     Trash2, Loader2, MoreVertical, Clock, Layers
@@ -36,11 +36,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const [lessonDuration, setLessonDuration] = useState(15);
     const [isAddingLesson, setIsAddingLesson] = useState(false);
 
-    useEffect(() => {
-        loadCurriculum();
-    }, [courseId]);
-
-    const loadCurriculum = async () => {
+    const loadCurriculum = useCallback(async () => {
         setIsLoading(true);
         try {
             const data = await courseContentService.getCourseCurriculum(courseId);
@@ -52,7 +48,11 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [courseId, toast]);
+
+    useEffect(() => {
+        void loadCurriculum();
+    }, [loadCurriculum]);
 
     const handleAddSection = async () => {
         if (!newSectionTitle.trim()) return;
@@ -164,7 +164,9 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={handleAddSection} className="w-full bg-[#0F4C75] text-white rounded-xl py-6 font-bold">Thêm học phần</Button>
+                                <Button onClick={handleAddSection} disabled={isAddingSection} className="w-full bg-[#0F4C75] text-white rounded-xl py-6 font-bold">
+                                    {isAddingSection ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Thêm học phần'}
+                                </Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
