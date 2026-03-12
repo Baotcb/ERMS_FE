@@ -151,9 +151,9 @@ export function AssignTrainingPage({
             }
 
             toast({ title: 'Thành công', description: 'Đã lưu phân công đào tạo' });
-            
-            // Navigate to step 2: Setup Schedule (Dept Head flow)
-            router.push(`/enterprise/dept-head/training/schedule?courseId=${selectedCourseId}`);
+
+            // New flow: HR sets schedule at course creation; Dept Head only assigns trainer/trainees.
+            router.push('/enterprise/dept-head/training');
         } catch (error: unknown) {
             void error;
             toast({ title: 'Lỗi', description: 'Không thể lưu phân công đào tạo. Vui lòng thử lại.', variant: 'destructive' });
@@ -174,7 +174,7 @@ export function AssignTrainingPage({
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F4C75] mb-1">Phân công Đào tạo</h1>
-                    <p className="text-gray-500">Thiết lập danh sách người đào tạo và học viên cho khóa học.</p>
+                    <p className="text-gray-500">Thiết lập người đào tạo và học viên cho khóa học.</p>
                 </div>
                 <Button 
                     onClick={handleSaveAssignment} 
@@ -191,7 +191,7 @@ export function AssignTrainingPage({
                     <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-[#0F4C75]">
                         {courses.length > 0
                             ? 'Danh sách khóa học đang được giới hạn theo kế hoạch đào tạo bạn vừa chọn.'
-                            : 'Chưa tìm thấy khóa học nháp nào gắn với kế hoạch này. Nếu kế hoạch đã duyệt nhưng chưa có course, cần backend hoặc luồng tạo course riêng để sinh dữ liệu.'}
+                            : 'Chưa tìm thấy khóa học nào gắn với kế hoạch này.'}
                         {courses.length === 0 && (
                             <div className="mt-3">
                                 <Button
@@ -199,7 +199,7 @@ export function AssignTrainingPage({
                                     className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
                                     onClick={() => router.push('/enterprise/dept-head/training/plans')}
                                 >
-                                    Quay lại tạo khóa học
+                                    Quay lại xem kế hoạch
                                 </Button>
                             </div>
                         )}
@@ -231,7 +231,7 @@ export function AssignTrainingPage({
                                     </SelectItem>
                                 ))}
                                 {courses.length === 0 && !isLoadingCourses && (
-                                    <SelectItem value="none" disabled>Không có khóa học chờ phân công</SelectItem>
+                                    <SelectItem value="none" disabled>Không có khóa học sẵn sàng để phân công</SelectItem>
                                 )}
                             </SelectContent>
                         </Select>
@@ -438,18 +438,13 @@ export function AssignTrainingPage({
                     <Button variant="outline" onClick={() => router.back()} className="px-6 rounded-full border-gray-300">
                         Hủy bỏ
                     </Button>
-                    <div className="flex gap-3">
-                        <Button variant="outline" className="px-6 rounded-full border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-700">
-                            Lưu nháp
-                        </Button>
-                        <Button 
-                            onClick={handleSaveAssignment} 
-                            disabled={isSubmitting || !selectedCourseId}
-                            className="px-6 rounded-full bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
-                        >
-                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Tiếp tục: Thiết lập lịch trình →'}
-                        </Button>
-                    </div>
+                    <Button 
+                        onClick={handleSaveAssignment} 
+                        disabled={isSubmitting || !selectedCourseId}
+                        className="px-6 rounded-full bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
+                    >
+                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Hoàn tất phân công'}
+                    </Button>
                 </div>
 
             </div>

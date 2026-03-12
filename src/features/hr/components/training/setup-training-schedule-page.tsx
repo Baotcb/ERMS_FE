@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Calendar as CalendarIcon, Clock, Video, Building2, ChevronLeft, Send, Check as CheckIcon, Users, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Video, Building2, ChevronLeft, Send, Check as CheckIcon, Users, Loader2, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { courseService } from '@/features/hr/api/course-service';
 import { Course, CourseResult, UpdateCourseCommand } from '@/features/hr/types/course-types';
+import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 import {
     Select,
     SelectContent,
@@ -19,6 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { CreateCourseDialog } from './create-course-dialog';
 
 function isValidHttpUrl(value: string): boolean {
     try {
@@ -32,13 +34,15 @@ function isValidHttpUrl(value: string): boolean {
 export function SetupTrainingSchedulePage({ 
     initialCourses, 
     initialCourseDetails,
-    headingTitle = 'Thông báo & Mở lịch đào tạo',
-    headingDescription = 'HR cấu hình thời gian, địa điểm và mở lịch đào tạo để các bên tiếp tục triển khai.',
-    stepTwoLabel = 'Bước 2: HR mở lịch & thông báo',
+    initialPlans = [],
+    headingTitle = 'Tạo khóa học & Lập lịch đào tạo',
+    headingDescription = 'Thiết lập thời gian, địa điểm và thông báo cho khóa học.',
+    stepTwoLabel = 'Bước 2: HR lập lịch & thông báo',
     publishRedirectPath = '/enterprise/hr/training/requests'
 }: { 
     initialCourses?: CourseResult; 
     initialCourseDetails?: Course;
+    initialPlans?: TrainingPlan[];
     headingTitle?: string;
     headingDescription?: string;
     stepTwoLabel?: string;
@@ -59,9 +63,10 @@ export function SetupTrainingSchedulePage({
     const [notifyTrainees, setNotifyTrainees] = useState(true);
     const [remindBefore15m, setRemindBefore15m] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
 
     // Fetch Courses
-    const { data: coursesData, isLoading: isLoadingCourses } = useSWR<CourseResult>(
+    const { data: coursesData, isLoading: isLoadingCourses, mutate: mutateCourses } = useSWR<CourseResult>(
         ['/api/Course', 'scheduling'],
         () => courseService.getAllCourses({ status: 'Draft', pageSize: 100 }),
         { fallbackData: initialCourses }
@@ -161,7 +166,7 @@ export function SetupTrainingSchedulePage({
             } as UpdateCourseCommand);
 
             // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).
-            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình và gửi thông báo cho tất cả học viên.' });
+            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học.' });
             router.push(publishRedirectPath);
         } catch (error: unknown) {
             const errorMessage = error instanceof Error
@@ -171,6 +176,13 @@ export function SetupTrainingSchedulePage({
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleCourseCreated = async (courseId: string) => {
+        setSelectedCourseId(courseId);
+        setIsCreateCourseOpen(false);
+        await mutateCourses();
+        toast({ title: 'Đã tạo khóa học', description: 'Khóa học đã được tạo.' });
     };
 
     const courses = coursesData?.items || [];
@@ -195,7 +207,7 @@ export function SetupTrainingSchedulePage({
                                 <div className="w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center border border-green-200 shadow-sm">
                                     <CheckIcon className="w-4 h-4" />
                                 </div>
-                                <span className="font-semibold text-sm text-gray-500">Bước 1: Trưởng bộ phận phân công</span>
+                                <span className="font-semibold text-sm text-gray-500">Bước 1: Tạo khóa học</span>
                             </div>
                             <div className="flex items-center gap-3 bg-white pl-4">
                                 <div className="w-7 h-7 rounded-full bg-[#0F4C75] text-white flex items-center justify-center text-sm font-bold border-2 border-[#BBE1FA] shadow-md">
@@ -212,20 +224,45 @@ export function SetupTrainingSchedulePage({
 
                 {/* Course Selection */}
                 <div className="p-5 bg-blue-50/30 rounded-xl border border-blue-100">
-                    <label className="text-sm font-semibold text-gray-700 block mb-2 uppercase tracking-wider">CHỌN KHÓA HỌC CẦN THIẾT LẬP</label>
-                    <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-                        <SelectTrigger className="w-full md:w-[600px] bg-white border-gray-200">
-                            <SelectValue placeholder={isLoadingCourses ? "Đang tải danh sách..." : "Chọn khóa học..."} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {courses.map(course => (
-                                <SelectItem key={course.id} value={course.id}>
-                                    {course.courseName} (Mã: {course.courseCode})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC CẦN LẬP LỊCH</label>
+                        <Button
+                            type="button"
+                            onClick={() => setIsCreateCourseOpen(true)}
+                            className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Tạo khóa học mới
+                        </Button>
+                    </div>
+
+                    {courses.length === 0 && !isLoadingCourses ? (
+                        <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white px-4 py-4 text-sm text-[#0F4C75]">
+                            Chưa có khóa học nháp để lập lịch. Hãy tạo khóa học mới ngay tại trang này.
+                        </div>
+                    ) : (
+                        <div className="mt-3">
+                            <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
+                                <SelectTrigger className="w-full md:w-[600px] bg-white border-gray-200">
+                                    <SelectValue placeholder={isLoadingCourses ? "Đang tải danh sách..." : "Chọn khóa học..."} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {courses.map(course => (
+                                        <SelectItem key={course.id} value={course.id}>
+                                            {course.courseName} (Mã: {course.courseCode})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
+
+                {!selectedCourseId && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        Vui lòng tạo hoặc chọn khóa học trước khi cấu hình lịch đào tạo.
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-10 border-t border-gray-50 pt-8">
                     {/* Left side form */}
@@ -366,7 +403,7 @@ export function SetupTrainingSchedulePage({
                                 ) : (
                                     <>
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10" />
-                                        <h3 className="font-bold text-sm tracking-wider uppercase mb-6 text-blue-100">TÓM TẮT PHÂN CÔNG</h3>
+                                        <h3 className="font-bold text-sm tracking-wider uppercase mb-6 text-blue-100">TÓM TẮT KHÓA HỌC</h3>
                                         
                                         <div className="space-y-6 relative z-10">
                                             <div className="flex items-start gap-4">
@@ -450,6 +487,16 @@ export function SetupTrainingSchedulePage({
                 </div>
 
             </div>
+
+            <CreateCourseDialog
+                open={isCreateCourseOpen}
+                plan={null}
+                availablePlans={initialPlans}
+                onOpenChange={setIsCreateCourseOpen}
+                onCreated={(courseId) => {
+                    void handleCourseCreated(courseId);
+                }}
+            />
         </div>
     );
 }

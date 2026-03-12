@@ -5,7 +5,7 @@ export interface Course {
     courseCode: string;
     description?: string;
     thumbnailUrl?: string;
-    trainerId: string;
+    trainerId?: string;
     trainerName?: string;
     durationMinutes?: number;
     level?: string;
@@ -26,7 +26,7 @@ export interface CreateCourseCommand {
     courseCode: string;
     description?: string;
     thumbnailUrl?: string;
-    trainerId: string;
+    trainerId?: string;
     durationMinutes?: number;
     level?: string;
     isMandatory: boolean;

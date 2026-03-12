@@ -119,7 +119,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                     <ArrowRight className="h-5 w-5 shrink-0 text-blue-500" />
                     <span className="flex-1">
                         Một số yêu cầu của bạn đã được thêm vào kế hoạch đào tạo và được Giám đốc phê duyệt.
-                        Hãy vào <strong>Kế hoạch đào tạo</strong> để tạo khóa học và mở phân công.
+                        Hãy vào <strong>Kế hoạch đào tạo</strong> để xem khóa học HR đã khởi tạo và phân công trainer, trainee.
                     </span>
                     <Button
                         size="sm"

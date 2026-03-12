@@ -9,7 +9,10 @@ export default async function Page({
     const resolvedParams = await searchParams;
     const courseId = typeof resolvedParams.courseId === 'string' ? resolvedParams.courseId : undefined;
 
-    const initialCourses = await trainingServerService.getAllCourses({ status: 'Draft', pageSize: 100 });
+    const [initialCourses, initialPlans] = await Promise.all([
+        trainingServerService.getAllCourses({ status: 'Draft', pageSize: 100 }),
+        trainingServerService.getPlans({ status: 'Approved', pageSize: 100 }),
+    ]);
     
     let initialCourseDetails;
     if (courseId) {
@@ -19,6 +22,7 @@ export default async function Page({
     return (
         <SetupTrainingSchedulePage 
             initialCourses={initialCourses} 
+            initialPlans={initialPlans.items}
             initialCourseDetails={initialCourseDetails} 
         />
     );
