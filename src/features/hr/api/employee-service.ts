@@ -17,6 +17,7 @@ export interface Employee {
     createdAt: string
     managerId?: string | null
     roles?: string[]
+    isTrainer?: boolean
 }
 
 export interface GetEmployeesParams {

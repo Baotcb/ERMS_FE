@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '../../api/hr-training-service';
 import type { TrainingRequest } from '../../../dept-head/types/training-types';
 
-export function ConsolidateRequests() {
+export function ConsolidateRequests({ initialData }: { initialData?: { items: TrainingRequest[] } }) {
     const router = useRouter();
     const { toast } = useToast();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -32,7 +32,8 @@ export function ConsolidateRequests() {
 
     const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
         '/api/TrainingRequest?status=Pending',
-        () => hrTrainingService.getAllRequests({ status: 'Pending' })
+        () => hrTrainingService.getAllRequests({ status: 'Pending' }),
+        { fallbackData: initialData }
     );
 
     const pendingRequests = data?.items || [];
@@ -74,10 +75,10 @@ export function ConsolidateRequests() {
                 router.push('/enterprise/hr/training/plans');
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Không thể tạo kế hoạch.';
+            void error;
             toast({
                 title: 'Lỗi',
-                description: errorMessage,
+                description: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
                 variant: 'destructive',
             });
         } finally {

@@ -70,10 +70,11 @@ const NAV_ITEMS: NavItem[] = [
     {
         label: 'Đào tạo',
         icon: <GraduationCap className="w-5 h-5" />,
-        roles: ['HRManager', 'Director'],
+        roles: ['HRManager', 'HR', 'Director', 'Admin'],
         children: [
             { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
-            { label: 'Yêu cầu từ phòng ban', href: '/enterprise/hr/training/requests' }
+            { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
+            { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' }
         ]
     }
 ]
@@ -150,7 +151,7 @@ const NavMenuItem = memo(function NavMenuItem({
 export const HRSidebar = memo(function HRSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự'])
+    const [expandedItems, setExpandedItems] = useState<string[]>(['Nhân sự', 'Đào tạo'])
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const { enterpriseInfo } = useEnterpriseInfo()
 

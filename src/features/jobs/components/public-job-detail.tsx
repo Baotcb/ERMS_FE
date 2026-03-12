@@ -31,6 +31,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog'
 
 import { usePublicJob } from '../hooks/use-public-jobs'
