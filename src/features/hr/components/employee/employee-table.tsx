@@ -80,25 +80,25 @@ export const EmployeeTable = memo(function EmployeeTable({
     return (
         <div className="w-full">
             <div className="overflow-x-auto">
-                <Table className="min-w-[1020px]">
+                <Table className="table-fixed min-w-[920px]">
                     <TableHeader>
                         <TableRow className="border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50/50">
-                            <TableHead className="min-w-[280px] px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <TableHead className="w-[220px] px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Nhân viên
                             </TableHead>
-                            <TableHead className="whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <TableHead className="w-[210px] whitespace-nowrap px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Mã NV
                             </TableHead>
-                            <TableHead className="min-w-[150px] whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <TableHead className="w-[130px] whitespace-nowrap px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Phòng ban
                             </TableHead>
-                            <TableHead className="min-w-[150px] whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <TableHead className="w-[170px] whitespace-nowrap px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Chức vụ
                             </TableHead>
-                            <TableHead className="whitespace-nowrap px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <TableHead className="w-[130px] whitespace-nowrap px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Trạng thái
                             </TableHead>
-                            <TableHead className="min-w-[110px] whitespace-nowrap px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <TableHead className="w-[90px] whitespace-nowrap px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
                                 Thao tác
                             </TableHead>
                         </TableRow>
@@ -112,42 +112,48 @@ export const EmployeeTable = memo(function EmployeeTable({
                                     key={employee.id}
                                     className="group transition-colors hover:bg-sky-50/30"
                                 >
-                                    <TableCell className="px-6 py-4 align-middle">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0EA5E9] ring-2 ring-white">
+                                    <TableCell className="px-4 py-3.5 align-middle">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#0369A1] to-[#0EA5E9] ring-2 ring-white">
                                                 <span className="text-xs font-bold text-white">
                                                     {getInitials(employee.fullName)}
                                                 </span>
                                             </div>
                                             <div className="flex min-w-0 flex-col">
-                                                <span className="text-sm font-semibold text-[#0C4A6E]">
+                                                <span className="truncate text-sm font-semibold text-[#0C4A6E]" title={employee.fullName}>
                                                     {employee.fullName}
                                                 </span>
-                                                <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
+                                                <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
                                                     <span className="truncate">{employee.email}</span>
                                                     {employee.phone && (
                                                         <>
-                                                            <span className="h-1 w-1 rounded-full bg-slate-300" />
-                                                            <span className="whitespace-nowrap">{employee.phone}</span>
+                                                            <span className="hidden h-1 w-1 rounded-full bg-slate-300 2xl:inline-block" />
+                                                            <span className="hidden whitespace-nowrap 2xl:inline">{employee.phone}</span>
                                                         </>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-600">
-                                        {employee.employeeCode}
+                                    <TableCell className="whitespace-nowrap px-4 py-3.5 text-sm font-medium text-slate-600">
+                                        <span className="block max-w-[200px] truncate" title={employee.employeeCode}>
+                                            {employee.employeeCode}
+                                        </span>
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                                        {employee.departmentName || '-'}
+                                    <TableCell className="whitespace-nowrap px-4 py-3.5 text-sm text-slate-600">
+                                        <span className="block max-w-[120px] truncate" title={employee.departmentName || '-'}>
+                                            {employee.departmentName || '-'}
+                                        </span>
                                     </TableCell>
-                                    <TableCell className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                                        {employee.position || '-'}
+                                    <TableCell className="whitespace-nowrap px-4 py-3.5 text-sm text-slate-600">
+                                        <span className="block max-w-[160px] truncate" title={employee.position || '-'}>
+                                            {employee.position || '-'}
+                                        </span>
                                     </TableCell>
-                                    <TableCell className="px-6 py-4 align-middle">
+                                    <TableCell className="px-4 py-3.5 align-middle">
                                         <span
                                             className={cn(
-                                                'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium',
+                                                'inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium',
                                                 statusConfig.bg,
                                                 statusConfig.text
                                             )}
@@ -161,7 +167,7 @@ export const EmployeeTable = memo(function EmployeeTable({
                                             {statusConfig.label}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="px-6 py-4 text-right align-middle">
+                                    <TableCell className="px-4 py-3.5 text-right align-middle">
                                         <div className="flex items-center justify-end gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                                             <button
                                                 type="button"

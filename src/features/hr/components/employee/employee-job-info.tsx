@@ -25,9 +25,19 @@ interface EmployeeJobInfoProps {
 export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
     const { register, setValue, watch, formState: { errors } } = useFormContext<EmployeeFormValues>()
 
+    const selectedRole = watch('role')
     const selectedDepartmentId = watch('departmentId')
     const selectedDepartment = departments.find((department) => department.id.toString() === selectedDepartmentId)
     const hireDate = watch('hireDate')
+    const isDirectorRole = selectedRole === 'Director'
+
+    const handleRoleChange = (value: string) => {
+        const nextRole = value as EmployeeFormValues['role']
+        setValue('role', nextRole, { shouldDirty: true, shouldValidate: true })
+        if (nextRole === 'Director') {
+            setValue('departmentId', '', { shouldDirty: true, shouldValidate: true })
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -38,37 +48,25 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label>Phòng ban <span className="text-red-500">*</span></Label>
-                    <Select
-                        value={selectedDepartmentId}
-                        onValueChange={(value) => setValue('departmentId', value)}
-                    >
-                        <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
-                            <SelectValue placeholder="Chọn phòng ban">
-                                {selectedDepartment
-                                    ? selectedDepartment.departmentCode
-                                        ? `${selectedDepartment.departmentName} (${selectedDepartment.departmentCode})`
-                                        : selectedDepartment.departmentName
-                                    : selectedDepartmentId || 'Chọn phòng ban'}
-                            </SelectValue>
+                    <Label>Vai trò <span className="text-red-500">*</span></Label>
+                    <Select value={selectedRole || undefined} onValueChange={handleRoleChange}>
+                        <SelectTrigger className={errors.role ? 'border-red-500' : ''}>
+                            <SelectValue placeholder="Chọn vai trò" />
                         </SelectTrigger>
                         <SelectContent>
-                            {departments.map((department) => (
-                                <SelectItem key={department.id} value={department.id.toString()}>
-                                    {department.departmentCode
-                                        ? `${department.departmentName} (${department.departmentCode})`
-                                        : department.departmentName}
-                                </SelectItem>
-                            ))}
+                            <SelectItem value="Employee">Nhân viên</SelectItem>
+                            <SelectItem value="Trainer">Đào tạo viên</SelectItem>
+                            <SelectItem value="DepartmentHead">Trưởng phòng</SelectItem>
+                            <SelectItem value="Director">Giám đốc</SelectItem>
                         </SelectContent>
                     </Select>
-                    {errors.departmentId && (
-                        <p className="text-sm text-red-500">{errors.departmentId.message}</p>
+                    {errors.role && (
+                        <p className="text-sm text-red-500">{errors.role.message}</p>
                     )}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="position">Chức vụ</Label>
+                    <Label htmlFor="position">Chức vụ (Position)</Label>
                     <Input
                         id="position"
                         placeholder="Ví dụ: Nhân viên kinh doanh"
@@ -78,6 +76,45 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {!isDirectorRole ? (
+                    <div className="space-y-2">
+                        <Label>Phòng ban <span className="text-red-500">*</span></Label>
+                        <Select
+                            value={selectedDepartmentId}
+                            onValueChange={(value) => setValue('departmentId', value, { shouldDirty: true, shouldValidate: true })}
+                        >
+                            <SelectTrigger className={errors.departmentId ? 'border-red-500' : ''}>
+                                <SelectValue placeholder="Chọn phòng ban">
+                                    {selectedDepartment
+                                        ? selectedDepartment.departmentCode
+                                            ? `${selectedDepartment.departmentName} (${selectedDepartment.departmentCode})`
+                                            : selectedDepartment.departmentName
+                                        : selectedDepartmentId || 'Chọn phòng ban'}
+                                </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {departments.map((department) => (
+                                    <SelectItem key={department.id} value={department.id.toString()}>
+                                        {department.departmentCode
+                                            ? `${department.departmentName} (${department.departmentCode})`
+                                            : department.departmentName}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {errors.departmentId && (
+                            <p className="text-sm text-red-500">{errors.departmentId.message}</p>
+                        )}
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        <Label>Phòng ban</Label>
+                        <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                            Vai trò Director không yêu cầu phòng ban.
+                        </p>
+                    </div>
+                )}
+
                 <div className="space-y-2">
                     <Label>Loại hợp đồng</Label>
                     <Select
@@ -143,24 +180,6 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
                                 <SelectItem value="Inactive">Ngưng hoạt động</SelectItem>
                                 <SelectItem value="OnLeave">Nghỉ phép</SelectItem>
                                 <SelectItem value="Terminated">Đã nghỉ việc</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Vai trò</Label>
-                        <Select
-                            value={watch('role') || '__none__'}
-                            onValueChange={(value) => setValue('role', value === '__none__' ? '' : value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Chọn vai trò" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__none__">Không thay đổi</SelectItem>
-                                <SelectItem value="Employee">Nhân viên</SelectItem>
-                                <SelectItem value="Trainer">Đào tạo viên</SelectItem>
-                                <SelectItem value="DepartmentHead">Trưởng phòng</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

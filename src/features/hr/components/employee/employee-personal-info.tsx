@@ -22,7 +22,7 @@ export function EmployeePersonalInfo({ isEdit }: EmployeePersonalInfoProps) {
                     <Label htmlFor="fullName">Họ và tên <span className="text-red-500">*</span></Label>
                     <Input
                         id="fullName"
-                        placeholder="Nguyen Van A"
+                        placeholder="Nguyễn Văn A"
                         {...register('fullName')}
                         className={errors.fullName ? 'border-red-500' : ''}
                         disabled={isEdit}

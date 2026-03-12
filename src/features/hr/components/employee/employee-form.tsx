@@ -25,7 +25,16 @@ interface EmployeeFormProps {
     onCancel?: () => void
 }
 
-function createDefaultValues(initialData?: Employee): EmployeeFormValues {
+const managedRoles = ['Employee', 'Trainer', 'DepartmentHead', 'Director'] as const
+
+function getManagedRole(roles?: string[]): EmployeeFormValues['role'] {
+    const matched = roles?.find((role) => managedRoles.includes(role as (typeof managedRoles)[number]))
+    return (matched as EmployeeFormValues['role']) || ''
+}
+
+function createDefaultValues(initialData?: Employee, isEdit: boolean = false): EmployeeFormValues {
+    const existingRole = getManagedRole(initialData?.roles)
+
     return {
         fullName: initialData?.fullName || '',
         email: initialData?.email || '',
@@ -36,7 +45,7 @@ function createDefaultValues(initialData?: Employee): EmployeeFormValues {
         employmentType: initialData?.employmentType || 'FullTime',
         hireDate: initialData?.hireDate ? new Date(initialData.hireDate) : new Date(),
         status: initialData?.status || 'Active',
-        role: initialData?.roles?.find(r => ['Employee', 'Trainer', 'DepartmentHead'].includes(r)) || '',
+        role: isEdit ? existingRole : 'Employee',
     }
 }
 
@@ -46,10 +55,14 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
     const [isLoading, setIsLoading] = useState(false)
     const [departments, setDepartments] = useState<Department[]>([])
 
+    const existingManagedRole = getManagedRole(initialData?.roles)
+    const hasUnmanagedRoleOnEdit = Boolean(
+        isEdit && initialData?.roles && initialData.roles.length > 0 && !existingManagedRole
+    )
 
     const form = useForm<EmployeeFormValues>({
         resolver: zodResolver(isEdit ? updateEmployeeSchema : createEmployeeSchema) as Resolver<EmployeeFormValues>,
-        defaultValues: createDefaultValues(initialData),
+        defaultValues: createDefaultValues(initialData, isEdit),
     })
 
     const { handleSubmit, reset } = form
@@ -57,13 +70,12 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
     const { trigger: updateEmployeeFn } = useUpdateEmployee()
 
     useEffect(() => {
-        reset(createDefaultValues(initialData))
-    }, [initialData, reset])
+        reset(createDefaultValues(initialData, isEdit))
+    }, [initialData, isEdit, reset])
 
     useEffect(() => {
         let cancelled = false
 
-        // Load departments - độc lập, không bị ảnh hưởng bởi manager fetch
         const loadDepartments = async () => {
             try {
                 const departmentResponse = await getDepartments({ pageSize: 100 })
@@ -113,13 +125,23 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                 return
             }
 
+            if (!data.role) {
+                form.setError('role', { message: 'Vui lòng chọn vai trò trước khi lưu' })
+                setIsLoading(false)
+                return
+            }
+
+            const isDirectorRole = data.role === 'Director'
+            const parsedDepartmentId = data.departmentId ? parseInt(data.departmentId, 10) : null
+            const departmentId = Number.isNaN(parsedDepartmentId) ? null : parsedDepartmentId
+
             if (isEdit && initialData) {
                 const updatePayload: UpdateEmployeeData = {
-                    departmentId: parseInt(data.departmentId, 10),
+                    role: data.role,
+                    departmentId: isDirectorRole ? null : departmentId,
                     position: data.position || undefined,
                     employmentType: data.employmentType,
                     status: data.status,
-                    role: data.role || undefined,
                 }
 
                 await updateEmployeeFn({
@@ -137,7 +159,8 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                     email: data.email || '',
                     phone: data.phone || undefined,
                     password: data.password || '',
-                    departmentId: parseInt(data.departmentId, 10),
+                    role: data.role,
+                    departmentId: isDirectorRole ? null : departmentId,
                     position: data.position || undefined,
                     employmentType: data.employmentType,
                     hireDate: data.hireDate ? data.hireDate.toISOString() : undefined,
@@ -182,6 +205,12 @@ export function EmployeeForm({ initialData, isEdit = false, onSuccess, onCancel 
                     {isEdit && (
                         <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                             Họ tên, email, số điện thoại và ngày vào làm là thông tin chỉ đọc trong chế độ chỉnh sửa.
+                        </p>
+                    )}
+
+                    {hasUnmanagedRoleOnEdit && (
+                        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            Vai trò hiện tại của tài khoản không nằm trong nhóm role quản lý tại màn này. Vui lòng chọn role phù hợp trước khi lưu để tránh thay đổi quyền ngoài ý muốn.
                         </p>
                     )}
 
