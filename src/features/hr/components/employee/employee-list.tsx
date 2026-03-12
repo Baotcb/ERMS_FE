@@ -36,11 +36,18 @@ const STATUS_OPTIONS = [
     { value: 'Inactive', label: 'Đã nghỉ việc' },
 ]
 
+const ROLE_OPTIONS = [
+    { value: 'Employee', label: 'Nhân viên' },
+    { value: 'Trainer', label: 'Đào tạo viên' },
+    { value: 'DepartmentHead', label: 'Trưởng phòng' },
+    { value: 'Director', label: 'Giám đốc' },
+]
+
 const PAGE_SIZE = 7
 const FILTER_OPTIONS_PAGE_SIZE = 1000
 
-function normalizePosition(position: string | null | undefined) {
-    return position?.trim().toLocaleLowerCase('vi-VN') ?? ''
+function normalizeRole(role: string | null | undefined) {
+    return role?.trim().toLocaleLowerCase('vi-VN') ?? ''
 }
 
 function revalidateEmployeeLists() {
@@ -57,7 +64,7 @@ export const EmployeeList = memo(function EmployeeList() {
     const [searchQuery, setSearchQuery] = useState('')
     const [prevSearch, setPrevSearch] = useState('')
     const [departmentFilter, setDepartmentFilter] = useState<number | undefined>(undefined)
-    const [positionFilter, setPositionFilter] = useState<string | undefined>(undefined)
+    const [roleFilter, setRoleFilter] = useState<string | undefined>(undefined)
     const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isImportOpen, setIsImportOpen] = useState(false)
@@ -102,40 +109,28 @@ export const EmployeeList = memo(function EmployeeList() {
         ...baseFilterParams,
     })
 
-    const positionOptions = useMemo(
-        () =>
-            Array.from(
-                new Set(
-                    employeesForFilters
-                        .map((employee) => employee.position?.trim())
-                        .filter((position): position is string => Boolean(position))
-                )
-            ).sort((left, right) => left.localeCompare(right, 'vi', { sensitivity: 'base' })),
-        [employeesForFilters]
-    )
-
-    const filteredEmployeesForPosition = useMemo(() => {
-        if (!positionFilter) {
+    const filteredEmployeesForRole = useMemo(() => {
+        if (!roleFilter) {
             return employees
         }
 
-        const normalizedFilter = normalizePosition(positionFilter)
+        const normalizedFilter = normalizeRole(roleFilter)
 
         return employeesForFilters.filter(
-            (employee) => normalizePosition(employee.position) === normalizedFilter
+            (employee) => employee.roles?.some((r) => normalizeRole(r) === normalizedFilter)
         )
-    }, [employees, employeesForFilters, positionFilter])
+    }, [employees, employeesForFilters, roleFilter])
 
-    const effectiveTotalCount = positionFilter
-        ? filteredEmployeesForPosition.length
+    const effectiveTotalCount = roleFilter
+        ? filteredEmployeesForRole.length
         : totalCount
-    const effectiveTotalPages = positionFilter
-        ? Math.max(1, Math.ceil(filteredEmployeesForPosition.length / PAGE_SIZE))
+    const effectiveTotalPages = roleFilter
+        ? Math.max(1, Math.ceil(filteredEmployeesForRole.length / PAGE_SIZE))
         : totalPages
-    const effectiveEmployees = positionFilter
-        ? filteredEmployeesForPosition.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    const effectiveEmployees = roleFilter
+        ? filteredEmployeesForRole.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
         : employees
-    const isTableLoading = isLoading || (Boolean(positionFilter) && isFilterOptionsLoading)
+    const isTableLoading = isLoading || (Boolean(roleFilter) && isFilterOptionsLoading)
 
     useEffect(() => {
         if (page > effectiveTotalPages) {
@@ -200,6 +195,11 @@ export const EmployeeList = memo(function EmployeeList() {
     }, [])
 
     const handleRefresh = useCallback(() => {
+        setSearchQuery('')
+        setDepartmentFilter(undefined)
+        setRoleFilter(undefined)
+        setStatusFilter(undefined)
+        setPage(1)
         void revalidateEmployeeLists()
     }, [])
 
@@ -226,9 +226,8 @@ export const EmployeeList = memo(function EmployeeList() {
             </div>
 
             <div className="rounded-2xl bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                    <div className="flex flex-1 flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center">
-                        <div className="relative w-full xl:max-w-80">
+                <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative w-full sm:w-auto sm:min-w-[200px] lg:max-w-72">
                             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <Input
                                 type="text"
@@ -246,7 +245,7 @@ export const EmployeeList = memo(function EmployeeList() {
                                 setPage(1)
                             }}
                         >
-                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[190px]">
+                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[170px]">
                                 <SelectValue placeholder="Tất cả phòng ban" />
                             </SelectTrigger>
                             <SelectContent>
@@ -260,20 +259,20 @@ export const EmployeeList = memo(function EmployeeList() {
                         </Select>
 
                         <Select
-                            value={positionFilter || 'all'}
+                            value={roleFilter || 'all'}
                             onValueChange={(value) => {
-                                setPositionFilter(value === 'all' ? undefined : value)
+                                setRoleFilter(value === 'all' ? undefined : value)
                                 setPage(1)
                             }}
                         >
-                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[190px]">
-                                <SelectValue placeholder="Tất cả chức vụ" />
+                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[170px]">
+                                <SelectValue placeholder="Tất cả vai trò" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tất cả chức vụ</SelectItem>
-                                {positionOptions.map((position) => (
-                                    <SelectItem key={position} value={position}>
-                                        {position}
+                                <SelectItem value="all">Tất cả vai trò</SelectItem>
+                                {ROLE_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -286,7 +285,7 @@ export const EmployeeList = memo(function EmployeeList() {
                                 setPage(1)
                             }}
                         >
-                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[170px]">
+                            <SelectTrigger className="h-10 w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-700 sm:w-[150px]">
                                 <SelectValue placeholder="Trạng thái" />
                             </SelectTrigger>
                             <SelectContent>
@@ -307,9 +306,8 @@ export const EmployeeList = memo(function EmployeeList() {
                         >
                             <RefreshCw className={`h-4 w-4 ${isTableLoading ? 'animate-spin' : ''}`} />
                         </button>
-                    </div>
 
-                    <div className="flex w-full flex-col gap-3 sm:flex-row xl:w-auto">
+                        <div className="ml-auto flex items-center gap-3">
                         <Button
                             variant="outline"
                             onClick={handleImport}
@@ -325,7 +323,7 @@ export const EmployeeList = memo(function EmployeeList() {
                             <Plus className="mr-2 h-4 w-4" />
                             Thêm nhân viên
                         </Button>
-                    </div>
+                        </div>
                 </div>
             </div>
 

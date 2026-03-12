@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, CheckCircle2, PlusCircle, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Search, CheckCircle2, PlusCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

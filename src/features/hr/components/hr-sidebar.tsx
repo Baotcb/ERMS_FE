@@ -96,7 +96,7 @@ const NavMenuItem = memo(function NavMenuItem({
             <Link
                 href={item.href}
                 className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                    'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
                     isActive ? 'bg-[#0F4C75] text-white shadow-md' : 'text-gray-600'
                 )}
@@ -113,7 +113,7 @@ const NavMenuItem = memo(function NavMenuItem({
                 type="button"
                 onClick={() => onToggle(item.label)}
                 className={cn(
-                    'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                    'w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
                     isExpanded ? 'bg-[#BBE1FA]/30 text-[#0F4C75]' : 'text-gray-600'
                 )}
@@ -136,7 +136,7 @@ const NavMenuItem = memo(function NavMenuItem({
                         <Link
                             key={child.href}
                             href={child.href}
-                            className="block px-4 py-2 rounded-lg text-sm text-gray-500 transition-all duration-200 hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]"
+                            className="block px-3 py-1.5 rounded-lg text-[13px] text-gray-500 transition-all duration-200 hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]"
                         >
                             {child.label}
                         </Link>
@@ -180,7 +180,7 @@ export const HRSidebar = memo(function HRSidebar() {
 
     const sidebarContent = (
         <div className="h-full flex flex-col bg-white border-r border-gray-200">
-            <div className="p-6 border-b border-gray-100">
+            <div className="p-5 border-b border-gray-100">
                 <Link href="/enterprise/hr/dashboard" className="flex items-center gap-3">
                     {enterpriseInfo?.logoUrl ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
@@ -204,7 +204,7 @@ export const HRSidebar = memo(function HRSidebar() {
                 </Link>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
                 {visibleNavItems.map((item) => (
                     <NavMenuItem
                         key={item.label}
@@ -216,7 +216,7 @@ export const HRSidebar = memo(function HRSidebar() {
                 ))}
             </nav>
 
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-3 border-t border-gray-100">
                 <AvatarDropdown />
             </div>
         </div>
@@ -252,6 +252,7 @@ export const HRSidebar = memo(function HRSidebar() {
             <aside
                 className={cn(
                     'fixed top-0 left-0 h-screen w-72 z-40 transition-transform duration-300',
+                    'lg:w-64 xl:w-72',
                     'lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:z-auto',
                     isMobileOpen ? 'translate-x-0' : '-translate-x-full'
                 )}

@@ -73,7 +73,7 @@ export async function getEmployees(params: GetEmployeesParams, token?: string): 
 }
 
 export async function getEmployeeById(id: string): Promise<Employee> {
-    const response = await apiClient.get(`/api/Employees/${id}`)
+    const response = await apiClient.get(`/api/Employees/detail?id=${id}`)
 
     if (!response.ok) {
         let errorMessage = 'Không thể tải thông tin nhân viên'
@@ -99,7 +99,8 @@ export interface CreateEmployeeData {
     fullName: string
     phone?: string
     password: string
-    departmentId: number
+    role: string
+    departmentId?: number | null
     position?: string
     employmentType?: string
     hireDate?: string
@@ -118,12 +119,12 @@ export async function createEmployee(data: CreateEmployeeData): Promise<{ employ
 }
 
 export interface UpdateEmployeeData {
-    departmentId: number
+    role: string
+    departmentId?: number | null
     position?: string
     employmentType?: string
     managerId?: string
     status?: string
-    role?: string
 }
 
 export async function updateEmployee(id: string, data: UpdateEmployeeData): Promise<void> {

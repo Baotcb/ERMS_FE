@@ -141,7 +141,7 @@ export const DepartmentList = memo(function DepartmentList() {
                         disabled={page === displayTotalPages}
                         className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
                     >
-                        Sau
+                        Tiếp
                         <ChevronRight className="w-4 h-4" />
                     </Button>
                 </div>
