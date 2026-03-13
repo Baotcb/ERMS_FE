@@ -8,14 +8,16 @@ export interface Employee {
     fullName: string
     email: string
     phone: string | null
-    departmentId: number
-    departmentName: string
+    departmentId: number | null
+    departmentName: string | null
     position: string | null
     employmentType: string
     hireDate: string | null
     status: string
     createdAt: string
-    managerId?: number | null
+    managerId?: string | null
+    roles?: string[]
+    isTrainer?: boolean
 }
 
 export interface GetEmployeesParams {
@@ -72,7 +74,7 @@ export async function getEmployees(params: GetEmployeesParams, token?: string): 
 }
 
 export async function getEmployeeById(id: string): Promise<Employee> {
-    const response = await apiClient.get(`/api/Employees/${id}`)
+    const response = await apiClient.get(`/api/Employees/detail?id=${id}`)
 
     if (!response.ok) {
         let errorMessage = 'Không thể tải thông tin nhân viên'
@@ -98,7 +100,8 @@ export interface CreateEmployeeData {
     fullName: string
     phone?: string
     password: string
-    departmentId: number
+    role: string
+    departmentId?: number | null
     position?: string
     employmentType?: string
     hireDate?: string
@@ -117,8 +120,8 @@ export async function createEmployee(data: CreateEmployeeData): Promise<{ employ
 }
 
 export interface UpdateEmployeeData {
-    id: string
-    departmentId: number
+    role: string
+    departmentId?: number | null
     position?: string
     employmentType?: string
     managerId?: string
@@ -148,7 +151,7 @@ export interface EmployeeImportItem {
     fullName: string
     email: string
     phone?: string
-    departmentCode: string
+    departmentCode?: string
     position?: string
     password?: string
     role?: string // Optional: Employee, Trainer, Director, DepartmentHead

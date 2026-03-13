@@ -30,6 +30,7 @@ export interface HROfferDto {
     sentById: string | null
     respondedAt: string | null
     candidateNote: string | null
+    applicationStage: string
 }
 
 // Create Offer Request — khớp với BE CreateOfferCommand

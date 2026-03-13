@@ -1,10 +1,12 @@
-export default function TrainingPage() {
+import { TrainingRequestList } from '@/features/dept-head/components/training/training-request-list';
+import { trainingServerService } from '@/features/hr/api/training-server-service';
+
+export default async function TrainingPage() {
+    const initialData = await trainingServerService.getRequests();
+
     return (
-        <div>
-            <h1 className="text-2xl font-bold text-[#0F4C75] mb-4">Đào tạo</h1>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <p className="text-gray-500">Tính năng đang phát triển...</p>
-            </div>
+        <div className="container mx-auto py-2">
+            <TrainingRequestList initialData={initialData} />
         </div>
-    )
+    );
 }

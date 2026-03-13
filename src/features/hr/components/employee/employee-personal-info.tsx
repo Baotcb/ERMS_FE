@@ -14,7 +14,7 @@ export function EmployeePersonalInfo({ isEdit }: EmployeePersonalInfoProps) {
         <div className="space-y-6">
             <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
                 <div className="w-1 h-6 bg-[#0F4C75] rounded-full" />
-                <h3 className="text-lg font-semibold text-gray-800">Thông tin cá nhân & Tài khoản</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Thông tin cá nhân và tài khoản</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -25,6 +25,7 @@ export function EmployeePersonalInfo({ isEdit }: EmployeePersonalInfoProps) {
                         placeholder="Nguyễn Văn A"
                         {...register('fullName')}
                         className={errors.fullName ? 'border-red-500' : ''}
+                        disabled={isEdit}
                     />
                     {errors.fullName && (
                         <p className="text-sm text-red-500">{errors.fullName.message}</p>
@@ -68,6 +69,7 @@ export function EmployeePersonalInfo({ isEdit }: EmployeePersonalInfoProps) {
                         id="phone"
                         placeholder="0912345678"
                         {...register('phone')}
+                        disabled={isEdit}
                     />
                 </div>
             </div>

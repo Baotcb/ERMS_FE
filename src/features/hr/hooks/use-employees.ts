@@ -1,6 +1,14 @@
 import { useData, useMutation, mutate, type Fetcher } from '@/lib/swr/hooks'
 import { apiClient } from '@/lib/api-client'
-import type { Employee, GetEmployeesParams, CreateEmployeeData, UpdateEmployeeData, PaginatedResult, EmployeeImportItem, BulkCreateResult } from '../api/employee-service'
+import type {
+    Employee,
+    GetEmployeesParams,
+    CreateEmployeeData,
+    UpdateEmployeeData,
+    PaginatedResult,
+    EmployeeImportItem,
+    BulkCreateResult,
+} from '../api/employee-service'
 import type { ImportEmployeesResult } from '../types/import-types'
 
 // SWR keys for cache management
@@ -12,7 +20,6 @@ export const employeesKeys = {
     detail: (id: string) => [...employeesKeys.details(), id] as const,
 }
 
-// Fetcher for employees list
 async function fetchEmployees([, , paramsString]: readonly [string, string, string]): Promise<PaginatedResult<Employee>> {
     const params = JSON.parse(paramsString) as GetEmployeesParams
 
@@ -34,12 +41,11 @@ async function fetchEmployees([, , paramsString]: readonly [string, string, stri
     return response.json()
 }
 
-// Hook: Get employees list with pagination and caching
 export function useEmployees(params: GetEmployeesParams = {}) {
     const key = employeesKeys.list(params)
 
     const swr = useData<PaginatedResult<Employee>>(key, {
-        fetcher: fetchEmployees as unknown as Fetcher<PaginatedResult<Employee>>
+        fetcher: fetchEmployees as unknown as Fetcher<PaginatedResult<Employee>>,
     })
 
     return {
@@ -52,16 +58,19 @@ export function useEmployees(params: GetEmployeesParams = {}) {
     }
 }
 
-// Hook: Get employee by ID
 export function useEmployee(id: string | null) {
-    const key = id ? employeesKeys.detail(id).join('/') : null
+    const key = id ? employeesKeys.detail(id) : null
 
     const swr = useData<Employee>(key, {
-        fetcher: async () => {
-            const response = await apiClient.get(`/api/Employees/${id}`)
+        fetcher: async ([, , employeeId]) => {
+            if (typeof employeeId !== 'string') {
+                throw new Error('Employee ID is invalid')
+            }
+
+            const response = await apiClient.get(`/api/Employees/detail?id=${employeeId}`)
             if (!response.ok) throw new Error('Không thể tải thông tin nhân viên')
             return response.json()
-        }
+        },
     })
 
     return {
@@ -71,12 +80,11 @@ export function useEmployee(id: string | null) {
     }
 }
 
-// Mutation: Create employee
 export function useCreateEmployee() {
     return useMutation<{ employeeId: string }, CreateEmployeeData>(
         employeesKeys.lists().join('/'),
         async (data) => {
-            const response = await apiClient.post(`/api/Employees`, data)
+            const response = await apiClient.post('/api/Employees', data)
 
             if (!response.ok) {
                 const error = await response.json()
@@ -92,12 +100,11 @@ export function useCreateEmployee() {
                     undefined,
                     { revalidate: true }
                 )
-            }
+            },
         }
     )
 }
 
-// Mutation: Update employee
 export function useUpdateEmployee() {
     return useMutation<void, { id: string; data: UpdateEmployeeData }>(
         employeesKeys.lists().join('/'),
@@ -118,12 +125,16 @@ export function useUpdateEmployee() {
                     undefined,
                     { revalidate: true }
                 )
-            }
+                mutate(
+                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'detail',
+                    undefined,
+                    { revalidate: true }
+                )
+            },
         }
     )
 }
 
-// Mutation: Delete employee
 export function useDeleteEmployee() {
     return useMutation<void, string>(
         employeesKeys.lists().join('/'),
@@ -144,17 +155,16 @@ export function useDeleteEmployee() {
                     undefined,
                     { revalidate: true }
                 )
-            }
+            },
         }
     )
 }
 
-// Mutation: Bulk create employees
 export function useBulkCreateEmployees() {
     return useMutation<BulkCreateResult, EmployeeImportItem[]>(
         employeesKeys.lists().join('/'),
         async (items) => {
-            const response = await apiClient.post(`/api/Employees/bulk`, { items })
+            const response = await apiClient.post('/api/Employees/bulk', { items })
 
             if (!response.ok) {
                 const error = await response.json()
@@ -170,12 +180,11 @@ export function useBulkCreateEmployees() {
                     undefined,
                     { revalidate: true }
                 )
-            }
+            },
         }
     )
 }
 
-// Mutation: Import employees from file
 export function useImportEmployeesFromFile() {
     return useMutation<ImportEmployeesResult, { file: File; commit?: boolean }>(
         employeesKeys.lists().join('/'),
@@ -184,7 +193,7 @@ export function useImportEmployeesFromFile() {
             formData.append('file', file)
             formData.append('commit', commit.toString())
 
-            const response = await apiClient.post(`/api/Employees/import`, formData)
+            const response = await apiClient.post('/api/Employees/import', formData)
 
             if (!response.ok) {
                 try {
@@ -207,7 +216,7 @@ export function useImportEmployeesFromFile() {
                     undefined,
                     { revalidate: true }
                 )
-            }
+            },
         }
     )
 }

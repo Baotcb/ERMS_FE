@@ -14,6 +14,10 @@ export interface RecruitmentCampaign {
     status: string
     createdByName?: string
     createdAt: string
+    usedBudget?: number
+    pendingBudget?: number
+    remainingBudget?: number
+    actualCost?: number
 }
 
 export interface CreateRecruitmentCampaignRequest {

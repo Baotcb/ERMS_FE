@@ -111,12 +111,19 @@ export const OfferCard = memo(function OfferCard({ offer }: OfferCardProps) {
                         <span className="lg:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">
                             Trạng thái
                         </span>
-                        <OfferStatusBadge status={offer.status} />
+                        {offer.applicationStage === 'Hired' ? (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-700">
+                                <span className="size-1.5 rounded-full bg-teal-500 mr-2" />
+                                Đã tuyển
+                            </span>
+                        ) : (
+                            <OfferStatusBadge status={offer.status} />
+                        )}
                     </div>
 
                     {/* Actions */}
                     <div className="col-span-1 lg:col-span-2 flex justify-end gap-2">
-                        {offer.status === 'Accepted' && (
+                        {offer.status === 'Accepted' && offer.applicationStage !== 'Hired' && (
                             <button
                                 onClick={() => setHireOpen(true)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200"

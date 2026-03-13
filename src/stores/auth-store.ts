@@ -8,6 +8,10 @@ export interface User {
     email: string
     fullName?: string
     role?: string
+    isTrainer?: boolean
+    departmentId?: number
+    departmentName?: string
+    avatarUrl?: string
 }
 
 interface AuthState {
@@ -76,9 +80,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
             const userRole = getCookie(STORAGE_KEYS.USER_ROLE)
             const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
+            const userAvatarEncoded = getCookie(STORAGE_KEYS.USER_AVATAR)
 
             if (userRole) {
                 const fullName = userNameEncoded ? decodeURIComponent(userNameEncoded) : 'User'
+                const avatarUrl = userAvatarEncoded ? decodeURIComponent(userAvatarEncoded) : undefined
 
                 // We don't have ID or Email in the public cookie, but we can assume session is valid for UI
                 // Critical data fetching will fail if the HttpOnly token is missing/invalid
@@ -86,7 +92,8 @@ export const useAuthStore = create<AuthState>((set) => ({
                     id: 'current', // Placeholder
                     email: '',     // Placeholder
                     fullName,
-                    role: userRole
+                    role: userRole,
+                    avatarUrl
                 }
 
                 set({

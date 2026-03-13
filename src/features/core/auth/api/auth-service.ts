@@ -10,6 +10,7 @@ import { apiClient } from '@/lib/api-client'
 import type {
     LoginRequest,
     LoginResponse,
+    GoogleLoginResponse,
     RegisterRequest,
     RegisterResponse,
     ForgotPasswordRequest,
@@ -71,7 +72,22 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
     const sanitizedData = sanitizeLoginRequest(data)
     // Use local proxy route to handle HttpOnly cookies
     const response = await apiClient.post('/api/auth/session/login', sanitizedData)
-    return handleApiResponse<LoginResponse>(response, 'Đăng nhập thất bại')
+    const result = await handleApiResponse<{
+        success?: boolean
+        data?: {
+            user?: LoginResponse['user']
+        }
+        message?: string
+    }>(response, 'Đăng nhập thất bại')
+
+    if (!result.data?.user) {
+        throw new Error(result.message || 'Đăng nhập thất bại')
+    }
+
+    return {
+        success: result.success,
+        user: result.data.user,
+    }
 }
 
 /**
@@ -163,17 +179,14 @@ export async function resendConfirmation(email: string): Promise<{ message: stri
 /**
  * Login with Google
  */
-export async function loginByGoogle(data: GoogleLoginRequest): Promise<LoginResponse> {
+ export async function loginByGoogle(data: GoogleLoginRequest): Promise<GoogleLoginResponse> {
     const response = await fetch(`${config.apiUrl}/api/Auth/google-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
     })
 
-    return handleApiResponse<LoginResponse>(
-        response,
-        'Đăng nhập Google thất bại'
-    )
+    return handleApiResponse<GoogleLoginResponse>(response, 'Đăng nhập Google thất bại')
 }
 
 

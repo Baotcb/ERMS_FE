@@ -1,5 +1,5 @@
-import { UseFormReturn } from 'react-hook-form'
-import { CalendarIcon, DollarSign } from 'lucide-react'
+﻿import { UseFormReturn, useWatch } from 'react-hook-form'
+import { CalendarIcon, DollarSign, AlertTriangle, Info } from 'lucide-react'
 import { format, startOfDay } from 'date-fns'
 
 import { cn } from '@/lib/utils'
@@ -15,7 +15,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import type { RecruitmentCampaign } from '@/features/hr/types/recruitment-campaign-types'
-import type { CreatePlanValues, Department } from './create-plan-types'
+import type { CreatePlanValues, Department, CampaignBudgetInfo } from './create-plan-types'
+
+// Format VND
+function formatVND(value: number): string {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+}
 
 interface PlanFormStepProps {
     form: UseFormReturn<CreatePlanValues>
@@ -24,12 +29,73 @@ interface PlanFormStepProps {
     isLoadingCampaigns: boolean
     showCampaignField: boolean
     onSubmit: (values: CreatePlanValues) => void
+    budgetInfo: CampaignBudgetInfo | null
 }
 
-export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCampaigns, showCampaignField, onSubmit }: PlanFormStepProps) {
+export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCampaigns, showCampaignField, onSubmit, budgetInfo }: PlanFormStepProps) {
+    // Watch totalBudget field để kiểm tra realtime
+    const totalBudget = useWatch({ control: form.control, name: 'totalBudget' })
+    const isOverBudget = Boolean(budgetInfo && (totalBudget ?? 0) > budgetInfo.remainingBudget)
+
     return (
         <Form {...form}>
             <form id="create-plan-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-3xl mx-auto pb-4">
+                {/* Budget Info Banner */}
+                {budgetInfo && (
+                    <div className={cn(
+                        "rounded-lg border p-4 space-y-3",
+                        isOverBudget
+                            ? "bg-amber-50 border-amber-200"
+                            : "bg-blue-50 border-blue-200"
+                    )}>
+                        <div className="flex items-center gap-2">
+                            {isOverBudget
+                                ? <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                : <Info className="w-4 h-4 text-blue-600" />
+                            }
+                            <span className={cn(
+                                "text-sm font-semibold",
+                                isOverBudget ? "text-amber-700" : "text-blue-700"
+                            )}>
+                                Thông tin ngân sách chiến dịch
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-white rounded-md p-3 border border-gray-100">
+                                <p className="text-xs text-gray-500 mb-1">Tổng ngân sách</p>
+                                <p className="text-sm font-bold text-gray-900">{formatVND(budgetInfo.totalBudgetCeiling)}</p>
+                            </div>
+                            <div className="bg-white rounded-md p-3 border border-gray-100">
+                                <p className="text-xs text-gray-500 mb-1">Đã phân bổ</p>
+                                <p className="text-sm font-bold text-green-700">{formatVND(budgetInfo.usedBudget)}</p>
+                                {budgetInfo.pendingBudget > 0 && (
+                                    <p className="text-xs text-amber-600 mt-0.5">
+                                        + {formatVND(budgetInfo.pendingBudget)} đang chờ duyệt
+                                    </p>
+                                )}
+                            </div>
+                            <div className="bg-white rounded-md p-3 border border-gray-100">
+                                <p className="text-xs text-gray-500 mb-1">Còn lại</p>
+                                <p className={cn(
+                                    "text-sm font-bold",
+                                    isOverBudget ? "text-amber-600" : "text-blue-700"
+                                )}>
+                                    {formatVND(budgetInfo.remainingBudget)}
+                                </p>
+                            </div>
+                        </div>
+                        {isOverBudget && (
+                            <div className="flex items-start gap-2 bg-amber-100/60 rounded-md p-2.5">
+                                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                                <p className="text-xs text-amber-700">
+                                    Ngân sách yêu cầu ({formatVND(totalBudget || 0)}) vượt hạn mức còn lại ({formatVND(budgetInfo.remainingBudget)}).
+                                    Kế hoạch vẫn được gửi nhưng có thể bị từ chối bởi Director.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-6 bg-white p-6 rounded-lg border shadow-sm">
                     {showCampaignField && (
                         <FormField control={form.control} name="campaignId" render={({ field }) => (
@@ -94,22 +160,36 @@ export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCam
                     )} />
 
                     <FormField control={form.control} name="totalBudget" render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="grid grid-rows-[auto_auto_minmax(1.25rem,_auto)] items-start">
                             <FormLabel>Ngân sách (VNĐ)</FormLabel>
                             <FormControl>
                                 <div className="relative">
                                     <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                                    <Input type="number" className="pl-9" placeholder="0" {...field} />
+                                    <Input
+                                        type="number"
+                                        className={cn("pl-9", isOverBudget && "border-amber-400 focus-visible:ring-amber-400")}
+                                        placeholder="0"
+                                        {...field}
+                                    />
                                 </div>
                             </FormControl>
+                            <div className="min-h-5">
+                                {isOverBudget && (
+                                    <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        Vượt hạn mức còn lại {formatVND(budgetInfo?.remainingBudget ?? 0)}
+                                    </p>
+                                )}
+                            </div>
                         </FormItem>
                     )} />
 
-                    <FormItem>
+                    <FormItem className="grid grid-rows-[auto_auto_minmax(1.25rem,_auto)] items-start">
                         <FormLabel>Phòng ban</FormLabel>
                         <div className="h-10 px-3 py-2 border rounded-md bg-gray-100 text-sm text-gray-500 flex items-center">
                             {detectedDepartment?.departmentName || 'Không xác định'}
                         </div>
+                        <div className="min-h-5" aria-hidden="true" />
                     </FormItem>
 
                     <FormField control={form.control} name="description" render={({ field }) => (

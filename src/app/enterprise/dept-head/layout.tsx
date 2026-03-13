@@ -8,7 +8,7 @@ export default function DeptHeadLayout({
     return (
         <div className="flex bg-gray-50 min-h-screen">
             <DeptHeadSidebar />
-            <main className="flex-1 p-8 overflow-x-hidden">
+            <main className="enterprise-scale flex-1 p-8 overflow-x-hidden">
                 {children}
             </main>
         </div>

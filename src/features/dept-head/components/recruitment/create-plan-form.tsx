@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
-import { getCookie } from '@/features/core/auth/utils/auth-cookies'
-import { STORAGE_KEYS } from '@/utils/constants'
 
 import {
     type CreatePlanFormProps,
@@ -28,6 +26,7 @@ import {
 } from './create-plan-types'
 import { PlanFormStep } from './plan-form-step'
 import { PlanDetailFormSection } from './plan-detail-form-section'
+import { getRecruitmentCampaignById } from '@/features/hr/api/recruitment-campaign-service'
 import { PlanDetailTableSection } from './plan-detail-table-section'
 
 // --- Component ---
@@ -60,6 +59,27 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
         }
     }, [])
 
+    const fetchBudgetInfo = useCallback(async (campaignId: string) => {
+        try {
+            const campaign = await getRecruitmentCampaignById(campaignId)
+            if (campaign.totalBudgetCeiling != null) {
+                dispatch({
+                    type: 'SET_BUDGET_INFO',
+                    budgetInfo: {
+                        totalBudgetCeiling: campaign.totalBudgetCeiling,
+                        usedBudget: campaign.usedBudget ?? 0,
+                        pendingBudget: campaign.pendingBudget ?? 0,
+                        remainingBudget: campaign.remainingBudget ?? campaign.totalBudgetCeiling,
+                    }
+                })
+            } else {
+                dispatch({ type: 'SET_BUDGET_INFO', budgetInfo: null })
+            }
+        } catch (e) {
+            console.error('Failed to fetch budget info:', e)
+        }
+    }, [])
+
     // --- Initialization Effect ---
 
     useEffect(() => {
@@ -83,27 +103,42 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                     console.error(error)
                     dispatch({ type: 'SET_LOADING', key: 'isLoadingCampaigns', value: false })
                 }
+            } else {
+                // Fetch budget info khi có defaultCampaignId
+                fetchBudgetInfo(defaultCampaignId)
             }
 
             if (!state.detectedDepartment) {
                 try {
-                    const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
-                    if (userNameEncoded) {
-                        const userName = decodeURIComponent(userNameEncoded)
-                        const res = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(userName)}&PageSize=1`)
-                        if (res.ok) {
-                            const data = await res.json()
-                            const employee = data.items?.[0]
-                            if (employee?.departmentId) {
-                                dispatch({
-                                    type: 'SET_DEPARTMENT',
-                                    department: { id: employee.departmentId, departmentName: employee.departmentName }
-                                })
+                    const profileRes = await apiClient.get('/api/User/profile')
+                    if (profileRes.ok) {
+                        const profile = await profileRes.json()
+
+                        // Ưu tiên lấy departmentId từ User profile
+                        if (profile?.departmentId) {
+                            dispatch({
+                                type: 'SET_DEPARTMENT',
+                                department: { id: profile.departmentId, departmentName: profile.departmentName || 'Không xác định' }
+                            })
+                        } else if (profile?.email) {
+                            // Fallback: User table không có departmentId → tìm trong Employee table
+                            const empRes = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(profile.email)}&PageSize=5`)
+                            if (empRes.ok) {
+                                const empData = await empRes.json()
+                                const employee = (empData.items || []).find(
+                                    (item: { email?: string }) => item.email?.trim().toLowerCase() === profile.email.trim().toLowerCase()
+                                )
+                                if (employee?.departmentId) {
+                                    dispatch({
+                                        type: 'SET_DEPARTMENT',
+                                        department: { id: employee.departmentId, departmentName: employee.departmentName || 'Không xác định' }
+                                    })
+                                }
                             }
                         }
                     }
                 } catch (e) {
-                    console.error(e)
+                    console.error('Failed to fetch department info:', e)
                 }
             }
         }
@@ -141,7 +176,17 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
             dispatch({ type: 'SET_STEP', step: 'create-plan' })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, defaultCampaignId, editPlanId, fetchPlanDetails, planForm])
+    }, [open, defaultCampaignId, editPlanId, fetchPlanDetails, fetchBudgetInfo, planForm])
+
+    // Watch campaignId changes để fetch budget info khi user chọn campaign từ dropdown
+    useEffect(() => {
+        const subscription = planForm.watch((value, { name }) => {
+            if (name === 'campaignId' && value.campaignId && !defaultCampaignId) {
+                fetchBudgetInfo(value.campaignId)
+            }
+        })
+        return () => subscription.unsubscribe()
+    }, [planForm, defaultCampaignId, fetchBudgetInfo])
 
     useEffect(() => {
         if (state.detectedDepartment && !editPlanId && !planForm.getValues('departmentId')) {
@@ -256,9 +301,9 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className={cn(
-                "flex flex-col p-0 gap-0 bg-white shadow-2xl transition-all",
+                "flex flex-col overflow-hidden p-0 gap-0 bg-white shadow-2xl transition-all",
                 state.step === 'add-details' ? "sm:max-w-[1200px] h-[85vh]" : "sm:max-w-[800px] max-h-[90vh]"
-            )}>
+            )} showCloseButton={false}>
                 <DialogHeader className="px-6 py-4 bg-white border-b shrink-0">
                     <DialogDescription className="sr-only">
                         {state.step === 'create-plan' ? 'Form tạo kế hoạch tuyển dụng' : 'Quản lý đề xuất vị trí'}
@@ -294,6 +339,7 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
                             isLoadingCampaigns={state.isLoadingCampaigns}
                             showCampaignField={!defaultCampaignId && !editPlanId}
                             onSubmit={onSubmitPlan}
+                            budgetInfo={state.budgetInfo}
                         />
                     ) : (
                         <div className="flex flex-col gap-6 h-full">
@@ -330,3 +376,4 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
         </Dialog>
     )
 }
+

@@ -142,3 +142,21 @@
     display: none !important;
   }
 }
+
+@layer utilities {
+  @media (min-width: 1024px) {
+    .enterprise-scale {
+      zoom: 0.85;
+      min-height: calc(100vh / 0.85);
+    }
+
+    @supports not (zoom: 1) {
+      .enterprise-scale {
+        transform: scale(0.85);
+        transform-origin: top left;
+        width: calc(100% / 0.85);
+        min-height: calc(100vh / 0.85);
+      }
+    }
+  }
+}
