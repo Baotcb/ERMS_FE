@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useReducer, useEffect, useCallback } from 'react'
 import { useForm, Resolver } from 'react-hook-form'
@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
-import { getCookie } from '@/features/core/auth/utils/auth-cookies'
-import { STORAGE_KEYS } from '@/utils/constants'
 
 import {
     type CreatePlanFormProps,
@@ -112,23 +110,35 @@ export function CreatePlanForm({ open, onOpenChange, onSuccess, defaultCampaignI
 
             if (!state.detectedDepartment) {
                 try {
-                    const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
-                    if (userNameEncoded) {
-                        const userName = decodeURIComponent(userNameEncoded)
-                        const res = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(userName)}&PageSize=1`)
-                        if (res.ok) {
-                            const data = await res.json()
-                            const employee = data.items?.[0]
-                            if (employee?.departmentId) {
-                                dispatch({
-                                    type: 'SET_DEPARTMENT',
-                                    department: { id: employee.departmentId, departmentName: employee.departmentName }
-                                })
+                    const profileRes = await apiClient.get('/api/User/profile')
+                    if (profileRes.ok) {
+                        const profile = await profileRes.json()
+
+                        // Ưu tiên lấy departmentId từ User profile
+                        if (profile?.departmentId) {
+                            dispatch({
+                                type: 'SET_DEPARTMENT',
+                                department: { id: profile.departmentId, departmentName: profile.departmentName || 'Không xác định' }
+                            })
+                        } else if (profile?.email) {
+                            // Fallback: User table không có departmentId → tìm trong Employee table
+                            const empRes = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(profile.email)}&PageSize=5`)
+                            if (empRes.ok) {
+                                const empData = await empRes.json()
+                                const employee = (empData.items || []).find(
+                                    (item: { email?: string }) => item.email?.trim().toLowerCase() === profile.email.trim().toLowerCase()
+                                )
+                                if (employee?.departmentId) {
+                                    dispatch({
+                                        type: 'SET_DEPARTMENT',
+                                        department: { id: employee.departmentId, departmentName: employee.departmentName || 'Không xác định' }
+                                    })
+                                }
                             }
                         }
                     }
                 } catch (e) {
-                    console.error(e)
+                    console.error('Failed to fetch department info:', e)
                 }
             }
         }
