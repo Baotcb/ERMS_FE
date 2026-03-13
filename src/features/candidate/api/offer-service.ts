@@ -29,7 +29,7 @@ export async function getMyOffers(params?: {
 // Lấy chi tiết 1 offer (dùng danh sách rồi filter client-side,
 // vì BE chưa có endpoint riêng cho candidate get by id)
 export async function getMyOfferById(offerId: string): Promise<CandidateOfferDto | null> {
-    const data = await getMyOffers({ pageSize: 100 })
+    const data = await getMyOffers({ pageSize: 50 })
     return data.items.find((o) => o.offerId === offerId) || null
 }
 

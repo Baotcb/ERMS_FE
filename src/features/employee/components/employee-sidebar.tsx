@@ -128,23 +128,7 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                         })}
                     </div>
                 )}
-                {NAV_ITEMS.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
-                                'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
-                                isActive ? 'bg-[#0F4C75] text-white shadow-md' : 'text-gray-600'
-                            )}
-                        >
-                            {item.icon}
-                            <span className="font-medium">{item.label}</span>
-                        </Link>
-                    )
-                })}
+
             </nav>
 
             <div className="p-4 border-t border-gray-100">

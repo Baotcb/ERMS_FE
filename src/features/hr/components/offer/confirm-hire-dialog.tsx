@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { UserCheck, Loader2, CheckCircle2 } from 'lucide-react'
+import { UserCheck, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useConfirmHire } from '../../hooks/use-offers'
 
 interface ConfirmHireDialogProps {
@@ -31,6 +31,7 @@ export function ConfirmHireDialog({
     position,
 }: ConfirmHireDialogProps) {
     const [email, setEmail] = useState('')
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const [result, setResult] = useState<{
         employeeCode: string
         employeeEmail: string
@@ -39,17 +40,24 @@ export function ConfirmHireDialog({
 
     const handleSubmit = useCallback(async () => {
         if (!email.trim()) return
+        setErrorMsg(null)
         try {
             const res = await trigger({
                 applicationId,
                 employeeEmail: email.trim(),
             })
+            if (!res) {
+                setErrorMsg('Không nhận được phản hồi từ server. Vui lòng thử lại.')
+                return
+            }
             setResult({
                 employeeCode: res.employeeCode,
                 employeeEmail: res.employeeEmail,
             })
-        } catch {
-            // Error handled by SWR
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error ? err.message : 'Đã xảy ra lỗi không xác định.'
+            setErrorMsg(message)
         }
     }, [trigger, applicationId, email])
 
@@ -58,6 +66,7 @@ export function ConfirmHireDialog({
         // Reset sau khi đóng để lần mở tiếp sạch
         setTimeout(() => {
             setEmail('')
+            setErrorMsg(null)
             setResult(null)
         }, 200)
     }, [onOpenChange])
@@ -104,6 +113,14 @@ export function ConfirmHireDialog({
                                     Đã chấp nhận
                                 </span>
                             </div>
+
+                            {/* Error message */}
+                            {errorMsg && (
+                                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+                                    <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                                    <p className="text-sm text-red-700">{errorMsg}</p>
+                                </div>
+                            )}
 
                             {/* Email input */}
                             <div className="flex flex-col gap-2">
