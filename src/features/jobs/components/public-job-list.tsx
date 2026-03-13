@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useCallback, useMemo } from 'react'
+import { Suspense, useCallback, useEffect, useMemo } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Briefcase, Search } from 'lucide-react'
 
@@ -9,7 +9,7 @@ import { JobFilterSidebar } from './job-filter-sidebar'
 import { ListingJobCard } from './listing-job-card'
 import { JobPagination } from './job-pagination'
 import { usePublicJobFilterOptions, usePublicJobs } from '../hooks/use-public-jobs'
-import { PUBLIC_JOB_PAGE_SIZE, SORT_OPTIONS, getSalaryRangeFromValue, mergeJobSearchParams } from '../job-filtering'
+import { EMPLOYMENT_OPTIONS, PUBLIC_JOB_PAGE_SIZE, SORT_OPTIONS, getSalaryRangeFromValue, mergeJobSearchParams, parseJobPageParam } from '../job-filtering'
 import '@/features/jobs/styles/Jobs.css'
 
 function ListingSkeleton() {
@@ -49,7 +49,7 @@ function PublicJobListContent() {
     const salary = searchParams.get('salary') || ''
     const departmentId = searchParams.get('departmentId') || ''
     const sort = searchParams.get('sort') || 'newest'
-    const page = Math.max(1, Number(searchParams.get('page') || 1))
+    const page = parseJobPageParam(searchParams.get('page'))
     const salaryRange = getSalaryRangeFromValue(salary)
 
     const { data, isLoading, error } = usePublicJobs({
@@ -81,13 +81,23 @@ function PublicJobListContent() {
         })
     }, [updateFilters])
 
-    const hasFilters = employment || experience || salary || departmentId
+    const hasFilters = Boolean(employment || experience || salary || departmentId)
+    const items = data?.items ?? []
+    const shouldClampPage = Boolean(data && data.totalPages > 0 && page > data.totalPages)
     const resultCount = useMemo(
         () => (data?.totalCount ?? 0).toLocaleString('vi-VN'),
         [data?.totalCount]
     )
 
-    if (isLoading) return <ListingSkeleton />
+    useEffect(() => {
+        if (!shouldClampPage || !data) {
+            return
+        }
+
+        updateFilters({ page: data.totalPages })
+    }, [data, shouldClampPage, updateFilters])
+
+    if (isLoading || shouldClampPage) return <ListingSkeleton />
 
     if (error) {
         return (
@@ -106,20 +116,6 @@ function PublicJobListContent() {
         )
     }
 
-    if (!data?.items || data.items.length === 0) {
-        return (
-            <div className="job-listing__container" style={{ display: 'block' }}>
-                <div className="topcv-empty">
-                    <div className="topcv-empty__icon">
-                        <Search className="w-14 h-14" style={{ color: '#00b14f' }} />
-                    </div>
-                    <h3 className="topcv-empty__title">Không tìm thấy việc làm nào</h3>
-                    <p className="topcv-empty__text">Vui lòng thử tìm kiếm với từ khoá khác</p>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className="job-listing__container">
             <JobFilterSidebar
@@ -128,6 +124,7 @@ function PublicJobListContent() {
                 employment={employment}
                 departmentId={departmentId}
                 departments={filterOptions?.departments ?? []}
+                employmentTypes={filterOptions?.employmentTypes ?? [...EMPLOYMENT_OPTIONS]}
                 onExperienceChange={(value) => updateFilters({ experience: value || null })}
                 onSalaryChange={(value) => updateFilters({ salary: value || null })}
                 onEmploymentChange={(value) => updateFilters({ employment: value || null })}
@@ -165,8 +162,8 @@ function PublicJobListContent() {
                 </div>
 
                 <div className="topcv-page__list">
-                    {data.items.length > 0 ? (
-                        data.items.map((job) => (
+                    {items.length > 0 ? (
+                        items.map((job) => (
                             <ListingJobCard key={job.id} job={job} />
                         ))
                     ) : (
@@ -175,19 +172,23 @@ function PublicJobListContent() {
                                 <Search className="w-10 h-10" style={{ color: '#a6acb2' }} />
                             </div>
                             <h3 className="topcv-empty__title" style={{ fontSize: '1rem' }}>
-                                Không tìm thấy việc làm phù hợp với bộ lọc
+                                {hasFilters
+                                    ? 'Không tìm thấy việc làm phù hợp với bộ lọc'
+                                    : 'Không tìm thấy việc làm nào'}
                             </h3>
-                            <button className="topcv-empty__button" onClick={clearFilters} type="button">
-                                Xoá bộ lọc
-                            </button>
+                            {hasFilters && (
+                                <button className="topcv-empty__button" onClick={clearFilters} type="button">
+                                    Xoá bộ lọc
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
 
-                {data.items.length > 0 && (
+                {items.length > 0 && (
                     <JobPagination
                         page={page}
-                        totalPages={data.totalPages}
+                        totalPages={data?.totalPages ?? 0}
                         onPageChange={(nextPage) => updateFilters({ page: nextPage })}
                     />
                 )}

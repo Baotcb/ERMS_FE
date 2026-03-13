@@ -19,8 +19,8 @@ export const SALARY_OPTIONS = [
 
 export const EMPLOYMENT_OPTIONS = [
     { value: '', label: 'Tất cả hình thức' },
-    { value: 'FullTime', label: 'Toàn thời gian' },
-    { value: 'PartTime', label: 'Bán thời gian' },
+    { value: 'Full-time', label: 'Toàn thời gian' },
+    { value: 'Part-time', label: 'Bán thời gian' },
     { value: 'Contract', label: 'Hợp đồng' },
     { value: 'Internship', label: 'Thực tập' },
 ] as const
@@ -62,6 +62,11 @@ export function getSalaryRangeFromValue(value?: string | null): { minSalary?: nu
         default:
             return {}
     }
+}
+
+export function parseJobPageParam(value?: string | null) {
+    const parsed = Number.parseInt(value ?? '', 10)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
 }
 
 export function mergeJobSearchParams(current: SearchParamsInput, updates: JobFilterUpdates, resetPage = true) {

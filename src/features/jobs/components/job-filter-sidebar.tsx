@@ -2,7 +2,7 @@
 
 import { Filter, X } from 'lucide-react'
 import { EMPLOYMENT_OPTIONS, EXPERIENCE_OPTIONS, SALARY_OPTIONS } from '../job-filtering'
-import type { PublicDepartmentFilterOption } from '../types'
+import type { PublicDepartmentFilterOption, PublicJobFilterOption } from '../types'
 
 interface JobFilterSidebarProps {
     experience: string
@@ -10,6 +10,7 @@ interface JobFilterSidebarProps {
     employment: string
     departmentId: string
     departments: PublicDepartmentFilterOption[]
+    employmentTypes: PublicJobFilterOption[]
     onExperienceChange: (value: string) => void
     onSalaryChange: (value: string) => void
     onEmploymentChange: (value: string) => void
@@ -23,6 +24,7 @@ export function JobFilterSidebar({
     employment,
     departmentId,
     departments,
+    employmentTypes,
     onExperienceChange,
     onSalaryChange,
     onEmploymentChange,
@@ -30,6 +32,7 @@ export function JobFilterSidebar({
     onClear,
 }: JobFilterSidebarProps) {
     const hasFilters = experience || salary || employment || departmentId
+    const availableEmploymentTypes = employmentTypes.length > 0 ? employmentTypes : EMPLOYMENT_OPTIONS
 
     return (
         <aside className="job-filter-sidebar">
@@ -96,7 +99,7 @@ export function JobFilterSidebar({
 
             <div className="job-filter-sidebar__group">
                 <h4 className="job-filter-sidebar__group-title">Hình thức làm việc</h4>
-                {EMPLOYMENT_OPTIONS.map((option) => (
+                {availableEmploymentTypes.map((option) => (
                     <label key={option.value} className="job-filter-sidebar__option">
                         <input
                             type="radio"
