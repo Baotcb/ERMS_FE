@@ -28,6 +28,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
     const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${new Date().getFullYear() + 1}`);
     const [startDate, setStartDate] = useState(`${new Date().getFullYear() + 1}-01-01`);
     const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
+    const [plannedBudget, setPlannedBudget] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
@@ -54,6 +55,16 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             return;
         }
 
+        const budgetValue = Number(plannedBudget);
+        if (!plannedBudget || Number.isNaN(budgetValue) || budgetValue <= 0) {
+            toast({
+                title: 'Thiếu ngân sách dự kiến',
+                description: 'Vui lòng nhập tổng ngân sách dự kiến lớn hơn 0.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const res = await hrTrainingService.createPlan({
@@ -62,7 +73,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                 description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
                 startDate: startDate,
                 endDate: endDate,
-                totalBudget: totalSelectedBudget,
+                totalBudget: budgetValue,
                 status: 'Pending',
                 trainingRequestIds: selectedIds,
             });
@@ -85,10 +96,6 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             setIsSubmitting(false);
         }
     };
-
-    const totalSelectedBudget = pendingRequests
-        .filter((r: TrainingRequest) => selectedIds.includes(r.id))
-        .reduce((sum: number, r: TrainingRequest) => sum + (r.estimatedBudget || 0), 0);
 
     return (
         <div className="space-y-6">
@@ -207,10 +214,21 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                     <span className="text-gray-500">Số lượng khóa:</span>
                                     <span className="font-bold text-gray-700">{selectedIds.length}</span>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tổng ngân sách dự kiến (VNĐ)</label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={plannedBudget}
+                                        onChange={(e) => setPlannedBudget(e.target.value)}
+                                        placeholder="Nhập tổng ngân sách dự kiến"
+                                        className="bg-white"
+                                    />
+                                </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Tổng ngân sách:</span>
+                                    <span className="text-gray-500">Ngân sách đã nhập:</span>
                                     <span className="font-bold text-[#0F4C75]">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalSelectedBudget)}
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(plannedBudget) || 0)}
                                     </span>
                                 </div>
                             </div>
@@ -222,7 +240,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
 
                             <Button 
                                 className="w-full bg-[#0F4C75] hover:bg-[#1A5F8C] h-11"
-                                disabled={selectedIds.length === 0 || isSubmitting}
+                                disabled={selectedIds.length === 0 || isSubmitting || !plannedBudget}
                                 onClick={handleCreatePlan}
                             >
                                 {isSubmitting ? 'Đang xử lý...' : 'Lưu kế hoạch & Gửi duyệt'}

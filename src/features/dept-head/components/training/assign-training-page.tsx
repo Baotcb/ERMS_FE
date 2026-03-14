@@ -65,7 +65,7 @@ export function AssignTrainingPage({
     // Fetch Potential Trainers (Employees with 'Trainer' role or similar - for now just all employees)
     const { data: trainersData, isLoading: isLoadingTrainers } = useSWR(
         ['/api/Employees', 'trainers', debouncedTrainerSearch],
-        () => getEmployees({ search: debouncedTrainerSearch, pageSize: 5 }),
+        () => getEmployees({ search: debouncedTrainerSearch, pageSize: 50 }),
         { fallbackData: initialTrainers }
     );
 
@@ -83,15 +83,54 @@ export function AssignTrainingPage({
     );
 
     useEffect(() => {
-        if (currentCourse) {
-            const trainerId = currentCourse.trainerId || '';
-            setSelectedTrainerId(trainerId);
-            // Remove trainer from trainee selection if already selected
-            if (trainerId) {
-                setSelectedTraineeIds(prev => prev.filter(id => id !== trainerId));
-            }
+        const trainerEmail = currentCourse?.trainerEmail;
+        if (!trainerEmail) {
+            setSelectedTrainerId('');
+            return;
         }
-    }, [currentCourse]);
+
+        let isCancelled = false;
+
+        const syncTrainerByEmail = async () => {
+            const normalizedEmail = trainerEmail.trim().toLowerCase();
+            const localMatch = (trainersData?.items || []).find(
+                (employee) => employee.email?.trim().toLowerCase() === normalizedEmail
+            );
+
+            if (localMatch) {
+                if (!isCancelled) {
+                    setSelectedTrainerId(localMatch.id);
+                    setSelectedTraineeIds(prev => prev.filter(id => id !== localMatch.id));
+                }
+                return;
+            }
+
+            try {
+                const result = await getEmployees({ search: normalizedEmail, pageSize: 20 });
+                const exactMatch = result.items.find(
+                    (employee) => employee.email?.trim().toLowerCase() === normalizedEmail
+                );
+
+                if (!isCancelled) {
+                    const trainerId = exactMatch?.id || '';
+                    setSelectedTrainerId(trainerId);
+                    if (trainerId) {
+                        setSelectedTraineeIds(prev => prev.filter(id => id !== trainerId));
+                    }
+                }
+            } catch {
+                if (!isCancelled) {
+                    setSelectedTrainerId('');
+                }
+            }
+        };
+
+        void syncTrainerByEmail();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [currentCourse?.trainerEmail, trainersData?.items]);
 
     const courses = useMemo(() => {
         const allCourses = coursesData?.items || [];
@@ -137,17 +176,45 @@ export function AssignTrainingPage({
             return;
         }
 
+        const selectedTrainer = (trainersData?.items || []).find((employee) => employee.id === selectedTrainerId);
+        if (!selectedTrainer?.email) {
+            toast({ title: 'Lỗi', description: 'Không tìm thấy email người đào tạo đã chọn.', variant: 'destructive' });
+            return;
+        }
+
+        if (!currentCourse.startTime) {
+            toast({ title: 'Lỗi', description: 'Khóa học chưa có thời gian bắt đầu. Vui lòng để HR thiết lập lịch trước.', variant: 'destructive' });
+            return;
+        }
+
+        if (typeof currentCourse.isOnline !== 'boolean') {
+            toast({ title: 'Lỗi', description: 'Khóa học chưa xác định hình thức online/offline.', variant: 'destructive' });
+            return;
+        }
+
+        if (currentCourse.isOnline && !currentCourse.location) {
+            toast({ title: 'Lỗi', description: 'Khóa học online chưa có link họp.', variant: 'destructive' });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             // 1. Update Trainer
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
-                trainerId: selectedTrainerId
+                trainerEmail: selectedTrainer.email,
+                startTime: currentCourse.startTime,
+                isOnline: currentCourse.isOnline,
+                location: currentCourse.location,
             } as UpdateCourseCommand);
 
             // 2. Assign Trainees
             if (selectedTraineeIds.length > 0) {
-                await courseService.assignEmployees(selectedCourseId, selectedTraineeIds);
+                await courseService.assignEmployees(
+                    selectedCourseId,
+                    selectedTraineeIds,
+                    currentCourse.isOnline ? (currentCourse.location || '') : ''
+                );
             }
 
             toast({ title: 'Thành công', description: 'Đã lưu phân công đào tạo' });

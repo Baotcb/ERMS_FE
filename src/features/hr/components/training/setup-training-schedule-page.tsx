@@ -31,6 +31,13 @@ function isValidHttpUrl(value: string): boolean {
     }
 }
 
+function sanitizePlainText(value: string): string {
+    return value
+        .replace(/[<>]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 export function SetupTrainingSchedulePage({ 
     initialCourses, 
     initialCourseDetails,
@@ -56,14 +63,33 @@ export function SetupTrainingSchedulePage({
     const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCourseId);
     const [locationType, setLocationType] = useState<'online' | 'offline'>('online');
     const [startDate, setStartDate] = useState('');
+    const [startTime, setStartTime] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [meetingLink, setMeetingLink] = useState('https://meet.google.com/');
     const [offlineLocation, setOfflineLocation] = useState('');
-    const [notifyTrainer, setNotifyTrainer] = useState(true);
     const [notifyTrainees, setNotifyTrainees] = useState(true);
-    const [remindBefore15m, setRemindBefore15m] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
+
+    const buildDateTime = (date: string, time: string): Date | null => {
+        if (!date || !time) {
+            return null;
+        }
+        const value = new Date(`${date}T${time}:00`);
+        return Number.isNaN(value.getTime()) ? null : value;
+    };
+
+    const resolveStartTimeIso = (): string | null => {
+        const dateTime = buildDateTime(startDate, startTime);
+        if (dateTime) {
+            return dateTime.toISOString();
+        }
+        if (currentCourse?.startTime) {
+            return currentCourse.startTime;
+        }
+        return null;
+    };
 
     // Fetch Courses
     const { data: coursesData, isLoading: isLoadingCourses, mutate: mutateCourses } = useSWR<CourseResult>(
@@ -90,29 +116,50 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (locationType === 'online' && meetingLink && !isValidHttpUrl(meetingLink)) {
+        const normalizedTrainerEmail = (currentCourse.trainerEmail || '').trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedTrainerEmail)) {
+            toast({ title: 'Lỗi', description: 'Khóa học chưa có email giảng viên hợp lệ.', variant: 'destructive' });
+            return;
+        }
+
+        const normalizedMeetingLink = meetingLink.trim();
+        const normalizedOfflineLocation = sanitizePlainText(offlineLocation);
+
+        if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
             toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ', variant: 'destructive' });
             return;
         }
 
-        if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
-            toast({ title: 'Lỗi', description: 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu', variant: 'destructive' });
+        const draftStart = buildDateTime(startDate, startTime);
+        const draftEnd = buildDateTime(endDate, endTime);
+        if (draftStart && draftEnd && draftEnd < draftStart) {
+            toast({ title: 'Lỗi', description: 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu', variant: 'destructive' });
             return;
         }
 
-        if (locationType === 'offline' && !offlineLocation.trim()) {
+        if (locationType === 'offline' && !normalizedOfflineLocation) {
             toast({ title: 'Lỗi', description: 'Vui lòng nhập phòng họp/địa điểm tổ chức', variant: 'destructive' });
+            return;
+        }
+
+        const resolvedStartTime = resolveStartTimeIso();
+        if (!resolvedStartTime) {
+            toast({ title: 'Lỗi', description: 'Khóa học chưa có thời gian bắt đầu hợp lệ. Vui lòng chọn ngày giờ.', variant: 'destructive' });
             return;
         }
 
         setIsSubmitting(true);
         try {
             const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
-            const locationValue = locationType === 'online' ? meetingLink : offlineLocation.trim();
-            const notificationConfig = `\nThông báo: giảng viên=${notifyTrainer ? 'on' : 'off'}, học viên=${notifyTrainees ? 'on' : 'off'}, nhắc_15_phút=${remindBefore15m ? 'on' : 'off'}`;
+            const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
+            const notificationConfig = `\nThông báo: học viên=${notifyTrainees ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
-                description: `${baseDescription}\n[DRAFT] Lịch trình: ${startDate} đến ${endDate}. Địa điểm: ${locationValue}${notificationConfig}`
+                trainerEmail: normalizedTrainerEmail,
+                startTime: resolvedStartTime,
+                isOnline: locationType === 'online',
+                location: locationValue,
+                description: `${baseDescription}\n[DRAFT] Lịch trình: ${startDate} ${startTime} đến ${endDate} ${endTime}. Địa điểm: ${locationValue}${notificationConfig}`
             } as UpdateCourseCommand);
             toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
         } catch (error: unknown) {
@@ -134,23 +181,40 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (!startDate || !endDate) {
-            toast({ title: 'Lỗi', description: 'Vui lòng điền đầy đủ thông tin ngày bắt đầu/kết thúc', variant: 'destructive' });
+        const normalizedTrainerEmail = (currentCourse.trainerEmail || '').trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedTrainerEmail)) {
+            toast({ title: 'Lỗi', description: 'Khóa học chưa có email giảng viên hợp lệ.', variant: 'destructive' });
             return;
         }
 
-        if (new Date(endDate) < new Date(startDate)) {
-            toast({ title: 'Lỗi', description: 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu', variant: 'destructive' });
+        const normalizedMeetingLink = meetingLink.trim();
+        const normalizedOfflineLocation = sanitizePlainText(offlineLocation);
+
+        if (!startDate || !endDate || !startTime || !endTime) {
+            toast({ title: 'Lỗi', description: 'Vui lòng điền đầy đủ ngày và giờ bắt đầu/kết thúc', variant: 'destructive' });
             return;
         }
 
-        if (locationType === 'offline' && !offlineLocation.trim()) {
+        const publishStart = buildDateTime(startDate, startTime);
+        const publishEnd = buildDateTime(endDate, endTime);
+        if (!publishStart || !publishEnd || publishEnd < publishStart) {
+            toast({ title: 'Lỗi', description: 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu', variant: 'destructive' });
+            return;
+        }
+
+        if (locationType === 'offline' && !normalizedOfflineLocation) {
             toast({ title: 'Lỗi', description: 'Vui lòng nhập phòng họp/địa điểm tổ chức', variant: 'destructive' });
             return;
         }
 
-        if (locationType === 'online' && !isValidHttpUrl(meetingLink)) {
+        if (locationType === 'online' && !isValidHttpUrl(normalizedMeetingLink)) {
             toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ', variant: 'destructive' });
+            return;
+        }
+
+        const resolvedStartTime = resolveStartTimeIso();
+        if (!resolvedStartTime) {
+            toast({ title: 'Lỗi', description: 'Không xác định được thời gian bắt đầu hợp lệ.', variant: 'destructive' });
             return;
         }
 
@@ -158,11 +222,15 @@ export function SetupTrainingSchedulePage({
         try {
             // 1. Update Course Schedule info
             const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
-            const locationValue = locationType === 'online' ? meetingLink : offlineLocation.trim();
-            const notificationConfig = `\nThông báo: giảng viên=${notifyTrainer ? 'on' : 'off'}, học viên=${notifyTrainees ? 'on' : 'off'}, nhắc_15_phút=${remindBefore15m ? 'on' : 'off'}`;
+            const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
+            const notificationConfig = `\nThông báo: học viên=${notifyTrainees ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
-                description: `${baseDescription}\nLịch trình: ${startDate} đến ${endDate}. Địa điểm: ${locationValue}${notificationConfig}`
+                trainerEmail: normalizedTrainerEmail,
+                startTime: resolvedStartTime,
+                isOnline: locationType === 'online',
+                location: locationValue,
+                description: `${baseDescription}\nLịch trình: ${startDate} ${startTime} đến ${endDate} ${endTime}. Địa điểm: ${locationValue}${notificationConfig}`
             } as UpdateCourseCommand);
 
             // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).
@@ -299,6 +367,24 @@ export function SetupTrainingSchedulePage({
                                         <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
                                     </div>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-600">Giờ bắt đầu</label>
+                                    <Input
+                                        type="time"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        className="bg-white border-gray-200"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-gray-600">Giờ kết thúc</label>
+                                    <Input
+                                        type="time"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                        className="bg-white border-gray-200"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -364,31 +450,11 @@ export function SetupTrainingSchedulePage({
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
-                                            <Send className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-semibold text-gray-700">Gửi email cho giảng viên</span>
-                                    </div>
-                                    <Switch checked={notifyTrainer} onCheckedChange={setNotifyTrainer} className="data-[state=checked]:bg-[#0F4C75]" />
-                                </div>
-                                <Separator className="bg-gray-200" />
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
                                             <Users className="w-4 h-4" />
                                         </div>
                                         <span className="font-semibold text-gray-700">Gửi email cho học viên</span>
                                     </div>
                                     <Switch checked={notifyTrainees} onCheckedChange={setNotifyTrainees} className="data-[state=checked]:bg-[#0F4C75]" />
-                                </div>
-                                <Separator className="bg-gray-200" />
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-gray-100 text-gray-500 flex items-center justify-center">
-                                            <Clock className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-semibold text-gray-700">Nhắc nhở trước 15 phút</span>
-                                    </div>
-                                    <Switch checked={remindBefore15m} onCheckedChange={setRemindBefore15m} className="data-[state=checked]:bg-[#0F4C75]" />
                                 </div>
                             </div>
                         </div>
@@ -411,24 +477,9 @@ export function SetupTrainingSchedulePage({
                                                     <Users className="w-5 h-5 text-white" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-blue-200 mb-1">Giảng viên phụ trách</p>
-                                                    <p className="font-bold text-lg mb-1">{currentCourse?.trainerName || 'Chưa phân công'}</p>
-                                                    {currentCourse?.trainerId && (
-                                                        <Badge variant="secondary" className="bg-white/20 text-blue-50 border-none font-normal">Đã xác nhận</Badge>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            
-                                            <Separator className="bg-white/20" />
-
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                                                    <Users className="w-5 h-5 text-white" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-blue-200 mb-1">Số lượng học viên</p>
-                                                    <p className="font-bold text-lg mb-1">{currentCourse?.enrollmentCount || 0} Học viên</p>
-                                                    <Badge variant="secondary" className="bg-blue-400/30 text-blue-100 border-none font-medium">Danh sách đã duyệt</Badge>
+                                                    <p className="text-xs text-blue-200 mb-1">Số lượng học viên dự kiến</p>
+                                                    <p className="font-bold text-lg mb-1">{currentCourse?.maxEnrollments || 0} Học viên</p>
+                                                    <Badge variant="secondary" className="bg-blue-400/30 text-blue-100 border-none font-medium">Theo cấu hình khóa học</Badge>
                                                 </div>
                                             </div>
 

@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import useSWR from 'swr';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 import {
     Dialog,
@@ -26,7 +25,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { courseService } from '@/features/hr/api/course-service';
-import { getEmployees, type Employee } from '@/features/hr/api/employee-service';
 import type { CreateCourseCommand } from '@/features/hr/types/course-types';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 
@@ -35,7 +33,6 @@ interface CreateCourseDialogProps {
     plan: TrainingPlan | null;
     onOpenChange: (open: boolean) => void;
     onCreated: (courseId: string, planId: string) => void;
-    allowEmptyTrainer?: boolean;
     hideTrainerSelection?: boolean;
     availablePlans?: TrainingPlan[];
 }
@@ -55,20 +52,17 @@ export function CreateCourseDialog({
     plan,
     onOpenChange,
     onCreated,
-    allowEmptyTrainer = false,
     hideTrainerSelection = false,
     availablePlans = [],
 }: CreateCourseDialogProps) {
     const { toast } = useToast();
-    const [trainerSearch, setTrainerSearch] = useState('');
     const [courseName, setCourseName] = useState('');
     const [courseCode, setCourseCode] = useState('');
     const [description, setDescription] = useState('');
-    const [trainerId, setTrainerId] = useState('');
+    const [trainerEmail, setTrainerEmail] = useState('');
     const [selectedPlanId, setSelectedPlanId] = useState('');
     const [durationMinutes, setDurationMinutes] = useState('');
     const [maxEnrollments, setMaxEnrollments] = useState('');
-    const [level, setLevel] = useState('Co ban');
     const [completionCriteria, setCompletionCriteria] = useState('Quiz');
     const [isMandatory, setIsMandatory] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,27 +75,16 @@ export function CreateCourseDialog({
         setCourseName(plan?.planName || '');
         setCourseCode(plan ? buildDefaultCourseCode(plan) : buildQuickCourseCode());
         setDescription(plan?.description || '');
-        setTrainerId('');
+        setTrainerEmail('');
         setSelectedPlanId(plan?.id || '');
         setDurationMinutes('');
         setMaxEnrollments('');
-        setLevel('Co ban');
         setCompletionCriteria('Quiz');
         setIsMandatory(false);
-        setTrainerSearch('');
     }, [open, plan]);
 
-    const { data: employeesData, isLoading: isLoadingEmployees } = useSWR(
-        open ? ['/api/Employees', 'create-course-trainers', trainerSearch] : null,
-        () => getEmployees({ search: trainerSearch, pageSize: 20 })
-    );
-
-    const employees = employeesData?.items || [];
-    const trainerCandidates = employees;
     const resolvedPlanId = plan?.id || selectedPlanId;
     const selectedPlan = plan ?? availablePlans.find((item) => item.id === selectedPlanId) ?? null;
-
-    const selectedTrainer = trainerCandidates.find((employee) => employee.id === trainerId) ?? null;
 
     const handleSubmit = async () => {
         if (!resolvedPlanId) {
@@ -113,12 +96,19 @@ export function CreateCourseDialog({
             return;
         }
 
-        if (!courseName.trim() || !courseCode.trim() || (!allowEmptyTrainer && !trainerId)) {
+        if (!courseName.trim() || !courseCode.trim() || !trainerEmail.trim()) {
             toast({
                 title: 'Thiếu thông tin',
-                description: allowEmptyTrainer
-                    ? 'Vui lòng nhập tên khóa học và mã khóa học.'
-                    : 'Vui lòng nhập tên khóa học, mã khóa học và chọn người đào tạo.',
+                description: 'Vui lòng nhập tên khóa học, mã khóa học và email người đào tạo.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trainerEmail.trim())) {
+            toast({
+                title: 'Email không hợp lệ',
+                description: 'Vui lòng nhập đúng định dạng email người đào tạo.',
                 variant: 'destructive',
             });
             return;
@@ -145,6 +135,18 @@ export function CreateCourseDialog({
             return;
         }
 
+        const provisionalStartTime = selectedPlan?.startDate
+            ? new Date(selectedPlan.startDate)
+            : null;
+        if (!provisionalStartTime || Number.isNaN(provisionalStartTime.getTime())) {
+            toast({
+                title: 'Thiếu dữ liệu kế hoạch',
+                description: 'Không xác định được thời gian bắt đầu từ training plan. Vui lòng kiểm tra lại kế hoạch.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const payload: CreateCourseCommand = {
@@ -152,9 +154,11 @@ export function CreateCourseDialog({
                 courseName: courseName.trim(),
                 courseCode: courseCode.trim(),
                 description: description.trim() || undefined,
-                trainerId: trainerId || undefined,
+                trainerEmail: trainerEmail.trim().toLowerCase(),
+                startTime: provisionalStartTime.toISOString(),
+                isOnline: true,
+                location: undefined,
                 durationMinutes: durationValue ?? undefined,
-                level: level.trim() || undefined,
                 isMandatory,
                 maxEnrollments: maxEnrollmentsValue ?? undefined,
                 completionCriteria: completionCriteria.trim() || 'Quiz',
@@ -173,17 +177,9 @@ export function CreateCourseDialog({
             onCreated(result.courseId, resolvedPlanId);
         } catch (error) {
             const rawMessage = error instanceof Error ? error.message : 'Không thể tạo khóa học.';
-            const normalizedMessage = rawMessage.toLowerCase();
-            const message = (!trainerId && hideTrainerSelection) && (
-                normalizedMessage.includes('giảng viên') ||
-                normalizedMessage.includes('trainer') ||
-                normalizedMessage.includes('trainerid')
-            )
-                ? 'API hiện tại vẫn đang yêu cầu trainer khi tạo khóa học. Cần backend cho phép tạo course trước rồi gán trainer sau.'
-                : rawMessage;
             toast({
                 title: 'Không thể tạo khóa học',
-                description: message,
+                description: rawMessage,
                 variant: 'destructive',
             });
         } finally {
@@ -245,15 +241,6 @@ export function CreateCourseDialog({
                                 placeholder="Nhập mã khóa học"
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="course-level">Cấp độ</Label>
-                            <Input
-                                id="course-level"
-                                value={level}
-                                onChange={(event) => setLevel(event.target.value)}
-                                placeholder="Ví dụ: Cơ bản, Nâng cao"
-                            />
-                        </div>
                     </div>
 
                     <div className="grid gap-2">
@@ -268,53 +255,19 @@ export function CreateCourseDialog({
                     </div>
 
                     {!hideTrainerSelection && (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="trainer-search">Tìm người đào tạo</Label>
-                                <div className="relative">
-                                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                                    <Input
-                                        id="trainer-search"
-                                        value={trainerSearch}
-                                        onChange={(event) => setTrainerSearch(event.target.value)}
-                                        placeholder="Tìm theo tên hoặc email"
-                                        className="pl-10"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label>Người đào tạo</Label>
-                                <Select value={trainerId} onValueChange={(value) => setTrainerId(value === '__none__' ? '' : value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={isLoadingEmployees ? 'Đang tải danh sách nhân sự...' : (allowEmptyTrainer ? 'Tùy chọn: chọn người đào tạo' : 'Chọn người đào tạo')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {allowEmptyTrainer && (
-                                            <SelectItem value="__none__">Chưa gán trainer</SelectItem>
-                                        )}
-                                        {trainerCandidates.map((employee: Employee) => (
-                                            <SelectItem key={employee.id} value={employee.id}>
-                                                {employee.fullName} {employee.departmentName ? `- ${employee.departmentName}` : ''}
-                                                {employee.isTrainer ? ' (Giảng viên)' : ' (Nhân viên)'}
-                                            </SelectItem>
-                                        ))}
-                                        {!isLoadingEmployees && trainerCandidates.length === 0 && (
-                                            <SelectItem value="empty" disabled>
-                                                Không tìm thấy nhân sự phù hợp
-                                            </SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-xs text-gray-500">
-                                    {selectedTrainer
-                                        ? `Đã chọn: ${selectedTrainer.fullName}${selectedTrainer.position ? ` - ${selectedTrainer.position}` : ''}`
-                                        : allowEmptyTrainer
-                                            ? 'Bạn có thể để trống trainer ở bước này.'
-                                            : 'Bạn có thể chọn bất kỳ nhân viên nào; khi gắn vào khóa học hệ thống sẽ tự nâng thành giảng viên.'}
-                                </p>
-                            </div>
-                        </>
+                        <div className="grid gap-2">
+                            <Label htmlFor="trainer-email">Email người đào tạo</Label>
+                            <Input
+                                id="trainer-email"
+                                type="email"
+                                value={trainerEmail}
+                                onChange={(event) => setTrainerEmail(event.target.value)}
+                                placeholder="trainer@company.com"
+                            />
+                            <p className="text-xs text-gray-500">
+                                Nhập email giảng viên để hệ thống ghi nhận và gửi email mời giảng dạy.
+                            </p>
+                        </div>
                     )}
 
                     {hideTrainerSelection && (
