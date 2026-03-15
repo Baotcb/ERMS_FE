@@ -46,6 +46,13 @@ export interface UpdateCourseCommand extends CreateCourseCommand {
     id: string;
 }
 
+export interface PublishCourseCommand {
+    id: string;
+    startTime: string;
+    trainingType: 'Online' | 'Offline';
+    location: string;
+}
+
 export interface CourseResult {
     items: Course[];
     totalCount: number;

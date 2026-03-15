@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
 
 export function TeachingTasksPage({
     teachingBasePath = '/enterprise/employee/teaching',
@@ -29,11 +30,7 @@ export function TeachingTasksPage({
         const normalizedSearch = search.trim().toLowerCase();
 
         return initialCourses.filter((course) => {
-            const matchesOwnership = course.trainerId === user.id || (
-                Boolean(user.fullName) &&
-                Boolean(course.trainerName) &&
-                course.trainerName!.trim().toLowerCase() === user.fullName!.trim().toLowerCase()
-            );
+            const matchesOwnership = isCourseOwnedByUser(course, user);
 
             if (!matchesOwnership) {
                 return false;
@@ -52,8 +49,7 @@ export function TeachingTasksPage({
     }, [initialCourses, search, user]);
 
     const getStatusStep = (course: Course) => {
-        if (course.status === 'Published') return 4;
-        if (course.lessonCount > 0) return 3;
+        if (course.status === 'Published') return 3;
         if (course.description && course.durationMinutes) return 2;
         return 1;
     };
@@ -61,9 +57,8 @@ export function TeachingTasksPage({
     const getStepLabel = (step: number) => {
         switch (step) {
             case 1: return 'Nhận nhiệm vụ & Khởi tạo';
-            case 2: return 'Tải lên tài liệu';
-            case 3: return 'Lộ trình học & Bài thi cuối khóa';
-            case 4: return 'Xuất bản khóa học';
+            case 2: return 'Thiết lập quiz cuối khóa';
+            case 3: return 'Xuất bản khóa học';
             default: return 'Khởi tạo';
         }
     };
@@ -104,7 +99,7 @@ export function TeachingTasksPage({
                 ) : (
                     courses.map((course) => {
                         const currentStep = getStatusStep(course);
-                        const progress = (currentStep / 4) * 100;
+                        const progress = (currentStep / 3) * 100;
 
                         return (
                             <div key={course.id} className="group bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 flex flex-col overflow-hidden">
@@ -134,7 +129,7 @@ export function TeachingTasksPage({
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Users className="w-3.5 h-3.5" />
-                                            {course.lessonCount || 0} bài học
+                                            {course.enrollmentCount || 0} học viên
                                         </div>
                                     </div>
                                 </div>
@@ -149,8 +144,8 @@ export function TeachingTasksPage({
                                         <Progress value={progress} className="h-1.5 bg-gray-50" />
                                     </div>
 
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {[1, 2, 3, 4].map((step) => (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[1, 2, 3].map((step) => (
                                             <div 
                                                 key={step} 
                                                 className={`h-1.5 rounded-full ${currentStep >= step ? 'bg-[#3282B8]' : 'bg-gray-100'}`} 

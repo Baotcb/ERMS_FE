@@ -36,6 +36,20 @@ export interface ChartData {
     color: string
 }
 
+export interface DepartmentTrainingResultItem {
+    id: string
+    employeeName: string
+    employeeEmail: string
+    departmentName: string
+    courseName: string
+    assignedAt: string
+    progressPercentage: number
+    quizScore: number | null
+    learningStatus: 'InProgress' | 'Completed' | 'NotStarted'
+    evaluationStatus: 'Passed' | 'Failed' | 'Pending'
+    note?: string
+}
+
 interface PlanDetailDto {
     id: string
     recruitmentPlanId: string
@@ -139,5 +153,62 @@ export async function getTrainingCompletion(): Promise<ChartData[]> {
         { label: 'Team B', value: 65, color: '#3282B8' },
         { label: 'Team C', value: 90, color: '#BBE1FA' },
         { label: 'Team D', value: 45, color: '#0F4C75' },
+    ]
+}
+
+export async function getDepartmentTrainingResults(): Promise<DepartmentTrainingResultItem[]> {
+    return [
+        {
+            id: 'tr-001',
+            employeeName: 'Nguyen Van An',
+            employeeEmail: 'an.nguyen@erms.local',
+            departmentName: 'Kinh doanh',
+            courseName: 'Kỹ năng bán hàng B2B',
+            assignedAt: '2026-03-01T08:00:00Z',
+            progressPercentage: 100,
+            quizScore: 92,
+            learningStatus: 'Completed',
+            evaluationStatus: 'Passed',
+            note: 'Đã hoàn thành và vượt điểm đạt cuối khóa.'
+        },
+        {
+            id: 'tr-002',
+            employeeName: 'Tran Thi Binh',
+            employeeEmail: 'binh.tran@erms.local',
+            departmentName: 'Kinh doanh',
+            courseName: 'Kỹ năng bán hàng B2B',
+            assignedAt: '2026-03-01T08:00:00Z',
+            progressPercentage: 100,
+            quizScore: 61,
+            learningStatus: 'Completed',
+            evaluationStatus: 'Failed',
+            note: 'Chưa đạt điểm quiz, cần học lại.'
+        },
+        {
+            id: 'tr-003',
+            employeeName: 'Le Quoc Cuong',
+            employeeEmail: 'cuong.le@erms.local',
+            departmentName: 'Vận hành',
+            courseName: 'Onboarding nhân viên mới',
+            assignedAt: '2026-03-05T08:00:00Z',
+            progressPercentage: 60,
+            quizScore: null,
+            learningStatus: 'InProgress',
+            evaluationStatus: 'Pending',
+            note: 'Chưa mở khóa quiz vì chưa hoàn tất bài học.'
+        },
+        {
+            id: 'tr-004',
+            employeeName: 'Pham Minh Duc',
+            employeeEmail: 'duc.pham@erms.local',
+            departmentName: 'Vận hành',
+            courseName: 'Cập nhật luật thuế 2026',
+            assignedAt: '2026-03-08T08:00:00Z',
+            progressPercentage: 0,
+            quizScore: null,
+            learningStatus: 'NotStarted',
+            evaluationStatus: 'Pending',
+            note: 'Nhân viên chưa bắt đầu khóa học.'
+        },
     ]
 }

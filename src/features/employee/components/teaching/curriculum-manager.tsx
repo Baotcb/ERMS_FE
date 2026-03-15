@@ -42,8 +42,14 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             const data = await courseContentService.getCourseCurriculum(courseId);
             setSections(data || []);
         } catch (error) {
+            const status = typeof error === 'object' && error && 'status' in error
+                ? Number((error as { status?: unknown }).status)
+                : undefined;
             const message = error instanceof Error ? error.message : 'Không thể tải chương trình học.';
-            toast({ title: 'Lỗi tải dữ liệu', description: message, variant: 'destructive' });
+
+            if (status !== 404) {
+                toast({ title: 'Lỗi tải dữ liệu', description: message, variant: 'destructive' });
+            }
             setSections([]);
         } finally {
             setIsLoading(false);

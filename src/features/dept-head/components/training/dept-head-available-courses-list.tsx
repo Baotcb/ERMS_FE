@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function getDeploymentLabel(course: Course): string {
-    const hasTrainer = Boolean(course.trainerId);
+    const hasTrainer = Boolean(course.trainerEmail?.trim());
     const hasTrainees = (course.enrollmentCount || 0) > 0;
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
@@ -102,7 +102,6 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                         <TableRow>
                             <TableHead className="font-bold text-[#0F4C75]">Khóa học</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Giảng viên</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Cấp độ</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Bài học</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Học viên</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
@@ -113,13 +112,13 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-12 text-gray-400">
+                                <TableCell colSpan={7} className="text-center py-12 text-gray-400">
                                     Đang tải dữ liệu...
                                 </TableCell>
                             </TableRow>
                         ) : courses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-12 text-gray-400 italic">
+                                <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
                                     Chưa có khóa học nào trong công ty
                                 </TableCell>
                             </TableRow>
@@ -135,8 +134,7 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-gray-700">{course.trainerName || 'Chưa gán'}</TableCell>
-                                    <TableCell className="text-gray-700">{course.level || 'N/A'}</TableCell>
+                                    <TableCell className="text-gray-700">{course.trainerName || course.trainerEmail || 'Chưa gán'}</TableCell>
                                     <TableCell className="text-gray-700">{course.lessonCount || 0}</TableCell>
                                     <TableCell className="text-gray-700">{course.enrollmentCount || 0}</TableCell>
                                     <TableCell className="text-gray-500 text-sm">
@@ -182,8 +180,7 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div><span className="font-semibold">Tên khóa học:</span> {selectedCourse.courseName}</div>
                             <div><span className="font-semibold">Mã khóa học:</span> {selectedCourse.courseCode}</div>
-                            <div><span className="font-semibold">Giảng viên:</span> {selectedCourse.trainerName || 'Chưa gán'}</div>
-                            <div><span className="font-semibold">Cấp độ:</span> {selectedCourse.level || 'N/A'}</div>
+                            <div><span className="font-semibold">Giảng viên:</span> {selectedCourse.trainerName || selectedCourse.trainerEmail || 'Chưa gán'}</div>
                             <div><span className="font-semibold">Thời lượng:</span> {selectedCourse.durationMinutes || 0} phút</div>
                             <div><span className="font-semibold">Số bài học:</span> {selectedCourse.lessonCount || 0}</div>
                             <div><span className="font-semibold">Số học viên:</span> {selectedCourse.enrollmentCount || 0}</div>

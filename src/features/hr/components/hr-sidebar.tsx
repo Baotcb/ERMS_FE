@@ -74,7 +74,8 @@ const NAV_ITEMS: NavItem[] = [
         children: [
             { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
             { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
-            { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' }
+            { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' },
+            { label: 'Khóa học của tôi', href: '/enterprise/hr/learning' }
         ]
     }
 ]

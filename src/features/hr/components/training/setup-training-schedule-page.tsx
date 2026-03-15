@@ -68,7 +68,7 @@ export function SetupTrainingSchedulePage({
     const [endTime, setEndTime] = useState('');
     const [meetingLink, setMeetingLink] = useState('https://meet.google.com/');
     const [offlineLocation, setOfflineLocation] = useState('');
-    const [notifyTrainees, setNotifyTrainees] = useState(true);
+    const [notifyTrainerOnAssignment, setNotifyTrainerOnAssignment] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
 
@@ -152,7 +152,7 @@ export function SetupTrainingSchedulePage({
         try {
             const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
             const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
-            const notificationConfig = `\nThông báo: học viên=${notifyTrainees ? 'on' : 'off'}`;
+            const notificationConfig = `\nThông báo: giangvien_khi_phancong=${notifyTrainerOnAssignment ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
@@ -223,7 +223,7 @@ export function SetupTrainingSchedulePage({
             // 1. Update Course Schedule info
             const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
             const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
-            const notificationConfig = `\nThông báo: học viên=${notifyTrainees ? 'on' : 'off'}`;
+            const notificationConfig = `\nThông báo: giangvien_khi_phancong=${notifyTrainerOnAssignment ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
@@ -234,7 +234,7 @@ export function SetupTrainingSchedulePage({
             } as UpdateCourseCommand);
 
             // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).
-            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học.' });
+            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học. Email trainer sẽ được gửi cùng lúc khi phân công học viên.' });
             router.push(publishRedirectPath);
         } catch (error: unknown) {
             const errorMessage = error instanceof Error
@@ -266,7 +266,7 @@ export function SetupTrainingSchedulePage({
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-8 space-y-10 border border-gray-100">
-                
+
                 {/* Stepper */}
                 <div className="flex items-center w-full px-4 pt-2">
                     <div className="flex flex-col flex-1 relative">
@@ -293,20 +293,20 @@ export function SetupTrainingSchedulePage({
                 {/* Course Selection */}
                 <div className="p-5 bg-blue-50/30 rounded-xl border border-blue-100">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC CẦN LẬP LỊCH</label>
+                        <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC THEO KẾ HOẠCH</label>
                         <Button
                             type="button"
                             onClick={() => setIsCreateCourseOpen(true)}
                             className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
                         >
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Tạo khóa học mới
+                            Lập lịch kế hoạch mới
                         </Button>
                     </div>
 
                     {courses.length === 0 && !isLoadingCourses ? (
                         <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white px-4 py-4 text-sm text-[#0F4C75]">
-                            Chưa có khóa học nháp để lập lịch. Hãy tạo khóa học mới ngay tại trang này.
+                            Chưa có khóa học nháp để lập lịch. Hãy tạo khóa học theo kế hoạch ngay tại trang này.
                         </div>
                     ) : (
                         <div className="mt-3">
@@ -443,7 +443,7 @@ export function SetupTrainingSchedulePage({
                         <div className="space-y-5">
                             <div className="flex items-center gap-2">
                                 <Send className="w-5 h-5 text-[#0F4C75]" />
-                                <h2 className="text-[15px] font-bold text-[#0F4C75] tracking-wide">3. Cấu hình thông báo</h2>
+                                <h2 className="text-[15px] font-bold text-[#0F4C75] tracking-wide">3. Cấu hình thông báo khi phân công</h2>
                             </div>
                             
                             <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100 space-y-6">
@@ -452,9 +452,12 @@ export function SetupTrainingSchedulePage({
                                         <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
                                             <Users className="w-4 h-4" />
                                         </div>
-                                        <span className="font-semibold text-gray-700">Gửi email cho học viên</span>
+                                        <div>
+                                            <span className="font-semibold text-gray-700">Gửi email trainer khi phân công học viên</span>
+                                            <p className="text-xs text-gray-500 mt-1">Email trainer không gửi ở bước này; sẽ gửi cùng lúc với email học viên ở bước phân công.</p>
+                                        </div>
                                     </div>
-                                    <Switch checked={notifyTrainees} onCheckedChange={setNotifyTrainees} className="data-[state=checked]:bg-[#0F4C75]" />
+                                    <Switch checked={notifyTrainerOnAssignment} onCheckedChange={setNotifyTrainerOnAssignment} className="data-[state=checked]:bg-[#0F4C75]" />
                                 </div>
                             </div>
                         </div>
@@ -531,7 +534,7 @@ export function SetupTrainingSchedulePage({
                             {isSubmitting ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                                <>Hoàn tất & Gửi thông báo <Send className="w-4 h-4 ml-2" /></>
+                                <>Hoàn tất thiết lập <Send className="w-4 h-4 ml-2" /></>
                             )}
                         </Button>
                     </div>

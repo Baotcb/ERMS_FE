@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { 
-    ChevronLeft, Save, Layers, 
+    ChevronLeft, Save,
     FileText, Send, CheckCircle2, 
-    Layout, ArrowRight, Loader2, Award
+    Layout, ArrowRight, Loader2, Award, Copy
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -18,20 +18,18 @@ import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { Course } from '@/features/hr/types/course-types';
 import { useToast } from '@/hooks/use-toast';
 import { courseService } from '@/features/hr/api/course-service';
+import { buildPublishCourseCommand } from '@/features/hr/utils/course-workflow';
 
-import { CurriculumManager } from './curriculum-manager';
 import { ExamBuilder } from './exam-builder';
 
 const courseSchema = z.object({
     courseName: z.string().min(5, 'Tên khóa học ít nhất 5 ký tự'),
     description: z.string().min(20, 'Mô tả ít nhất 20 ký tự'),
     durationMinutes: z.number().min(1, 'Thời lượng phải lớn hơn 0'),
-    level: z.string().min(1, 'Vui lòng chọn cấp độ'),
 });
 
 type CourseFormValues = z.infer<typeof courseSchema>;
@@ -41,12 +39,40 @@ interface TrainerCourseDashboardProps {
     teachingBasePath?: string;
 }
 
+function getQuizStorageKey(courseId: string): string {
+    return `course-quiz:${courseId}`;
+}
+
 export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/enterprise/employee/teaching' }: TrainerCourseDashboardProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [course, setCourse] = useState<Course>(initialCourse);
     const [activeTab, setActiveTab] = useState('basics');
     const [isSaving, setIsSaving] = useState(false);
+    const [savedQuizId, setSavedQuizId] = useState('');
+
+    useEffect(() => {
+        if (activeTab !== 'publish') {
+            return;
+        }
+
+        const storedQuizId = localStorage.getItem(getQuizStorageKey(course.id)) || sessionStorage.getItem(getQuizStorageKey(course.id)) || '';
+        setSavedQuizId(storedQuizId);
+    }, [activeTab, course.id]);
+
+    const handleCopyQuizId = async () => {
+        if (!savedQuizId) {
+            toast({ title: 'Chưa có Quiz ID', description: 'Vui lòng tạo quiz ở tab Bài thi cuối khóa trước.', variant: 'destructive' });
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(savedQuizId);
+            toast({ title: 'Đã copy Quiz ID', description: 'Bạn có thể gửi mã này cho HR/học viên.' });
+        } catch {
+            toast({ title: 'Không thể copy', description: 'Trình duyệt chặn thao tác copy. Vui lòng copy thủ công.', variant: 'destructive' });
+        }
+    };
 
     const form = useForm<CourseFormValues>({
         resolver: zodResolver(courseSchema),
@@ -54,7 +80,6 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
             courseName: initialCourse.courseName,
             description: initialCourse.description || '',
             durationMinutes: initialCourse.durationMinutes || 60,
-            level: initialCourse.level || 'Beginner',
         },
     });
 
@@ -88,7 +113,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
             await courseService.updateCourse(course.id, buildCourseUpdatePayload(values));
             setCourse(prev => ({ ...prev, ...values }));
             toast({ title: 'Thành công', description: 'Đã lưu thông tin cơ bản.' });
-            setActiveTab('curriculum');
+            setActiveTab('exam');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Không thể lưu thông tin.';
             toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
@@ -119,13 +144,13 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
     const handlePublish = async () => {
         setIsSaving(true);
         try {
-            await courseService.publishCourse(course.id);
+            await courseService.publishCourse(buildPublishCourseCommand(course));
             setCourse(prev => ({ ...prev, status: 'Published' }));
             toast({ title: 'Chúc mừng!', description: 'Khóa học đã được xuất bản theo luồng nhiệm vụ giảng viên.' });
             router.push(teachingBasePath);
         } catch (error) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể xuất bản khóa học.', variant: 'destructive' });
+            const errorMessage = error instanceof Error ? error.message : 'Không thể xuất bản khóa học.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSaving(false);
         }
@@ -163,18 +188,15 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
 
             {/* Workflow Steps */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full md:w-auto h-auto grid grid-cols-2 md:grid-cols-4 gap-1">
+                <TabsList className="bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full md:w-auto h-auto grid grid-cols-1 md:grid-cols-3 gap-1">
                     <TabsTrigger value="basics" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
                         <Layout className="w-4 h-4" /> 1. Nhận nhiệm vụ
                     </TabsTrigger>
-                    <TabsTrigger value="curriculum" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <Layers className="w-4 h-4" /> 2. Tài liệu
-                    </TabsTrigger>
                     <TabsTrigger value="exam" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <FileText className="w-4 h-4" /> 3. Lộ trình & Thi cuối khóa
+                        <FileText className="w-4 h-4" /> 2. Quiz cuối khóa
                     </TabsTrigger>
                     <TabsTrigger value="publish" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <Send className="w-4 h-4" /> 4. Xuất bản
+                        <Send className="w-4 h-4" /> 3. Xuất bản
                     </TabsTrigger>
                 </TabsList>
 
@@ -184,7 +206,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                         <div className="max-w-3xl space-y-8">
                             <div className="space-y-2">
                                 <h2 className="text-xl font-bold text-[#0F4C75]">Nhận nhiệm vụ & Khởi tạo khóa học</h2>
-                                <p className="text-gray-500 text-sm">Giảng viên tiếp nhận khóa học được giao và hoàn thiện thông tin khởi tạo trước khi bổ sung tài liệu.</p>
+                                <p className="text-gray-500 text-sm">Giảng viên tiếp nhận khóa học được giao và hoàn thiện thông tin khởi tạo trước khi tạo quiz cuối khóa.</p>
                             </div>
 
                             <Form {...form}>
@@ -217,7 +239,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                         )}
                                     />
 
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <FormField
                                             control={form.control}
                                             name="durationMinutes"
@@ -236,29 +258,6 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                                 </FormItem>
                                             )}
                                         />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="level"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="font-bold text-gray-700">Cấp độ</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="rounded-xl border-gray-200 h-11">
-                                                                <SelectValue placeholder="Chọn cấp độ" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Beginner">Cơ bản (Beginner)</SelectItem>
-                                                            <SelectItem value="Intermediate">Trung cấp (Intermediate)</SelectItem>
-                                                            <SelectItem value="Advanced">Nâng cao (Advanced)</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                     </div>
 
                                     <Button 
@@ -271,25 +270,6 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                     </Button>
                                 </form>
                             </Form>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="curriculum" className="m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <div className="space-y-1 mb-8">
-                            <h2 className="text-xl font-bold text-[#0F4C75]">Tải lên tài liệu</h2>
-                            <p className="text-gray-500 text-sm">Tổ chức học phần, bài giảng và tài liệu để chuẩn bị cho lộ trình học.</p>
-                        </div>
-
-                        <CurriculumManager courseId={course.id} />
-
-                        <div className="flex justify-end pt-8 border-t border-gray-100">
-                            <Button 
-                                onClick={() => setActiveTab('exam')}
-                                className="bg-[#0F4C75] hover:bg-[#1B262C] text-white px-8 py-6 rounded-xl font-bold gap-2"
-                            >
-                                Tiếp tục bước 3
-                                <ArrowRight className="w-4 h-4" />
-                            </Button>
                         </div>
                     </TabsContent>
 
@@ -317,11 +297,22 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
 
                                 <div className="flex items-center gap-4 p-5 rounded-3xl border border-blue-50 bg-blue-50/20">
                                     <div className="w-10 h-10 bg-[#3282B8] text-white rounded-2xl flex items-center justify-center shadow-sm">
-                                        <Layers className="w-6 h-6" />
+                                        <FileText className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-[#0F4C75]">Chương trình học</p>
-                                        <p className="text-xs text-[#3282B8] font-medium">Cần hoàn tất việc thêm bài giảng (Yêu cầu ít nhất 1 bài học).</p>
+                                        <p className="font-bold text-[#0F4C75]">Quiz cuối khóa</p>
+                                        <p className="text-xs text-[#3282B8] font-medium">Tạo bộ câu hỏi để đánh giá pass/failed sau khóa học.</p>
+                                        {savedQuizId ? (
+                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                <span className="text-[11px] font-semibold text-[#0F4C75]">Quiz ID:</span>
+                                                <span className="rounded-md bg-white px-2 py-1 font-mono text-[11px] text-[#0F4C75] border border-blue-100">{savedQuizId}</span>
+                                                <Button type="button" variant="outline" size="sm" className="h-7 border-blue-200 text-[#0F4C75] hover:bg-white" onClick={handleCopyQuizId}>
+                                                    <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[11px] text-amber-700 mt-2">Chưa có Quiz ID. Hãy tạo quiz ở tab Bài thi cuối khóa trước khi xuất bản.</p>
+                                        )}
                                     </div>
                                 </div>
 

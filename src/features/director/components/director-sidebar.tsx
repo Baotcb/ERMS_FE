@@ -15,6 +15,8 @@ import {
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
 
 interface SidebarItem {
     title: string
@@ -64,23 +66,32 @@ export function DirectorSidebar() {
 
     const { enterpriseInfo } = useEnterpriseInfo()
 
-    const dynamicSidebarItems: SidebarItem[] = user?.isTrainer
-        ? sidebarItems.map((item) => {
+    const dynamicSidebarItems: SidebarItem[] = sidebarItems.map((item) => {
             if (item.title !== 'Đào tạo' || !item.children) {
                 return item
             }
 
-            const hasTrainerLink = item.children.some((child) => child.href === '/enterprise/director/teaching')
-            if (hasTrainerLink) {
-                return item
+            let children = item.children
+
+            if (canAccessTeachingWorkspace(user)) {
+                const hasTrainerLink = children.some((child) => child.href === '/enterprise/director/teaching')
+                if (!hasTrainerLink) {
+                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' }]
+                }
+            }
+
+            if (canAccessLearningWorkspace(user)) {
+                const hasLearningLink = children.some((child) => child.href === '/enterprise/director/learning')
+                if (!hasLearningLink) {
+                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/director/learning' }]
+                }
             }
 
             return {
                 ...item,
-                children: [...item.children, { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' }]
+                children,
             }
         })
-        : sidebarItems
 
     return (
         <div className="flex bg-white h-screen flex-col w-64 border-r border-gray-200">

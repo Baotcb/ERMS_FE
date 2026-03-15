@@ -33,15 +33,43 @@ const STATUS_COLORS: Record<string, string> = {
     Draft: 'bg-gray-100 text-gray-800',
     Pending: 'bg-yellow-100 text-yellow-800',
     Approved: 'bg-green-100 text-green-800',
-    Rejected: 'bg-red-100 text-red-800',
+    Rejected: 'bg-amber-100 text-amber-800',
 };
 
-const STATUS_LABELS: Record<string, string> = {
+const BASE_STATUS_LABELS: Record<string, string> = {
     Draft: 'Bản nháp',
     Pending: 'Chờ duyệt',
     Approved: 'Đã duyệt',
-    Rejected: 'Từ chối',
+    Rejected: 'Yêu cầu gửi lại',
 };
+
+const RESUBMIT_REQUEST_PREFIX = '[RESUBMIT_REQUEST]';
+const FINAL_REJECT_PREFIX = '[FINAL_REJECT]';
+
+function getStatusLabel(plan: TrainingPlan): string {
+    if (plan.status !== 'Rejected') {
+        return BASE_STATUS_LABELS[plan.status] || plan.status;
+    }
+
+    const note = (plan.reviewNote || '').trim();
+    if (note.startsWith(FINAL_REJECT_PREFIX)) {
+        return 'Từ chối';
+    }
+
+    if (note.startsWith(RESUBMIT_REQUEST_PREFIX)) {
+        return 'Yêu cầu gửi lại';
+    }
+
+    return BASE_STATUS_LABELS.Rejected;
+}
+
+function getDisplayReviewNote(rawNote?: string): string {
+    if (!rawNote) return '';
+    return rawNote
+        .replace(RESUBMIT_REQUEST_PREFIX, '')
+        .replace(FINAL_REJECT_PREFIX, '')
+        .trim();
+}
 
 export function TrainingPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const router = useRouter();
@@ -97,19 +125,20 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                             <TableHead className="font-bold text-[#0F4C75]">Tổng ngân sách</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>
+                            <TableHead className="font-bold text-[#0F4C75]">Ghi chú duyệt</TableHead>
                             <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-gray-400">
+                                <TableCell colSpan={8} className="text-center py-12 text-gray-400">
                                     Đang tải dữ liệu...
                                 </TableCell>
                             </TableRow>
                         ) : plans?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
+                                <TableCell colSpan={8} className="text-center py-12 text-gray-400 italic">
                                     Chưa có kế hoạch đào tạo nào
                                 </TableCell>
                             </TableRow>
@@ -138,8 +167,15 @@ export function TrainingPlansList({ initialData }: { initialData?: { items: Trai
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[plan.status] || 'bg-gray-100'}`}>
-                                            {STATUS_LABELS[plan.status] || plan.status}
+                                            {getStatusLabel(plan)}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="max-w-[300px] text-sm text-gray-600">
+                                        {plan.reviewNote ? (
+                                            <p className="line-clamp-2" title={getDisplayReviewNote(plan.reviewNote)}>{getDisplayReviewNote(plan.reviewNote)}</p>
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>

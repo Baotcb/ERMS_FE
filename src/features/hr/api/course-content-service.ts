@@ -3,7 +3,12 @@ import { CourseSection, Lesson, CreateLessonCommand, Material } from '../types/c
 
 export const courseContentService = {
     async getCourseCurriculum(courseId: string): Promise<CourseSection[]> {
-        const response = await apiClient.get(`/api/Course/${courseId}/curriculum`);
+        const response = await apiClient.get(`/api/Course/${courseId}/curriculum`, { retries: 0 });
+        if (response.status === 404) {
+            // Some environments do not expose curriculum endpoint yet.
+            // Treat as empty curriculum so trainer can still continue the flow.
+            return [];
+        }
         if (!response.ok) {
             const error = new Error(`Không thể tải chương trình học (HTTP ${response.status})`) as Error & { status?: number };
             error.status = response.status;

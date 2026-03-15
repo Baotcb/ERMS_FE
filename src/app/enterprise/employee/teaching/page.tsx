@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/server-fetch';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
+import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
 
 export default async function Page() {
     const session = await getServerSession();
@@ -14,17 +15,7 @@ export default async function Page() {
     }
 
     const allCourses = await trainingServerService.getAllCourses({ pageSize: 100 }).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
-    const initialCourses = allCourses.items.filter((course) => {
-        if (course.trainerId === session.user?.id) {
-            return true;
-        }
-
-        if (session.user?.fullName && course.trainerName) {
-            return course.trainerName.trim().toLowerCase() === session.user.fullName.trim().toLowerCase();
-        }
-
-        return false;
-    });
+    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user));
 
     return (
         <Suspense fallback={

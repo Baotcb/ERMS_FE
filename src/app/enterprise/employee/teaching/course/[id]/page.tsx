@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { notFound, redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/server-fetch';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
+import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
 
 export default async function Page({ params }: { params: { id: string } }) {
     const session = await getServerSession();
@@ -19,13 +20,7 @@ export default async function Page({ params }: { params: { id: string } }) {
         notFound();
     }
 
-    const normalizedTrainerName = course.trainerName?.trim().toLowerCase();
-    const normalizedUserFullName = session.user?.fullName?.trim().toLowerCase();
-    const ownsCourse = course.trainerId === session.user?.id || (
-        Boolean(normalizedTrainerName) &&
-        Boolean(normalizedUserFullName) &&
-        normalizedTrainerName === normalizedUserFullName
-    );
+    const ownsCourse = isCourseOwnedByUser(course, session.user);
 
     if (!ownsCourse) {
         notFound();

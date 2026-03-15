@@ -1,6 +1,17 @@
 import { apiClient } from '@/lib/api-client';
 import { TrainingPlansResult } from '../../hr/types/training-plan-types';
 
+const RESUBMIT_REQUEST_NOTE_PREFIX = '[RESUBMIT_REQUEST]';
+const FINAL_REJECT_NOTE_PREFIX = '[FINAL_REJECT]';
+
+function withPrefix(prefix: string, note: string): string {
+    const trimmed = note.trim();
+    if (trimmed.startsWith(prefix)) {
+        return trimmed;
+    }
+    return `${prefix} ${trimmed}`;
+}
+
 export const directorTrainingService = {
     async getPendingPlans(): Promise<TrainingPlansResult> {
         const allItems: TrainingPlansResult['items'] = [];
@@ -51,10 +62,28 @@ export const directorTrainingService = {
         return { ok: true };
     },
 
+    async requestPlanResubmission(planId: string, reviewNote: string): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/reject', {
+            trainingPlanId: planId,
+            reviewNote: withPrefix(RESUBMIT_REQUEST_NOTE_PREFIX, reviewNote)
+        });
+        if (!response.ok) {
+            let message = 'Không thể gửi yêu cầu chỉnh sửa kế hoạch';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch {
+                // Keep fallback message when response is not JSON
+            }
+            throw new Error(message);
+        }
+        return { ok: true };
+    },
+
     async rejectPlan(planId: string, reviewNote: string): Promise<{ ok: boolean }> {
         const response = await apiClient.put('/api/TrainingPlan/reject', {
             trainingPlanId: planId,
-            reviewNote
+            reviewNote: withPrefix(FINAL_REJECT_NOTE_PREFIX, reviewNote)
         });
         if (!response.ok) {
             let message = 'Không thể từ chối kế hoạch';

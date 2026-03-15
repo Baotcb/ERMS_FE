@@ -4,6 +4,13 @@ import { TrainingPlansResult } from '../types/training-plan-types';
 import { Course, CourseResult } from '../types/course-types';
 import { Employee, PaginatedResult } from './employee-service';
 
+export interface CourseProgressResult {
+    totalLessons: number;
+    completedLessons: number;
+    progressPercentage: number;
+    quizUnlocked: boolean;
+}
+
 export const trainingServerService = {
     async getRequests(params?: {
         page?: number;
@@ -69,6 +76,13 @@ export const trainingServerService = {
 
     async getCourseDetails(id: string): Promise<Course> {
         return serverFetch<Course>(`/api/Course/${id}`, {
+            requireAuth: true,
+            cache: 'no-store',
+        });
+    },
+
+    async getCourseProgress(courseId: string): Promise<CourseProgressResult> {
+        return serverFetch<CourseProgressResult>(`/api/Course/${courseId}/progress`, {
             requireAuth: true,
             cache: 'no-store',
         });
