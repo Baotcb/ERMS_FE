@@ -150,11 +150,11 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                 });
             }
         } catch (error) {
-            void error;
+            const errorMessage = error instanceof Error ? error.message : 'Không thể gửi yêu cầu đào tạo. Vui lòng thử lại.';
             toast({
                 variant: 'destructive',
                 title: 'Lỗi',
-                description: 'Không thể gửi yêu cầu đào tạo. Vui lòng thử lại.',
+                description: errorMessage,
             });
         } finally {
             setIsLoading(false);

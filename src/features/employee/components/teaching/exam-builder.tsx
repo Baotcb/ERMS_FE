@@ -339,6 +339,7 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
         }
 
         setIsSaving(true);
+        let createdQuizId = '';
         try {
             const { quizId } = await quizService.createQuiz(courseId, {
                 quizTitle: quizTitle.trim(),
@@ -350,6 +351,9 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
                 shuffleAnswers,
                 showCorrectAnswers,
             });
+            createdQuizId = quizId;
+            // Persist immediately so trainer does not lose Quiz ID if later question import fails.
+            linkQuizIdToCourse(quizId);
 
             if (preparedCsvQuestions) {
                 for (const question of preparedCsvQuestions) {
@@ -377,16 +381,18 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
                 });
             }
 
-            linkQuizIdToCourse(quizId);
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Không thể tạo bài thi cuối khóa.';
             const duplicateHint = message.toLowerCase().includes('mỗi khóa chỉ có 1 quiz') || message.toLowerCase().includes('đã có quiz');
+            const partialCreationHint = createdQuizId
+                ? ` Quiz ID đã được tạo: ${createdQuizId}. Hãy copy mã này và kiểm tra lại danh sách câu hỏi.`
+                : '';
 
             toast({
                 title: 'Không thể tạo quiz',
                 description: duplicateHint
                     ? 'Khóa học có thể đã có quiz trên hệ thống (mỗi khóa chỉ 1 quiz). Vui lòng dùng lại Quiz ID đã tạo trước đó.'
-                    : message,
+                    : `${message}${partialCreationHint}`,
                 variant: 'destructive'
             });
         } finally {

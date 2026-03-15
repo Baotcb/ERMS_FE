@@ -25,6 +25,7 @@ import { courseService } from '@/features/hr/api/course-service';
 import { buildPublishCourseCommand } from '@/features/hr/utils/course-workflow';
 
 import { ExamBuilder } from './exam-builder';
+import { CurriculumManager } from './curriculum-manager';
 
 const courseSchema = z.object({
     courseName: z.string().min(5, 'Tên khóa học ít nhất 5 ký tự'),
@@ -132,7 +133,10 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
         try {
             await courseService.updateCourse(course.id, buildCourseUpdatePayload(values));
             setCourse(prev => ({ ...prev, ...values }));
-            toast({ title: 'Đã lưu bản nháp', description: 'Thông tin khóa học đã được lưu.' });
+            toast({
+                title: 'Đã lưu bản nháp',
+                description: 'Thông tin cơ bản đã lưu lên hệ thống. Nội dung học trong tab Nội dung học được tự lưu nháp local.',
+            });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Không thể lưu bản nháp.';
             toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
@@ -188,15 +192,18 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
 
             {/* Workflow Steps */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full md:w-auto h-auto grid grid-cols-1 md:grid-cols-3 gap-1">
+                <TabsList className="bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full md:w-auto h-auto grid grid-cols-1 md:grid-cols-4 gap-1">
                     <TabsTrigger value="basics" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
                         <Layout className="w-4 h-4" /> 1. Nhận nhiệm vụ
                     </TabsTrigger>
+                    <TabsTrigger value="curriculum" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
+                        <FileText className="w-4 h-4" /> 2. Nội dung học
+                    </TabsTrigger>
                     <TabsTrigger value="exam" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <FileText className="w-4 h-4" /> 2. Quiz cuối khóa
+                        <Award className="w-4 h-4" /> 3. Quiz cuối khóa
                     </TabsTrigger>
                     <TabsTrigger value="publish" className="rounded-xl py-3 px-6 data-[state=active]:bg-[#0F4C75] data-[state=active]:text-white transition-all font-bold text-xs uppercase tracking-wider gap-2">
-                        <Send className="w-4 h-4" /> 3. Xuất bản
+                        <Send className="w-4 h-4" /> 4. Xuất bản
                     </TabsTrigger>
                 </TabsList>
 
@@ -270,6 +277,16 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                     </Button>
                                 </form>
                             </Form>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="curriculum" className="m-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="space-y-4">
+                            <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
+                                <h2 className="text-lg font-bold text-[#0F4C75]">Thiết kế lộ trình học tập</h2>
+                                <p className="text-sm text-gray-600 mt-1">Tạo lesson, đính kèm video và upload tài liệu để học viên có thể học theo từng học phần.</p>
+                            </div>
+                            <CurriculumManager courseId={course.id} />
                         </div>
                     </TabsContent>
 

@@ -21,10 +21,11 @@ export default async function Page({
     const resolvedSearchParams = await searchParams;
     const initialQuizId = typeof resolvedSearchParams.quizId === 'string' ? resolvedSearchParams.quizId : '';
     const course = await trainingServerService.getCourseDetails(id).catch(() => null);
+    const progress = await trainingServerService.getCourseProgress(id).catch(() => null);
 
-    if (!course) {
+    if (!course || !progress) {
         notFound();
     }
 
-    return <CourseQuizPage initialCourse={course} initialQuizId={initialQuizId} />;
+    return <CourseQuizPage initialCourse={course} initialQuizId={initialQuizId} initialProgress={progress} />;
 }

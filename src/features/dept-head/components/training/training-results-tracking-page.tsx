@@ -47,7 +47,15 @@ function getLearningBadge(status: DepartmentTrainingResultItem['learningStatus']
     }
 }
 
-export function TrainingResultsTrackingPage({ initialData }: { initialData: DepartmentTrainingResultItem[] }) {
+export function TrainingResultsTrackingPage({
+    initialData,
+    sourceEndpoint,
+    initialError,
+}: {
+    initialData: DepartmentTrainingResultItem[];
+    sourceEndpoint?: string | null;
+    initialError?: string;
+}) {
     const [search, setSearch] = useState('');
     const [courseFilter, setCourseFilter] = useState('all');
     const [evaluationFilter, setEvaluationFilter] = useState('all');
@@ -90,9 +98,17 @@ export function TrainingResultsTrackingPage({ initialData }: { initialData: Depa
                     <h1 className="text-2xl font-bold text-[#0F4C75]">Theo dõi kết quả đào tạo</h1>
                     <p className="text-sm text-gray-500">Theo dõi tiến độ học và trạng thái đạt/không đạt của thành viên phòng ban đã được cử đi học.</p>
                 </div>
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 max-w-2xl">
-                    Dữ liệu chi tiết theo từng học viên hiện đang dùng fallback UI vì backend chưa có endpoint tracking kết quả đào tạo theo phòng ban. Khi BE bổ sung query, màn này chỉ cần thay source dữ liệu.
-                </div>
+                {initialError ? (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 max-w-2xl">
+                        Không tải được dữ liệu từ API. Chi tiết: {initialError}
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#0F4C75] max-w-2xl">
+                        {initialData.length > 0
+                            ? `Dữ liệu đang được tải từ ${sourceEndpoint || 'API theo phòng ban'}.`
+                            : `API ${sourceEndpoint || 'theo phòng ban'} đã phản hồi nhưng chưa có bản ghi nào phù hợp. Hãy kiểm tra lại phân công khóa học, kết quả quiz hoặc phạm vi dữ liệu của tài khoản hiện tại.`}
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

@@ -1,12 +1,21 @@
 import { TrainingResultsTrackingPage } from '@/features/dept-head/components/training/training-results-tracking-page';
-import { getDepartmentTrainingResults } from '@/features/dept-head/api/dept-head-service';
+import { trainingServerService } from '@/features/hr/api/training-server-service';
 
 export default async function Page() {
-    const initialData = await getDepartmentTrainingResults();
+    const result = await trainingServerService.getDepartmentTrainingResults()
+        .catch((error) => ({
+            items: [],
+            sourceEndpoint: null,
+            errorMessage: error instanceof Error ? error.message : 'Không thể tải kết quả đào tạo theo phòng ban.',
+        }));
 
     return (
         <div className="container mx-auto py-2">
-            <TrainingResultsTrackingPage initialData={initialData} />
+            <TrainingResultsTrackingPage
+                initialData={result.items}
+                sourceEndpoint={result.sourceEndpoint}
+                initialError={'errorMessage' in result ? result.errorMessage : undefined}
+            />
         </div>
     );
 }
