@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,6 +8,7 @@ import { JobCard } from "./job-card"
 import { usePublicJobs } from "../hooks/use-public-jobs"
 import { buildJobsHref } from "../job-filtering"
 import { cn } from "@/lib/utils"
+import { useUserLocation } from "../hooks/use-user-location"
 
 const FILTER_TABS = [
     { key: "random", label: "Tất cả" },
@@ -18,9 +19,23 @@ const FILTER_TABS = [
 ] as const
 
 export function BestJobsSection() {
+    const { location: userLocation } = useUserLocation()
     const [filter, setFilter] = useState("random")
     const [page, setPage] = useState(1)
     const pageSize = 12
+
+    // Auto-select tab dựa trên vị trí user (chỉ 1 lần khi mount)
+    const [filterInitialized, setFilterInitialized] = useState(false)
+    useEffect(() => {
+        if (!filterInitialized && userLocation?.city) {
+            // Tìm tab có label chứa tên thành phố (VD: "Hà Nội" match tab "Hà Nội")
+            const matched = FILTER_TABS.find(t => t.label === userLocation.city)
+            if (matched && matched.key !== 'random') {
+                setFilter(matched.key)
+            }
+            setFilterInitialized(true)
+        }
+    }, [userLocation, filterInitialized])
 
     const getLocation = (value: string) => {
         switch (value) {

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { HERO_CATEGORIES } from "../data/hero-categories"
 import { ALL_LOCATIONS_LABEL, buildJobsHref, normalizeLocationChoice } from "../job-filtering"
+import { useUserLocation } from "../hooks/use-user-location"
 
 const LOCATIONS = [ALL_LOCATIONS_LABEL, "Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Bình Dương", "Đồng Nai"]
 
@@ -74,6 +75,16 @@ export function HeroSection() {
     const [activeCategory, setActiveCategory] = useState<string>("marketing")
     const [keyword, setKeyword] = useState("")
     const [locationFilter, setLocationFilter] = useState(ALL_LOCATIONS_LABEL)
+    const [locationInitialized, setLocationInitialized] = useState(false)
+    const { location: userLocation } = useUserLocation()
+
+    // Pre-fill location dropdown khi detect được vị trí user
+    useEffect(() => {
+        if (!locationInitialized && userLocation?.city && LOCATIONS.includes(userLocation.city)) {
+            setLocationFilter(userLocation.city)
+            setLocationInitialized(true)
+        }
+    }, [userLocation, locationInitialized])
 
     const handleSearch = (event: React.FormEvent) => {
         event.preventDefault()
