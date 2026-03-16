@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, DollarSign, Users, Info, Send } from 'lucide-react';
+import { Loader2, Users, Info, Send } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -199,25 +199,6 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                                     className="pl-9 border-gray-200"
                                                     placeholder="0"
                                                     {...field}
-                                                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-                                                />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-
-                                <FormField control={form.control} name="estimatedBudget" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-[#0F4C75] font-semibold">Ngân sách dự kiến (VNĐ)</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                                                <Input 
-                                                    type="number" 
-                                                    className="pl-9 border-gray-200" 
-                                                    placeholder="0" 
-                                                    {...field} 
                                                     onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                                                 />
                                             </div>

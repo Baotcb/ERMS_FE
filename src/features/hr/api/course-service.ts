@@ -66,8 +66,11 @@ export const courseService = {
         return { ok: true };
     },
 
-    async assignEmployees(courseId: string, employeeIds: string[]): Promise<{ totalAssigned: number }> {
-        const response = await apiClient.post(`/api/Course/${courseId}/assign-employees`, employeeIds);
+    async assignEmployees(courseId: string, employeeIds: string[], meetUrl: string = ''): Promise<{ totalAssigned: number }> {
+        const response = await apiClient.post(`/api/Course/${courseId}/assign-employees`, {
+            meetUrl,
+            employeeIds,
+        });
         if (!response.ok) throw new Error('Không thể phân công nhân viên');
         return response.json();
     },

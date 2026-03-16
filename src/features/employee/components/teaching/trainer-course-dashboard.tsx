@@ -60,18 +60,38 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
 
     const handleBack = () => router.back();
 
+    const buildCourseUpdatePayload = (overrides: Partial<Course>) => {
+        const normalizedTrainerEmail = (course.trainerEmail || '').trim().toLowerCase();
+        if (!normalizedTrainerEmail) {
+            throw new Error('Khóa học chưa có email giảng viên hợp lệ.');
+        }
+        if (!course.startTime) {
+            throw new Error('Khóa học chưa có thời gian bắt đầu. Vui lòng nhờ HR thiết lập lịch trước.');
+        }
+        if (typeof course.isOnline !== 'boolean') {
+            throw new Error('Khóa học chưa xác định hình thức online/offline.');
+        }
+
+        return {
+            ...course,
+            ...overrides,
+            trainerEmail: normalizedTrainerEmail,
+            startTime: course.startTime,
+            isOnline: course.isOnline,
+            location: course.location,
+        };
+    };
+
     const handleSaveBasics = async (values: CourseFormValues) => {
         setIsSaving(true);
         try {
-            await courseService.updateCourse(course.id, {
-                ...course,
-                ...values
-            });
+            await courseService.updateCourse(course.id, buildCourseUpdatePayload(values));
             setCourse(prev => ({ ...prev, ...values }));
             toast({ title: 'Thành công', description: 'Đã lưu thông tin cơ bản.' });
             setActiveTab('curriculum');
-        } catch {
-            toast({ title: 'Lỗi', description: 'Không thể lưu thông tin.', variant: 'destructive' });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể lưu thông tin.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSaving(false);
         }
@@ -85,14 +105,12 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
         }
         setIsSaving(true);
         try {
-            await courseService.updateCourse(course.id, {
-                ...course,
-                ...values,
-            });
+            await courseService.updateCourse(course.id, buildCourseUpdatePayload(values));
             setCourse(prev => ({ ...prev, ...values }));
             toast({ title: 'Đã lưu bản nháp', description: 'Thông tin khóa học đã được lưu.' });
-        } catch {
-            toast({ title: 'Lỗi', description: 'Không thể lưu bản nháp.', variant: 'destructive' });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể lưu bản nháp.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSaving(false);
         }
