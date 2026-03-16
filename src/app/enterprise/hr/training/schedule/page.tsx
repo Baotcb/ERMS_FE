@@ -1,5 +1,29 @@
 import { SetupTrainingSchedulePage } from '@/features/hr/components/training/setup-training-schedule-page';
+import { trainingServerService } from '@/features/hr/api/training-server-service';
 
-export default function Page() {
-    return <SetupTrainingSchedulePage />;
+export default async function Page({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+    const resolvedParams = await searchParams;
+    const courseId = typeof resolvedParams.courseId === 'string' ? resolvedParams.courseId : undefined;
+
+    const [initialCourses, initialPlans] = await Promise.all([
+        trainingServerService.getAllCourses({ status: 'Draft', pageSize: 100 }),
+        trainingServerService.getPlans({ status: 'Approved', pageSize: 100 }),
+    ]);
+    
+    let initialCourseDetails;
+    if (courseId) {
+        initialCourseDetails = await trainingServerService.getCourseDetails(courseId);
+    }
+
+    return (
+        <SetupTrainingSchedulePage 
+            initialCourses={initialCourses} 
+            initialPlans={initialPlans.items}
+            initialCourseDetails={initialCourseDetails} 
+        />
+    );
 }

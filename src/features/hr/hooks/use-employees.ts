@@ -67,7 +67,7 @@ export function useEmployee(id: string | null) {
                 throw new Error('Employee ID is invalid')
             }
 
-            const response = await apiClient.get(`/api/Employees/${employeeId}`)
+            const response = await apiClient.get(`/api/Employees/detail?id=${employeeId}`)
             if (!response.ok) throw new Error('Không thể tải thông tin nhân viên')
             return response.json()
         },

@@ -42,5 +42,7 @@ export async function confirmHire(
         const error = await response.json().catch(() => null)
         throw new Error(error?.message || 'Không thể xác nhận tuyển dụng')
     }
-    return response.json()
+    const json = await response.json()
+    // Backend wraps response in { message, data }
+    return json.data ?? json
 }

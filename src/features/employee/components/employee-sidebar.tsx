@@ -14,12 +14,16 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
+import { useAuth } from '@/features/core/auth/hooks/use-auth'
 
 interface NavItem {
     label: string
     href: string
     icon: React.ReactNode
 }
+
+import { GraduationCap } from 'lucide-react'
+import { USER_ROLES } from '@/utils/constants'
 
 const NAV_ITEMS: NavItem[] = [
     {
@@ -34,8 +38,17 @@ const NAV_ITEMS: NavItem[] = [
     },
 ]
 
+const TRAINER_NAV_ITEMS: NavItem[] = [
+    {
+        label: 'Nhiệm vụ giảng dạy',
+        href: '/enterprise/employee/teaching',
+        icon: <GraduationCap className="w-5 h-5" />,
+    },
+]
+
 export const EmployeeSidebar = memo(function EmployeeSidebar() {
     const pathname = usePathname()
+    const { user } = useAuth()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const { enterpriseInfo } = useEnterpriseInfo()
 
@@ -66,23 +79,56 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
             </div>
 
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                {NAV_ITEMS.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
-                                'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
-                                isActive ? 'bg-[#0F4C75] text-white shadow-md' : 'text-gray-600'
-                            )}
-                        >
-                            {item.icon}
-                            <span className="font-medium">{item.label}</span>
-                        </Link>
-                    )
-                })}
+                <div className="space-y-1">
+                    {NAV_ITEMS.map((item) => {
+                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={cn(
+                                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                                    'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
+                                    isActive
+                                        ? 'bg-[#0F4C75] text-white shadow-md'
+                                        : 'text-gray-600'
+                                )}
+                            >
+                                {item.icon}
+                                <span className="font-medium">{item.label}</span>
+                            </Link>
+                        )
+                    })}
+                </div>
+
+                {/* Trainer Section */}
+                {(user?.isTrainer || user?.role === USER_ROLES.TRAINER) && (
+                    <div className="mt-8 pt-6 border-t border-gray-100 space-y-1">
+                        <p className="px-4 mb-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            Giảng vụ
+                        </p>
+                        {TRAINER_NAV_ITEMS.map((item) => {
+                            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={cn(
+                                        'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                                        'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
+                                        isActive
+                                            ? 'bg-[#3282B8] text-white shadow-md'
+                                            : 'text-gray-600'
+                                    )}
+                                >
+                                    {item.icon}
+                                    <span className="font-medium">{item.label}</span>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                )}
+
             </nav>
 
             <div className="p-4 border-t border-gray-100">

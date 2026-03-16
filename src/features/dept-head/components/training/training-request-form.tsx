@@ -19,8 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
-import { getCookie } from '@/features/core/auth/utils/auth-cookies';
-import { STORAGE_KEYS } from '@/utils/constants';
+
 
 import { trainingService } from '../../api/training-service';
 import { 
@@ -34,36 +33,57 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
+    const [detectError, setDetectError] = useState<string | null>(null);
 
     const form = useForm<TrainingRequestValues>({
         resolver: zodResolver(trainingRequestSchema),
         defaultValues: TRAINING_REQUEST_DEFAULTS,
     });
 
-    // Detect Employee & Department
+    // Detect Employee & Department via User Profile API
     useEffect(() => {
         if (!open) return;
-        
+
         const detectUser = async () => {
             try {
-                const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME);
-                if (userNameEncoded) {
-                    const userName = decodeURIComponent(userNameEncoded);
-                    const res = await apiClient.get(`/api/Employees?Search=${encodeURIComponent(userName)}&PageSize=1`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const employee = data.items?.[0];
-                        if (employee?.id) {
-                            setDetectedEmp({ 
-                                id: employee.id, 
-                                departmentName: employee.departmentName 
-                            });
-                            form.setValue('requestedById', employee.id);
-                        }
+                setDetectError(null);
+                setDetectedEmp(null);
+
+                // Lấy profile user hiện tại (departmentName)
+                const profileRes = await apiClient.get('/api/User/profile');
+                if (!profileRes.ok) {
+                    setDetectError('Không thể lấy thông tin profile. Vui lòng đăng nhập lại.');
+                    return;
+                }
+                const profile = await profileRes.json();
+                const departmentName = profile?.departmentName || '';
+
+                // Cần employeeId cho training request - search bằng email từ profile
+                const email = profile?.email;
+                if (!email) {
+                    setDetectError('Không thể xác định email người dùng.');
+                    return;
+                }
+
+                const empRes = await apiClient.get(`/api/Employees?search=${encodeURIComponent(email)}&pageSize=5`);
+                if (empRes.ok) {
+                    const data = await empRes.json();
+                    const items = data.items || [];
+                    const employee = items.find(
+                        (item: { email?: string }) => item.email?.trim().toLowerCase() === email.trim().toLowerCase()
+                    );
+                    if (employee?.id) {
+                        const empDeptName = departmentName || employee.departmentName || '';
+                        setDetectedEmp({ id: employee.id, departmentName: empDeptName });
+                        form.setValue('requestedById', employee.id);
+                        return;
                     }
                 }
+
+                setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng đăng nhập lại.');
             } catch (e) {
-                console.error('Failed to detect user employee profile', e);
+                console.error('Failed to detect employee:', e);
+                setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng thử lại.');
             }
         };
 
@@ -72,9 +92,21 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
     }, [open, form]);
 
     const onSubmit: SubmitHandler<TrainingRequestValues> = async (values) => {
+        if (!detectedEmp?.id) {
+            toast({
+                variant: 'destructive',
+                title: 'Lỗi',
+                description: detectError || 'Không thể xác định người gửi yêu cầu.',
+            });
+            return;
+        }
+
         setIsLoading(true);
         try {
-            const res = await trainingService.createRequest(values);
+            const res = await trainingService.createRequest({
+                ...values,
+                requestedById: detectedEmp.id,
+            });
 
             if (res.ok) {
                 toast({
@@ -91,11 +123,11 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                 });
             }
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+            void error;
             toast({
                 variant: 'destructive',
                 title: 'Lỗi',
-                description: errorMessage,
+                description: 'Không thể gửi yêu cầu đào tạo. Vui lòng thử lại.',
             });
         } finally {
             setIsLoading(false);
@@ -152,7 +184,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                 <FormItem>
                                     <FormLabel className="text-[#0F4C75] font-semibold">Phòng ban</FormLabel>
                                     <div className="h-10 px-3 py-2 border border-gray-100 rounded-md bg-gray-50 text-sm text-gray-600 flex items-center font-medium">
-                                        {detectedEmp?.departmentName || 'Đang xác định...'}
+                                        {detectedEmp?.departmentName || detectError || 'Đang xác định...'}
                                     </div>
                                 </FormItem>
 
@@ -226,7 +258,7 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="border-gray-300">
                             Hủy
                         </Button>
-                        <Button className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white min-w-[120px]" disabled={isLoading} onClick={form.handleSubmit(onSubmit)}>
+                        <Button className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white min-w-[120px]" disabled={isLoading || !detectedEmp?.id} onClick={form.handleSubmit(onSubmit)}>
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
                             Gửi yêu cầu
                         </Button>

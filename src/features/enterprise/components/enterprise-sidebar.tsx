@@ -60,10 +60,11 @@ const NAV_ITEMS: NavItem[] = [
     {
         label: 'Đào tạo',
         icon: <GraduationCap className="w-5 h-5" />,
-        roles: ['Trainer', 'HRManager', 'Director'],
+        roles: ['Trainer', 'HRManager', 'Director', 'DepartmentHead', 'Admin'],
         children: [
-            { label: 'Khóa học', href: '/training/courses' },
-            { label: 'Lịch đào tạo', href: '/training/schedule' }
+            { label: 'Khóa học', href: '/enterprise/hr/training/plans' },
+            { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
+            { label: 'Thiết lập lịch trình', href: '/enterprise/hr/training/schedule' }
         ]
     },
     {

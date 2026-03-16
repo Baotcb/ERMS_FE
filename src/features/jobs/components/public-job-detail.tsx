@@ -216,31 +216,14 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                             <Heart className={`h-4 w-4 mr-1.5 ${isSaved ? 'fill-[#e74c3c]' : ''}`} />
                             {isSaved ? 'Đã lưu' : 'Lưu'}
                         </Button>
-                        <Dialog open={showStickyBar && isApplyOpen} onOpenChange={setIsApplyOpen}>
-                            <DialogTrigger asChild>
-                                <Button
-                                    size="sm"
-                                    onClick={(event) => {
-                                        event.preventDefault()
-                                        handleOpenApply()
-                                    }}
-                                    className="h-9 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-lg px-5 transition-colors shadow-none"
-                                >
-                                    <Send className="h-4 w-4 mr-1.5" />
-                                    Ứng tuyển ngay
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
-                                <DialogHeader>
-                                    <DialogTitle className="text-xl">Ứng tuyển: {job.jobTitle}</DialogTitle>
-                                </DialogHeader>
-                                <JobApplyForm
-                                    jobId={job.id}
-                                    jobTitle={job.jobTitle}
-                                    onSuccess={() => setIsApplyOpen(false)}
-                                />
-                            </DialogContent>
-                        </Dialog>
+                        <Button
+                            size="sm"
+                            onClick={handleOpenApply}
+                            className="h-9 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-lg px-5 transition-colors shadow-none"
+                        >
+                            <Send className="h-4 w-4 mr-1.5" />
+                            Ứng tuyển ngay
+                        </Button>
                     </div>
                 </div>
             </div>

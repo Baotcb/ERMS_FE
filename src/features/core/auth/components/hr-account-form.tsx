@@ -67,7 +67,7 @@ function HRAccountFormContent() {
                         <Label htmlFor="fullName">Họ và tên</Label>
                         <div className="relative">
                             <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                            <Input id="fullName" placeholder="Nguyen Van A" className="pl-9" {...form.register('fullName')} disabled={isLoading} />
+                            <Input id="fullName" placeholder="Nguyễn Văn A" className="pl-9" {...form.register('fullName')} disabled={isLoading} />
                         </div>
                         {form.formState.errors.fullName && (
                             <p className="text-sm text-red-500">{form.formState.errors.fullName.message}</p>
