@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { PublicJobPostingDto, PublicJobsResponse } from '../types'
+import type { PublicJobFilterOptionsResponse, PublicJobPostingDto, PublicJobsResponse } from '../types'
 
 interface GetPublicJobsParams {
     pageNumber?: number
@@ -7,11 +7,12 @@ interface GetPublicJobsParams {
     searchTerm?: string
     location?: string
     employmentType?: string
-    experienceLevel?: string
+    experienceBucket?: string
     minSalary?: number
     maxSalary?: number
     departmentId?: string
     enterpriseId?: string
+    sortBy?: string
 }
 
 export async function getPublicJobs(params?: GetPublicJobsParams): Promise<PublicJobsResponse> {
@@ -23,11 +24,12 @@ export async function getPublicJobs(params?: GetPublicJobsParams): Promise<Publi
     if (params?.searchTerm) searchParams.append('SearchTerm', params.searchTerm)
     if (params?.location) searchParams.append('Location', params.location)
     if (params?.employmentType) searchParams.append('EmploymentType', params.employmentType)
-    if (params?.experienceLevel) searchParams.append('ExperienceLevel', params.experienceLevel)
-    if (params?.minSalary) searchParams.append('MinSalary', String(params.minSalary))
-    if (params?.maxSalary) searchParams.append('MaxSalary', String(params.maxSalary))
+    if (params?.experienceBucket) searchParams.append('ExperienceBucket', params.experienceBucket)
+    if (params?.minSalary != null) searchParams.append('MinSalary', String(params.minSalary))
+    if (params?.maxSalary != null) searchParams.append('MaxSalary', String(params.maxSalary))
     if (params?.departmentId) searchParams.append('DepartmentId', params.departmentId)
     if (params?.enterpriseId) searchParams.append('EnterpriseId', params.enterpriseId)
+    if (params?.sortBy) searchParams.append('SortBy', params.sortBy)
 
     const response = await apiClient.get(`/api/public/jobs?${searchParams}`, {
         cache: 'no-store',
@@ -51,6 +53,18 @@ export async function getPublicJobById(id: string): Promise<PublicJobPostingDto 
 
     if (!response.ok) {
         throw new Error('Không thể tải thông tin công việc')
+    }
+
+    return response.json()
+}
+
+export async function getPublicJobFilterOptions(): Promise<PublicJobFilterOptionsResponse> {
+    const response = await apiClient.get('/api/public/jobs/filter-options', {
+        cache: 'no-store',
+    })
+
+    if (!response.ok) {
+        throw new Error('Không thể tải bộ lọc việc làm')
     }
 
     return response.json()

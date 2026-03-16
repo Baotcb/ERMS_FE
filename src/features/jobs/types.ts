@@ -5,7 +5,7 @@ export interface PublicJobPostingDto {
     description: string
     requirements?: string
     benefits?: string
-    employmentType: 'FullTime' | 'PartTime' | 'Contract' | 'Internship'
+    employmentType: 'FullTime' | 'Full-time' | 'PartTime' | 'Part-time' | 'Contract' | 'Internship' | string
     experienceLevel?: string
     educationLevel?: string
     salaryRangeMin?: number
@@ -33,6 +33,32 @@ export interface PublicJobsResponse {
 }
 
 export type Job = PublicJobPostingDto
+
+export interface PublicDepartmentFilterOption {
+    id: number
+    departmentName: string
+    jobCount: number
+}
+
+export interface PublicJobFilterOption {
+    value: string
+    label: string
+}
+
+export interface PublicSalaryBucket {
+    value: string
+    label: string
+    minSalary?: number
+    maxSalary?: number
+}
+
+export interface PublicJobFilterOptionsResponse {
+    departments: PublicDepartmentFilterOption[]
+    locations: string[]
+    employmentTypes: PublicJobFilterOption[]
+    experienceBuckets: PublicJobFilterOption[]
+    salaryBuckets: PublicSalaryBucket[]
+}
 
 // Derived from jobs API (for company listing page)
 export interface PublicEnterprise {

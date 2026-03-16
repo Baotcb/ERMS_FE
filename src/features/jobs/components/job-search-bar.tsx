@@ -1,21 +1,43 @@
 'use client'
 
 import { useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
+import { buildJobsHref, mergeJobSearchParams } from '../job-filtering'
 
 export function JobSearchBar() {
+    const searchParams = useSearchParams()
+    const searchKey = `${searchParams.get('q') || ''}|${searchParams.get('location') || ''}`
+
+    return (
+        <JobSearchBarForm
+            key={searchKey}
+            initialKeyword={searchParams.get('q') || ''}
+            initialLocation={searchParams.get('location') || ''}
+        />
+    )
+}
+
+function JobSearchBarForm({
+    initialKeyword,
+    initialLocation,
+}: {
+    initialKeyword: string
+    initialLocation: string
+}) {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const [keyword, setKeyword] = useState(searchParams.get('q') || '')
-    const [locationInput, setLocationInput] = useState(searchParams.get('location') || '')
+    const [keyword, setKeyword] = useState(initialKeyword)
+    const [locationInput, setLocationInput] = useState(initialLocation)
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault()
-        const params = new URLSearchParams()
-        if (keyword.trim()) params.set('q', keyword.trim())
-        if (locationInput.trim()) params.set('location', locationInput.trim())
-        router.push(`/jobs?${params.toString()}`)
+    const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const nextParams = mergeJobSearchParams(searchParams, {
+            q: keyword.trim() || null,
+            location: locationInput.trim() || null,
+        })
+
+        router.push(buildJobsHref({}, nextParams, false))
     }
 
     return (
@@ -27,14 +49,14 @@ export function JobSearchBar() {
                         type="text"
                         placeholder="Vị trí tuyển dụng, tên công ty..."
                         value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
+                        onChange={(event) => setKeyword(event.target.value)}
                     />
                     <input
                         className="job-search-bar__input"
                         type="text"
                         placeholder="Địa điểm làm việc..."
                         value={locationInput}
-                        onChange={(e) => setLocationInput(e.target.value)}
+                        onChange={(event) => setLocationInput(event.target.value)}
                         style={{ maxWidth: 240 }}
                     />
                     <button className="job-search-bar__button" type="submit">
