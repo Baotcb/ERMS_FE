@@ -54,6 +54,7 @@ export function TeachingTasksPage({
 }) {
     const { user } = useAuth();
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
 
     const courses = useMemo(() => {
         if (!user) {
@@ -78,8 +79,12 @@ export function TeachingTasksPage({
                 course.courseCode.toLowerCase().includes(normalizedSearch) ||
                 (course.description || '').toLowerCase().includes(normalizedSearch)
             );
+        }).filter(course => {
+            if (statusFilter === 'all') return true;
+            if (statusFilter === 'published') return course.status === 'Published';
+            return course.status !== 'Published';
         });
-    }, [initialCourses, search, user]);
+    }, [initialCourses, search, user, statusFilter]);
 
     const stats = useMemo(() => {
         const all = initialCourses.filter(c => user ? isCourseOwnedByUser(c, user) : false);
@@ -122,15 +127,34 @@ export function TeachingTasksPage({
                 </div>
             </div>
 
-            {/* ── Search ── */}
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tìm khóa học theo tên hoặc mã..."
-                    className="pl-12 h-12 rounded-2xl border-gray-200 bg-white shadow-sm text-sm focus:border-[#3282B8] focus:ring-[#3282B8]/20"
-                />
+            {/* ── Search + Filter ── */}
+            <div className="flex flex-col md:flex-row items-center gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Tìm khóa học theo tên hoặc mã..."
+                        className="pl-12 h-12 rounded-2xl border-gray-200 bg-white shadow-sm text-sm focus:border-[#3282B8] focus:ring-[#3282B8]/20"
+                    />
+                </div>
+                <div className="flex bg-gray-100 rounded-xl p-1 gap-1 shrink-0">
+                    {[
+                        { key: 'all' as const, label: 'Tất cả' },
+                        { key: 'draft' as const, label: 'Đang thiết lập' },
+                        { key: 'published' as const, label: 'Đã xuất bản' },
+                    ].map(({ key, label }) => (
+                        <button
+                            key={key}
+                            onClick={() => setStatusFilter(key)}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                                statusFilter === key ? 'bg-white text-[#0F4C75] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* ── Course Grid ── */}

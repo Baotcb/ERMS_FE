@@ -69,6 +69,7 @@ export function LearningCoursesPage({
     learningBasePath?: string;
 }) {
     const [search, setSearch] = useState('');
+    const [progressFilter, setProgressFilter] = useState<'all' | 'inProgress' | 'completed'>('all');
 
     const courses = useMemo(() => {
         const normalizedSearch = search.trim().toLowerCase();
@@ -83,8 +84,12 @@ export function LearningCoursesPage({
                 course.courseCode.toLowerCase().includes(normalizedSearch) ||
                 (course.description || '').toLowerCase().includes(normalizedSearch)
             );
+        }).filter(item => {
+            if (progressFilter === 'all') return true;
+            if (progressFilter === 'completed') return item.progressPercentage >= 100;
+            return item.progressPercentage < 100;
         });
-    }, [initialCourses, search]);
+    }, [initialCourses, search, progressFilter]);
 
     const stats = useMemo(() => {
         const total = initialCourses.length;
@@ -124,15 +129,34 @@ export function LearningCoursesPage({
                 </div>
             </div>
 
-            {/* ── Search Bar ── */}
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Tìm khóa học theo tên, mã hoặc mô tả..."
-                    className="pl-12 h-12 rounded-2xl border-gray-200 bg-white shadow-sm text-sm focus:border-[#3282B8] focus:ring-[#3282B8]/20"
-                />
+            {/* ── Search + Filter ── */}
+            <div className="flex flex-col md:flex-row items-center gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Input
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Tìm khóa học theo tên, mã hoặc mô tả..."
+                        className="pl-12 h-12 rounded-2xl border-gray-200 bg-white shadow-sm text-sm focus:border-[#3282B8] focus:ring-[#3282B8]/20"
+                    />
+                </div>
+                <div className="flex bg-gray-100 rounded-xl p-1 gap-1 shrink-0">
+                    {[
+                        { key: 'all' as const, label: 'Tất cả' },
+                        { key: 'inProgress' as const, label: 'Đang học' },
+                        { key: 'completed' as const, label: 'Hoàn thành' },
+                    ].map(({ key, label }) => (
+                        <button
+                            key={key}
+                            onClick={() => setProgressFilter(key)}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                                progressFilter === key ? 'bg-white text-[#0F4C75] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* ── Course Grid ── */}

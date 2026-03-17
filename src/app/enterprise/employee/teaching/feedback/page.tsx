@@ -1,10 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { MessageSquare, Star, TrendingUp } from 'lucide-react';
+import { MessageSquare, Search, Star, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { feedbackService, type TrainerFeedbackDto } from '@/features/employee/api/feedback-service';
 
 function StarDisplay({ rating }: { rating: number }) {
@@ -34,6 +42,8 @@ function RatingBar({ label, count, total }: { label: string; count: number; tota
 export default function TrainerFeedbackPage() {
     const [feedbacks, setFeedbacks] = useState<TrainerFeedbackDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [courseFilter, setCourseFilter] = useState('all');
 
     useEffect(() => {
         feedbackService.getTrainerFeedbacks()
@@ -42,14 +52,25 @@ export default function TrainerFeedbackPage() {
             .finally(() => setLoading(false));
     }, []);
 
+    const courseOptions = useMemo(() => Array.from(new Set(feedbacks.map((f) => f.courseName))), [feedbacks]);
+
+    const filtered = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return feedbacks.filter((f) => {
+            const matchSearch = !q || [f.employeeName, f.courseName, f.comment].some((v) => v?.toLowerCase().includes(q));
+            const matchCourse = courseFilter === 'all' || f.courseName === courseFilter;
+            return matchSearch && matchCourse;
+        });
+    }, [feedbacks, search, courseFilter]);
+
     const stats = useMemo(() => {
-        if (feedbacks.length === 0) return { total: 0, avgTrainer: 0, avgCourse: 0, distribution: [0, 0, 0, 0, 0] };
-        const avgTrainer = feedbacks.reduce((s, f) => s + f.trainerRating, 0) / feedbacks.length;
-        const avgCourse = feedbacks.reduce((s, f) => s + f.courseRating, 0) / feedbacks.length;
+        if (filtered.length === 0) return { total: 0, avgTrainer: 0, avgCourse: 0, distribution: [0, 0, 0, 0, 0] };
+        const avgTrainer = filtered.reduce((s, f) => s + f.trainerRating, 0) / filtered.length;
+        const avgCourse = filtered.reduce((s, f) => s + f.courseRating, 0) / filtered.length;
         const distribution = [0, 0, 0, 0, 0];
-        feedbacks.forEach((f) => { distribution[f.trainerRating - 1]++; });
-        return { total: feedbacks.length, avgTrainer: +avgTrainer.toFixed(1), avgCourse: +avgCourse.toFixed(1), distribution };
-    }, [feedbacks]);
+        filtered.forEach((f) => { distribution[f.trainerRating - 1]++; });
+        return { total: filtered.length, avgTrainer: +avgTrainer.toFixed(1), avgCourse: +avgCourse.toFixed(1), distribution };
+    }, [filtered]);
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
@@ -100,35 +121,56 @@ export default function TrainerFeedbackPage() {
                         </div>
                     </div>
 
-                    {/* Feedback List */}
-                    <div className="space-y-3">
-                        {feedbacks.map((f) => (
-                            <div key={f.id} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:border-blue-200 transition-colors">
-                                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-semibold text-gray-900">{f.employeeName}</span>
-                                        </div>
-                                        <p className="text-sm font-medium text-[#0F4C75]">{f.courseName} <span className="text-gray-400">({f.courseCode})</span></p>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                                            <span>Giảng viên:</span> <StarDisplay rating={f.trainerRating} />
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                                            <span>Khóa học:</span> <StarDisplay rating={f.courseRating} />
-                                        </div>
-                                        <p className="text-xs text-gray-400 mt-1">{format(new Date(f.createdAt), 'dd/MM/yyyy HH:mm')}</p>
-                                    </div>
-                                </div>
-                                {f.comment && (
-                                    <div className="mt-3 pt-3 border-t border-gray-100">
-                                        <p className="text-sm text-gray-700 italic">&ldquo;{f.comment}&rdquo;</p>
-                                    </div>
-                                )}
+                    {/* Search + Filter */}
+                    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_1fr]">
+                            <div className="relative">
+                                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên học viên, khóa học, nhận xét..." className="pl-9" />
                             </div>
-                        ))}
+                            <Select value={courseFilter} onValueChange={setCourseFilter}>
+                                <SelectTrigger><SelectValue placeholder="Lọc theo khóa học" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả khóa học</SelectItem>
+                                    {courseOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
+
+                    {/* Feedback List */}
+                    {filtered.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">Không tìm thấy đánh giá phù hợp.</div>
+                    ) : (
+                        <div className="space-y-3">
+                            {filtered.map((f) => (
+                                <div key={f.id} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:border-blue-200 transition-colors">
+                                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-semibold text-gray-900">{f.employeeName}</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-[#0F4C75]">{f.courseName} <span className="text-gray-400">({f.courseCode})</span></p>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                <span>Giảng viên:</span> <StarDisplay rating={f.trainerRating} />
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                <span>Khóa học:</span> <StarDisplay rating={f.courseRating} />
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1">{format(new Date(f.createdAt), 'dd/MM/yyyy HH:mm')}</p>
+                                        </div>
+                                    </div>
+                                    {f.comment && (
+                                        <div className="mt-3 pt-3 border-t border-gray-100">
+                                            <p className="text-sm text-gray-700 italic">&ldquo;{f.comment}&rdquo;</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </>
             )}
         </div>
