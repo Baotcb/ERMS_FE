@@ -109,8 +109,8 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
 
                 setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng đăng nhập lại.');
             } catch (e) {
-                void e;
-                setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng thử lại.');
+                const msg = e instanceof Error ? e.message : 'Lỗi không xác định';
+                setDetectError(`Không thể xác định thông tin nhân viên hiện tại: ${msg}`);
             }
         };
 
@@ -254,24 +254,24 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                     </FormItem>
                                 )} />
                             </div>
+
+                            <DialogFooter className="px-0 py-4 bg-transparent border-t flex items-center justify-between">
+                                <div className="flex items-center text-xs text-gray-500 gap-1 italic">
+                                    <Info className="w-3 h-3" /> Yêu cầu của bạn sẽ được gửi tới HR Manager để xem xét.
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="border-gray-300">
+                                        Hủy
+                                    </Button>
+                                    <Button type="submit" className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white min-w-[120px]" disabled={isLoading || !detectedEmp?.id}>
+                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                                        Gửi yêu cầu
+                                    </Button>
+                                </div>
+                            </DialogFooter>
                         </form>
                     </Form>
                 </div>
-
-                <DialogFooter className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
-                    <div className="flex items-center text-xs text-gray-500 gap-1 italic">
-                        <Info className="w-3 h-3" /> Yêu cầu của bạn sẽ được gửi tới HR Manager để xem xét.
-                    </div>
-                    <div className="flex gap-3">
-                        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="border-gray-300">
-                            Hủy
-                        </Button>
-                        <Button className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white min-w-[120px]" disabled={isLoading || !detectedEmp?.id} onClick={form.handleSubmit(onSubmit)}>
-                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                            Gửi yêu cầu
-                        </Button>
-                    </div>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

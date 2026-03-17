@@ -73,9 +73,11 @@ const NAV_ITEMS: NavItem[] = [
         roles: ['HRManager', 'HR', 'Director', 'Admin'],
         children: [
             { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
+            { label: 'Danh sách khóa học', href: '/enterprise/hr/training/courses' },
             { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
             { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' },
-            { label: 'Khóa học của tôi', href: '/enterprise/hr/learning' }
+            { label: 'Khóa học của tôi', href: '/enterprise/hr/learning' },
+            { label: 'Quản lý Workshop', href: '/enterprise/hr/training/workshop' }
         ]
     }
 ]
@@ -130,7 +132,7 @@ const NavMenuItem = memo(function NavMenuItem({
             <div
                 className={cn(
                     'overflow-hidden transition-all duration-300',
-                    isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                    isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 )}
             >
                 <div className="ml-8 mt-1 space-y-1">

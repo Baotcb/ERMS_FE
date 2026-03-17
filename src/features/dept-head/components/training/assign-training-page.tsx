@@ -231,9 +231,14 @@ export function AssignTrainingPage({
         <div className="w-full max-w-7xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#0F4C75] mb-1">Phân công Đào tạo</h1>
-                    <p className="text-gray-500">Xác nhận trainer đã được HR mời và chọn học viên cho khóa học.</p>
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-blue-50">
+                        <ChevronLeft className="w-5 h-5 text-[#0F4C75]" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-[#0F4C75] mb-1">Phân công Đào tạo</h1>
+                        <p className="text-gray-500">Xác nhận trainer đã được HR mời và chọn học viên cho khóa học.</p>
+                    </div>
                 </div>
                 <Button 
                     onClick={handleSaveAssignment} 

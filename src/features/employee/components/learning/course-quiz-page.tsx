@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Clock3, FileText, Lock, Loader2, Paperclip, Trophy } from 'lucide-react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { CheckCircle2, Clock3, FileText, Lock, Loader2, Paperclip, Trophy, Timer, Send, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,8 @@ import type { Course } from '@/features/hr/types/course-types';
 import type { CourseProgressDto, LearnerQuizQuestionDto, LearnerQuizResultDto } from '@/features/employee/types/learning-quiz-types';
 import { learningQuizService } from '@/features/employee/api/learning-quiz-service';
 import { courseContentService } from '@/features/hr/api/course-content-service';
+import { quizService } from '@/features/hr/api/quiz-service';
+import { feedbackService } from '@/features/employee/api/feedback-service';
 import type { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
 
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
@@ -187,6 +189,43 @@ export function CourseQuizPage({
     const [isStarting, setIsStarting] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState<LearnerQuizResultDto | null>(null);
+    const [activeTab, setActiveTab] = useState<'lessons' | 'quiz'>('lessons');
+
+    // Feedback form
+    const [feedbackCourseRating, setFeedbackCourseRating] = useState(0);
+    const [feedbackTrainerRating, setFeedbackTrainerRating] = useState(0);
+    const [feedbackComment, setFeedbackComment] = useState('');
+    const [feedbackAnonymous, setFeedbackAnonymous] = useState(false);
+    const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+    // Quiz countdown timer
+    const [quizRemainingSeconds, setQuizRemainingSeconds] = useState<number | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const stopTimer = useCallback(() => {
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+    }, []);
+
+    const startTimer = useCallback((minutes: number) => {
+        stopTimer();
+        const totalSeconds = minutes * 60;
+        setQuizRemainingSeconds(totalSeconds);
+        timerRef.current = setInterval(() => {
+            setQuizRemainingSeconds(prev => {
+                if (prev === null || prev <= 1) {
+                    stopTimer();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, [stopTimer]);
+
+    useEffect(() => stopTimer, [stopTimer]);
 
     const allLessons = useMemo(() => sections.flatMap((section) => section.lessons || []), [sections]);
 
@@ -442,6 +481,16 @@ export function CourseQuizPage({
             setAnswers({});
             setResult(null);
 
+            // Start countdown timer
+            try {
+                const quizInfo = await quizService.getCourseQuiz(initialCourse.id);
+                if (quizInfo.timeLimitMinutes && quizInfo.timeLimitMinutes > 0) {
+                    startTimer(quizInfo.timeLimitMinutes);
+                }
+            } catch {
+                // Timer is optional, don't block quiz start
+            }
+
             toast({ title: 'Bắt đầu bài thi', description: 'Bạn có thể trả lời từng câu và nộp bài khi hoàn tất.' });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Không thể bắt đầu bài thi.';
@@ -484,42 +533,78 @@ export function CourseQuizPage({
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto px-1">
-            <div className="rounded-3xl border border-[#D9E8FF] bg-[linear-gradient(120deg,#F5FAFF_0%,#EEF6FF_55%,#FFFDF6_100%)] p-6 md:p-8 shadow-sm">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#3D6F9A]">Learning Path</p>
-                        <h1 className="text-3xl font-black tracking-tight text-[#0F3B64]">{initialCourse.courseName}</h1>
-                        <p className="text-sm text-[#4A6A88]">Mã khóa học: {initialCourse.courseCode}</p>
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F4C75] via-[#1B262C] to-[#0F4C75] p-6 md:p-8 text-white">
+                <div className="absolute top-0 right-0 w-72 h-72 bg-[#3282B8]/10 rounded-full -translate-y-1/2 translate-x-1/3" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#BBE1FA]/5 rounded-full translate-y-1/3 -translate-x-1/4" />
+
+                <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#BBE1FA]/60">
+                            <span>Học tập</span>
+                            <span>›</span>
+                            <span className="text-[#BBE1FA]/90">{initialCourse.courseName}</span>
+                        </div>
+                        <h1 className="text-3xl font-black tracking-tight">{initialCourse.courseName}</h1>
+                        <div className="flex items-center gap-3">
+                            <Badge className="bg-white/15 text-white border-0 font-bold text-xs backdrop-blur-sm">{initialCourse.courseCode}</Badge>
+                            <span className="text-sm text-[#BBE1FA]/80">• {knownTotalLessons} bài học • {totalDurationMinutes} phút</span>
+                        </div>
                     </div>
 
-                    <div className="w-full max-w-lg rounded-2xl border border-white/60 bg-white/80 backdrop-blur p-4 space-y-3">
+                    <div className="w-full max-w-md rounded-2xl border border-white/15 bg-white/10 backdrop-blur p-4 space-y-3">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="font-semibold text-[#1D4E7A]">Hoàn thành lesson</span>
-                            <span className="font-bold text-[#0F3B64]">{completedLessonsCount}/{knownTotalLessons} ({completionPercent}%)</span>
+                            <span className="font-semibold text-white/80">Tiến độ học</span>
+                            <span className="font-black text-white">{completedLessonsCount}/{knownTotalLessons} ({completionPercent}%)</span>
                         </div>
-                        <div className="h-2.5 rounded-full bg-[#E6EEF7] overflow-hidden">
+                        <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
                             <div
-                                className="h-full bg-[linear-gradient(90deg,#145DA0,#2E8BC0)] transition-all duration-500"
+                                className="h-full bg-gradient-to-r from-[#3282B8] to-[#BBE1FA] transition-all duration-500"
                                 style={{ width: `${completionPercent}%` }}
                             />
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <Badge className={localLessonsCompleted ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}>
-                                {localLessonsCompleted ? 'Đã hoàn thành toàn bộ lesson' : 'Chưa hoàn thành lesson'}
-                            </Badge>
-                            <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-                                Tổng thời lượng: {totalDurationMinutes} phút
+                            <Badge className={localLessonsCompleted ? 'bg-green-500/20 text-green-200 border-0' : 'bg-amber-500/20 text-amber-200 border-0'}>
+                                {localLessonsCompleted ? '✓ Hoàn thành lessons' : '◉ Đang học'}
                             </Badge>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {/* Tab Switcher */}
+            <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-gray-100/80 w-fit">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('lessons')}
+                    className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                        activeTab === 'lessons'
+                            ? 'bg-white text-[#0F4C75] shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                    }`}
+                >
+                    📚 Bài học ({completedLessonsCount}/{knownTotalLessons})
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('quiz')}
+                    className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                        activeTab === 'quiz'
+                            ? 'bg-white text-[#0F4C75] shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                    }`}
+                >
+                    📝 Kiểm tra cuối khóa {result?.isPassed ? '✅' : ''}
+                </button>
+            </div>
+
+            {/* === TAB: Bài học === */}
+            {activeTab === 'lessons' && (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[360px_1fr]">
                 <aside className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden h-fit">
-                    <div className="px-5 py-4 border-b border-gray-100 bg-[#F8FBFF]">
-                        <h2 className="font-black tracking-tight text-[#0F3B64]">Course Content</h2>
-                        <p className="text-xs text-gray-500 mt-1">Học theo thứ tự từ trên xuống để mở khóa quiz.</p>
+                    <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-[#F8FBFF] to-white">
+                        <h2 className="font-black tracking-tight text-[#0F4C75]">Nội dung khóa học</h2>
+                        <p className="text-[11px] text-gray-400 mt-1 font-medium">{completedLessonsCount}/{knownTotalLessons} bài đã hoàn thành</p>
                     </div>
 
                     {isLoadingCurriculum ? (
@@ -539,8 +624,8 @@ export function CourseQuizPage({
                         <div className="max-h-[640px] overflow-y-auto">
                             {sections.map((section, index) => (
                                 <div key={section.id} className="border-b border-gray-100 last:border-b-0">
-                                    <div className="px-4 py-3 bg-[#FCFDFF]">
-                                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Module {index + 1}</p>
+                                    <div className="px-4 py-3 bg-[#FCFDFF] border-l-3 border-l-[#3282B8]">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#3282B8]">Module {index + 1}</p>
                                         <p className="text-sm font-bold text-[#0F4C75]">{section.title}</p>
                                     </div>
                                     <div className="p-2 space-y-1.5">
@@ -612,6 +697,70 @@ export function CourseQuizPage({
 
                         {activeLesson ? (
                             <>
+                                {/* Video Player */}
+                                {activeLesson.videoUrl && (() => {
+                                    const url = activeLesson.videoUrl;
+                                    const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+                                    let youtubeVideoId: string | null = null;
+                                    if (isYouTube) {
+                                        const match = url.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/e\/|watch\?.*v=)([a-zA-Z0-9_-]{11})/);
+                                        youtubeVideoId = match ? match[1] : null;
+                                    }
+                                    return (
+                                        <div className="rounded-2xl border border-gray-100 overflow-hidden">
+                                            {isYouTube && youtubeVideoId ? (
+                                                <div className="relative">
+                                                    <iframe
+                                                        src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?rel=0`}
+                                                        className="w-full aspect-video"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                        allowFullScreen
+                                                        title={activeLesson.title}
+                                                        referrerPolicy="strict-origin-when-cross-origin"
+                                                    />
+                                                    <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
+                                                        <span className="text-xs text-gray-500">Video bài giảng</span>
+                                                        <a
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs font-semibold text-[#3282B8] hover:underline"
+                                                        >
+                                                            Xem trên YouTube ↗
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ) : isYouTube ? (
+                                                <a
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-4 p-5 bg-gradient-to-r from-red-50 to-white hover:from-red-100 transition-colors"
+                                                >
+                                                    <div className="w-16 h-16 rounded-xl bg-red-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                                                        <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">Xem Video bài giảng</p>
+                                                        <p className="text-sm text-gray-500 truncate max-w-md">{url}</p>
+                                                    </div>
+                                                </a>
+                                            ) : (
+                                                <video
+                                                    key={url}
+                                                    src={url}
+                                                    controls
+                                                    className="w-full aspect-video bg-black"
+                                                    controlsList="nodownload"
+                                                    preload="metadata"
+                                                >
+                                                    Trình duyệt không hỗ trợ phát video.
+                                                </video>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+
                                 <div className="rounded-2xl border border-gray-100 bg-white p-4">
                                     <p className="text-sm font-semibold text-[#0F4C75] mb-2">Nội dung bài học</p>
                                     <p className="text-sm text-gray-700 whitespace-pre-wrap">
@@ -674,7 +823,14 @@ export function CourseQuizPage({
                             <div className="text-sm text-gray-500">Chưa có lesson để hiển thị.</div>
                         )}
                     </div>
+                </section>
 
+            </div>
+            )}
+
+            {/* === TAB: Quiz === */}
+            {activeTab === 'quiz' && (
+            <div className="space-y-5">
                     <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                             <div>
@@ -711,20 +867,31 @@ export function CourseQuizPage({
 
 
                     </div>
-                </section>
-            </div>
 
             {quizQuestions.length > 0 && (
                 <div className="space-y-4">
                     <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm flex items-center justify-between">
                         <p className="text-sm text-gray-600">Đã trả lời {completedCount}/{quizQuestions.length} câu</p>
+                        {quizRemainingSeconds !== null && (
+                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm ${
+                                quizRemainingSeconds <= 300
+                                    ? 'bg-red-100 text-red-700 animate-pulse'
+                                    : 'bg-blue-50 text-[#0F4C75]'
+                            }`}>
+                                <Timer className="w-4 h-4" />
+                                {Math.floor(quizRemainingSeconds / 60).toString().padStart(2, '0')}:{(quizRemainingSeconds % 60).toString().padStart(2, '0')}
+                            </div>
+                        )}
                         <Badge variant="secondary" className="bg-blue-50 text-[#0F4C75] border-0">Attempt: {attemptId.slice(0, 8)}...</Badge>
                     </div>
 
                     {quizQuestions.map((question, qIndex) => (
-                        <div key={question.id} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
-                            <h3 className="font-semibold text-[#0F4C75]">Câu {qIndex + 1}. {question.questionText}</h3>
-                            <div className="space-y-2">
+                        <div key={question.id} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm space-y-4">
+                            <div className="flex items-start gap-3">
+                                <span className="w-8 h-8 rounded-full bg-[#0F4C75] text-white flex items-center justify-center text-sm font-bold shrink-0">{qIndex + 1}</span>
+                                <h3 className="font-bold text-[#0F4C75] text-base leading-relaxed pt-1">{question.questionText}</h3>
+                            </div>
+                            <div className="space-y-2 pl-11">
                                 {question.parsedOptions.map((option, optionIndex) => {
                                     const answerValue = ANSWER_LABELS[optionIndex] || String(optionIndex + 1);
                                     const isSelected = answers[question.id] === answerValue;
@@ -734,10 +901,10 @@ export function CourseQuizPage({
                                             key={`${question.id}-${answerValue}`}
                                             type="button"
                                             onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: answerValue }))}
-                                            className={`w-full text-left rounded-xl border px-4 py-3 transition ${isSelected ? 'border-[#0F4C75] bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
+                                            className={`w-full text-left rounded-xl border-2 px-4 py-3.5 transition-all duration-200 flex items-center gap-3 ${isSelected ? 'border-[#0F4C75] bg-[#BBE1FA]/20 shadow-sm' : 'border-gray-100 hover:border-[#BBE1FA] hover:bg-[#BBE1FA]/5'}`}
                                         >
-                                            <span className="font-bold mr-2">{answerValue}.</span>
-                                            <span>{option}</span>
+                                            <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold shrink-0 transition-all ${isSelected ? 'border-[#0F4C75] bg-[#0F4C75] text-white' : 'border-gray-300 text-gray-400'}`}>{answerValue}</span>
+                                            <span className={`text-sm ${isSelected ? 'font-semibold text-[#0F4C75]' : 'text-gray-700'}`}>{option}</span>
                                         </button>
                                     );
                                 })}
@@ -745,9 +912,9 @@ export function CourseQuizPage({
                         </div>
                     ))}
 
-                    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                        <Button onClick={handleSubmitQuiz} disabled={isSubmitting} className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white">
-                            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    <div className="rounded-2xl bg-gradient-to-r from-[#0F4C75] to-[#1B262C] p-6 shadow-sm">
+                        <Button onClick={handleSubmitQuiz} disabled={isSubmitting} className="w-full bg-white text-[#0F4C75] hover:bg-[#BBE1FA] py-6 rounded-xl font-bold text-base gap-2">
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                             Nộp bài thi
                         </Button>
                     </div>
@@ -755,16 +922,121 @@ export function CourseQuizPage({
             )}
 
             {result && (
-                <div className={`rounded-2xl border p-5 ${result.isPassed ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                        {result.isPassed ? <CheckCircle2 className="w-5 h-5 text-green-700" /> : <Trophy className="w-5 h-5 text-amber-700" />}
-                        <h3 className={`font-bold ${result.isPassed ? 'text-green-700' : 'text-amber-700'}`}>
-                            {result.isPassed ? 'Kết quả: ĐẠT' : 'Kết quả: CHƯA ĐẠT'}
-                        </h3>
+                <div className={`rounded-3xl border-2 p-8 text-center space-y-4 ${result.isPassed ? 'border-green-200 bg-gradient-to-b from-green-50 to-white' : 'border-amber-200 bg-gradient-to-b from-amber-50 to-white'}`}>
+                    <div className="text-5xl">{result.isPassed ? '🎉' : '💪'}</div>
+                    <h3 className={`text-2xl font-black ${result.isPassed ? 'text-green-700' : 'text-amber-700'}`}>
+                        {result.isPassed ? 'Chúc mừng, bạn đã ĐẠT!' : 'Chưa đạt, hãy thử lại!'}
+                    </h3>
+                    <div className="flex items-center justify-center gap-6 text-sm">
+                        <div className="text-center">
+                            <p className={`text-3xl font-black ${result.isPassed ? 'text-green-600' : 'text-amber-600'}`}>{result.score}%</p>
+                            <p className="text-gray-500 text-xs font-medium">Điểm số</p>
+                        </div>
+                        <div className="w-px h-10 bg-gray-200" />
+                        <div className="text-center">
+                            <p className={`text-3xl font-black ${result.isPassed ? 'text-green-600' : 'text-amber-600'}`}>{result.correctAnswers}/{result.totalQuestions}</p>
+                            <p className="text-gray-500 text-xs font-medium">Câu đúng</p>
+                        </div>
                     </div>
-                    <p className="text-sm text-gray-700">Điểm: {result.score}%</p>
-                    <p className="text-sm text-gray-700">Số câu đúng: {result.correctAnswers}/{result.totalQuestions}</p>
                 </div>
+            )}
+
+            {/* Feedback Form — appears after quiz result */}
+            {result?.isPassed && !feedbackSubmitted && (
+                <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 space-y-5">
+                    <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đánh giá</p>
+                        <h3 className="text-xl font-black text-[#0F3B64]">⭐ Đánh giá khóa học</h3>
+                        <p className="text-sm text-gray-500 mt-1">Chia sẻ trải nghiệm của bạn để cải thiện chất lượng đào tạo.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-[#0F4C75]">Chất lượng khóa học</label>
+                            <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map((star) => (
+                                    <button key={star} type="button" onClick={() => setFeedbackCourseRating(star)}
+                                        className="p-1 transition-transform hover:scale-110">
+                                        <Star className={`w-7 h-7 ${star <= feedbackCourseRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                                    </button>
+                                ))}
+                                <span className="ml-2 text-sm text-gray-500">{feedbackCourseRating > 0 ? `${feedbackCourseRating}/5` : ''}</span>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-[#0F4C75]">Giảng viên</label>
+                            <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map((star) => (
+                                    <button key={star} type="button" onClick={() => setFeedbackTrainerRating(star)}
+                                        className="p-1 transition-transform hover:scale-110">
+                                        <Star className={`w-7 h-7 ${star <= feedbackTrainerRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                                    </button>
+                                ))}
+                                <span className="ml-2 text-sm text-gray-500">{feedbackTrainerRating > 0 ? `${feedbackTrainerRating}/5` : ''}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-[#0F4C75]">Nhận xét (tùy chọn)</label>
+                        <textarea
+                            value={feedbackComment}
+                            onChange={(e) => setFeedbackComment(e.target.value)}
+                            placeholder="Chia sẻ ý kiến của bạn về khóa học và giảng viên..."
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#3282B8]/30 focus:border-[#3282B8]"
+                            rows={3}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={feedbackAnonymous} onChange={(e) => setFeedbackAnonymous(e.target.checked)}
+                                className="rounded border-gray-300" />
+                            <span className="text-sm text-gray-600">Gửi đánh giá ẩn danh</span>
+                        </label>
+                    </div>
+
+                    <Button
+                        onClick={async () => {
+                            if (feedbackCourseRating === 0 || feedbackTrainerRating === 0) {
+                                toast({ title: 'Vui lòng chọn sao', description: 'Hãy đánh giá cả khóa học và giảng viên.', variant: 'destructive' });
+                                return;
+                            }
+                            setIsSubmittingFeedback(true);
+                            try {
+                                await feedbackService.submitFeedback({
+                                    courseId: initialCourse.id,
+                                    courseRating: feedbackCourseRating,
+                                    trainerRating: feedbackTrainerRating,
+                                    comment: feedbackComment || undefined,
+                                    isAnonymous: feedbackAnonymous,
+                                });
+                                setFeedbackSubmitted(true);
+                                toast({ title: 'Cảm ơn bạn!', description: 'Đánh giá của bạn đã được ghi nhận.' });
+                            } catch (err) {
+                                const msg = err instanceof Error ? err.message : 'Không thể gửi đánh giá.';
+                                toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
+                            } finally {
+                                setIsSubmittingFeedback(false);
+                            }
+                        }}
+                        disabled={isSubmittingFeedback}
+                        className="bg-[#145DA0] hover:bg-[#0F4C75] text-white"
+                    >
+                        {isSubmittingFeedback ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Gửi đánh giá
+                    </Button>
+                </div>
+            )}
+
+            {feedbackSubmitted && (
+                <div className="rounded-3xl border-2 border-green-200 bg-gradient-to-b from-green-50 to-white p-8 text-center space-y-3">
+                    <div className="text-4xl">🌟</div>
+                    <h3 className="text-xl font-black text-green-700">Cảm ơn bạn đã đánh giá!</h3>
+                    <p className="text-sm text-gray-500">Phản hồi của bạn sẽ giúp cải thiện chất lượng đào tạo.</p>
+                </div>
+            )}
+            </div>
             )}
         </div>
     );

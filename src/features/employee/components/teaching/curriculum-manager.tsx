@@ -40,6 +40,7 @@ interface MaterialMirrorItem {
 export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const { toast } = useToast();
     const [sections, setSections] = useState<CourseSection[]>([]);
+    const [lastSavedAt, setLastSavedAt] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
     const [isAddingSection, setIsAddingSection] = useState(false);
     const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -86,6 +87,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
 
         try {
             window.localStorage.setItem(draftStorageKey, JSON.stringify(nextSections));
+            setLastSavedAt(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         } catch {
             // Ignore storage write errors to avoid breaking UI actions.
         }
@@ -478,7 +480,14 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-[#0F4C75]">Chương trình học ({sections.length} học phần)</h3>
+                <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-bold text-[#0F4C75]">Chương trình học ({sections.length} học phần)</h3>
+                    {lastSavedAt && (
+                        <span className="text-[11px] text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
+                            ✓ Đã lưu nháp {lastSavedAt}
+                        </span>
+                    )}
+                </div>
                 <div className="flex gap-3">
                     <Dialog>
                         <DialogTrigger asChild>

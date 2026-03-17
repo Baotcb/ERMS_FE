@@ -45,7 +45,6 @@ const NAV_ITEMS: NavItem[] = [
             { label: 'Kế hoạch đào tạo', href: '/enterprise/dept-head/training/plans' },
             { label: 'Khóa học khả dụng', href: '/enterprise/dept-head/training/courses' },
             { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' },
-            { label: 'Theo dõi kết quả', href: '/enterprise/dept-head/training/results' }
         ]
     },
     {

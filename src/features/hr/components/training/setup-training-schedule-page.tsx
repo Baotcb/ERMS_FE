@@ -340,6 +340,7 @@ export function SetupTrainingSchedulePage({
                                     {courses.map(course => (
                                         <SelectItem key={course.id} value={course.id}>
                                             {course.courseName} (Mã: {course.courseCode})
+                                            {course.startTime ? ' ✓ Đã thiết lập' : ''}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -441,12 +442,6 @@ export function SetupTrainingSchedulePage({
 
                             {locationType === 'online' ? (
                                 <div className="space-y-2 mt-4 animate-in fade-in duration-300">
-                                    <label className="text-sm font-semibold text-gray-600">Link cuộc họp (Zoom/Meet/Teams)</label>
-                                    <Input 
-                                        value={meetingLink}
-                                        onChange={(e) => setMeetingLink(e.target.value)}
-                                        className="bg-gray-50/50 border-gray-200 text-[#0F4C75] font-medium" 
-                                    />
                                 </div>
                             ) : (
                                 <div className="space-y-2 mt-4 animate-in fade-in duration-300">

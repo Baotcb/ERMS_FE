@@ -75,6 +75,8 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
     const [shuffleAnswers, setShuffleAnswers] = useState(true);
     const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
     const [quizFile, setQuizFile] = useState<File | null>(null);
+    const [csvPreviewCount, setCsvPreviewCount] = useState<number | null>(null);
+    const [csvPreviewFirst, setCsvPreviewFirst] = useState<string>('');
     const [savedQuizId, setSavedQuizId] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -416,7 +418,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={passingScore} 
-                            onChange={(e) => setPassingScore(parseInt(e.target.value))}
+                            onChange={(e) => setPassingScore(parseInt(e.target.value, 10) || 0)}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
                         />
                     </div>
@@ -427,7 +429,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={timeLimit} 
-                            onChange={(e) => setTimeLimit(parseInt(e.target.value))}
+                            onChange={(e) => setTimeLimit(parseInt(e.target.value, 10) || 0)}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
                         />
                     </div>
@@ -493,12 +495,35 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                     <Input
                         type="file"
                         accept=".csv"
-                        onChange={(e) => setQuizFile(e.target.files?.[0] ?? null)}
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0] ?? null;
+                            setQuizFile(file);
+                            setCsvPreviewCount(null);
+                            setCsvPreviewFirst('');
+                            if (file && file.name.endsWith('.csv')) {
+                                try {
+                                    const parsed = await parseQuestionsFromCsv(file);
+                                    setCsvPreviewCount(parsed.length);
+                                    setCsvPreviewFirst(parsed[0]?.questionText || '');
+                                } catch {
+                                    setCsvPreviewCount(null);
+                                    setCsvPreviewFirst('');
+                                }
+                            }
+                        }}
                         className="rounded-2xl border-gray-200 bg-white"
                     />
                     <div className="rounded-2xl bg-white px-4 py-3 text-sm text-gray-600 border border-gray-100 min-h-[60px] flex items-center">
                         {quizFile ? (
-                            <span className="font-medium text-[#0F4C75]">Đã chọn file: {quizFile.name}</span>
+                            <div className="space-y-1">
+                                <span className="font-medium text-[#0F4C75]">Đã chọn file: {quizFile.name}</span>
+                                {csvPreviewCount !== null && (
+                                    <div className="text-xs text-green-700">
+                                        ✅ {csvPreviewCount} câu hỏi hợp lệ
+                                        {csvPreviewFirst && <span className="text-gray-500"> — Câu 1: &quot;{csvPreviewFirst.slice(0, 60)}{csvPreviewFirst.length > 60 ? '...' : ''}&quot;</span>}
+                                    </div>
+                                )}
+                            </div>
                         ) : (
                             <span>Chưa chọn file. Bạn vẫn có thể nhập câu hỏi thủ công ở phần bên dưới.</span>
                         )}
@@ -604,7 +629,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                     {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                         <span className="flex items-center gap-2">
                             <Save className="w-5 h-5" />
-                            LUU BÀI THI
+                            LƯU BÀI THI
                         </span>
                     )}
                 </Button>
