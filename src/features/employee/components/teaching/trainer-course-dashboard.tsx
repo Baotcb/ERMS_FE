@@ -86,7 +86,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
             await courseService.updateCourse(course.id, buildCourseUpdatePayload(values));
             setCourse(prev => ({ ...prev, ...values }));
             toast({ title: 'Thành công', description: 'Đã lưu thông tin cơ bản.' });
-            setActiveTab('exam');
+            setActiveTab('curriculum');
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Không thể lưu thông tin.';
             toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
@@ -259,6 +259,15 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                 <p className="text-sm text-gray-600 mt-1">Tạo lesson, đính kèm video và upload tài liệu để học viên có thể học theo từng học phần.</p>
                             </div>
                             <CurriculumManager courseId={course.id} />
+                            <Separator className="bg-gray-100" />
+                            <div className="flex items-center justify-between pt-2">
+                                <Button variant="ghost" className="text-gray-600 font-medium gap-2" onClick={() => setActiveTab('basics')}>
+                                    <ChevronLeft className="w-4 h-4" /> Quay lại Nhận nhiệm vụ
+                                </Button>
+                                <Button className="bg-[#0F4C75] hover:bg-[#1B262C] text-white px-6 rounded-xl font-bold gap-2" onClick={() => setActiveTab('exam')}>
+                                    Quiz cuối khóa <ArrowRight className="w-4 h-4" />
+                                </Button>
+                            </div>
                         </div>
                     </TabsContent>
 
@@ -268,6 +277,15 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                             initialQuizId={course.finalQuizId}
                             onQuizLinked={(quizId) => setCourse((prev) => ({ ...prev, hasFinalQuiz: true, finalQuizId: quizId }))}
                         />
+                        <Separator className="bg-gray-100 mt-6" />
+                        <div className="flex items-center justify-between pt-4">
+                            <Button variant="ghost" className="text-gray-600 font-medium gap-2" onClick={() => setActiveTab('curriculum')}>
+                                <ChevronLeft className="w-4 h-4" /> Quay lại Nội dung học
+                            </Button>
+                            <Button className="bg-[#0F4C75] hover:bg-[#1B262C] text-white px-6 rounded-xl font-bold gap-2" onClick={() => setActiveTab('publish')}>
+                                Xuất bản <ArrowRight className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="publish" className="m-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -336,6 +354,12 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                         )}
                                     </Button>
                                 </div>
+                            </div>
+
+                            <div className="flex items-center justify-start pt-2">
+                                <Button variant="ghost" className="text-gray-600 font-medium gap-2" onClick={() => setActiveTab('exam')}>
+                                    <ChevronLeft className="w-4 h-4" /> Quay lại Quiz cuối khóa
+                                </Button>
                             </div>
                         </div>
                     </TabsContent>

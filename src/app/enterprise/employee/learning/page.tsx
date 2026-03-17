@@ -22,6 +22,8 @@ export default async function Page() {
         .getAllCourses({ status: 'Published', pageSize: 100 })
         .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
 
+    // TODO: N+1 query — gọi getCourseProgress() cho từng course. Khi BE có endpoint
+    // GET /api/Course/my-enrolled (trả courses + progress 1 lần), thay thế đoạn này.
     const learnerCoursesResults = await Promise.all(
         coursesResult.items.map(async (course): Promise<LearnerCourseItem | null> => {
             try {

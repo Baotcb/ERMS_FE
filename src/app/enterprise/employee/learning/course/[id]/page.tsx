@@ -16,8 +16,10 @@ export default async function Page({
     }
 
     const { id } = await params;
-    const course = await trainingServerService.getCourseDetails(id).catch(() => null);
-    const progress = await trainingServerService.getCourseProgress(id).catch(() => null);
+    const [course, progress] = await Promise.all([
+        trainingServerService.getCourseDetails(id).catch(() => null),
+        trainingServerService.getCourseProgress(id).catch(() => null),
+    ]);
 
     if (!course || !progress) {
         notFound();

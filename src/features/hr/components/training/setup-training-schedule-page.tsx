@@ -38,6 +38,29 @@ function sanitizePlainText(value: string): string {
         .trim();
 }
 
+function parseScheduleConfig(description: string | undefined) {
+    const raw = description || '';
+    const baseDescription = raw.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
+    const notifyMatch = raw.match(/Thông báo:\s*giangvien_khi_phancong=(on|off)/i);
+    return {
+        baseDescription,
+        notifyTrainerOnAssignment: notifyMatch ? notifyMatch[1].toLowerCase() === 'on' : true,
+    };
+}
+
+function buildScheduleDescription(
+    baseDescription: string,
+    schedule: { startDate: string; startTime: string; endDate: string; endTime: string },
+    locationValue: string,
+    notifyTrainer: boolean,
+    isDraft: boolean,
+): string {
+    const prefix = isDraft ? '[DRAFT] ' : '';
+    const scheduleInfo = `\n${prefix}Lịch trình: ${schedule.startDate} ${schedule.startTime} đến ${schedule.endDate} ${schedule.endTime}. Địa điểm: ${locationValue}`;
+    const notificationConfig = `\nThông báo: giangvien_khi_phancong=${notifyTrainer ? 'on' : 'off'}`;
+    return `${baseDescription}${scheduleInfo}${notificationConfig}`;
+}
+
 export function SetupTrainingSchedulePage({ 
     initialCourses, 
     initialCourseDetails,
@@ -45,7 +68,7 @@ export function SetupTrainingSchedulePage({
     headingTitle = 'Tạo khóa học & Lập lịch đào tạo',
     headingDescription = 'Thiết lập thời gian, địa điểm và thông báo cho khóa học.',
     stepTwoLabel = 'Bước 2: HR lập lịch & thông báo',
-    publishRedirectPath = '/enterprise/hr/training/requests'
+    publishRedirectPath = '/enterprise/hr/training/schedule'
 }: { 
     initialCourses?: CourseResult; 
     initialCourseDetails?: Course;
@@ -66,7 +89,7 @@ export function SetupTrainingSchedulePage({
     const [startTime, setStartTime] = useState('');
     const [endDate, setEndDate] = useState('');
     const [endTime, setEndTime] = useState('');
-    const [meetingLink, setMeetingLink] = useState('https://meet.google.com/');
+    const [meetingLink, setMeetingLink] = useState('');
     const [offlineLocation, setOfflineLocation] = useState('');
     const [notifyTrainerOnAssignment, setNotifyTrainerOnAssignment] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -150,21 +173,22 @@ export function SetupTrainingSchedulePage({
 
         setIsSubmitting(true);
         try {
-            const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
+            const { baseDescription } = parseScheduleConfig(currentCourse?.description);
             const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
-            const notificationConfig = `\nThông báo: giangvien_khi_phancong=${notifyTrainerOnAssignment ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
                 startTime: resolvedStartTime,
                 isOnline: locationType === 'online',
                 location: locationValue,
-                description: `${baseDescription}\n[DRAFT] Lịch trình: ${startDate} ${startTime} đến ${endDate} ${endTime}. Địa điểm: ${locationValue}${notificationConfig}`
+                description: buildScheduleDescription(baseDescription, { startDate, startTime, endDate, endTime }, locationValue, notifyTrainerOnAssignment, true),
             } as UpdateCourseCommand);
             toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
-        } catch (error: unknown) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể lưu bản nháp lịch trình. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const errorMessage = err instanceof Error
+                ? err.message
+                : 'Không thể lưu bản nháp lịch trình. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -220,17 +244,15 @@ export function SetupTrainingSchedulePage({
 
         setIsSubmitting(true);
         try {
-            // 1. Update Course Schedule info
-            const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
+            const { baseDescription } = parseScheduleConfig(currentCourse?.description);
             const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
-            const notificationConfig = `\nThông báo: giangvien_khi_phancong=${notifyTrainerOnAssignment ? 'on' : 'off'}`;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
                 startTime: resolvedStartTime,
                 isOnline: locationType === 'online',
                 location: locationValue,
-                description: `${baseDescription}\nLịch trình: ${startDate} ${startTime} đến ${endDate} ${endTime}. Địa điểm: ${locationValue}${notificationConfig}`
+                description: buildScheduleDescription(baseDescription, { startDate, startTime, endDate, endTime }, locationValue, notifyTrainerOnAssignment, false),
             } as UpdateCourseCommand);
 
             // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).

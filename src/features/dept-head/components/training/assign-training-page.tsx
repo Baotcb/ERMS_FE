@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useSWR from 'swr';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
@@ -31,7 +31,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { getEmployees, Employee, PaginatedResult } from '@/features/hr/api/employee-service';
+import { getDepartments, type Department } from '@/features/hr/api/department-service';
 import { normalizeEmail } from '@/features/hr/utils/course-workflow';
+
+const TRAINEES_PAGE_SIZE = 10;
+
+function parseNotifyConfig(description: string | undefined): boolean {
+    const match = (description || '').match(/Thông báo:\s*giangvien_khi_phancong=(on|off)/i);
+    return match ? match[1].toLowerCase() === 'on' : true;
+}
 
 export function AssignTrainingPage({
     initialCourses,
@@ -50,6 +58,8 @@ export function AssignTrainingPage({
     const [selectedTraineeIds, setSelectedTraineeIds] = useState<string[]>([]);
     const [notifyTrainer, setNotifyTrainer] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('all');
 
     const debouncedTraineeSearch = useDebouncedValue(traineeSearch, 300);
 
@@ -60,12 +70,26 @@ export function AssignTrainingPage({
         { fallbackData: initialCourses }
     );
 
-    // Fetch Potential Trainees
-    const { data: traineesData, isLoading: isLoadingTrainees } = useSWR(
-        ['/api/Employees', 'trainees', debouncedTraineeSearch],
-        () => getEmployees({ search: debouncedTraineeSearch, pageSize: 50 }),
-        { fallbackData: initialTrainees }
+    // Fetch Departments for filter
+    const { data: departmentsData } = useSWR(
+        '/api/Departments/list',
+        () => getDepartments({ pageSize: 100 }),
     );
+    const departments: Department[] = departmentsData?.items || [];
+
+    // Fetch Potential Trainees with real pagination & department filter
+    const { data: traineesData, isLoading: isLoadingTrainees } = useSWR(
+        ['/api/Employees', 'trainees', debouncedTraineeSearch, currentPage, selectedDepartmentId],
+        () => getEmployees({
+            search: debouncedTraineeSearch,
+            page: currentPage,
+            pageSize: TRAINEES_PAGE_SIZE,
+            departmentId: selectedDepartmentId !== 'all' ? Number(selectedDepartmentId) : undefined,
+        }),
+        { fallbackData: initialTrainees, keepPreviousData: true }
+    );
+    const totalPages = traineesData?.totalPages || 1;
+    const totalCount = traineesData?.totalCount || 0;
 
     // Fetch Current Course Assignment if selected
     const { data: currentCourse } = useSWR<Course>(
@@ -115,15 +139,17 @@ export function AssignTrainingPage({
     }, [preselectedCourseId]);
 
     useEffect(() => {
-        const description = currentCourse?.description || '';
-        const configMatch = description.match(/Thông báo:\s*(?:giangvien_khi_phancong|giangvien)=(on|off)/i);
-        if (!configMatch) {
-            setNotifyTrainer(true);
-            return;
-        }
-
-        setNotifyTrainer(configMatch[1].toLowerCase() === 'on');
+        setNotifyTrainer(parseNotifyConfig(currentCourse?.description));
     }, [currentCourse?.description]);
+
+    // Reset page when search or department filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedTraineeSearch, selectedDepartmentId]);
+
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    }, [totalPages]);
 
     useEffect(() => {
         if (selectedCourseId && courses.some((course) => course.id === selectedCourseId)) {
@@ -183,12 +209,10 @@ export function AssignTrainingPage({
             );
 
             toast({ title: 'Thành công', description: 'Đã lưu phân công đào tạo' });
-
-            // New flow: HR invites trainer and sets schedule; Dept Head only assigns trainees.
             router.push('/enterprise/dept-head/training');
-        } catch (error: unknown) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể lưu phân công đào tạo. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Không thể lưu phân công đào tạo. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -345,12 +369,17 @@ export function AssignTrainingPage({
                                         className="pl-9 w-[220px] bg-white border-gray-200" 
                                     />
                                 </div>
-                                <Select defaultValue="all">
-                                    <SelectTrigger className="w-[160px] bg-white border-gray-200">
+                                <Select value={selectedDepartmentId} onValueChange={setSelectedDepartmentId}>
+                                    <SelectTrigger className="w-[200px] bg-white border-gray-200">
                                         <SelectValue placeholder="Tất cả phòng ban" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Tất cả phòng ban</SelectItem>
+                                        {departments.map((dept) => (
+                                            <SelectItem key={dept.id} value={String(dept.id)}>
+                                                {dept.departmentName}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -430,18 +459,58 @@ export function AssignTrainingPage({
                         </div>
 
                         <div className="pt-2 flex items-center justify-between text-sm">
-                            <span className="text-gray-500 font-medium">Đã chọn {selectedTraineeIds.length} nhân viên</span>
-                            <div className="flex items-center gap-1">
-                                <Button variant="outline" size="icon" className="w-8 h-8 text-gray-400 border-gray-200">
-                                    <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <Button variant="default" size="icon" className="w-8 h-8 bg-[#0F4C75] text-white hover:bg-[#155A8A]">
-                                    1
-                                </Button>
-                                <Button variant="outline" size="icon" className="w-8 h-8 text-gray-400 border-gray-200">
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
-                            </div>
+                            <span className="text-gray-500 font-medium">
+                                Đã chọn {selectedTraineeIds.length} nhân viên · Hiển thị {potentialTrainees.length}/{totalCount}
+                            </span>
+                            {totalPages > 1 && (
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="w-8 h-8 text-gray-400 border-gray-200"
+                                        disabled={currentPage <= 1}
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                        let pageNum: number;
+                                        if (totalPages <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            pageNum = currentPage - 2 + i;
+                                        }
+                                        return (
+                                            <Button
+                                                key={pageNum}
+                                                variant={currentPage === pageNum ? 'default' : 'outline'}
+                                                size="icon"
+                                                className={`w-8 h-8 ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-[#0F4C75] text-white hover:bg-[#155A8A]'
+                                                        : 'text-gray-400 border-gray-200'
+                                                }`}
+                                                onClick={() => handlePageChange(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </Button>
+                                        );
+                                    })}
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="w-8 h-8 text-gray-400 border-gray-200"
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                     </div>

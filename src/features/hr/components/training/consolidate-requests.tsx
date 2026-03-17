@@ -85,11 +85,11 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                 });
                 router.push('/enterprise/hr/training/plans');
             }
-        } catch (error) {
-            void error;
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể tạo kế hoạch. Vui lòng thử lại.';
             toast({
                 title: 'Lỗi',
-                description: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
+                description: msg,
                 variant: 'destructive',
             });
         } finally {

@@ -28,7 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { directorTrainingService } from '../../api/director-training-service';
 import { TrainingPlan } from '../../../hr/types/training-plan-types';
 
-export function TrainingPlansApprovalList() {
+export function TrainingPlansApprovalList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const { toast } = useToast();
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isApproveOpen, setIsApproveOpen] = useState(false);
@@ -40,7 +40,8 @@ export function TrainingPlansApprovalList() {
 
     const { data, isLoading, mutate } = useSWR<{ items: TrainingPlan[] }>(
         '/api/TrainingPlan?status=Pending',
-        () => directorTrainingService.getPendingPlans()
+        () => directorTrainingService.getPendingPlans(),
+        { fallbackData: initialData }
     );
 
     const plans = data?.items || [];
@@ -57,9 +58,9 @@ export function TrainingPlansApprovalList() {
             } else {
                 toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch.', variant: 'destructive' });
             }
-        } catch (error) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -81,9 +82,9 @@ export function TrainingPlansApprovalList() {
             } else {
                 toast({ title: 'Lỗi', description: 'Không thể gửi yêu cầu chỉnh sửa kế hoạch.', variant: 'destructive' });
             }
-        } catch (error) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể gửi yêu cầu chỉnh sửa kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể gửi yêu cầu chỉnh sửa kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -105,9 +106,9 @@ export function TrainingPlansApprovalList() {
             } else {
                 toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch.', variant: 'destructive' });
             }
-        } catch (error) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể từ chối kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
