@@ -697,7 +697,15 @@ export function CourseQuizPage({
 
                         {!canViewQuizSection ? (
                             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                                Quiz chưa được backend mở. Tiến độ local của bạn hiện là {completedLessonsCount}/{knownTotalLessons} lesson.
+                                {initialCourse.isOnline === false ? (
+                                    <>
+                                        <strong>Workshop chưa được xác nhận.</strong> HR cần xác nhận hoàn thành workshop trước khi bạn có thể làm bài kiểm tra. Vui lòng liên hệ HR nếu workshop đã diễn ra.
+                                    </>
+                                ) : (
+                                    <>
+                                        Quiz chưa được mở. Tiến độ local của bạn hiện là {completedLessonsCount}/{knownTotalLessons} lesson.
+                                    </>
+                                )}
                             </div>
                         ) : null}
 

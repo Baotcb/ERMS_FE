@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { 
-    PlusCircle, GripVertical, FileText,
+    PlusCircle, GripVertical, FileText, Video,
     Trash2, Loader2, MoreVertical, Clock, Layers, Upload, Paperclip, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     // Lesson addition state
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
     const [lessonTitle, setLessonTitle] = useState('');
+    const [lessonVideoUrl, setLessonVideoUrl] = useState('');
 
     const [lessonDuration, setLessonDuration] = useState(15);
     const [isAddingLesson, setIsAddingLesson] = useState(false);
@@ -285,7 +286,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                 title: lessonTitle,
                 description: lessonTitle,
                 content: lessonTitle,
-
+                videoUrl: lessonVideoUrl || undefined,
                 durationMinutes: lessonDuration || 15,
                 orderIndex,
             };
@@ -299,6 +300,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             ));
 
             setLessonTitle('');
+            setLessonVideoUrl('');
 
             setActiveSectionId(null);
             toast({ title: 'Đã đồng bộ server', description: 'Bài giảng đã được lưu trên hệ thống.' });
@@ -575,6 +577,11 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                                         <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
                                                                 <FileText className="w-3 h-3" /> Văn bản
                                                             </span>
+                                                        {lesson.videoUrl && (
+                                                            <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full hover:bg-purple-100 transition-colors">
+                                                                <Video className="w-3 h-3" /> Video
+                                                            </a>
+                                                        )}
                                                         <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
                                                             <Clock className="w-3 h-3" /> {lesson.durationMinutes} phút
                                                         </span>
@@ -685,6 +692,16 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                                         onChange={(e) => setLessonTitle(e.target.value)}
                                                         className="rounded-xl border-gray-200 h-11"
                                                     />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Link video bài giảng (tùy chọn)</Label>
+                                                    <Input 
+                                                        placeholder="https://youtube.com/watch?v=... hoặc URL video khác" 
+                                                        value={lessonVideoUrl}
+                                                        onChange={(e) => setLessonVideoUrl(e.target.value)}
+                                                        className="rounded-xl border-gray-200 h-11"
+                                                    />
+                                                    <p className="text-xs text-gray-400">Hỗ trợ YouTube, Vimeo hoặc link video trực tiếp</p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Thời lượng dự kiến (phút)</Label>
