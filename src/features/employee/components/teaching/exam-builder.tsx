@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { 
     PlusCircle, Trash2, 
-    CheckCircle2, Clock, Award, Save, Loader2, AlertCircle, FileSpreadsheet, UploadCloud, Copy
+    CheckCircle2, Clock, Award, Save, Loader2, AlertCircle, FileSpreadsheet, UploadCloud
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +24,11 @@ interface Question {
 
 interface ExamBuilderProps {
     courseId: string;
+    initialQuizId?: string;
+    onQuizLinked?: (quizId: string) => void;
 }
 
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
-
-function getQuizStorageKey(courseId: string): string {
-    return `course-quiz:${courseId}`;
-}
 
 function parseCsvLine(line: string): string[] {
     const values: string[] = [];
@@ -64,7 +62,7 @@ function parseCsvLine(line: string): string[] {
     return values;
 }
 
-export function ExamBuilder({ courseId }: ExamBuilderProps) {
+export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: ExamBuilderProps) {
     const { toast } = useToast();
     const courseLabel = courseId.slice(0, 8).toUpperCase();
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -79,25 +77,6 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
     const [quizFile, setQuizFile] = useState<File | null>(null);
     const [savedQuizId, setSavedQuizId] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-
-    const linkQuizIdToCourse = (quizId: string) => {
-        setSavedQuizId(quizId);
-        localStorage.setItem(getQuizStorageKey(courseId), quizId);
-        sessionStorage.setItem(getQuizStorageKey(courseId), quizId);
-    };
-
-    const handleCopyQuizId = async () => {
-        if (!savedQuizId) {
-            return;
-        }
-
-        try {
-            await navigator.clipboard.writeText(savedQuizId);
-            toast({ title: 'Đã copy Quiz ID', description: 'Bạn có thể gửi mã này cho học viên để vào làm quiz.' });
-        } catch {
-            toast({ title: 'Không thể copy', description: 'Trình duyệt chặn thao tác copy. Vui lòng copy thủ công.', variant: 'destructive' });
-        }
-    };
 
     const parseQuestionsFromCsv = async (file: File): Promise<Array<{
         questionText: string;
@@ -187,11 +166,28 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
     };
 
     useEffect(() => {
-        const storedQuizId = localStorage.getItem(getQuizStorageKey(courseId)) || sessionStorage.getItem(getQuizStorageKey(courseId));
-        if (storedQuizId) {
-            setSavedQuizId(storedQuizId);
+        if (initialQuizId) {
+            setSavedQuizId(initialQuizId);
+            return;
         }
-    }, [courseId]);
+
+        let isMounted = true;
+        void quizService.getCourseQuiz(courseId)
+            .then((quiz) => {
+                if (isMounted) {
+                    setSavedQuizId(quiz.quizId || '');
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setSavedQuizId('');
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [courseId, initialQuizId]);
 
     const addQuestion = () => {
         const newQuestion: Question = {
@@ -352,8 +348,8 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
                 showCorrectAnswers,
             });
             createdQuizId = quizId;
-            // Persist immediately so trainer does not lose Quiz ID if later question import fails.
-            linkQuizIdToCourse(quizId);
+            setSavedQuizId(quizId);
+            onQuizLinked?.(quizId);
 
             if (preparedCsvQuestions) {
                 for (const question of preparedCsvQuestions) {
@@ -385,13 +381,13 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
             const message = error instanceof Error ? error.message : 'Không thể tạo bài thi cuối khóa.';
             const duplicateHint = message.toLowerCase().includes('mỗi khóa chỉ có 1 quiz') || message.toLowerCase().includes('đã có quiz');
             const partialCreationHint = createdQuizId
-                ? ` Quiz ID đã được tạo: ${createdQuizId}. Hãy copy mã này và kiểm tra lại danh sách câu hỏi.`
+                ? ' Quiz đã được tạo trên hệ thống. Hãy mở lại tab Bài thi cuối khóa để kiểm tra danh sách câu hỏi.'
                 : '';
 
             toast({
                 title: 'Không thể tạo quiz',
                 description: duplicateHint
-                    ? 'Khóa học có thể đã có quiz trên hệ thống (mỗi khóa chỉ 1 quiz). Vui lòng dùng lại Quiz ID đã tạo trước đó.'
+                    ? 'Khóa học có thể đã có quiz trên hệ thống (mỗi khóa chỉ 1 quiz). Vui lòng dùng quiz đã gắn với khóa học này.'
                     : `${message}${partialCreationHint}`,
                 variant: 'destructive'
             });
@@ -594,12 +590,8 @@ export function ExamBuilder({ courseId }: ExamBuilderProps) {
             {savedQuizId && (
                 <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 space-y-3">
                     <p>
-                        Quiz đã được tạo trên trình duyệt này với mã <span className="font-mono font-bold">{savedQuizId}</span>. Hệ thống BE sẽ dùng quiz này để xác định học viên đạt/không đạt sau khi nộp bài.
+                        Quiz cuối khóa đã được gắn với khóa học này trên hệ thống. Học viên sẽ tự vào quiz theo khóa học mà không cần nhập mã.
                     </p>
-                    <Button type="button" variant="outline" onClick={handleCopyQuizId} className="border-green-300 text-green-800 hover:bg-green-100">
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy Quiz ID
-                    </Button>
                 </div>
             )}
 

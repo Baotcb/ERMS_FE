@@ -7,10 +7,8 @@ import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
 
 export default async function Page({
     params,
-    searchParams,
 }: {
     params: Promise<{ id: string }>;
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const session = await getServerSession();
 
@@ -19,8 +17,6 @@ export default async function Page({
     }
 
     const { id } = await params;
-    const resolvedSearchParams = await searchParams;
-    const initialQuizId = typeof resolvedSearchParams.quizId === 'string' ? resolvedSearchParams.quizId : '';
     const course = await trainingServerService.getCourseDetails(id).catch(() => null);
     const progress = await trainingServerService.getCourseProgress(id).catch(() => null);
 
@@ -28,5 +24,5 @@ export default async function Page({
         notFound();
     }
 
-    return <CourseQuizPage initialCourse={course} initialQuizId={initialQuizId} initialProgress={progress} />;
+    return <CourseQuizPage initialCourse={course} initialProgress={progress} />;
 }

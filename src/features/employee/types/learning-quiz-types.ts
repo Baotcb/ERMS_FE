@@ -5,6 +5,13 @@ export interface CourseProgressDto {
     quizUnlocked: boolean;
 }
 
+export interface UpdateLessonProgressCommand {
+    lessonId: string;
+    watchPercentage: number;
+    lastPosition?: number;
+    timeSpentMinutes: number;
+}
+
 export interface LearnerQuizQuestionDto {
     id: string;
     questionText: string;

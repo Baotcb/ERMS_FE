@@ -21,6 +21,8 @@ export interface Course {
     publishedAt?: string;
     lessonCount: number;
     enrollmentCount: number;
+    hasFinalQuiz?: boolean;
+    finalQuizId?: string;
     createdAt: string;
 }
 

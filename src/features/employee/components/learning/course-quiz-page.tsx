@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Clock3, FileText, Lock, Loader2, Paperclip, Trophy } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import type { Course } from '@/features/hr/types/course-types';
@@ -15,6 +13,20 @@ import { courseContentService } from '@/features/hr/api/course-content-service';
 import type { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
 
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
+
+const GUID_REGEX = /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/;
+
+function isServerLessonId(lessonId: string): boolean {
+    if (!lessonId) {
+        return false;
+    }
+
+    if (lessonId.startsWith('fallback-') || lessonId.startsWith('local-')) {
+        return false;
+    }
+
+    return GUID_REGEX.test(lessonId);
+}
 
 function parseOptions(raw: string): string[] {
     if (!raw) {
@@ -39,11 +51,6 @@ function parseOptions(raw: string): string[] {
 
 function getLearnerQuizIdKey(courseId: string): string {
     return `learner-quiz-id:${courseId}`;
-}
-
-// Same key used by exam-builder to persist the trainer's created quiz ID.
-function getTrainerQuizStorageKey(courseId: string): string {
-    return `course-quiz:${courseId}`;
 }
 
 function getLessonCompletionKey(courseId: string): string {
@@ -158,11 +165,9 @@ function mergeMaterialMirror(sections: CourseSection[], materialMirror: Material
 
 export function CourseQuizPage({
     initialCourse,
-    initialQuizId = '',
     initialProgress = null,
 }: {
     initialCourse: Course;
-    initialQuizId?: string;
     initialProgress?: CourseProgressDto | null;
 }) {
     const { toast } = useToast();
@@ -174,17 +179,14 @@ export function CourseQuizPage({
     const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
     const [activeLessonId, setActiveLessonId] = useState<string>('');
 
-    const [quizId, setQuizId] = useState('');
-
     const [attemptId, setAttemptId] = useState('');
     const [questions, setQuestions] = useState<LearnerQuizQuestionDto[]>([]);
     const [answers, setAnswers] = useState<Record<string, string>>({});
 
+    const [isUpdatingLesson, setIsUpdatingLesson] = useState(false);
     const [isStarting, setIsStarting] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState<LearnerQuizResultDto | null>(null);
-
-    const normalizedQuizId = quizId.trim();
 
     const allLessons = useMemo(() => sections.flatMap((section) => section.lessons || []), [sections]);
 
@@ -199,7 +201,7 @@ export function CourseQuizPage({
     const completionPercent = knownTotalLessons > 0 ? Math.round((completedLessonsCount / knownTotalLessons) * 100) : 0;
     const totalDurationMinutes = allLessons.reduce((sum, lesson) => sum + (lesson.durationMinutes || 0), 0);
 
-    const canViewQuizSection = localLessonsCompleted;
+    const canViewQuizSection = Boolean(progress?.quizUnlocked);
 
     const activeLesson = useMemo(() => {
         if (!allLessons.length) {
@@ -219,16 +221,6 @@ export function CourseQuizPage({
     }, [activeLesson, allLessons]);
 
     useEffect(() => {
-        const normalizedInitialQuizId = initialQuizId.trim();
-        const trainerQuizId = localStorage.getItem(getTrainerQuizStorageKey(initialCourse.id)) || '';
-        const storedQuizId = localStorage.getItem(getLearnerQuizIdKey(initialCourse.id)) || '';
-        const resolvedQuizId = normalizedInitialQuizId || trainerQuizId || storedQuizId;
-
-        if (resolvedQuizId) {
-            setQuizId(resolvedQuizId);
-            localStorage.setItem(getLearnerQuizIdKey(initialCourse.id), resolvedQuizId);
-        }
-
         try {
             const raw = localStorage.getItem(getLessonCompletionKey(initialCourse.id));
             if (!raw) {
@@ -241,7 +233,7 @@ export function CourseQuizPage({
         } catch {
             setCompletedLessonIds([]);
         }
-    }, [initialCourse.id, initialQuizId]);
+    }, [initialCourse.id]);
 
     useEffect(() => {
         const loadCurriculum = async () => {
@@ -307,25 +299,66 @@ export function CourseQuizPage({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialCourse.id]);
 
-    const toggleLessonComplete = (lessonId: string) => {
+    const markLessonComplete = (lessonId: string) => {
         setCompletedLessonIds((prev) => {
-            const hasLesson = prev.includes(lessonId);
-            const next = hasLesson ? prev.filter((id) => id !== lessonId) : [...prev, lessonId];
+            if (prev.includes(lessonId)) {
+                return prev;
+            }
+
+            const next = [...prev, lessonId];
             localStorage.setItem(getLessonCompletionKey(initialCourse.id), JSON.stringify(next));
             return next;
         });
     };
 
-    const handleCompleteActiveLesson = () => {
+    const handleCompleteActiveLesson = async () => {
         if (!activeLesson) {
             return;
         }
 
         const alreadyCompleted = completedLessonSet.has(activeLesson.id);
-        toggleLessonComplete(activeLesson.id);
+        if (alreadyCompleted) {
+            return;
+        }
+
+        if (!isServerLessonId(activeLesson.id)) {
+            toast({
+                title: 'Không thể đồng bộ tiến độ',
+                description: 'Lesson hiện tại là dữ liệu fallback/local nên chưa thể ghi nhận tiến độ backend. Vui lòng liên hệ trainer để đồng bộ curriculum lên hệ thống.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        setIsUpdatingLesson(true);
+        try {
+            await learningQuizService.updateLessonProgress({
+                lessonId: activeLesson.id,
+                watchPercentage: 100,
+                lastPosition: undefined,
+                timeSpentMinutes: activeLesson.durationMinutes || 1,
+            });
+
+            markLessonComplete(activeLesson.id);
+
+            try {
+                const refreshedProgress = await learningQuizService.getCourseProgress(initialCourse.id);
+                setProgress(refreshedProgress);
+            } catch {
+                // Keep local completion state even if progress refresh fails.
+            }
+
+            toast({ title: 'Đã cập nhật tiến độ', description: 'Bài học đã được ghi nhận hoàn thành trên hệ thống.' });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể cập nhật tiến độ bài học.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
+            return;
+        } finally {
+            setIsUpdatingLesson(false);
+        }
 
         // Move learners through curriculum linearly after first completion.
-        if (!alreadyCompleted && activeLessonIndex >= 0 && activeLessonIndex < allLessons.length - 1) {
+        if (activeLessonIndex >= 0 && activeLessonIndex < allLessons.length - 1) {
             setActiveLessonId(allLessons[activeLessonIndex + 1].id);
         }
     };
@@ -374,15 +407,23 @@ export function CourseQuizPage({
     };
 
     const handleStartQuiz = async () => {
-        if (!normalizedQuizId) {
-            toast({ title: 'Thiếu Quiz ID', description: 'Khóa học này chưa có bài kiểm tra. Vui lòng liên hệ HR/Trainer.', variant: 'destructive' });
+        if (!initialCourse.hasFinalQuiz) {
+            toast({ title: 'Chưa có bài thi cuối khóa', description: 'Khóa học này chưa được gắn quiz trên hệ thống hiện tại. Vui lòng liên hệ HR/Trainer.', variant: 'destructive' });
             return;
         }
 
-        if (!localLessonsCompleted) {
+        let latestProgress = progress;
+        try {
+            latestProgress = await learningQuizService.getCourseProgress(initialCourse.id);
+            setProgress(latestProgress);
+        } catch {
+            // Keep current progress state if refresh fails.
+        }
+
+        if (!latestProgress?.quizUnlocked) {
             toast({
                 title: 'Chưa đủ điều kiện làm quiz',
-                description: `Bạn cần hoàn thành toàn bộ lesson trước khi vào quiz (${completedLessonsCount}/${allLessons.length}).`,
+                description: 'Backend chưa mở quiz. Vui lòng hoàn thành thêm bài học hoặc liên hệ HR/Trainer.',
                 variant: 'destructive',
             });
             return;
@@ -390,7 +431,7 @@ export function CourseQuizPage({
 
         setIsStarting(true);
         try {
-            const { attemptId: startedAttemptId } = await learningQuizService.startQuiz(normalizedQuizId);
+            const { attemptId: startedAttemptId } = await learningQuizService.startQuiz(initialCourse.id);
             if (!startedAttemptId) {
                 throw new Error('Không nhận được mã lượt làm bài từ backend.');
             }
@@ -400,7 +441,6 @@ export function CourseQuizPage({
             setQuestions(loadedQuestions);
             setAnswers({});
             setResult(null);
-            localStorage.setItem(getLearnerQuizIdKey(initialCourse.id), normalizedQuizId);
 
             toast({ title: 'Bắt đầu bài thi', description: 'Bạn có thể trả lời từng câu và nộp bài khi hoàn tất.' });
         } catch (error) {
@@ -560,9 +600,11 @@ export function CourseQuizPage({
                                 <Button
                                     type="button"
                                     variant={completedLessonSet.has(activeLesson.id) ? 'outline' : 'default'}
-                                    onClick={handleCompleteActiveLesson}
+                                    onClick={() => void handleCompleteActiveLesson()}
+                                    disabled={isUpdatingLesson || completedLessonSet.has(activeLesson.id)}
                                     className={completedLessonSet.has(activeLesson.id) ? 'border-green-200 text-green-700' : 'bg-[#145DA0] hover:bg-[#0F4C75] text-white'}
                                 >
+                                    {isUpdatingLesson ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                     {completedLessonSet.has(activeLesson.id) ? 'Đã hoàn thành lesson' : 'Đánh dấu hoàn thành lesson'}
                                 </Button>
                             ) : null}
@@ -638,18 +680,7 @@ export function CourseQuizPage({
                             <div>
                                 <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Final Quiz</p>
                                 <h3 className="text-xl font-black text-[#0F3B64]">Đánh giá cuối khóa</h3>
-                                <p className="text-sm text-gray-500 mt-1">Hoàn thành tất cả bài học để mở khóa bài kiểm tra cuối khóa.</p>
-                            </div>
-
-                            <div className="w-full md:w-[340px] space-y-2">
-                                <Label htmlFor="quiz-id">Quiz ID</Label>
-                                <Input
-                                    id="quiz-id"
-                                    value={quizId}
-                                    onChange={(event) => setQuizId(event.target.value)}
-                                    placeholder="Dán Quiz ID hoặc tự động từ trainer..."
-                                    className="font-mono"
-                                />
+                                <p className="text-sm text-gray-500 mt-1">Hoàn thành tất cả bài học để mở khóa bài kiểm tra cuối khóa. Quiz sẽ được lấy tự động theo khóa học.</p>
                             </div>
                         </div>
 
@@ -666,7 +697,7 @@ export function CourseQuizPage({
 
                         {!canViewQuizSection ? (
                             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                                Cần hoàn thành toàn bộ lesson ({completedLessonsCount}/{knownTotalLessons}) trước khi vào bài kiểm tra.
+                                Quiz chưa được backend mở. Tiến độ local của bạn hiện là {completedLessonsCount}/{knownTotalLessons} lesson.
                             </div>
                         ) : null}
 

@@ -20,6 +20,19 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
 }
 
 export const quizService = {
+    async getCourseQuiz(courseId: string): Promise<{ quizId: string | null; hasFinalQuiz: boolean }> {
+        const response = await apiClient.get(`/api/Course/${courseId}`);
+        if (!response.ok) {
+            throw new Error('Không thể tải trạng thái quiz của khóa học');
+        }
+
+        const result = await response.json() as { finalQuizId?: string | null; hasFinalQuiz?: boolean };
+        return {
+            quizId: result.finalQuizId ?? null,
+            hasFinalQuiz: Boolean(result.hasFinalQuiz),
+        };
+    },
+
     async createQuiz(courseId: string, data: CreateQuizCommand): Promise<{ quizId: string }> {
         const response = await apiClient.post(`/api/Course/${courseId}/quizzes`, data);
         if (!response.ok) {

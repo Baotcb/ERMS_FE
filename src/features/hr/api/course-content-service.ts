@@ -79,7 +79,16 @@ function normalizeLesson(raw: unknown): Lesson {
         description: readString(record, 'description', 'Description') || undefined,
         content: readString(record, 'content', 'Content') || undefined,
         videoUrl: readString(record, 'videoUrl', 'VideoUrl') || undefined,
-        durationMinutes: readNumber(record, 0, 'durationMinutes', 'DurationMinutes'),
+        durationMinutes: readNumber(
+            record,
+            0,
+            'durationMinutes',
+            'DurationMinutes',
+            'estimatedMinutes',
+            'EstimatedMinutes',
+            'videoDurationMinutes',
+            'VideoDurationMinutes'
+        ),
         orderIndex: readNumber(record, 0, 'orderIndex', 'OrderIndex'),
         materials: Array.isArray(record.materials)
             ? record.materials.map((item) => normalizeMaterial(item))
@@ -135,16 +144,10 @@ function findCollectionByKeys(payload: unknown, keys: string[]): unknown[] {
     return [];
 }
 
-function extractSectionsPayload(payload: unknown): unknown[] {
+function extractLessonsPayload(payload: unknown): unknown[] {
     return findCollectionByKeys(payload, [
-        'sections',
-        'Sections',
-        'curriculum',
-        'Curriculum',
-        'modules',
-        'Modules',
-        'items',
-        'Items',
+        'lessons',
+        'Lessons',
         'data',
         'Data',
         'results',
@@ -156,6 +159,36 @@ function extractSectionsPayload(payload: unknown): unknown[] {
         'payload',
         'Payload',
     ]);
+}
+
+function mapFlatLessonsToSingleSection(courseId: string, lessonsPayload: unknown[]): CourseSection[] {
+    const lessons = lessonsPayload
+        .map((item) => normalizeLesson(item))
+        .filter((lesson) => lesson.id);
+
+    if (lessons.length === 0) {
+        return [];
+    }
+
+    const normalizedLessons = lessons
+        .map((lesson, index) => ({
+            ...lesson,
+            courseId: lesson.courseId || courseId,
+            orderIndex: lesson.orderIndex || index + 1,
+            title: lesson.title || `Lesson ${index + 1}`,
+            durationMinutes: lesson.durationMinutes || 0,
+        }))
+        .sort((a, b) => a.orderIndex - b.orderIndex);
+
+    return [
+        {
+            id: `course-${courseId}-default-section`,
+            courseId,
+            title: 'Course Lessons',
+            orderIndex: 1,
+            lessons: normalizedLessons,
+        },
+    ];
 }
 
 async function readApiErrorMessage(response: Response, fallback: string): Promise<string> {
@@ -251,25 +284,27 @@ async function deleteWithFallback(urls: string[]): Promise<Response> {
 
 export const courseContentService = {
     async getCourseCurriculum(courseId: string): Promise<CourseSection[]> {
-        const response = await apiClient.get(`/api/Course/${courseId}/curriculum`, { retries: 0 });
-        if (response.status === 404) {
-            // Some environments do not expose curriculum endpoint yet.
-            // Treat as empty curriculum so trainer can still continue the flow.
-            cacheCurriculumUnavailable(courseId);
-            return [];
-        }
-        if (!response.ok) {
-            const error = new Error(`Không thể tải chương trình học (HTTP ${response.status})`) as Error & { status?: number };
-            error.status = response.status;
-            throw error;
-        }
-        const raw = (await response.json()) as unknown;
-        const sectionItems = extractSectionsPayload(raw);
-        if (!Array.isArray(sectionItems) || sectionItems.length === 0) {
+        const lessonsResponse = await apiClient.get(`/api/Lessons/course/${courseId}`, { retries: 0 });
+        if (lessonsResponse.ok) {
+            const raw = (await lessonsResponse.json()) as unknown;
+            const lessonItems = extractLessonsPayload(raw);
+            if (Array.isArray(lessonItems) && lessonItems.length > 0) {
+                return mapFlatLessonsToSingleSection(courseId, lessonItems);
+            }
+
             return [];
         }
 
-        return sectionItems.map((item) => normalizeSection(item));
+        if (lessonsResponse.status !== 404) {
+            const error = new Error(`Không thể tải chương trình học (HTTP ${lessonsResponse.status})`) as Error & { status?: number };
+            error.status = lessonsResponse.status;
+            throw error;
+        }
+
+        // Backend currently does not expose curriculum endpoint in this flow.
+        // Keep graceful empty response so learner UI can still render state.
+        cacheCurriculumUnavailable(courseId);
+        return [];
     },
 
     async createLesson(data: CreateLessonCommand): Promise<Lesson> {

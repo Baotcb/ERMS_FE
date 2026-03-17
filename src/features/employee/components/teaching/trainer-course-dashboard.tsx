@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +8,7 @@ import * as z from 'zod';
 import { 
     ChevronLeft, Save,
     FileText, Send, CheckCircle2, 
-    Layout, ArrowRight, Loader2, Award, Copy
+    Layout, ArrowRight, Loader2, Award
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -40,40 +40,12 @@ interface TrainerCourseDashboardProps {
     teachingBasePath?: string;
 }
 
-function getQuizStorageKey(courseId: string): string {
-    return `course-quiz:${courseId}`;
-}
-
 export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/enterprise/employee/teaching' }: TrainerCourseDashboardProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [course, setCourse] = useState<Course>(initialCourse);
     const [activeTab, setActiveTab] = useState('basics');
     const [isSaving, setIsSaving] = useState(false);
-    const [savedQuizId, setSavedQuizId] = useState('');
-
-    useEffect(() => {
-        if (activeTab !== 'publish') {
-            return;
-        }
-
-        const storedQuizId = localStorage.getItem(getQuizStorageKey(course.id)) || sessionStorage.getItem(getQuizStorageKey(course.id)) || '';
-        setSavedQuizId(storedQuizId);
-    }, [activeTab, course.id]);
-
-    const handleCopyQuizId = async () => {
-        if (!savedQuizId) {
-            toast({ title: 'Chưa có Quiz ID', description: 'Vui lòng tạo quiz ở tab Bài thi cuối khóa trước.', variant: 'destructive' });
-            return;
-        }
-
-        try {
-            await navigator.clipboard.writeText(savedQuizId);
-            toast({ title: 'Đã copy Quiz ID', description: 'Bạn có thể gửi mã này cho HR/học viên.' });
-        } catch {
-            toast({ title: 'Không thể copy', description: 'Trình duyệt chặn thao tác copy. Vui lòng copy thủ công.', variant: 'destructive' });
-        }
-    };
 
     const form = useForm<CourseFormValues>({
         resolver: zodResolver(courseSchema),
@@ -291,7 +263,11 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                     </TabsContent>
 
                     <TabsContent value="exam" className="m-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <ExamBuilder courseId={course.id} />
+                        <ExamBuilder
+                            courseId={course.id}
+                            initialQuizId={course.finalQuizId}
+                            onQuizLinked={(quizId) => setCourse((prev) => ({ ...prev, hasFinalQuiz: true, finalQuizId: quizId }))}
+                        />
                     </TabsContent>
 
                     <TabsContent value="publish" className="m-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -319,16 +295,10 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                     <div>
                                         <p className="font-bold text-[#0F4C75]">Quiz cuối khóa</p>
                                         <p className="text-xs text-[#3282B8] font-medium">Tạo bộ câu hỏi để đánh giá pass/failed sau khóa học.</p>
-                                        {savedQuizId ? (
-                                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                                                <span className="text-[11px] font-semibold text-[#0F4C75]">Quiz ID:</span>
-                                                <span className="rounded-md bg-white px-2 py-1 font-mono text-[11px] text-[#0F4C75] border border-blue-100">{savedQuizId}</span>
-                                                <Button type="button" variant="outline" size="sm" className="h-7 border-blue-200 text-[#0F4C75] hover:bg-white" onClick={handleCopyQuizId}>
-                                                    <Copy className="w-3.5 h-3.5 mr-1" /> Copy
-                                                </Button>
-                                            </div>
+                                        {course.hasFinalQuiz ? (
+                                            <p className="text-[11px] text-green-700 mt-2">Đã có quiz cuối khóa gắn với khóa học này.</p>
                                         ) : (
-                                            <p className="text-[11px] text-amber-700 mt-2">Chưa có Quiz ID. Hãy tạo quiz ở tab Bài thi cuối khóa trước khi xuất bản.</p>
+                                            <p className="text-[11px] text-amber-700 mt-2">Chưa có quiz gắn với khóa học. Hãy tạo quiz ở tab Bài thi cuối khóa trước khi xuất bản.</p>
                                         )}
                                     </div>
                                 </div>
