@@ -53,8 +53,6 @@ export interface DashboardChartWidgetProps {
 }
 
 export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWidgetProps) {
-    const maxValue = Math.max(...data.map(d => d.value), 1) * 1.1
-
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
             <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
@@ -71,29 +69,35 @@ export function DashboardChartWidget({ title, subtitle, data }: DashboardChartWi
                     </Button>
                 </div>
             </div>
-            <div className="p-4 flex-1 flex flex-col justify-end min-h-0">
+            <div className="p-4 flex-1 overflow-y-auto">
                 {data.length > 0 ? (
-                    <div className="flex items-end justify-between gap-3 flex-1 w-full">
+                    <div className="flex flex-col gap-4">
                         {data.map((item) => (
-                            <div key={item.label} className="flex flex-col items-center flex-1 gap-1 group min-w-0">
-                                <span className="text-xs font-bold text-gray-700">{item.value}</span>
-                                <div className="relative w-full flex justify-center flex-1">
+                            <div key={item.label} className="w-full group">
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <span className="text-xs font-bold text-gray-700 truncate flex-1 pr-2" title={item.label}>
+                                        {item.label}
+                                    </span>
+                                    <span className="text-xs font-bold tabular-nums" style={{ color: item.color }}>
+                                        {item.value}%
+                                    </span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-2 by-gray-100 overflow-hidden shadow-inner">
                                     <div
-                                        className="w-full max-w-[48px] rounded-t-md transition-all duration-500 hover:opacity-80 group-hover:scale-105"
+                                        className="h-full rounded-full transition-all duration-1000 ease-out group-hover:brightness-110 flex items-center justify-end pr-1"
                                         style={{
-                                            height: `${Math.max((item.value / maxValue) * 100, 8)}%`,
+                                            width: `${Math.min(Math.max(item.value, 0), 100)}%`,
                                             backgroundColor: item.color
                                         }}
-                                    />
+                                    >
+                                        {(item.value > 10) && <div className="w-1 h-1 bg-white/40 rounded-full" />}
+                                    </div>
                                 </div>
-                                <span className="text-[10px] text-gray-500 text-center font-medium leading-tight w-full truncate" title={item.label}>
-                                    {item.label}
-                                </span>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
+                    <div className="h-full flex items-center justify-center text-gray-400 text-sm">Chưa có dữ liệu</div>
                 )}
             </div>
         </div>

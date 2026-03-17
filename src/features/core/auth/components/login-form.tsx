@@ -115,12 +115,9 @@ export function LoginForm() {
             {/* Headers are fine */}
             <div className="mb-10">
                 <div className="flex items-center gap-3 mb-8">
-                    <div className="w-12 h-12 rounded-lg bg-brand-dark shadow-lg flex items-center justify-center text-white">
-                        <Lock className="w-6 h-6" />
-                    </div>
                     <div className="flex flex-col">
                         <span className="text-3xl font-extrabold text-brand-dark dark:text-white tracking-tight">
-                            ERMS
+                            Enterprise Recruitment Managerment System
                         </span>
                         <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                             Tuyển dụng & Đào tạo
