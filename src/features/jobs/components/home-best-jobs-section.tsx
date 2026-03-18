@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -25,17 +25,17 @@ export function BestJobsSection() {
     const pageSize = 12
 
     // Auto-select tab dựa trên vị trí user (chỉ 1 lần khi mount)
-    const filterInitializedRef = useRef(false)
+    const [filterInitialized, setFilterInitialized] = useState(false)
     useEffect(() => {
-        if (!filterInitializedRef.current && userLocation?.city) {
+        if (!filterInitialized && userLocation?.city) {
             // Tìm tab có label chứa tên thành phố (VD: "Hà Nội" match tab "Hà Nội")
             const matched = FILTER_TABS.find(t => t.label === userLocation.city)
-            filterInitializedRef.current = true
             if (matched && matched.key !== 'random') {
-                queueMicrotask(() => setFilter(matched.key))
+                setFilter(matched.key)
             }
+            setFilterInitialized(true)
         }
-    }, [userLocation])
+    }, [userLocation, filterInitialized])
 
     const getLocation = (value: string) => {
         switch (value) {

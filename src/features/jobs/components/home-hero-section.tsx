@@ -75,16 +75,16 @@ export function HeroSection() {
     const [activeCategory, setActiveCategory] = useState<string>("marketing")
     const [keyword, setKeyword] = useState("")
     const [locationFilter, setLocationFilter] = useState(ALL_LOCATIONS_LABEL)
-    const locationInitializedRef = useRef(false)
+    const [locationInitialized, setLocationInitialized] = useState(false)
     const { location: userLocation } = useUserLocation()
 
     // Pre-fill location dropdown khi detect được vị trí user
     useEffect(() => {
-        if (!locationInitializedRef.current && userLocation?.city && LOCATIONS.includes(userLocation.city)) {
-            locationInitializedRef.current = true
-            queueMicrotask(() => setLocationFilter(userLocation.city))
+        if (!locationInitialized && userLocation?.city && LOCATIONS.includes(userLocation.city)) {
+            setLocationFilter(userLocation.city)
+            setLocationInitialized(true)
         }
-    }, [userLocation])
+    }, [userLocation, locationInitialized])
 
     const handleSearch = (event: React.FormEvent) => {
         event.preventDefault()

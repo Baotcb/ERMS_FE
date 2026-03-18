@@ -41,7 +41,6 @@ export const DepartmentList = memo(function DepartmentList() {
         setIsOpen(true)
     }, [])
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleDelete = useCallback((_dept: Department) => {
         // TODO: Implement department deletion with confirmation dialog
     }, [])
