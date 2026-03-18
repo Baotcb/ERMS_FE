@@ -68,7 +68,7 @@ export function SetupTrainingSchedulePage({
     headingTitle = 'Tạo khóa học & Lập lịch đào tạo',
     headingDescription = 'Thiết lập thời gian, địa điểm và thông báo cho khóa học.',
     stepTwoLabel = 'Bước 2: HR lập lịch & thông báo',
-    publishRedirectPath = '/enterprise/hr/training/schedule'
+    publishRedirectPath = '/enterprise/hr/training/courses'
 }: { 
     initialCourses?: CourseResult; 
     initialCourseDetails?: Course;
@@ -149,7 +149,7 @@ export function SetupTrainingSchedulePage({
         const normalizedOfflineLocation = sanitizePlainText(offlineLocation);
 
         if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
-            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ', variant: 'destructive' });
+            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ. Để trống nếu muốn hệ thống tự tạo Zoom.', variant: 'destructive' });
             return;
         }
 
@@ -174,7 +174,7 @@ export function SetupTrainingSchedulePage({
         setIsSubmitting(true);
         try {
             const { baseDescription } = parseScheduleConfig(currentCourse?.description);
-            const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
+            const locationValue = locationType === 'online' ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') : normalizedOfflineLocation;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
@@ -231,8 +231,8 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (locationType === 'online' && !isValidHttpUrl(normalizedMeetingLink)) {
-            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ', variant: 'destructive' });
+        if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
+            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ. Để trống nếu muốn hệ thống tự tạo Zoom.', variant: 'destructive' });
             return;
         }
 
@@ -245,7 +245,7 @@ export function SetupTrainingSchedulePage({
         setIsSubmitting(true);
         try {
             const { baseDescription } = parseScheduleConfig(currentCourse?.description);
-            const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
+            const locationValue = locationType === 'online' ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') : normalizedOfflineLocation;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
@@ -441,7 +441,23 @@ export function SetupTrainingSchedulePage({
                             </div>
 
                             {locationType === 'online' ? (
-                                <div className="space-y-2 mt-4 animate-in fade-in duration-300">
+                                <div className="space-y-3 mt-4 animate-in fade-in duration-300">
+                                    <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
+                                        <Video className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-sm font-semibold text-blue-800">Zoom Meeting tự động</p>
+                                            <p className="text-xs text-blue-600 mt-0.5">Hệ thống sẽ tự động tạo phòng họp Zoom và gửi link cho giảng viên + học viên khi phân công. Bạn có thể bỏ trống hoặc nhập link thủ công.</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold text-gray-600">Link cuộc họp (tùy chọn)</label>
+                                        <Input
+                                            value={meetingLink}
+                                            onChange={(e) => setMeetingLink(e.target.value)}
+                                            placeholder="Để trống để tự động tạo Zoom, hoặc nhập https://..."
+                                            className="bg-gray-50/50 border-gray-200 font-medium"
+                                        />
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-2 mt-4 animate-in fade-in duration-300">
