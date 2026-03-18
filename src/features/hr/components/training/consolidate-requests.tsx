@@ -46,7 +46,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
         { fallbackData: initialData }
     );
 
-    const pendingRequests = data?.items || [];
+    const pendingRequests = useMemo(() => data?.items || [], [data?.items]);
 
     const departmentOptions = useMemo(() => Array.from(new Set(pendingRequests.map(r => r.departmentName))).sort(), [pendingRequests]);
 

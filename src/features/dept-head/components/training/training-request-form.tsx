@@ -82,13 +82,8 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
 
                 setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng đăng nhập lại.');
             } catch (e) {
-<<<<<<< HEAD
                 const msg = e instanceof Error ? e.message : 'Lỗi không xác định';
                 setDetectError(`Không thể xác định thông tin nhân viên hiện tại: ${msg}`);
-=======
-                console.error('Failed to detect employee:', e);
-                setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng thử lại.');
->>>>>>> dev
             }
         };
 

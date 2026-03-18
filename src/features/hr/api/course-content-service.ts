@@ -98,6 +98,7 @@ function normalizeLesson(raw: unknown): Lesson {
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function normalizeSection(raw: unknown): CourseSection {
     const record = asRecord(raw);
     const lessons = Array.isArray(record.lessons)

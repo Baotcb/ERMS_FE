@@ -139,10 +139,7 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                         })}
                     </div>
                 )}
-<<<<<<< HEAD
-=======
 
->>>>>>> dev
             </nav>
 
             <div className="p-4 border-t border-gray-100">

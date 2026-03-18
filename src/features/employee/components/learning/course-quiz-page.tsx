@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
-import { CheckCircle2, Clock3, FileText, Lock, Loader2, Paperclip, Trophy, Timer, Send, Star } from 'lucide-react';
+import { Clock3, FileText, Lock, Loader2, Paperclip, Timer, Send, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,9 +51,7 @@ function parseOptions(raw: string): string[] {
     return raw.split('|').map((item) => item.trim()).filter(Boolean);
 }
 
-function getLearnerQuizIdKey(courseId: string): string {
-    return `learner-quiz-id:${courseId}`;
-}
+// getLearnerQuizIdKey removed — no longer used
 
 function getLessonCompletionKey(courseId: string): string {
     return `learner-lesson-completion:${courseId}`;
@@ -175,7 +173,7 @@ export function CourseQuizPage({
     const { toast } = useToast();
 
     const [progress, setProgress] = useState<CourseProgressDto | null>(initialProgress);
-    const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+    const [, setIsLoadingProgress] = useState(false);
     const [sections, setSections] = useState<CourseSection[]>([]);
     const [isLoadingCurriculum, setIsLoadingCurriculum] = useState(false);
     const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);

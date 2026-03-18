@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Camera, CheckCircle2, ImagePlus, Loader2, Trash2, X } from 'lucide-react';
+import Image from 'next/image';
+import { Camera, CheckCircle2, ImagePlus, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -126,7 +127,7 @@ export function WorkshopConfirmationDialog({
                             <div className="grid grid-cols-3 gap-3">
                                 {photos.map((url, i) => (
                                     <div key={i} className="relative group rounded-xl overflow-hidden border border-gray-200 aspect-video">
-                                        <img src={url} alt={`Workshop ${i + 1}`} className="w-full h-full object-cover" />
+                                        <Image src={url} alt={`Workshop ${i + 1}`} fill className="object-cover" unoptimized />
                                         <button
                                             onClick={() => handleRemovePhoto(i)}
                                             className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"

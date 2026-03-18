@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import useSWR from 'swr';
-import { Building2, Camera, CheckCircle2, Clock, Users, Search, Eye, XCircle } from 'lucide-react';
+import { Building2, Camera, CheckCircle2, Clock, Users, Search, Eye } from 'lucide-react';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,6 @@ import {
 import { courseService } from '@/features/hr/api/course-service';
 import { workshopService, type WorkshopConfirmation } from '@/features/hr/api/workshop-service';
 import { WorkshopConfirmationDialog } from './workshop-confirmation-dialog';
-import type { Course } from '@/features/hr/types/course-types';
 
 export function WorkshopManagementList() {
     const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; courseId: string; courseName: string }>({
@@ -271,7 +271,7 @@ export function WorkshopManagementList() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         {evidenceDialog.confirmation.evidencePhotoUrls.map((url, i) => (
                                             <a key={i} href={url} target="_blank" rel="noreferrer" className="rounded-xl overflow-hidden border border-gray-200 aspect-video block hover:shadow-md transition-shadow">
-                                                <img src={url} alt={`Minh chứng ${i + 1}`} className="w-full h-full object-cover" />
+                                                <Image src={url} alt={`Minh chứng ${i + 1}`} fill className="object-cover" unoptimized />
                                             </a>
                                         ))}
                                     </div>

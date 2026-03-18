@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, MessageSquare, Search, Star, TrendingUp, Users } from 'lucide-react';
+import { MessageSquare, Search, Star, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Badge } from '@/components/ui/badge';
