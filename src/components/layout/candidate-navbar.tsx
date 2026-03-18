@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BrandDecoration } from "@/components/layout/brand-decoration";
 import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import { logoutAction } from "@/features/core/auth/actions/auth";
+import { buildJobsHref, getKeywordFromPositionLabel } from "@/features/jobs/job-filtering";
 import { NavItem } from "./nav-item";
 import {
     Bell,
@@ -64,6 +65,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
     const userEmail = useMemo(() => user?.email || 'email@example.com', [user?.email]);
     const userId = useMemo(() => user?.id || 'N/A', [user?.id]);
     const userAvatar = useMemo(() => user?.avatarUrl || undefined, [user?.avatarUrl]);
+    const getJobHref = useCallback((job: string) => buildJobsHref({ q: getKeywordFromPositionLabel(job) }), []);
 
     return (
         <nav className="sticky top-0 z-50 bg-white border-b border-[#e8e8e8] h-16 shadow-sm">
@@ -143,7 +145,7 @@ export const CandidateNavbar = memo(function CandidateNavbar() {
                                         {JOB_POSITIONS.map((job) => (
                                             <Link
                                                 key={job}
-                                                href="/not-found"
+                                                href={getJobHref(job)}
                                                 className="text-sm text-[#6f7882] hover:text-[#1B5583] hover:translate-x-0.5 transition-all"
                                             >
                                                 {job}

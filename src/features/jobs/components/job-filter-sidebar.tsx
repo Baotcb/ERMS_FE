@@ -1,49 +1,38 @@
 'use client'
 
 import { Filter, X } from 'lucide-react'
-
-const EXPERIENCE_OPTIONS = [
-    { value: '', label: 'Tất cả kinh nghiệm' },
-    { value: '0', label: 'Chưa có kinh nghiệm' },
-    { value: '0-1', label: 'Dưới 1 năm' },
-    { value: '1-2', label: '1 - 2 năm' },
-    { value: '2-3', label: '2 - 3 năm' },
-    { value: '3-5', label: '3 - 5 năm' },
-    { value: '5+', label: 'Trên 5 năm' },
-]
-
-const SALARY_OPTIONS = [
-    { value: '', label: 'Tất cả mức lương' },
-    { value: '0-10', label: 'Dưới 10 triệu' },
-    { value: '10-15', label: '10 - 15 triệu' },
-    { value: '15-20', label: '15 - 20 triệu' },
-    { value: '20-30', label: '20 - 30 triệu' },
-    { value: '30+', label: 'Trên 30 triệu' },
-]
-
-const EMPLOYMENT_OPTIONS = [
-    { value: '', label: 'Tất cả hình thức' },
-    { value: 'FullTime', label: 'Toàn thời gian' },
-    { value: 'PartTime', label: 'Bán thời gian' },
-    { value: 'Contract', label: 'Hợp đồng' },
-    { value: 'Internship', label: 'Thực tập' },
-]
+import { EMPLOYMENT_OPTIONS, EXPERIENCE_OPTIONS, SALARY_OPTIONS } from '../job-filtering'
+import type { PublicDepartmentFilterOption, PublicJobFilterOption } from '../types'
 
 interface JobFilterSidebarProps {
     experience: string
     salary: string
     employment: string
-    onExperienceChange: (v: string) => void
-    onSalaryChange: (v: string) => void
-    onEmploymentChange: (v: string) => void
+    departmentId: string
+    departments: PublicDepartmentFilterOption[]
+    employmentTypes: PublicJobFilterOption[]
+    onExperienceChange: (value: string) => void
+    onSalaryChange: (value: string) => void
+    onEmploymentChange: (value: string) => void
+    onDepartmentChange: (value: string) => void
     onClear: () => void
 }
 
 export function JobFilterSidebar({
-    experience, salary, employment,
-    onExperienceChange, onSalaryChange, onEmploymentChange, onClear
+    experience,
+    salary,
+    employment,
+    departmentId,
+    departments,
+    employmentTypes,
+    onExperienceChange,
+    onSalaryChange,
+    onEmploymentChange,
+    onDepartmentChange,
+    onClear,
 }: JobFilterSidebarProps) {
-    const hasFilters = experience || salary || employment
+    const hasFilters = experience || salary || employment || departmentId
+    const availableEmploymentTypes = employmentTypes.length > 0 ? employmentTypes : EMPLOYMENT_OPTIONS
 
     return (
         <aside className="job-filter-sidebar">
@@ -60,50 +49,65 @@ export function JobFilterSidebar({
                 )}
             </div>
 
-            {/* Kinh nghiệm */}
+            {departments.length > 0 && (
+                <div className="job-filter-sidebar__group">
+                    <h4 className="job-filter-sidebar__group-title">Phòng ban</h4>
+                    <select
+                        className="w-full rounded-md border border-[#d8dee4] bg-white px-3 py-2 text-sm text-[#212f3f] outline-none focus:border-[#1B5583]"
+                        value={departmentId}
+                        onChange={(event) => onDepartmentChange(event.target.value)}
+                    >
+                        <option value="">Tất cả phòng ban</option>
+                        {departments.map((department) => (
+                            <option key={department.id} value={String(department.id)}>
+                                {department.departmentName} ({department.jobCount})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             <div className="job-filter-sidebar__group">
                 <h4 className="job-filter-sidebar__group-title">Kinh nghiệm</h4>
-                {EXPERIENCE_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="job-filter-sidebar__option">
+                {EXPERIENCE_OPTIONS.map((option) => (
+                    <label key={option.value} className="job-filter-sidebar__option">
                         <input
                             type="radio"
                             name="experience"
-                            checked={experience === opt.value}
-                            onChange={() => onExperienceChange(opt.value)}
+                            checked={experience === option.value}
+                            onChange={() => onExperienceChange(option.value)}
                         />
-                        {opt.label}
+                        {option.label}
                     </label>
                 ))}
             </div>
 
-            {/* Mức lương */}
             <div className="job-filter-sidebar__group">
                 <h4 className="job-filter-sidebar__group-title">Mức lương</h4>
-                {SALARY_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="job-filter-sidebar__option">
+                {SALARY_OPTIONS.map((option) => (
+                    <label key={option.value} className="job-filter-sidebar__option">
                         <input
                             type="radio"
                             name="salary"
-                            checked={salary === opt.value}
-                            onChange={() => onSalaryChange(opt.value)}
+                            checked={salary === option.value}
+                            onChange={() => onSalaryChange(option.value)}
                         />
-                        {opt.label}
+                        {option.label}
                     </label>
                 ))}
             </div>
 
-            {/* Hình thức */}
             <div className="job-filter-sidebar__group">
                 <h4 className="job-filter-sidebar__group-title">Hình thức làm việc</h4>
-                {EMPLOYMENT_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="job-filter-sidebar__option">
+                {availableEmploymentTypes.map((option) => (
+                    <label key={option.value} className="job-filter-sidebar__option">
                         <input
                             type="radio"
                             name="employment"
-                            checked={employment === opt.value}
-                            onChange={() => onEmploymentChange(opt.value)}
+                            checked={employment === option.value}
+                            onChange={() => onEmploymentChange(option.value)}
                         />
-                        {opt.label}
+                        {option.label}
                     </label>
                 ))}
             </div>

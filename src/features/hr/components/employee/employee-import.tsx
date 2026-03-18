@@ -295,9 +295,10 @@ export function EmployeeImport({ onSuccess, onCancel }: EmployeeImportProps) {
             <Alert className="bg-blue-50 border-blue-100 text-blue-800">
                 <AlertCircle className="h-4 w-4 text-blue-600" />
                 <AlertTitle>Lưu ý về định dạng file</AlertTitle>
-                <AlertDescription>
-                    File Excel cần có các cột: <strong>Full Name, Email, Department Code</strong> (bắt buộc).
-                    Các cột tùy chọn: Phone, Position, Password, Role.
+                <AlertDescription className="space-y-1">
+                    <p>File Excel cần có các cột: <strong>Full Name</strong>, <strong>Email</strong> (bắt buộc).</p>
+                    <p><strong>Department Code</strong>: bắt buộc khi <strong>Role</strong> khác <strong>Director</strong>.</p>
+                    <p>Các cột tùy chọn: Phone, Position, Password, Role.</p>
                 </AlertDescription>
             </Alert>
         </div>

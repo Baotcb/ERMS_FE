@@ -55,7 +55,7 @@ const EmployeeRow = memo(function EmployeeRow({
     return (
         <div className="flex border-b border-gray-100 hover:bg-gray-50 transition-colors">
             {/* Avatar & Name */}
-            <div className="w-64 px-6 py-4 flex-shrink-0">
+            <div className="w-56 px-4 py-3.5 flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center">
                         <span className="text-white font-semibold text-sm">{initials}</span>
@@ -79,22 +79,22 @@ const EmployeeRow = memo(function EmployeeRow({
             </div>
 
             {/* Employee Code */}
-            <div className="w-32 px-6 py-4 flex-shrink-0">
-                <span className="text-sm font-mono text-gray-600">{emp.employeeCode}</span>
+            <div className="w-44 px-4 py-3.5 flex-shrink-0">
+                <span className="block truncate text-sm font-mono text-gray-600" title={emp.employeeCode}>{emp.employeeCode}</span>
             </div>
 
             {/* Department */}
-            <div className="w-48 px-6 py-4 flex-shrink-0">
-                <span className="text-sm text-gray-600">{emp.departmentName || '-'}</span>
+            <div className="w-36 px-4 py-3.5 flex-shrink-0">
+                <span className="block truncate text-sm text-gray-600" title={emp.departmentName || '-'}>{emp.departmentName || '-'}</span>
             </div>
 
             {/* Position */}
-            <div className="w-48 px-6 py-4 flex-shrink-0">
-                <span className="text-sm text-gray-600">{emp.position || '-'}</span>
+            <div className="w-40 px-4 py-3.5 flex-shrink-0">
+                <span className="block truncate text-sm text-gray-600" title={emp.position || '-'}>{emp.position || '-'}</span>
             </div>
 
             {/* Status */}
-            <div className="w-32 px-6 py-4 flex-shrink-0">
+            <div className="w-32 px-4 py-3.5 flex-shrink-0">
                 <span className={cn(
                     'inline-flex px-3 py-1 rounded-full text-xs font-medium',
                     emp.status === 'Active'
@@ -106,7 +106,7 @@ const EmployeeRow = memo(function EmployeeRow({
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 flex-shrink-0 text-right">
+            <div className="px-4 py-3.5 flex-shrink-0 text-right">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
@@ -177,12 +177,12 @@ export const EmployeeTableVirtualized = memo(function EmployeeTableVirtualized({
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Table Header */}
             <div className="flex border-b border-gray-100 bg-gray-50">
-                <div className="w-64 px-6 py-4 text-sm font-semibold text-gray-600">Nhân viên</div>
-                <div className="w-32 px-6 py-4 text-sm font-semibold text-gray-600">Mã NV</div>
-                <div className="w-48 px-6 py-4 text-sm font-semibold text-gray-600">Phòng ban</div>
-                <div className="w-48 px-6 py-4 text-sm font-semibold text-gray-600">Chức vụ</div>
-                <div className="w-32 px-6 py-4 text-sm font-semibold text-gray-600 text-center">Trạng thái</div>
-                <div className="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Thao tác</div>
+                <div className="w-56 px-4 py-3.5 text-sm font-semibold text-gray-600">Nhân viên</div>
+                <div className="w-44 px-4 py-3.5 text-sm font-semibold text-gray-600">Mã NV</div>
+                <div className="w-36 px-4 py-3.5 text-sm font-semibold text-gray-600">Phòng ban</div>
+                <div className="w-40 px-4 py-3.5 text-sm font-semibold text-gray-600">Chức vụ</div>
+                <div className="w-32 px-4 py-3.5 text-sm font-semibold text-gray-600 text-center">Trạng thái</div>
+                <div className="px-4 py-3.5 text-sm font-semibold text-gray-600 text-right">Thao tác</div>
             </div>
 
             {/* Virtualized Rows */}
@@ -217,3 +217,4 @@ export const EmployeeTableVirtualized = memo(function EmployeeTableVirtualized({
         </div>
     )
 })
+

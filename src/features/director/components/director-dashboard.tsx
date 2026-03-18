@@ -127,7 +127,7 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
     const pendingPlans = pendingPlansData?.items || []
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6 min-h-[calc(100vh-6rem)]">
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-[#0F4C75] leading-tight">Dashboard</h1>
@@ -163,7 +163,7 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
                 {/* Pending Plans List (Takes up 2 cols) */}
                 <div className="lg:col-span-2 h-full">
                     <DashboardListWidget
@@ -187,7 +187,7 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
                 <DashboardChartWidget
                     title="Phân bổ ngân sách tuyển dụng"
                     subtitle="Theo phòng ban (Đơn vị: Triệu VNĐ)"

@@ -19,9 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/lib/api-client';
-import { getCookie } from '@/features/core/auth/utils/auth-cookies';
-import { useAuth } from '@/features/core/auth/hooks/use-auth';
-import { STORAGE_KEYS } from '@/utils/constants';
+
 
 import { trainingService } from '../../api/training-service';
 import { 
@@ -33,7 +31,6 @@ import {
 
 export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingRequestFormProps) {
     const { toast } = useToast();
-    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
     const [detectError, setDetectError] = useState<string | null>(null);
@@ -43,65 +40,41 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
         defaultValues: TRAINING_REQUEST_DEFAULTS,
     });
 
-    const detectEmployeeFromItems = (
-        items: Array<{ id?: string; email?: string; fullName?: string; departmentName?: string }>,
-        email?: string,
-        fullName?: string
-    ) => {
-        const normalizedEmail = email?.trim().toLowerCase();
-        const normalizedName = fullName?.trim().toLowerCase();
-
-        return items.find((item) =>
-            normalizedEmail && item.email?.trim().toLowerCase() === normalizedEmail
-        ) || items.find((item) =>
-            normalizedName && item.fullName?.trim().toLowerCase() === normalizedName
-        ) || null;
-    };
-
-    // Detect Employee & Department
+    // Detect Employee & Department via User Profile API
     useEffect(() => {
         if (!open) return;
-        
+
         const detectUser = async () => {
             try {
                 setDetectError(null);
                 setDetectedEmp(null);
-                const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME);
-                const cookieFullName = userNameEncoded ? decodeURIComponent(userNameEncoded) : '';
-                const emailCandidates = [user?.email].filter(Boolean) as string[];
-                const nameCandidates = [user?.fullName, cookieFullName].filter(Boolean) as string[];
 
-                for (const email of emailCandidates) {
-                    const res = await apiClient.get(`/api/Employees?search=${encodeURIComponent(email)}&pageSize=20`);
-                    if (!res.ok) {
-                        continue;
-                    }
+                // Lấy profile user hiện tại (departmentName)
+                const profileRes = await apiClient.get('/api/User/profile');
+                if (!profileRes.ok) {
+                    setDetectError('Không thể lấy thông tin profile. Vui lòng đăng nhập lại.');
+                    return;
+                }
+                const profile = await profileRes.json();
+                const departmentName = profile?.departmentName || '';
 
-                    const data = await res.json();
-                    const employee = detectEmployeeFromItems(data.items || [], email, user?.fullName || cookieFullName);
-                    if (employee?.id) {
-                        setDetectedEmp({
-                            id: employee.id,
-                            departmentName: employee.departmentName || '',
-                        });
-                        form.setValue('requestedById', employee.id);
-                        return;
-                    }
+                // Cần employeeId cho training request - search bằng email từ profile
+                const email = profile?.email;
+                if (!email) {
+                    setDetectError('Không thể xác định email người dùng.');
+                    return;
                 }
 
-                for (const fullName of nameCandidates) {
-                    const res = await apiClient.get(`/api/Employees?search=${encodeURIComponent(fullName)}&pageSize=20`);
-                    if (!res.ok) {
-                        continue;
-                    }
-
-                    const data = await res.json();
-                    const employee = detectEmployeeFromItems(data.items || [], user?.email, fullName);
+                const empRes = await apiClient.get(`/api/Employees?search=${encodeURIComponent(email)}&pageSize=5`);
+                if (empRes.ok) {
+                    const data = await empRes.json();
+                    const items = data.items || [];
+                    const employee = items.find(
+                        (item: { email?: string }) => item.email?.trim().toLowerCase() === email.trim().toLowerCase()
+                    );
                     if (employee?.id) {
-                        setDetectedEmp({
-                            id: employee.id,
-                            departmentName: employee.departmentName || '',
-                        });
+                        const empDeptName = departmentName || employee.departmentName || '';
+                        setDetectedEmp({ id: employee.id, departmentName: empDeptName });
                         form.setValue('requestedById', employee.id);
                         return;
                     }
@@ -109,14 +82,19 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
 
                 setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng đăng nhập lại.');
             } catch (e) {
+<<<<<<< HEAD
                 const msg = e instanceof Error ? e.message : 'Lỗi không xác định';
                 setDetectError(`Không thể xác định thông tin nhân viên hiện tại: ${msg}`);
+=======
+                console.error('Failed to detect employee:', e);
+                setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng thử lại.');
+>>>>>>> dev
             }
         };
 
         detectUser();
         form.reset(TRAINING_REQUEST_DEFAULTS);
-    }, [open, form, user?.email, user?.fullName]);
+    }, [open, form]);
 
     const onSubmit: SubmitHandler<TrainingRequestValues> = async (values) => {
         if (!detectedEmp?.id) {

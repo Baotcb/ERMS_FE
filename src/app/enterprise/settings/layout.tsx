@@ -40,7 +40,7 @@ export default async function EnterpriseSettingsLayout({
 
       <main
         className={cn(
-          'flex-1 overflow-y-auto',
+          'enterprise-scale flex-1 overflow-y-auto',
           session.role === USER_ROLES.DIRECTOR ? 'h-screen' : 'overflow-x-hidden'
         )}
       >
