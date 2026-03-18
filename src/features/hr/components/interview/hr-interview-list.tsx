@@ -1,26 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { CalendarDays, Clock, Video, Building2, Users, AlertCircle, CheckCircle2, Search, CalendarCheck } from 'lucide-react'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+
 import { ConfirmScheduleDialog } from './confirm-schedule-dialog'
+import { HRInterviewTable } from './hr-interview-table'
 import { useAllInterviews } from '../../hooks/use-interview'
 import type { InterviewDto } from '../../types/interview-types'
-
-function StatusBadge({ status }: { status: string }) {
-    const config: Record<string, { label: string; className: string }> = {
-        PendingSchedule: { label: 'Chờ xếp lịch', className: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-        Scheduled: { label: 'Đã xếp lịch', className: 'bg-blue-100 text-blue-700 border-blue-200' },
-        Completed: { label: 'Hoàn thành', className: 'bg-green-100 text-green-700 border-green-200' },
-        Cancelled: { label: 'Đã hủy', className: 'bg-red-100 text-red-700 border-red-200' },
-    }
-    const c = config[status] ?? { label: status, className: 'bg-gray-100 text-gray-600 border-gray-200' }
-    return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>
-}
 
 const STATUS_TABS = [
     { value: '', label: 'Tất cả' },
@@ -29,194 +18,126 @@ const STATUS_TABS = [
     { value: 'Completed', label: 'Hoàn thành' },
 ]
 
+const PAGE_SIZE = 10
+
 export function HRInterviewList() {
     const [statusFilter, setStatusFilter] = useState('')
     const [search, setSearch] = useState('')
+    const [page, setPage] = useState(1)
     const [scheduleDialog, setScheduleDialog] = useState<{ open: boolean; item: InterviewDto | null }>({ open: false, item: null })
 
-    // Real API call
     const { data, isLoading, error, mutate } = useAllInterviews({
-        pageNumber: 1,
-        pageSize: 50,
+        pageNumber: page,
+        pageSize: PAGE_SIZE,
         statusFilter: statusFilter || undefined,
     })
 
-    const interviews = data?.items ?? []
-    const hasError = !!error
+    const totalCount = data?.totalCount ?? 0
+    const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
-    // Client-side search filter (search by candidate name or job title)
+    const interviews = data?.items ?? []
+
+    // Client-side search filter
     const filteredInterviews = interviews.filter(i => {
         if (!search) return true
         const q = search.toLowerCase()
         return i.candidateName.toLowerCase().includes(q) || i.jobTitle.toLowerCase().includes(q)
     })
 
-    const handleScheduleClick = (item: InterviewDto) => {
-        setScheduleDialog({ open: true, item })
-    }
-
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-12">
-            {/* Header */}
-            <div className="border-b border-slate-200 pb-6">
-                <h1 className="text-2xl font-bold text-[#0F4C75]">Quản lý phỏng vấn</h1>
-                <p className="text-sm text-slate-500 mt-1">
+        <div className="flex flex-col gap-6">
+            {/* Page Header */}
+            <div className="flex flex-col gap-1">
+                <h1 className="text-3xl font-bold tracking-tight text-[#0C4A6E]">
+                    Quản lý phỏng vấn
+                </h1>
+                <p className="text-[#0C4A6E]/70 text-base">
                     Xem và xác nhận lịch phỏng vấn cho các ứng viên đã được phân công.
                 </p>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex gap-2 flex-wrap">
-                    {STATUS_TABS.map(tab => (
-                        <button
-                            key={tab.value}
-                            type="button"
-                            onClick={() => setStatusFilter(tab.value)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${statusFilter === tab.value
-                                ? 'bg-[#0F4C75] text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-                <div className="relative max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input
-                        placeholder="Tìm ứng viên hoặc vị trí..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="pl-10"
-                    />
+            {/* Toolbar */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        <Input
+                            placeholder="Tìm ứng viên hoặc vị trí..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-sky-200 focus-visible:border-sky-300"
+                        />
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex gap-1 p-1 bg-slate-50 rounded-xl">
+                        {STATUS_TABS.map(tab => (
+                            <button
+                                key={tab.value}
+                                type="button"
+                                onClick={() => { setStatusFilter(tab.value); setPage(1) }}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${statusFilter === tab.value
+                                    ? 'bg-white shadow-sm text-[#0C4A6E]'
+                                    : 'text-slate-500 hover:text-[#0369A1]'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Content */}
-            {isLoading ? (
-                <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-xl border border-slate-200 p-6 animate-pulse">
-                            <div className="flex gap-4">
-                                <div className="w-12 h-12 bg-slate-100 rounded-full" />
-                                <div className="flex-1 space-y-3">
-                                    <div className="h-5 bg-slate-100 rounded w-1/3" />
-                                    <div className="h-4 bg-slate-100 rounded w-1/2" />
-                                </div>
-                            </div>
+            {/* Data Table Card */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[420px]">
+                <div className="flex-1 overflow-x-auto">
+                    {isLoading ? (
+                        <div className="p-6 space-y-4">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-16 w-full" />
                         </div>
-                    ))}
-                </div>
-            ) : hasError ? (
-                <div className="bg-white rounded-xl border border-red-200 p-8 text-center">
-                    <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-                    <p className="text-sm text-red-600">Không thể tải danh sách phỏng vấn.</p>
-                </div>
-            ) : filteredInterviews.length === 0 ? (
-                <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-                    <CalendarDays className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="font-medium text-slate-600">Chưa có lịch phỏng vấn nào</p>
-                    <p className="text-sm text-slate-400 mt-1">
-                        {statusFilter
-                            ? 'Không tìm thấy phỏng vấn với bộ lọc hiện tại.'
-                            : 'Khi Trưởng bộ phận phân công người phỏng vấn, lịch sẽ hiển thị ở đây để bạn xác nhận.'}
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {filteredInterviews.map(item => (
-                        <div
-                            key={item.interviewId}
-                            className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5"
-                        >
-                            <div className="flex flex-col md:flex-row justify-between gap-4">
-                                {/* Left Info */}
-                                <div className="flex gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-[#BBE1FA]/40 flex items-center justify-center text-[#0F4C75] font-bold text-lg shrink-0">
-                                        {item.candidateName.charAt(0)}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="font-semibold text-slate-800">{item.candidateName}</p>
-                                            <p className="text-sm text-slate-500">{item.jobTitle}</p>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            <StatusBadge status={item.status} />
-                                            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                                                {item.interviewType}
-                                            </Badge>
-                                            <Badge variant="outline" className="text-xs bg-slate-50 text-slate-500 border-slate-200">
-                                                Vòng {item.roundNumber}
-                                            </Badge>
-                                        </div>
-
-                                        {/* Interviewers */}
-                                        {item.participants.length > 0 && (
-                                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                <Users className="w-3.5 h-3.5" />
-                                                <span>PV: {item.participants.map(p => p.employeeName).join(', ')}</span>
-                                            </div>
-                                        )}
-
-                                        {/* Scheduled info */}
-                                        {item.status === 'Scheduled' && item.scheduledAt && (
-                                            <div className="flex flex-wrap gap-4 text-sm text-slate-600 mt-1">
-                                                <span className="flex items-center gap-1.5">
-                                                    <CalendarDays className="w-4 h-4 text-slate-400" />
-                                                    {format(new Date(item.scheduledAt), "EEEE, dd/MM/yyyy 'lúc' HH:mm", { locale: vi })}
-                                                </span>
-                                                <span className="flex items-center gap-1.5">
-                                                    <Clock className="w-4 h-4 text-slate-400" />
-                                                    {item.duration} phút
-                                                </span>
-                                                <span className="flex items-center gap-1.5">
-                                                    {item.interviewFormat === 'Online'
-                                                        ? <Video className="w-4 h-4 text-blue-400" />
-                                                        : <Building2 className="w-4 h-4 text-orange-400" />
-                                                    }
-                                                    {item.interviewFormat === 'Online'
-                                                        ? (item.meetingLink ? 'Online' : 'Online')
-                                                        : (item.location || 'Tại văn phòng')
-                                                    }
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Right Actions */}
-                                <div className="flex items-center gap-2 shrink-0 self-start md:self-center">
-                                    {item.status === 'PendingSchedule' && (
-                                        <Button
-                                            size="sm"
-                                            className="text-xs bg-[#0F4C75] hover:bg-[#3282B8]"
-                                            onClick={() => handleScheduleClick(item)}
-                                        >
-                                            <CalendarCheck className="w-3 h-3 mr-1" />
-                                            Xác nhận lịch
-                                        </Button>
-                                    )}
-
-                                    {item.status === 'Scheduled' && (
-                                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                                            Đã xác nhận
-                                        </Badge>
-                                    )}
-
-                                    {item.status === 'Completed' && (
-                                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                                            Hoàn thành
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
+                    ) : error ? (
+                        <div className="p-12 text-center text-red-500 text-sm">
+                            Không thể tải danh sách phỏng vấn.
                         </div>
-                    ))}
+                    ) : (
+                        <HRInterviewTable
+                            data={filteredInterviews}
+                            onSchedule={(item) => setScheduleDialog({ open: true, item })}
+                        />
+                    )}
                 </div>
-            )}
+
+                {/* Pagination */}
+                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Trước
+                    </Button>
+                    <span className="text-sm font-medium text-slate-600">
+                        Trang {page} / {pageCount}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(pageCount, p + 1))}
+                        disabled={page === pageCount}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        Tiếp
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
 
             {/* Confirm Schedule Dialog */}
             {scheduleDialog.item && (

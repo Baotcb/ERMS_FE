@@ -24,12 +24,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import type { RecruitmentCampaign } from '../../types/recruitment-campaign-types'
@@ -53,8 +47,8 @@ function CampaignStatusBadge({ status }: { status: string }) {
     const c = config[status] ?? config.Draft
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${c.dot}`} />
+        <span className={`inline-flex items-center justify-center min-w-[90px] px-2.5 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 flex-shrink-0 ${c.dot}`} />
             {status}
         </span>
     )
@@ -168,20 +162,27 @@ export function RecruitmentCampaignTable({
                             )}
                         </TableCell>
                         <TableCell className="px-6 py-4 align-middle text-center">
-                            <Select
-                                defaultValue={campaign.status}
-                                onValueChange={(value) => onStatusChange(campaign.id, value)}
-                            >
-                                <SelectTrigger className="w-[120px] h-8 mx-auto border-0 rounded-full text-xs font-medium px-3 focus:ring-0 focus:ring-offset-0 cursor-pointer bg-transparent">
-                                    <CampaignStatusBadge status={campaign.status} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Draft">Draft</SelectItem>
-                                    <SelectItem value="Open">Open</SelectItem>
-                                    <SelectItem value="Closed">Closed</SelectItem>
-                                    <SelectItem value="Archived">Archived</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button type="button" className="cursor-pointer focus:outline-none">
+                                        <CampaignStatusBadge status={campaign.status} />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="center">
+                                    <DropdownMenuLabel>Đổi trạng thái</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {['Draft', 'Open', 'Closed', 'Archived'].map((s) => (
+                                        <DropdownMenuItem
+                                            key={s}
+                                            onClick={() => onStatusChange(campaign.id, s)}
+                                            className="cursor-pointer"
+                                            disabled={campaign.status === s}
+                                        >
+                                            <CampaignStatusBadge status={s} />
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </TableCell>
                         <TableCell className="px-6 py-4 align-middle text-right">
                             <DropdownMenu>

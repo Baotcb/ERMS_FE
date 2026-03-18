@@ -101,13 +101,13 @@ export const DepartmentTable = memo(function DepartmentTable({
                         </TableCell>
                         <TableCell className="px-6 py-4 align-middle text-center">
                             <span className={cn(
-                                'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border',
+                                'inline-flex items-center justify-center min-w-[90px] px-2.5 py-1 rounded-full text-xs font-medium border',
                                 dept.isActive
                                     ? 'bg-green-100 border-green-200/50 text-green-700'
                                     : 'bg-slate-100 border-slate-200/50 text-slate-600'
                             )}>
                                 <span className={cn(
-                                    'w-1.5 h-1.5 rounded-full mr-1.5',
+                                    'w-1.5 h-1.5 rounded-full mr-1.5 flex-shrink-0',
                                     dept.isActive ? 'bg-green-500' : 'bg-slate-400'
                                 )} />
                                 {dept.isActive ? 'Hoạt động' : 'Tạm dừng'}

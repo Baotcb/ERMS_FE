@@ -18,7 +18,7 @@ function StatusBadge({ status }: { status: string }) {
         Cancelled: { label: 'Đã hủy', className: 'bg-red-100 text-red-700 border-red-200' },
     }
     const c = config[status] ?? { label: status, className: 'bg-gray-100 text-gray-600 border-gray-200' }
-    return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>
+    return <Badge variant="outline" className={`text-xs min-w-[100px] justify-center ${c.className}`}>{c.label}</Badge>
 }
 
 function InterviewTypeBadge({ type }: { type: string }) {
