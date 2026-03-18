@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import useSWR from 'swr';
-import { ChevronLeft, Save, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Save, AlertTriangle, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,13 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '../../api/hr-training-service';
 import type { TrainingRequest } from '../../../dept-head/types/training-types';
@@ -30,6 +37,8 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
     const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
     const [plannedBudget, setPlannedBudget] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [search, setSearch] = useState('');
+    const [deptFilter, setDeptFilter] = useState('all');
 
     const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
         '/api/TrainingRequest?status=Pending',
@@ -37,7 +46,18 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
         { fallbackData: initialData }
     );
 
-    const pendingRequests = data?.items || [];
+    const pendingRequests = useMemo(() => data?.items || [], [data?.items]);
+
+    const departmentOptions = useMemo(() => Array.from(new Set(pendingRequests.map(r => r.departmentName))).sort(), [pendingRequests]);
+
+    const filteredRequests = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return pendingRequests.filter(r => {
+            const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.departmentName.toLowerCase().includes(q);
+            const matchDept = deptFilter === 'all' || r.departmentName === deptFilter;
+            return matchSearch && matchDept;
+        });
+    }, [pendingRequests, search, deptFilter]);
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => 
@@ -85,11 +105,11 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                 });
                 router.push('/enterprise/hr/training/plans');
             }
-        } catch (error) {
-            void error;
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể tạo kế hoạch. Vui lòng thử lại.';
             toast({
                 title: 'Lỗi',
-                description: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
+                description: msg,
                 variant: 'destructive',
             });
         } finally {
@@ -112,17 +132,40 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-700">
-                                {pendingRequests.length} Yêu cầu đang chờ
-                            </Badge>
-                            <span className="text-sm text-gray-400">|</span>
-                            <span className="text-sm font-medium text-gray-600">Đã chọn: {selectedIds.length}</span>
+                    {/* Search + Filter */}
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+                        <div className="flex flex-col md:flex-row items-center gap-3">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Tìm theo chủ đề hoặc phòng ban..."
+                                    className="pl-10 border-gray-200 focus:border-[#3282B8]"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <Select value={deptFilter} onValueChange={setDeptFilter}>
+                                <SelectTrigger className="w-[200px]">
+                                    <SelectValue placeholder="Phòng ban" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả phòng ban</SelectItem>
+                                    {departmentOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedIds(pendingRequests.map((r: TrainingRequest) => r.id))}>Chọn tất cả</Button>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>Bỏ chọn</Button>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                                    {filteredRequests.length} Yêu cầu đang chờ
+                                </Badge>
+                                <span className="text-sm text-gray-400">|</span>
+                                <span className="text-sm font-medium text-gray-600">Đã chọn: {selectedIds.length}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setSelectedIds(filteredRequests.map((r: TrainingRequest) => r.id))}>Chọn tất cả</Button>
+                                <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>Bỏ chọn</Button>
+                            </div>
                         </div>
                     </div>
 
@@ -141,10 +184,10 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow><TableCell colSpan={6} className="text-center py-8">Đang tải...</TableCell></TableRow>
-                                ) : pendingRequests.length === 0 ? (
-                                    <TableRow><TableCell colSpan={6} className="text-center py-8 italic text-gray-400">Không có yêu cầu nào đang chờ xử lý</TableCell></TableRow>
+                                ) : filteredRequests.length === 0 ? (
+                                    <TableRow><TableCell colSpan={6} className="text-center py-8 italic text-gray-400">{pendingRequests.length === 0 ? 'Không có yêu cầu nào đang chờ xử lý' : 'Không tìm thấy kết quả phù hợp'}</TableCell></TableRow>
                                 ) : (
-                                    pendingRequests.map((request: TrainingRequest) => (
+                                    filteredRequests.map((request: TrainingRequest) => (
                                         <TableRow key={request.id} className={selectedIds.includes(request.id) ? 'bg-blue-50/30' : ''}>
                                             <TableCell>
                                                 <Checkbox 

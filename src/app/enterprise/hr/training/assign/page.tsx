@@ -2,16 +2,14 @@ import { AssignTrainingPage } from '@/features/dept-head/components/training/ass
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 
 export default async function Page() {
-    const [initialCourses, initialTrainers, initialTrainees] = await Promise.all([
+    const [initialCourses, initialTrainees] = await Promise.all([
         trainingServerService.getAllCourses({ status: 'Draft', pageSize: 100 }),
-        trainingServerService.getEmployees({ pageSize: 5 }),
-        trainingServerService.getEmployees({ pageSize: 10 }),
+        trainingServerService.getEmployees({ pageSize: 50 }),
     ]);
 
     return (
         <AssignTrainingPage
             initialCourses={initialCourses}
-            initialTrainers={initialTrainers}
             initialTrainees={initialTrainees}
         />
     );

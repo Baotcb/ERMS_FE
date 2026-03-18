@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Check, X, Info } from 'lucide-react';
+import { Check, RotateCcw, X, Info } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -28,17 +28,20 @@ import { useToast } from '@/hooks/use-toast';
 import { directorTrainingService } from '../../api/director-training-service';
 import { TrainingPlan } from '../../../hr/types/training-plan-types';
 
-export function TrainingPlansApprovalList() {
+export function TrainingPlansApprovalList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const { toast } = useToast();
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isApproveOpen, setIsApproveOpen] = useState(false);
+    const [isResubmitRequestOpen, setIsResubmitRequestOpen] = useState(false);
+    const [resubmitRequestNote, setResubmitRequestNote] = useState('');
     const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, isLoading, mutate } = useSWR<{ items: TrainingPlan[] }>(
         '/api/TrainingPlan?status=Pending',
-        () => directorTrainingService.getPendingPlans()
+        () => directorTrainingService.getPendingPlans(),
+        { fallbackData: initialData }
     );
 
     const plans = data?.items || [];
@@ -55,30 +58,57 @@ export function TrainingPlansApprovalList() {
             } else {
                 toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch.', variant: 'destructive' });
             }
-        } catch (error) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleRequestResubmission = async () => {
+        if (!selectedPlan || !resubmitRequestNote.trim()) return;
+        setIsSubmitting(true);
+        try {
+            const res = await directorTrainingService.requestPlanResubmission(
+                selectedPlan.id,
+                resubmitRequestNote.trim()
+            );
+            if (res.ok) {
+                toast({ title: 'Đã yêu cầu gửi lại', description: 'Kế hoạch đã được trả về HR để chỉnh sửa và gửi lại.' });
+                setIsResubmitRequestOpen(false);
+                setResubmitRequestNote('');
+                mutate();
+            } else {
+                toast({ title: 'Lỗi', description: 'Không thể gửi yêu cầu chỉnh sửa kế hoạch.', variant: 'destructive' });
+            }
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể gửi yêu cầu chỉnh sửa kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleReject = async () => {
-        if (!selectedPlan || !rejectReason) return;
+        if (!selectedPlan || !rejectReason.trim()) return;
         setIsSubmitting(true);
         try {
-            const res = await directorTrainingService.rejectPlan(selectedPlan.id, rejectReason);
+            const res = await directorTrainingService.rejectPlan(
+                selectedPlan.id,
+                rejectReason.trim()
+            );
             if (res.ok) {
-                toast({ title: 'Đã từ chối', description: 'Kế hoạch đã được trả về cho HR xử lý.' });
+                toast({ title: 'Đã từ chối', description: 'Kế hoạch đã bị từ chối.' });
                 setIsRejectOpen(false);
                 setRejectReason('');
                 mutate();
             } else {
                 toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch.', variant: 'destructive' });
             }
-        } catch (error) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Không thể từ chối kế hoạch. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -128,6 +158,9 @@ export function TrainingPlansApprovalList() {
                                             <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
                                                 <Check className="w-4 h-4 mr-1" /> Phê duyệt
                                             </Button>
+                                            <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}>
+                                                <RotateCcw className="w-4 h-4 mr-1" /> Yêu cầu gửi lại
+                                            </Button>
                                             <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}>
                                                 <X className="w-4 h-4 mr-1" /> Từ chối
                                             </Button>
@@ -162,16 +195,40 @@ export function TrainingPlansApprovalList() {
                 </DialogContent>
             </Dialog>
 
+            {/* Request Resubmission Dialog */}
+            <Dialog open={isResubmitRequestOpen} onOpenChange={setIsResubmitRequestOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-amber-700">Yêu cầu gửi lại kế hoạch</DialogTitle>
+                        <DialogDescription>Vui lòng cung cấp nội dung cần chỉnh sửa để HR cập nhật và gửi lại kế hoạch.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <Textarea 
+                            placeholder="Nhập nội dung yêu cầu chỉnh sửa..." 
+                            value={resubmitRequestNote}
+                            onChange={(e) => setResubmitRequestNote(e.target.value)}
+                            className="min-h-[100px]"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsResubmitRequestOpen(false)}>Hủy</Button>
+                        <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleRequestResubmission} disabled={!resubmitRequestNote.trim() || isSubmitting}>
+                            {isSubmitting ? 'Đang xử lý...' : 'Gửi yêu cầu gửi lại'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Reject Dialog */}
             <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="text-red-600">Từ chối kế hoạch</DialogTitle>
-                        <DialogDescription>Vui lòng cung cấp lý do từ chối để bộ phận HR điều chỉnh.</DialogDescription>
+                        <DialogDescription>Vui lòng nhập lý do từ chối để HR nắm rõ và lưu vết phê duyệt.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                        <Textarea 
-                            placeholder="Nhập lý do từ chối..." 
+                        <Textarea
+                            placeholder="Nhập lý do từ chối..."
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
                             className="min-h-[100px]"
@@ -179,7 +236,7 @@ export function TrainingPlansApprovalList() {
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsRejectOpen(false)}>Hủy</Button>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleReject} disabled={!rejectReason || isSubmitting}>
+                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleReject} disabled={!rejectReason.trim() || isSubmitting}>
                             {isSubmitting ? 'Đang xử lý...' : 'Xác nhận từ chối'}
                         </Button>
                     </DialogFooter>

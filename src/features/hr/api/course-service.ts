@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { Course, CourseResult, CreateCourseCommand, UpdateCourseCommand } from '../types/course-types';
+import { Course, CourseResult, CreateCourseCommand, PublishCourseCommand, UpdateCourseCommand } from '../types/course-types';
 
 export const courseService = {
     async getAllCourses(params?: {
@@ -66,17 +66,25 @@ export const courseService = {
         return { ok: true };
     },
 
-    async assignEmployees(courseId: string, employeeIds: string[], meetUrl: string = ''): Promise<{ totalAssigned: number }> {
+    async assignEmployees(
+        courseId: string,
+        employeeIds: string[],
+        options: {
+            meetUrl?: string;
+            notifyTrainer?: boolean;
+        } = {}
+    ): Promise<{ totalAssigned: number }> {
         const response = await apiClient.post(`/api/Course/${courseId}/assign-employees`, {
-            meetUrl,
+            meetUrl: options.meetUrl || '',
+            notifyTrainer: options.notifyTrainer ?? true,
             employeeIds,
         });
         if (!response.ok) throw new Error('Không thể phân công nhân viên');
         return response.json();
     },
 
-    async publishCourse(id: string): Promise<{ ok: boolean }> {
-        const response = await apiClient.post(`/api/Course/${id}/publish`, {}, { retries: 0 });
+    async publishCourse(command: PublishCourseCommand): Promise<{ ok: boolean }> {
+        const response = await apiClient.post(`/api/Course/${command.id}/publish`, command, { retries: 0 });
         if (!response.ok) {
             let message = `Không thể công khai khóa học (HTTP ${response.status})`;
             try {

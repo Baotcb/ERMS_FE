@@ -44,7 +44,7 @@ const NAV_ITEMS: NavItem[] = [
             { label: 'Yêu cầu của tôi', href: '/enterprise/dept-head/training' },
             { label: 'Kế hoạch đào tạo', href: '/enterprise/dept-head/training/plans' },
             { label: 'Khóa học khả dụng', href: '/enterprise/dept-head/training/courses' },
-            { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' }
+            { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' },
         ]
     },
     {
@@ -136,6 +136,8 @@ const NavMenuItem = memo(function NavMenuItem({
 // Avatar Dropdown imported from shared component
 import { AvatarDropdown } from '@/components/common/avatar-dropdown'
 import { useEnterpriseInfo } from '@/features/enterprise'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
 
 export function DeptHeadSidebar() {
     const pathname = usePathname()
@@ -159,23 +161,32 @@ export function DeptHeadSidebar() {
         return item.children?.some((child) => pathname === child.href) ?? false
     }, [pathname])
 
-    const navItems = user?.isTrainer
-        ? NAV_ITEMS.map((item) => {
+    const navItems = NAV_ITEMS.map((item) => {
             if (item.label !== 'Đào tạo' || !item.children) {
                 return item
             }
 
-            const hasTrainerLink = item.children.some((child) => child.href === '/enterprise/dept-head/teaching')
-            if (hasTrainerLink) {
-                return item
+            let children = item.children
+
+            if (canAccessTeachingWorkspace(user)) {
+                const hasTrainerLink = children.some((child) => child.href === '/enterprise/dept-head/teaching')
+                if (!hasTrainerLink) {
+                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' }]
+                }
+            }
+
+            if (canAccessLearningWorkspace(user)) {
+                const hasLearningLink = children.some((child) => child.href === '/enterprise/dept-head/learning')
+                if (!hasLearningLink) {
+                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/dept-head/learning' }]
+                }
             }
 
             return {
                 ...item,
-                children: [...item.children, { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' }]
+                children,
             }
         })
-        : NAV_ITEMS
 
     return (
         <aside className="w-72 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col z-40 shrink-0">

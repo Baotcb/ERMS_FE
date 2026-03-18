@@ -38,6 +38,29 @@ function sanitizePlainText(value: string): string {
         .trim();
 }
 
+function parseScheduleConfig(description: string | undefined) {
+    const raw = description || '';
+    const baseDescription = raw.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
+    const notifyMatch = raw.match(/Thông báo:\s*giangvien_khi_phancong=(on|off)/i);
+    return {
+        baseDescription,
+        notifyTrainerOnAssignment: notifyMatch ? notifyMatch[1].toLowerCase() === 'on' : true,
+    };
+}
+
+function buildScheduleDescription(
+    baseDescription: string,
+    schedule: { startDate: string; startTime: string; endDate: string; endTime: string },
+    locationValue: string,
+    notifyTrainer: boolean,
+    isDraft: boolean,
+): string {
+    const prefix = isDraft ? '[DRAFT] ' : '';
+    const scheduleInfo = `\n${prefix}Lịch trình: ${schedule.startDate} ${schedule.startTime} đến ${schedule.endDate} ${schedule.endTime}. Địa điểm: ${locationValue}`;
+    const notificationConfig = `\nThông báo: giangvien_khi_phancong=${notifyTrainer ? 'on' : 'off'}`;
+    return `${baseDescription}${scheduleInfo}${notificationConfig}`;
+}
+
 export function SetupTrainingSchedulePage({ 
     initialCourses, 
     initialCourseDetails,
@@ -45,7 +68,7 @@ export function SetupTrainingSchedulePage({
     headingTitle = 'Tạo khóa học & Lập lịch đào tạo',
     headingDescription = 'Thiết lập thời gian, địa điểm và thông báo cho khóa học.',
     stepTwoLabel = 'Bước 2: HR lập lịch & thông báo',
-    publishRedirectPath = '/enterprise/hr/training/requests'
+    publishRedirectPath = '/enterprise/hr/training/courses'
 }: { 
     initialCourses?: CourseResult; 
     initialCourseDetails?: Course;
@@ -66,9 +89,9 @@ export function SetupTrainingSchedulePage({
     const [startTime, setStartTime] = useState('');
     const [endDate, setEndDate] = useState('');
     const [endTime, setEndTime] = useState('');
-    const [meetingLink, setMeetingLink] = useState('https://meet.google.com/');
+    const [meetingLink, setMeetingLink] = useState('');
     const [offlineLocation, setOfflineLocation] = useState('');
-    const [notifyTrainees, setNotifyTrainees] = useState(true);
+    const [notifyTrainerOnAssignment, setNotifyTrainerOnAssignment] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
 
@@ -126,7 +149,7 @@ export function SetupTrainingSchedulePage({
         const normalizedOfflineLocation = sanitizePlainText(offlineLocation);
 
         if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
-            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ', variant: 'destructive' });
+            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ. Để trống nếu muốn hệ thống tự tạo Zoom.', variant: 'destructive' });
             return;
         }
 
@@ -150,21 +173,22 @@ export function SetupTrainingSchedulePage({
 
         setIsSubmitting(true);
         try {
-            const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
-            const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
-            const notificationConfig = `\nThông báo: học viên=${notifyTrainees ? 'on' : 'off'}`;
+            const { baseDescription } = parseScheduleConfig(currentCourse?.description);
+            const locationValue = locationType === 'online' ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') : normalizedOfflineLocation;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
                 startTime: resolvedStartTime,
                 isOnline: locationType === 'online',
                 location: locationValue,
-                description: `${baseDescription}\n[DRAFT] Lịch trình: ${startDate} ${startTime} đến ${endDate} ${endTime}. Địa điểm: ${locationValue}${notificationConfig}`
+                description: buildScheduleDescription(baseDescription, { startDate, startTime, endDate, endTime }, locationValue, notifyTrainerOnAssignment, true),
             } as UpdateCourseCommand);
             toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
-        } catch (error: unknown) {
-            void error;
-            toast({ title: 'Lỗi', description: 'Không thể lưu bản nháp lịch trình. Vui lòng thử lại.', variant: 'destructive' });
+        } catch (err) {
+            const errorMessage = err instanceof Error
+                ? err.message
+                : 'Không thể lưu bản nháp lịch trình. Vui lòng thử lại.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -207,8 +231,8 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        if (locationType === 'online' && !isValidHttpUrl(normalizedMeetingLink)) {
-            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ', variant: 'destructive' });
+        if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
+            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ. Để trống nếu muốn hệ thống tự tạo Zoom.', variant: 'destructive' });
             return;
         }
 
@@ -220,21 +244,19 @@ export function SetupTrainingSchedulePage({
 
         setIsSubmitting(true);
         try {
-            // 1. Update Course Schedule info
-            const baseDescription = currentCourse?.description?.split('\nLịch trình:')[0]?.split('\n[DRAFT] Lịch trình:')[0] || '';
-            const locationValue = locationType === 'online' ? normalizedMeetingLink : normalizedOfflineLocation;
-            const notificationConfig = `\nThông báo: học viên=${notifyTrainees ? 'on' : 'off'}`;
+            const { baseDescription } = parseScheduleConfig(currentCourse?.description);
+            const locationValue = locationType === 'online' ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') : normalizedOfflineLocation;
             await courseService.updateCourse(selectedCourseId, {
                 ...currentCourse!,
                 trainerEmail: normalizedTrainerEmail,
                 startTime: resolvedStartTime,
                 isOnline: locationType === 'online',
                 location: locationValue,
-                description: `${baseDescription}\nLịch trình: ${startDate} ${startTime} đến ${endDate} ${endTime}. Địa điểm: ${locationValue}${notificationConfig}`
+                description: buildScheduleDescription(baseDescription, { startDate, startTime, endDate, endTime }, locationValue, notifyTrainerOnAssignment, false),
             } as UpdateCourseCommand);
 
             // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).
-            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học.' });
+            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học. Email trainer sẽ được gửi cùng lúc khi phân công học viên.' });
             router.push(publishRedirectPath);
         } catch (error: unknown) {
             const errorMessage = error instanceof Error
@@ -266,7 +288,7 @@ export function SetupTrainingSchedulePage({
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-8 space-y-10 border border-gray-100">
-                
+
                 {/* Stepper */}
                 <div className="flex items-center w-full px-4 pt-2">
                     <div className="flex flex-col flex-1 relative">
@@ -293,20 +315,20 @@ export function SetupTrainingSchedulePage({
                 {/* Course Selection */}
                 <div className="p-5 bg-blue-50/30 rounded-xl border border-blue-100">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC CẦN LẬP LỊCH</label>
+                        <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC THEO KẾ HOẠCH</label>
                         <Button
                             type="button"
                             onClick={() => setIsCreateCourseOpen(true)}
                             className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
                         >
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Tạo khóa học mới
+                            Lập lịch kế hoạch mới
                         </Button>
                     </div>
 
                     {courses.length === 0 && !isLoadingCourses ? (
                         <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white px-4 py-4 text-sm text-[#0F4C75]">
-                            Chưa có khóa học nháp để lập lịch. Hãy tạo khóa học mới ngay tại trang này.
+                            Chưa có khóa học nháp để lập lịch. Hãy tạo khóa học theo kế hoạch ngay tại trang này.
                         </div>
                     ) : (
                         <div className="mt-3">
@@ -318,6 +340,7 @@ export function SetupTrainingSchedulePage({
                                     {courses.map(course => (
                                         <SelectItem key={course.id} value={course.id}>
                                             {course.courseName} (Mã: {course.courseCode})
+                                            {course.startTime ? ' ✓ Đã thiết lập' : ''}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -418,13 +441,23 @@ export function SetupTrainingSchedulePage({
                             </div>
 
                             {locationType === 'online' ? (
-                                <div className="space-y-2 mt-4 animate-in fade-in duration-300">
-                                    <label className="text-sm font-semibold text-gray-600">Link cuộc họp (Zoom/Meet/Teams)</label>
-                                    <Input 
-                                        value={meetingLink}
-                                        onChange={(e) => setMeetingLink(e.target.value)}
-                                        className="bg-gray-50/50 border-gray-200 text-[#0F4C75] font-medium" 
-                                    />
+                                <div className="space-y-3 mt-4 animate-in fade-in duration-300">
+                                    <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
+                                        <Video className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-sm font-semibold text-blue-800">Zoom Meeting tự động</p>
+                                            <p className="text-xs text-blue-600 mt-0.5">Hệ thống sẽ tự động tạo phòng họp Zoom và gửi link cho giảng viên + học viên khi phân công. Bạn có thể bỏ trống hoặc nhập link thủ công.</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold text-gray-600">Link cuộc họp (tùy chọn)</label>
+                                        <Input
+                                            value={meetingLink}
+                                            onChange={(e) => setMeetingLink(e.target.value)}
+                                            placeholder="Để trống để tự động tạo Zoom, hoặc nhập https://..."
+                                            className="bg-gray-50/50 border-gray-200 font-medium"
+                                        />
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-2 mt-4 animate-in fade-in duration-300">
@@ -443,7 +476,7 @@ export function SetupTrainingSchedulePage({
                         <div className="space-y-5">
                             <div className="flex items-center gap-2">
                                 <Send className="w-5 h-5 text-[#0F4C75]" />
-                                <h2 className="text-[15px] font-bold text-[#0F4C75] tracking-wide">3. Cấu hình thông báo</h2>
+                                <h2 className="text-[15px] font-bold text-[#0F4C75] tracking-wide">3. Cấu hình thông báo khi phân công</h2>
                             </div>
                             
                             <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100 space-y-6">
@@ -452,9 +485,12 @@ export function SetupTrainingSchedulePage({
                                         <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
                                             <Users className="w-4 h-4" />
                                         </div>
-                                        <span className="font-semibold text-gray-700">Gửi email cho học viên</span>
+                                        <div>
+                                            <span className="font-semibold text-gray-700">Gửi email trainer khi phân công học viên</span>
+                                            <p className="text-xs text-gray-500 mt-1">Email trainer không gửi ở bước này; sẽ gửi cùng lúc với email học viên ở bước phân công.</p>
+                                        </div>
                                     </div>
-                                    <Switch checked={notifyTrainees} onCheckedChange={setNotifyTrainees} className="data-[state=checked]:bg-[#0F4C75]" />
+                                    <Switch checked={notifyTrainerOnAssignment} onCheckedChange={setNotifyTrainerOnAssignment} className="data-[state=checked]:bg-[#0F4C75]" />
                                 </div>
                             </div>
                         </div>
@@ -531,7 +567,7 @@ export function SetupTrainingSchedulePage({
                             {isSubmitting ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                                <>Hoàn tất & Gửi thông báo <Send className="w-4 h-4 ml-2" /></>
+                                <>Hoàn tất thiết lập <Send className="w-4 h-4 ml-2" /></>
                             )}
                         </Button>
                     </div>

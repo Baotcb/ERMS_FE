@@ -123,9 +123,7 @@ export function JobPostingWizardDialog({
     // Reset form when initialData changes or dialog opens
     useEffect(() => {
         if (open && initialData) {
-            console.log('🔄 Resetting form with initialData:', initialData)
             const formData = getFormData(initialData)
-            console.log('📋 Form data (without hidePlanDetailId):', formData)
 
             form.reset({
                 showSalary: true,
@@ -193,9 +191,6 @@ export function JobPostingWizardDialog({
                 remoteOption: data.remoteOption,
                 applicationDeadline: data.applicationDeadline ? new Date(data.applicationDeadline).toISOString() : new Date().toISOString(), // Fallback to now if empty, although validation should catch it
             }
-
-            console.log('📤 Submitting job posting:', payload)
-            console.log('📋 planDetailId:', payload.planDetailId)
 
             await createJob(payload)
             toast({
@@ -681,17 +676,10 @@ export function JobPostingWizardDialog({
                                             <Button
                                                 type="button"
                                                 onClick={async () => {
-                                                    console.log('🔘 Submit button clicked')
-                                                    console.log('📝 Current form values:', form.getValues())
-                                                    console.log('❌ Form errors:', form.formState.errors)
-
                                                     const isValid = await form.trigger()
-                                                    console.log('✅ Form valid?', isValid)
 
                                                     if (isValid) {
                                                         form.handleSubmit(onSubmit)()
-                                                    } else {
-                                                        console.log('⚠️ Form validation failed')
                                                     }
                                                 }}
                                                 disabled={isMutating}
