@@ -269,7 +269,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
 
     const handleSave = async () => {
         if (savedQuizId) {
-            toast({ title: 'Quiz đã được tạo', description: 'Khóa học này đã có quiz trong phiên làm việc hiện tại. Tránh bấm lưu lặp để không tạo quiz trùng.', variant: 'destructive' });
+            toast({ title: 'Quiz đã tồn tại', description: 'Khóa học này đã có bài thi cuối khóa, không cần tạo lại.', variant: 'destructive' });
             return;
         }
 
@@ -402,7 +402,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
         <div className="space-y-8">
             <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-[#0F4C75]">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Quiz cuối khóa đã nối BE. Để tránh tạo ghost quiz, hệ thống chỉ nhận import CSV đã kiểm tra hợp lệ trước khi tạo quiz.</span>
+                <span>Hệ thống kiểm tra nội dung file trước khi tạo bài thi để đảm bảo dữ liệu hợp lệ. Chỉ hỗ trợ định dạng CSV.</span>
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
                 <div className="space-y-1">
@@ -530,7 +530,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                     </div>
                     <div className="flex items-start gap-2 text-xs text-gray-500">
                         <UploadCloud className="w-4 h-4 mt-0.5 shrink-0" />
-                        <span>BE đang parse các cột theo thứ tự: QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, Explanation, Points, OrderIndex. Với nhập tay, đáp án đúng cũng sẽ được lưu theo mã A/B/C/D để khớp với file import.</span>
+                        <span>Các cột theo thứ tự: QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, Explanation, Points, OrderIndex. Đáp án đúng sẽ được lưu theo mã A/B/C/D.</span>
                     </div>
                 </Card>
             </div>

@@ -45,7 +45,7 @@ const WIZARD_STEPS = [
     { key: 'basics', label: 'Thông tin', icon: Layout },
     { key: 'curriculum', label: 'Nội dung', icon: FileText },
     { key: 'exam', label: 'Bài kiểm tra', icon: Award },
-    { key: 'publish', label: 'Xuất bản', icon: Send },
+    { key: 'publish', label: 'Hoàn thành', icon: Send },
 ] as const;
 
 /* ── Horizontal Stepper ── */
@@ -193,10 +193,10 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
         try {
             await courseService.publishCourse(buildPublishCourseCommand(course));
             setCourse(prev => ({ ...prev, status: 'Published' }));
-            toast({ title: 'Chúc mừng!', description: 'Khóa học đã được xuất bản theo luồng nhiệm vụ giảng viên.' });
+            toast({ title: 'Chúc mừng!', description: 'Khóa học đã sẵn sàng cho học viên tham gia.' });
             router.push(teachingBasePath);
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Không thể xuất bản khóa học.';
+            const errorMessage = error instanceof Error ? error.message : 'Không thể mở khóa học.';
             toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsSaving(false);
@@ -253,7 +253,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                 ? 'bg-green-50 text-green-700'
                                 : 'bg-amber-50 text-amber-700'
                         }`}>
-                            {course.status === 'Published' ? '✓ Đã xuất bản' : '◉ Đang thiết lập'}
+                            {course.status === 'Published' ? '✓ Hoàn thành' : '◉ Đang thiết lập'}
                         </Badge>
                         <Button variant="outline" className="rounded-xl border-gray-200 gap-2 font-semibold" onClick={handleSaveDraft} disabled={isSaving}>
                             <Save className="w-4 h-4" />
@@ -381,8 +381,8 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                     <TabsContent value="publish" className="m-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="max-w-2xl mx-auto space-y-8">
                             <div className="text-center space-y-2">
-                                <h2 className="text-2xl font-black text-[#0F4C75]">Kiểm tra & Xuất bản</h2>
-                                <p className="text-gray-500 text-sm">Hệ thống tự động kiểm tra các mục bên dưới trước khi xuất bản.</p>
+                                <h2 className="text-2xl font-black text-[#0F4C75]">Kiểm tra & Mở khóa học</h2>
+                                <p className="text-gray-500 text-sm">Hệ thống tự động kiểm tra các mục bên dưới trước khi mở khóa.</p>
                             </div>
 
                             {/* Dynamic Pre-publish Checklist */}
@@ -413,11 +413,11 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                 <div className="absolute top-0 right-0 w-40 h-40 bg-[#3282B8]/15 rounded-full -translate-y-1/2 translate-x-1/3" />
                                 <div className="relative z-10 space-y-5">
                                     <div className="space-y-2">
-                                        <h3 className="text-xl font-black">{allChecksOk ? 'Sẵn sàng xuất bản! 🎉' : 'Chưa đủ điều kiện'}</h3>
+                                        <h3 className="text-xl font-black">{allChecksOk ? 'Sẵn sàng mở khóa học! 🎉' : 'Chưa đủ điều kiện'}</h3>
                                         <p className="text-[#BBE1FA]/70 text-sm">
                                             {allChecksOk
                                                 ? 'Khóa học sẽ xuất hiện trong danh mục đào tạo và học viên có thể tham gia.'
-                                                : 'Vui lòng hoàn tất các mục trên trước khi xuất bản.'}
+                                                : 'Vui lòng hoàn tất các mục trên trước khi mở khóa.'}
                                         </p>
                                     </div>
                                     <Button 
@@ -428,7 +428,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                                             <>
                                                 <Send className="w-5 h-5" />
-                                                XUẤT BẢN NGAY
+                                                MỞ KHÓA HỌC
                                             </>
                                         )}
                                     </Button>
@@ -438,9 +438,9 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                             <AlertDialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Xác nhận xuất bản khóa học?</AlertDialogTitle>
+                                        <AlertDialogTitle>Xác nhận mở khóa học?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            Sau khi xuất bản, khóa học sẽ xuất hiện trong danh mục đào tạo và học viên có thể bắt đầu tham gia. Hành động này không thể hoàn tác.
+                                            Sau khi mở khóa, khóa học sẽ xuất hiện trong danh mục đào tạo và học viên có thể bắt đầu tham gia. Hành động này không thể hoàn tác.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -449,7 +449,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                                             onClick={handlePublish}
                                             className="bg-[#0F4C75] hover:bg-[#1B262C] text-white"
                                         >
-                                            Xuất bản
+                                            Xác nhận mở khóa
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>

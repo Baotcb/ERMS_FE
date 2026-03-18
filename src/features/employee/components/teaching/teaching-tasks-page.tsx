@@ -16,7 +16,7 @@ import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
 const STEPS = [
     { key: 1, label: 'Thiết lập nội dung', cta: 'Thiết lập nội dung', icon: BookOpen },
     { key: 2, label: 'Tạo bài kiểm tra', cta: 'Tạo quiz cuối khóa', icon: Layers },
-    { key: 3, label: 'Đã xuất bản', cta: 'Xem chi tiết', icon: CheckCircle2 },
+    { key: 3, label: 'Hoàn thành', cta: 'Xem chi tiết', icon: CheckCircle2 },
 ] as const;
 
 function getStatusStep(course: Course): number {
@@ -104,7 +104,7 @@ export function TeachingTasksPage({
 
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">Instructor Dashboard</p>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">Quản lý giảng dạy</p>
                         <h1 className="text-3xl md:text-4xl font-black tracking-tight">
                             Xin chào, {user?.fullName?.split(' ').pop() || 'Trainer'} 👋
                         </h1>
@@ -115,7 +115,7 @@ export function TeachingTasksPage({
                         {[
                             { label: 'Tổng khóa', value: stats.total, color: 'text-[#BBE1FA]' },
                             { label: 'Đang xử lý', value: stats.draft, color: 'text-amber-300' },
-                            { label: 'Đã xuất bản', value: stats.published, color: 'text-green-300' },
+                            { label: 'Hoàn thành', value: stats.published, color: 'text-green-300' },
                             { label: 'Học viên', value: stats.totalEnroll, color: 'text-[#BBE1FA]' },
                         ].map(({ label, value, color }) => (
                             <div key={label} className="bg-white/10 backdrop-blur rounded-2xl px-5 py-3 text-center min-w-[80px] border border-white/10">
@@ -142,7 +142,7 @@ export function TeachingTasksPage({
                     {[
                         { key: 'all' as const, label: 'Tất cả' },
                         { key: 'draft' as const, label: 'Đang thiết lập' },
-                        { key: 'published' as const, label: 'Đã xuất bản' },
+                        { key: 'published' as const, label: 'Hoàn thành' },
                     ].map(({ key, label }) => (
                         <button
                             key={key}
@@ -196,7 +196,7 @@ export function TeachingTasksPage({
                                                 ? 'bg-green-50 text-green-700'
                                                 : 'bg-amber-50 text-amber-700'
                                         }`}>
-                                            {isPublished ? '✓ Đã xuất bản' : '◉ Đang xử lý'}
+                                            {isPublished ? '✓ Hoàn thành' : '◉ Đang xử lý'}
                                         </Badge>
                                     </div>
 

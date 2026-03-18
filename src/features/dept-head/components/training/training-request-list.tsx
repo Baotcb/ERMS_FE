@@ -149,7 +149,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                         <TableRow>
                             <TableHead className="font-bold text-[#0F4C75]">Chủ đề đào tạo</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Mức độ ưu tiên</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Dự kiến</TableHead>
+                            <TableHead className="font-bold text-[#0F4C75]">SL Dự kiến</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Ngân sách</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Ngày gửi</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>

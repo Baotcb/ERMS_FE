@@ -28,48 +28,7 @@ import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan } from '../../types/training-plan-types';
 import { useRouter } from 'next/navigation';
 import { TrainingPlanDetail } from './training-plan-detail';
-
-const STATUS_COLORS: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-800',
-    Pending: 'bg-yellow-100 text-yellow-800',
-    Approved: 'bg-green-100 text-green-800',
-    Rejected: 'bg-amber-100 text-amber-800',
-};
-
-const BASE_STATUS_LABELS: Record<string, string> = {
-    Draft: 'Bản nháp',
-    Pending: 'Chờ duyệt',
-    Approved: 'Đã duyệt',
-    Rejected: 'Yêu cầu gửi lại',
-};
-
-const RESUBMIT_REQUEST_PREFIX = '[RESUBMIT_REQUEST]';
-const FINAL_REJECT_PREFIX = '[FINAL_REJECT]';
-
-function getStatusLabel(plan: TrainingPlan): string {
-    if (plan.status !== 'Rejected') {
-        return BASE_STATUS_LABELS[plan.status] || plan.status;
-    }
-
-    const note = (plan.reviewNote || '').trim();
-    if (note.startsWith(FINAL_REJECT_PREFIX)) {
-        return 'Từ chối';
-    }
-
-    if (note.startsWith(RESUBMIT_REQUEST_PREFIX)) {
-        return 'Yêu cầu gửi lại';
-    }
-
-    return BASE_STATUS_LABELS.Rejected;
-}
-
-function getDisplayReviewNote(rawNote?: string): string {
-    if (!rawNote) return '';
-    return rawNote
-        .replace(RESUBMIT_REQUEST_PREFIX, '')
-        .replace(FINAL_REJECT_PREFIX, '')
-        .trim();
-}
+import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote } from '../../utils/training-status-utils';
 
 export function TrainingPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const router = useRouter();

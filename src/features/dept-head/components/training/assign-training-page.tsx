@@ -334,7 +334,7 @@ export function AssignTrainingPage({
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-[#0F4C75] truncate">{invitedTrainer?.fullName || currentCourse?.trainerName || 'Trainer đã được mời'}</h3>
                                                 <Badge variant="secondary" className="bg-[#0F4C75] text-white hover:bg-[#0F4C75] text-[10px] px-2 py-0">
-                                                    KHÓA TRAINER
+                                                    GIẢNG VIÊN
                                                 </Badge>
                                             </div>
                                             <p className="text-sm text-gray-600 break-all">{normalizedTrainerEmail || 'Chưa có email trainer'}</p>
@@ -451,7 +451,7 @@ export function AssignTrainingPage({
                                                 <TableCell className="text-sm text-gray-500">{trainee.departmentName}</TableCell>
                                                 <TableCell className="text-sm text-gray-500">{trainee.position}</TableCell>
                                                 <TableCell className="text-center">
-                                                    <Badge variant="outline" className="font-normal text-gray-500">{trainee.status}</Badge>
+                                                    <Badge variant="outline" className="font-normal text-gray-500">{{ Active: 'Đang làm việc', Inactive: 'Ngừng hoạt động', OnLeave: 'Đang nghỉ phép' }[trainee.status] || trainee.status}</Badge>
                                                 </TableCell>
                                             </TableRow>
                                         );

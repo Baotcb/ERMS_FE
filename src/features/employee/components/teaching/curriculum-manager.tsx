@@ -162,7 +162,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             if (draftSections.length > 0) {
                 toast({
                     title: 'Đã khôi phục bản nháp nội dung học',
-                    description: 'Các phần nháp local đã được nạp lại cho khóa học này.',
+                    description: 'Nội dung đã lưu tạm được khôi phục thành công.',
                 });
             }
         } catch (error) {
@@ -223,7 +223,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             setNewSectionTitle('');
             toast({
                 title: 'Đã thêm học phần nháp',
-                description: 'Học phần này đang ở local draft. Chỉ bài giảng đồng bộ server mới dùng để upload tài liệu cho trainee.',
+                description: 'Học phần đã lưu tạm. Bài giảng cần được đồng bộ lên hệ thống trước khi đính kèm tài liệu.',
             });
         } catch {
             toast({ title: 'Lỗi', description: 'Không thể thêm học phần.', variant: 'destructive' });
@@ -397,7 +397,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         if (isUnsyncedLessonId(lessonId)) {
             toast({
                 title: 'Chưa thể upload tài liệu',
-                description: 'Bài giảng này chưa có ID backend hợp lệ. Hãy bấm Đồng bộ server cho lesson trước khi upload tài liệu.',
+                description: 'Vui lòng đồng bộ bài giảng lên hệ thống trước khi tải lên tài liệu.',
                 variant: 'destructive',
             });
             return;
@@ -621,7 +621,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                                         ) : (
                                                             <Upload className="w-3.5 h-3.5" />
                                                         )}
-                                                        {isUnsyncedLessonId(lesson.id) ? 'Lesson chưa sync' : 'Upload tài liệu'}
+                                                        {isUnsyncedLessonId(lesson.id) ? 'Chưa đồng bộ' : 'Tải lên tài liệu'}
                                                     </label>
                                                 </Button>
                                                 <input

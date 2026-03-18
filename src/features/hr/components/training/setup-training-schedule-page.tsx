@@ -476,7 +476,7 @@ export function SetupTrainingSchedulePage({
                         <div className="space-y-5">
                             <div className="flex items-center gap-2">
                                 <Send className="w-5 h-5 text-[#0F4C75]" />
-                                <h2 className="text-[15px] font-bold text-[#0F4C75] tracking-wide">3. Cấu hình thông báo khi phân công</h2>
+                                <h2 className="text-[15px] font-bold text-[#0F4C75] tracking-wide">3. Thiết lập thông báo khi phân công</h2>
                             </div>
                             
                             <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100 space-y-6">
@@ -486,8 +486,8 @@ export function SetupTrainingSchedulePage({
                                             <Users className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-gray-700">Gửi email trainer khi phân công học viên</span>
-                                            <p className="text-xs text-gray-500 mt-1">Email trainer không gửi ở bước này; sẽ gửi cùng lúc với email học viên ở bước phân công.</p>
+                                            <span className="font-semibold text-gray-700">Thông báo giảng viên khi phân công học viên</span>
+                                            <p className="text-xs text-gray-500 mt-1">Email giảng viên sẽ được gửi cùng lúc với email học viên ở bước phân công.</p>
                                         </div>
                                     </div>
                                     <Switch checked={notifyTrainerOnAssignment} onCheckedChange={setNotifyTrainerOnAssignment} className="data-[state=checked]:bg-[#0F4C75]" />

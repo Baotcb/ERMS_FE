@@ -28,6 +28,7 @@ const STATUSES: Record<string, { label: string; color: string }> = {
     Approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-800 border-green-200' },
     Rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-800 border-red-200' },
     Planned: { label: 'Đã lập kế hoạch', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    AddedToPlan: { label: 'Đã thêm vào KH', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
 };
 
 export function TrainingRequestDetail({ request, open, onOpenChange }: TrainingRequestDetailProps) {

@@ -25,6 +25,18 @@ import {
 } from '@/components/ui/table';
 import type { DepartmentTrainingResultItem } from '../../api/dept-head-service';
 
+const EVALUATION_LABELS: Record<string, string> = {
+    Passed: 'Đạt',
+    Failed: 'Không đạt',
+    Pending: 'Chờ đánh giá',
+};
+
+const LEARNING_LABELS: Record<string, string> = {
+    Completed: 'Hoàn thành',
+    InProgress: 'Đang học',
+    NotStarted: 'Chưa bắt đầu',
+};
+
 function getEvaluationBadge(status: DepartmentTrainingResultItem['evaluationStatus']) {
     switch (status) {
         case 'Passed':
@@ -217,10 +229,10 @@ export function TrainingResultsTrackingPage({
                                     )}
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" className={getLearningBadge(item.learningStatus)}>{item.learningStatus}</Badge>
+                                    <Badge variant="outline" className={getLearningBadge(item.learningStatus)}>{LEARNING_LABELS[item.learningStatus] || item.learningStatus}</Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" className={getEvaluationBadge(item.evaluationStatus)}>{item.evaluationStatus}</Badge>
+                                    <Badge variant="outline" className={getEvaluationBadge(item.evaluationStatus)}>{EVALUATION_LABELS[item.evaluationStatus] || item.evaluationStatus}</Badge>
                                 </TableCell>
                                 <TableCell className="text-sm text-gray-600 max-w-[280px]">{item.note || '-'}</TableCell>
                             </TableRow>

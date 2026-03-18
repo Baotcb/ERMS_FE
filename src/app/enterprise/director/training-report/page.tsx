@@ -65,9 +65,9 @@ export default async function TrainingReportPage() {
         : 0;
 
     const statusBars = [
-        { label: 'Pending', value: pendingPlans.length, color: 'bg-yellow-500' },
-        { label: 'Approved', value: approvedPlans.length, color: 'bg-green-500' },
-        { label: 'Rejected', value: rejectedPlans.length, color: 'bg-red-500' },
+        { label: 'Chờ duyệt', value: pendingPlans.length, color: 'bg-yellow-500' },
+        { label: 'Đã duyệt', value: approvedPlans.length, color: 'bg-green-500' },
+        { label: 'Từ chối', value: rejectedPlans.length, color: 'bg-red-500' },
     ];
 
     const maxStatusValue = Math.max(1, ...statusBars.map((item) => item.value));
@@ -83,25 +83,25 @@ export default async function TrainingReportPage() {
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kế hoạch đào tạo</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{totalPlans}</p>
-                    <p className="text-xs text-gray-500 mt-2">Pending {pendingPlans.length} | Approved {approvedPlans.length}</p>
+                    <p className="text-xs text-gray-500 mt-2">Chờ duyệt {pendingPlans.length} | Đã duyệt {approvedPlans.length}</p>
                 </div>
 
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ngân sách đã duyệt</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(totalBudget)}</p>
-                    <p className="text-xs text-gray-500 mt-2">Tính trên các kế hoạch Approved</p>
+                    <p className="text-xs text-gray-500 mt-2">Tính trên các kế hoạch Đã duyệt</p>
                 </div>
 
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Khóa học xuất bản</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Khóa học đang triển khai</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{publishedCourses.length}/{totalCourses}</p>
-                    <p className="text-xs text-gray-500 mt-2">Tỷ lệ xuất bản {publishedRate}%</p>
+                    <p className="text-xs text-gray-500 mt-2">Tỷ lệ triển khai {publishedRate}%</p>
                 </div>
 
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mức sẵn sàng học</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{completionReadyRate}%</p>
-                    <p className="text-xs text-gray-500 mt-2">Khóa published đã có ít nhất 1 bài học</p>
+                    <p className="text-xs text-gray-500 mt-2">Khóa đang triển khai đã có ít nhất 1 bài học</p>
                 </div>
             </div>
 

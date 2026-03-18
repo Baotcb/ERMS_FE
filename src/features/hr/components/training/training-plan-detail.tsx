@@ -10,70 +10,12 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TrainingPlan } from '../../types/training-plan-types';
+import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote, getReviewNoteHeading } from '../../utils/training-status-utils';
 
 interface TrainingPlanDetailProps {
     plan: TrainingPlan | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-}
-
-const STATUS_COLORS: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-800 border-gray-200',
-    Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    Approved: 'bg-green-100 text-green-800 border-green-200',
-    Rejected: 'bg-amber-100 text-amber-800 border-amber-200',
-    Active: 'bg-blue-100 text-blue-800 border-blue-200',
-    Completed: 'bg-purple-100 text-purple-800 border-purple-200',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    Draft: 'Bản nháp',
-    Pending: 'Chờ duyệt',
-    Approved: 'Đã duyệt',
-    Rejected: 'Yêu cầu gửi lại',
-    Active: 'Đang triển khai',
-    Completed: 'Đã hoàn thành',
-};
-
-const RESUBMIT_REQUEST_PREFIX = '[RESUBMIT_REQUEST]';
-const FINAL_REJECT_PREFIX = '[FINAL_REJECT]';
-
-function getStatusLabel(plan: TrainingPlan): string {
-    if (plan.status !== 'Rejected') {
-        return STATUS_LABELS[plan.status] || plan.status;
-    }
-
-    const note = (plan.reviewNote || '').trim();
-    if (note.startsWith(FINAL_REJECT_PREFIX)) {
-        return 'Từ chối';
-    }
-
-    if (note.startsWith(RESUBMIT_REQUEST_PREFIX)) {
-        return 'Yêu cầu gửi lại';
-    }
-
-    return STATUS_LABELS.Rejected;
-}
-
-function getDisplayReviewNote(rawNote?: string): string {
-    if (!rawNote) return '';
-    return rawNote
-        .replace(RESUBMIT_REQUEST_PREFIX, '')
-        .replace(FINAL_REJECT_PREFIX, '')
-        .trim();
-}
-
-function getReviewNoteHeading(plan: TrainingPlan): string {
-    if (plan.status !== 'Rejected') {
-        return 'Ghi chú phê duyệt';
-    }
-
-    const note = (plan.reviewNote || '').trim();
-    if (note.startsWith(FINAL_REJECT_PREFIX)) {
-        return 'Lý do từ chối từ Director';
-    }
-
-    return 'Yêu cầu chỉnh sửa từ Director';
 }
 
 export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDetailProps) {
@@ -182,7 +124,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                         <div className="mt-4 p-4 bg-orange-50 rounded-2xl border border-orange-100 flex gap-3">
                             <Info className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
                             <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-orange-500 uppercase">{getReviewNoteHeading(plan)}</span>
+                                <span className="text-[10px] font-bold text-orange-500 uppercase">{getReviewNoteHeading(plan.reviewNote)}</span>
                                 <p className="text-sm text-orange-800">{getDisplayReviewNote(plan.reviewNote)}</p>
                             </div>
                         </div>

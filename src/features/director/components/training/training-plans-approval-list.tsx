@@ -136,9 +136,9 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow><TableCell colSpan={6} className="text-center py-10">Đang tải...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={5} className="text-center py-10">Đang tải...</TableCell></TableRow>
                         ) : plans?.length === 0 ? (
-                            <TableRow><TableCell colSpan={6} className="text-center py-10 italic text-gray-400">Không có kế hoạch nào cần phê duyệt</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={5} className="text-center py-10 italic text-gray-400">Không có kế hoạch nào cần phê duyệt</TableCell></TableRow>
                         ) : (
                             plans?.map((plan: TrainingPlan) => (
                                 <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
