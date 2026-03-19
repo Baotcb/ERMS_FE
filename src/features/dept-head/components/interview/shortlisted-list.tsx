@@ -184,32 +184,32 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
             </div>
 
             {/* Data Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[420px]">
+                <div className="flex-1 overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-[#F8FAFC] border-b border-slate-200">
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[200px]">
+                            <TableRow className="border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50/50">
+                                <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-[200px]">
                                     Ứng viên
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-center p-4 w-[80px]">
+                                <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-[80px]">
                                     Điểm AI
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[30%]">
+                                <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-[30%]">
                                     Kỹ năng khớp
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[15%]">
+                                <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-[15%]">
                                     Kỹ năng thiếu
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider p-4 w-[120px]">
+                                <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-[120px]">
                                     Ngày ứng tuyển
                                 </TableHead>
-                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-right p-4 w-[140px]">
+                                <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right w-[140px]">
                                     Hành động
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody className="divide-y divide-slate-100">
+                        <TableBody className="divide-y divide-slate-50">
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-16 text-slate-400">
@@ -224,7 +224,7 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
                                 </TableRow>
                             ) : (
                                 processedItems.map(app => (
-                                    <TableRow key={app.applicationId} className="hover:bg-slate-50 transition-colors group">
+                                    <TableRow key={app.applicationId} className="hover:bg-sky-50/30 transition-colors group">
                                         <TableCell className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-[#BBE1FA]/40 flex items-center justify-center text-[#0F4C75] font-bold text-sm flex-shrink-0">

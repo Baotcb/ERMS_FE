@@ -170,8 +170,8 @@ export function TrainingPlansApprovalList() {
                         <DialogDescription>Vui lòng cung cấp lý do từ chối để bộ phận HR điều chỉnh.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                        <Textarea 
-                            placeholder="Nhập lý do từ chối..." 
+                        <Textarea
+                            placeholder="Nhập lý do từ chối..."
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
                             className="min-h-[100px]"
