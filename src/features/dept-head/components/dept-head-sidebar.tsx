@@ -1,6 +1,5 @@
 'use client'
 
-
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
@@ -13,8 +12,11 @@ import {
     LayoutDashboard,
 } from 'lucide-react'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
+import { USER_ROLES } from '@/utils/constants'
 
 interface NavItem {
     label: string
@@ -47,7 +49,6 @@ const NAV_ITEMS: NavItem[] = [
             { label: 'Khóa học khả dụng', href: '/enterprise/dept-head/training/courses' },
             { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' },
         ],
-        ]
     },
     {
         icon: <ClipboardList className="h-5 w-5" />,
@@ -71,7 +72,7 @@ const NavMenuItem = memo(function NavMenuItem({
     pathname: string
     onNavigate: () => void
 }) {
-    const hasChildren = item.children && item.children.length > 0
+    const hasChildren = Boolean(item.children?.length)
 
     if (!hasChildren && item.href) {
         return (
@@ -116,7 +117,7 @@ const NavMenuItem = memo(function NavMenuItem({
             <div
                 className={cn(
                     'overflow-hidden transition-all duration-300',
-                    isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                    isExpanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
                 )}
             >
                 <div className="ml-8 mt-1 space-y-1">
@@ -147,13 +148,6 @@ const NavMenuItem = memo(function NavMenuItem({
 })
 
 export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
-// Avatar Dropdown imported from shared component
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import { useEnterpriseInfo } from '@/features/enterprise'
-import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
-import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
-
-export function DeptHeadSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
     const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
@@ -192,66 +186,58 @@ export function DeptHeadSidebar() {
         }
     }, [setMobileSidebarOpen])
 
-    const isItemActive = useCallback((item: NavItem): boolean => {
-        if (item.href) {
-            return pathname === item.href || pathname.startsWith(`${item.href}/`)
-        }
+    const isItemActive = useCallback(
+        (item: NavItem): boolean => {
+            if (item.href) {
+                return pathname === item.href || pathname.startsWith(`${item.href}/`)
+            }
 
-        return (
-            item.children?.some(
-                (child) => pathname === child.href || pathname.startsWith(`${child.href}/`)
-            ) ?? false
-        )
-    }, [pathname])
+            return (
+                item.children?.some(
+                    (child) => pathname === child.href || pathname.startsWith(`${child.href}/`)
+                ) ?? false
+            )
+        },
+        [pathname]
+    )
 
-    const navItems = useMemo(() => {
-        if (!user?.isTrainer) {
-            return NAV_ITEMS
-        }
-
+    const navItems = useMemo<NavItem[]>(() => {
         return NAV_ITEMS.map((item) => {
-    const navItems = NAV_ITEMS.map((item) => {
             if (item.label !== 'Đào tạo' || !item.children) {
                 return item
             }
 
-            const hasTrainerLink = item.children.some(
-                (child) => child.href === '/enterprise/dept-head/teaching'
-            )
+            const children = [...item.children]
 
-            if (hasTrainerLink) {
-                return item
-            let children = item.children
-
-            if (canAccessTeachingWorkspace(user)) {
-                const hasTrainerLink = children.some((child) => child.href === '/enterprise/dept-head/teaching')
-                if (!hasTrainerLink) {
-                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' }]
-                }
+            if (
+                canAccessTeachingWorkspace(user, USER_ROLES.DEPARTMENT_HEAD) &&
+                !children.some((child) => child.href === '/enterprise/dept-head/teaching')
+            ) {
+                children.push({
+                    label: 'Khóa học giảng dạy',
+                    href: '/enterprise/dept-head/teaching',
+                })
             }
 
-            if (canAccessLearningWorkspace(user)) {
-                const hasLearningLink = children.some((child) => child.href === '/enterprise/dept-head/learning')
-                if (!hasLearningLink) {
-                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/dept-head/learning' }]
-                }
+            if (
+                canAccessLearningWorkspace(user, USER_ROLES.DEPARTMENT_HEAD) &&
+                !children.some((child) => child.href === '/enterprise/dept-head/learning')
+            ) {
+                children.push({
+                    label: 'Khóa học của tôi',
+                    href: '/enterprise/dept-head/learning',
+                })
             }
 
             return {
                 ...item,
-                children: [
-                    ...item.children,
-                    { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' },
-                ],
-            }
-        })
-    }, [user?.isTrainer])
                 children,
             }
         })
+    }, [user?.isTrainer, user?.role])
 
     const sidebarContent = (
-        <div className="flex h-full flex-col bg-white border-r border-gray-200">
+        <div className="flex h-full flex-col border-r border-gray-200 bg-white">
             <nav
                 className="flex-1 space-y-2 overflow-y-auto p-4"
                 aria-label="Department head navigation"
@@ -307,15 +293,13 @@ export function DeptHeadSidebar() {
             <aside
                 id="dept-head-sidebar-desktop"
                 className={cn(
-                    'hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300',
+                    'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300 lg:block',
                     isSidebarOpen ? 'w-72' : 'w-0 pointer-events-none'
                 )}
                 aria-hidden={!isSidebarOpen}
                 inert={!isSidebarOpen}
             >
-                <div className="h-full w-72">
-                    {sidebarContent}
-                </div>
+                <div className="h-full w-72">{sidebarContent}</div>
             </aside>
         </>
     )

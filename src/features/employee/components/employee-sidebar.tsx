@@ -3,19 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { memo, useCallback, useEffect } from 'react'
-import { CalendarDays, GraduationCap, LayoutDashboard } from 'lucide-react'
-import Image from 'next/image'
 import {
-    LayoutDashboard,
-    CalendarDays,
-    Menu,
-    X,
     BookOpenCheck,
+    CalendarDays,
+    GraduationCap,
+    LayoutDashboard,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import { useEnterpriseInfo } from '@/features/enterprise'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
@@ -41,7 +34,7 @@ const NAV_ITEMS: NavItem[] = [
     {
         label: 'Khóa học của tôi',
         href: '/enterprise/employee/learning',
-        icon: <BookOpenCheck className="w-5 h-5" />,
+        icon: <BookOpenCheck className="h-5 w-5" />,
     },
 ]
 
@@ -54,7 +47,7 @@ const TRAINER_NAV_ITEMS: NavItem[] = [
     {
         label: 'Đánh giá từ học viên',
         href: '/enterprise/employee/teaching/feedback',
-        icon: <BookOpenCheck className="w-5 h-5" />,
+        icon: <BookOpenCheck className="h-5 w-5" />,
     },
 ]
 
@@ -88,8 +81,11 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
         }
     }, [setMobileSidebarOpen])
 
+    const showTrainerWorkspace =
+        user?.isTrainer || user?.role === USER_ROLES.TRAINER
+
     const sidebarContent = (
-        <div className="flex h-full flex-col bg-white border-r border-gray-200">
+        <div className="flex h-full flex-col border-r border-gray-200 bg-white">
             <nav className="flex-1 space-y-2 overflow-y-auto p-4" aria-label="Employee navigation">
                 <div className="space-y-1">
                     {NAV_ITEMS.map((item) => {
@@ -116,7 +112,7 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                     })}
                 </div>
 
-                {(user?.isTrainer || user?.role === USER_ROLES.TRAINER) && (
+                {showTrainerWorkspace && (
                     <div className="mt-8 space-y-1 border-t border-gray-100 pt-6">
                         <p className="mb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                             Giảng vụ
@@ -185,15 +181,13 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
             <aside
                 id="employee-sidebar-desktop"
                 className={cn(
-                    'hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300',
+                    'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300 lg:block',
                     isSidebarOpen ? 'w-72' : 'w-0 pointer-events-none'
                 )}
                 aria-hidden={!isSidebarOpen}
                 inert={!isSidebarOpen}
             >
-                <div className="h-full w-72">
-                    {sidebarContent}
-                </div>
+                <div className="h-full w-72">{sidebarContent}</div>
             </aside>
         </>
     )

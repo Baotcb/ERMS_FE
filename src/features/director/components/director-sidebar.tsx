@@ -12,10 +12,11 @@ import {
     LayoutDashboard,
 } from 'lucide-react'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
-import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
-import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
+import { USER_ROLES } from '@/utils/constants'
 
 interface SidebarItem {
     title: string
@@ -90,53 +91,42 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
     }, [setMobileSidebarOpen])
 
     const dynamicSidebarItems = useMemo<SidebarItem[]>(() => {
-        if (!user?.isTrainer) {
-            return SIDEBAR_ITEMS
-        }
-
         return SIDEBAR_ITEMS.map((item) => {
-    const dynamicSidebarItems: SidebarItem[] = sidebarItems.map((item) => {
             if (item.title !== 'Đào tạo' || !item.children) {
                 return item
             }
 
-            const hasTrainerLink = item.children.some(
-                (child) => child.href === '/enterprise/director/teaching'
-            )
+            const children = [...item.children]
 
-            if (hasTrainerLink) {
-                return item
-            let children = item.children
-
-            if (canAccessTeachingWorkspace(user)) {
-                const hasTrainerLink = children.some((child) => child.href === '/enterprise/director/teaching')
-                if (!hasTrainerLink) {
-                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' }]
-                }
+            if (
+                canAccessTeachingWorkspace(user, USER_ROLES.DIRECTOR) &&
+                !children.some((child) => child.href === '/enterprise/director/teaching')
+            ) {
+                children.push({
+                    label: 'Khóa học giảng dạy',
+                    href: '/enterprise/director/teaching',
+                })
             }
 
-            if (canAccessLearningWorkspace(user)) {
-                const hasLearningLink = children.some((child) => child.href === '/enterprise/director/learning')
-                if (!hasLearningLink) {
-                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/director/learning' }]
-                }
+            if (
+                canAccessLearningWorkspace(user, USER_ROLES.DIRECTOR) &&
+                !children.some((child) => child.href === '/enterprise/director/learning')
+            ) {
+                children.push({
+                    label: 'Khóa học của tôi',
+                    href: '/enterprise/director/learning',
+                })
             }
 
             return {
                 ...item,
-                children: [
-                    ...item.children,
-                    { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' },
-                ],
-            }
-        })
-    }, [user?.isTrainer])
                 children,
             }
         })
+    }, [user?.isTrainer, user?.role])
 
     const sidebarContent = (
-        <div className="flex h-full flex-col bg-white border-r border-gray-200">
+        <div className="flex h-full flex-col border-r border-gray-200 bg-white">
             <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Director navigation">
                 {dynamicSidebarItems.map((item) => {
                     const Icon = item.icon
@@ -241,15 +231,13 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
             <aside
                 id="director-sidebar-desktop"
                 className={cn(
-                    'hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300',
+                    'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300 lg:block',
                     isSidebarOpen ? 'w-64' : 'w-0 pointer-events-none'
                 )}
                 aria-hidden={!isSidebarOpen}
                 inert={!isSidebarOpen}
             >
-                <div className="h-full w-64">
-                    {sidebarContent}
-                </div>
+                <div className="h-full w-64">{sidebarContent}</div>
             </aside>
         </>
     )
