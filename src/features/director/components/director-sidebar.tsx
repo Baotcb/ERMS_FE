@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { memo, useCallback, useEffect, useMemo } from 'react'
@@ -12,8 +11,6 @@ import {
     GraduationCap,
     LayoutDashboard,
 } from 'lucide-react'
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import { useEnterpriseInfo } from '@/features/enterprise'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
@@ -63,7 +60,6 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
 export const DirectorSidebar = memo(function DirectorSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const { enterpriseInfo } = useEnterpriseInfo()
     const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
     const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
     const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
@@ -121,34 +117,6 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
 
     const sidebarContent = (
         <div className="flex h-full flex-col bg-white border-r border-gray-200">
-            <div className="border-b border-gray-100 p-6">
-                <Link
-                    href="/enterprise/director/dashboard"
-                    onClick={closeMobileSidebar}
-                    className="flex items-center gap-3"
-                >
-                    {enterpriseInfo?.logoUrl ? (
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg">
-                            <Image
-                                src={enterpriseInfo.logoUrl}
-                                alt={enterpriseInfo.enterpriseName || 'Enterprise Logo'}
-                                width={32}
-                                height={32}
-                                className="object-contain"
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] shadow-lg">
-                            <span className="text-lg font-bold text-white">GD</span>
-                        </div>
-                    )}
-                    <div>
-                        <h1 className="text-lg font-bold text-[#0F4C75]">ERMS</h1>
-                        <p className="text-xs font-medium text-gray-400">Director Portal</p>
-                    </div>
-                </Link>
-            </div>
-
             <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Director navigation">
                 {dynamicSidebarItems.map((item) => {
                     const Icon = item.icon
@@ -214,10 +182,6 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
                     )
                 })}
             </nav>
-
-            <div className="border-t border-gray-100 p-4">
-                <AvatarDropdown />
-            </div>
         </div>
     )
 

@@ -210,18 +210,20 @@ export function ApplicationDetailModal({
                         </div>
 
                         <div className="mt-auto space-y-3 pt-6">
-                            {(application.stage === 'Applied' || application.stage === 'Reviewing') ? (
+                            {(application.stage === 'Applied' || application.stage === 'Reviewing' || application.stage === 'Shortlisted') ? (
                                 <>
-                                    <Button onClick={() => onForward(application)} className="w-full bg-brand-primary hover:bg-brand-primary/90 h-10 shadow-lg shadow-brand-primary/20 transition-all hover:-translate-y-0.5">
-                                        <Send className="w-4 h-4 mr-2" /> Chuyển tiếp (Shortlist)
-                                    </Button>
+                                    {(application.stage === 'Applied' || application.stage === 'Reviewing') && (
+                                        <Button onClick={() => onForward(application)} className="w-full bg-brand-primary hover:bg-brand-primary/90 h-10 shadow-lg shadow-brand-primary/20 transition-all hover:-translate-y-0.5">
+                                            <Send className="w-4 h-4 mr-2" /> Chuyển tiếp (Shortlist)
+                                        </Button>
+                                    )}
                                     <Button variant="outline" onClick={() => onReject?.(application)} className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300">
                                         <XCircle className="w-4 h-4 mr-2" /> Từ chối hồ sơ
                                     </Button>
                                 </>
                             ) : (
                                 <div className="p-4 bg-slate-100 rounded text-center text-sm text-slate-500">
-                                    Hồ sơ đang ở trạng thái <strong>{application.stage}</strong>. Không thể thay đổi.
+                                    Hồ sơ đang ở trạng thái <strong>{application.stage}</strong>. Không thể chuyển hoặc từ chối ở bước này.
                                 </div>
                             )}
                             <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">

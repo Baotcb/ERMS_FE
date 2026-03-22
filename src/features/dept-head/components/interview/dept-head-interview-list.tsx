@@ -33,7 +33,7 @@ function InterviewTypeBadge({ type }: { type: string }) {
         Combined: { label: 'Tổng hợp', className: 'bg-teal-100 text-teal-700 border-teal-200' },
     }
     const c = config[type] ?? { label: type, className: 'bg-gray-100 text-gray-600 border-gray-200' }
-    return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>
+    return <Badge variant="outline" className={`text-xs w-full justify-center ${c.className}`}>{c.label}</Badge>
 }
 
 const DECISION_TABS = [
@@ -222,8 +222,8 @@ function DeptHeadInterviewTable({ data, onDecision }: DeptHeadInterviewTableProp
 
                             {/* Round / Type */}
                             <TableCell className="px-6 py-4 align-middle">
-                                <div className="flex flex-col gap-1">
-                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-500 border-slate-200 w-fit">
+                                <div className="flex flex-col gap-1 w-[90px]">
+                                    <Badge variant="outline" className="text-xs bg-slate-50 text-slate-500 border-slate-200 w-full justify-center">
                                         Vòng {item.roundNumber}
                                     </Badge>
                                     <InterviewTypeBadge type={item.interviewType} />

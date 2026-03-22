@@ -43,6 +43,7 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
 
     const [showRejectForm, setShowRejectForm] = useState(false)
     const [rejectNote, setRejectNote] = useState('')
+    const [hasSubmitted, setHasSubmitted] = useState(false)
 
     // Tính countdown
     const countdown = useMemo(() => {
@@ -67,8 +68,10 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
     }, [accept, offerId, router])
 
     const handleReject = useCallback(async () => {
+        setHasSubmitted(true)
+        if (!rejectNote.trim()) return
         try {
-            await reject({ offerId, candidateNote: rejectNote || undefined })
+            await reject({ offerId, candidateNote: rejectNote.trim() })
             router.push('/offers')
         } catch {
             // Error handled by SWR
@@ -351,25 +354,30 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
                     ) : (
                         <div className="w-full max-w-md space-y-4">
                             <p className="text-sm font-semibold text-slate-700">
-                                Lý do từ chối (tùy chọn)
+                                Lý do từ chối <span className="text-red-500">*</span>
                             </p>
-                            <Textarea
-                                placeholder="Nhập lý do từ chối..."
-                                rows={3}
-                                value={rejectNote}
-                                onChange={(e) => setRejectNote(e.target.value)}
-                            />
+                            <div>
+                                <Textarea
+                                    placeholder="Nhập lý do từ chối..."
+                                    rows={3}
+                                    value={rejectNote}
+                                    onChange={(e) => setRejectNote(e.target.value)}
+                                />
+                                {hasSubmitted && !rejectNote.trim() && (
+                                    <p className="text-xs text-red-500 mt-1">Vui lòng nhập lý do từ chối.</p>
+                                )}
+                            </div>
                             <div className="flex gap-3">
                                 <Button
                                     variant="ghost"
-                                    onClick={() => setShowRejectForm(false)}
+                                    onClick={() => { setShowRejectForm(false); setRejectNote(''); setHasSubmitted(false) }}
                                     disabled={isRejecting}
                                 >
                                     Hủy
                                 </Button>
                                 <Button
                                     onClick={handleReject}
-                                    disabled={isRejecting}
+                                    disabled={isRejecting || !rejectNote.trim()}
                                     className="bg-red-600 hover:bg-red-700 text-white font-bold"
                                 >
                                     {isRejecting ? (

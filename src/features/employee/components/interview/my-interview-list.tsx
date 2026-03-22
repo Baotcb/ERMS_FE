@@ -41,7 +41,16 @@ function InterviewTypeBadge({ type }: { type: string }) {
         Combined: { label: 'Tổng hợp', className: 'bg-teal-100 text-teal-700 border-teal-200' },
     }
     const c = config[type] ?? { label: type, className: 'bg-gray-100 text-gray-600 border-gray-200' }
-    return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>
+    return <Badge variant="outline" className={`text-xs w-full justify-center ${c.className}`}>{c.label}</Badge>
+}
+
+/** Kiểm tra scheduledAt có phải ngày hợp lệ (không phải default DateTime C# 0001-01-01) */
+function hasValidSchedule(scheduledAt: string | null | undefined): boolean {
+    if (!scheduledAt) return false
+    // Backend C# trả DateTime.MinValue = "0001-01-01T00:00:00"
+    if (scheduledAt.startsWith('0001-01-01')) return false
+    const date = new Date(scheduledAt)
+    return !isNaN(date.getTime()) && date.getFullYear() > 1
 }
 
 const STATUS_FILTERS = [
@@ -65,7 +74,7 @@ export function MyInterviewList() {
 
     const interviews = data?.items ?? []
     const totalCount = data?.totalCount ?? 0
-    const totalPages = data ? Math.ceil(totalCount / data.pageSize) : 1
+    const totalPages = Math.max(1, data ? Math.ceil(totalCount / data.pageSize) : 1)
 
     const handleFeedback = (interview: MyInterviewDto) => {
         const params = new URLSearchParams({
@@ -73,7 +82,7 @@ export function MyInterviewList() {
             candidateName: interview.candidateName,
             jobTitle: interview.jobTitle,
             roundLabel: `Vòng ${interview.roundNumber} — ${interview.interviewType}`,
-            interviewDate: format(new Date(interview.scheduledAt), 'dd/MM/yyyy HH:mm'),
+            interviewDate: hasValidSchedule(interview.scheduledAt) ? format(new Date(interview.scheduledAt!), 'dd/MM/yyyy HH:mm') : '',
             interviewFormat: interview.interviewFormat,
         })
         router.push(`/enterprise/employee/feedback/${interview.applicationId}?${params}`)
@@ -221,8 +230,8 @@ function MyInterviewTable({ data, onFeedback }: MyInterviewTableProps) {
 
                         {/* Round / Type */}
                         <TableCell className="px-6 py-4 align-middle">
-                            <div className="flex flex-col gap-1">
-                                <Badge variant="outline" className="text-xs bg-slate-50 text-slate-500 border-slate-200 w-fit">
+                            <div className="flex flex-col gap-1 w-[90px]">
+                                <Badge variant="outline" className="text-xs bg-slate-50 text-slate-500 border-slate-200 w-full justify-center">
                                     Vòng {interview.roundNumber}
                                 </Badge>
                                 <InterviewTypeBadge type={interview.interviewType} />
@@ -231,9 +240,9 @@ function MyInterviewTable({ data, onFeedback }: MyInterviewTableProps) {
 
                         {/* Schedule Info */}
                         <TableCell className="px-6 py-4 align-middle whitespace-nowrap">
-                            {interview.status === 'Scheduled' ? (
+                            {hasValidSchedule(interview.scheduledAt) ? (
                                 <div className="flex flex-col gap-0.5 text-sm text-slate-600">
-                                    <span>{format(new Date(interview.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                                    <span>{format(new Date(interview.scheduledAt!), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                                     <span className="text-xs text-slate-400 flex items-center gap-1">
                                         {interview.interviewFormat === 'Online'
                                             ? <><Video className="w-3 h-3" /> Online</>
@@ -242,8 +251,10 @@ function MyInterviewTable({ data, onFeedback }: MyInterviewTableProps) {
                                         {' · '}{interview.duration} phút
                                     </span>
                                 </div>
-                            ) : (
+                            ) : interview.status === 'PendingSchedule' ? (
                                 <span className="text-slate-400 text-sm">Chưa xếp lịch</span>
+                            ) : (
+                                <span className="text-slate-400 text-sm">—</span>
                             )}
                         </TableCell>
 
