@@ -71,8 +71,8 @@ function StatusBadge({ status }: { status: JobStatus }) {
     const c = config[status] ?? config.Draft
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${c.dot}`} />
+        <span className={`inline-flex items-center justify-center min-w-[100px] px-2.5 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 flex-shrink-0 ${c.dot}`} />
             {labels[status] ?? status}
         </span>
     )

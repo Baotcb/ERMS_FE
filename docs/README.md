@@ -1,6 +1,6 @@
-# 📚 Tài Liệu ERMS
+# 📚 Tài Liệu ERMS Frontend
 
-Chào mừng đến với tài liệu ERMS! Đây là hướng dẫn toàn diện để hiểu, phát triển, và maintain ERMS application.
+Chào mừng đến với tài liệu ERMS Frontend! Đây là hướng dẫn toàn diện để hiểu, phát triển, và maintain ERMS application.
 
 ## 📖 Danh Sách Tài Liệu
 
@@ -8,13 +8,17 @@ Chào mừng đến với tài liệu ERMS! Đây là hướng dẫn toàn diệ
 - **[Hướng Dẫn Nhanh](./QUICK_START.md)** - Setup và chạy project trong 5 phút
 
 ### 📘 Hiểu Dự Án
-- **[Tổng Quan Ứng Dụng](./application-overview.md)** - ERMS làm gì, có gì, dùng gì
-- **[Cấu Trúc Dự Án](./project-structure.md)** - Tổ chức code như thế nào
+- **[Tổng Quan Ứng Dụng](./application-overview.md)** - ERMS làm gì, tech stack, kiến trúc tổng thể
+- **[Cấu Trúc Dự Án](./project-structure.md)** - Tổ chức code, features, routing
 
 ### 👨‍💻 Hướng Dẫn Phát Triển
 - **[Chuẩn Mực Dự Án](./project-standards.md)** - Quy tắc coding, naming, formatting
-- **[Components và Styling](./components-and-styling.md)** - Cách viết components
-- **[Quản Lý State](./state-management.md)** - State management patterns
+- **[Components và Styling](./components-and-styling.md)** - Cách viết components, Tailwind CSS 4
+- **[Quản Lý State](./state-management.md)** - State management patterns (Zustand, SWR, React Hook Form)
+
+### 📋 Kế Hoạch
+- **[Refactor Feature Structure](./refactor-feature-structure-plan.md)** - Kế hoạch tái cấu trúc features
+- **[HR Applications Plan](./hr-applications-plan.md)** - Kế hoạch triển khai HR Screening
 
 ## 🎯 Chọn Tài Liệu Phù Hợp
 
@@ -33,8 +37,8 @@ Xem:
 
 ### Bạn muốn hiểu kiến trúc?
 Đọc:
-1. [Cấu Trúc Dự Án](./project-structure.md) - Architecture overview
-2. [Tổng Quan Ứng Dụng](./application-overview.md) - Tech stack và decisions
+1. [Tổng Quan Ứng Dụng](./application-overview.md) - Tech stack và decisions
+2. [Cấu Trúc Dự Án](./project-structure.md) - Architecture overview
 
 ## 📝 Cập Nhật Tài Liệu
 
@@ -42,10 +46,11 @@ Khi code thay đổi, update docs tương ứng:
 
 | Thay Đổi | Cập Nhật File |
 |----------|---------------|
-| Thêm feature mới | `application-overview.md` |
+| Thêm feature mới | `application-overview.md`, `project-structure.md` |
 | Thay đổi cấu trúc | `project-structure.md` |
 | Thêm pattern mới | `components-and-styling.md` |
 | Thay đổi standards | `project-standards.md` |
+| Thay đổi state pattern | `state-management.md` |
 
 ## 🎨 Phong Cách Viết
 
@@ -73,6 +78,7 @@ Khi code thay đổi, update docs tương ứng:
 | Topic | Tài Liệu |
 |-------|----------|
 | Setup project | [Quick Start](./QUICK_START.md) |
+| Tech stack & kiến trúc | [Application Overview](./application-overview.md) |
 | Cấu trúc folders | [Project Structure](./project-structure.md) |
 | Viết components | [Components](./components-and-styling.md) |
 | Quản lý state | [State Management](./state-management.md) |
@@ -82,23 +88,28 @@ Khi code thay đổi, update docs tương ứng:
 
 **Developer Mới:**
 - [Quick Start](./QUICK_START.md)
+- [Application Overview](./application-overview.md)
 - [Project Structure](./project-structure.md)
 - [Project Standards](./project-standards.md)
 
-
+**Developer Có Kinh Nghiệm:**
+- [Project Structure](./project-structure.md)
+- [Components](./components-and-styling.md)
+- [State Management](./state-management.md)
 
 ## 📊 Trạng Thái Tài Liệu
 
 | Tài Liệu | Trạng Thái | Cập Nhật |
 |----------|-----------|----------|
-| Quick Start | ✅ Hoàn thành | 12/01/2026 |
-| Project Structure | ✅ Hoàn thành | 12/01/2026 |
-| Project Standards | ✅ Hoàn thành | 12/01/2026 |
-| Components & Styling | ✅ Hoàn thành | 12/01/2026 |
-| State Management | ✅ Hoàn thành | 12/01/2026 |
+| Quick Start | ✅ Hoàn thành | 20/03/2026 |
+| Application Overview | ✅ Hoàn thành | 20/03/2026 |
+| Project Structure | ✅ Hoàn thành | 20/03/2026 |
+| Project Standards | ✅ Hoàn thành | 20/03/2026 |
+| Components & Styling | ✅ Hoàn thành | 20/03/2026 |
+| State Management | ✅ Hoàn thành | 20/03/2026 |
+| Refactor Plan | 📋 Kế hoạch | 20/03/2026 |
+| HR Applications Plan | 📋 Kế hoạch | 20/03/2026 |
 
-
-
-**Happy vibing! 🚀**
+**Happy coding! 🚀**
 
 Được xây dựng với ❤️ bởi ERMS Team

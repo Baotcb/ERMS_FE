@@ -10,7 +10,7 @@ export interface MyInterviewDto {
     interviewType: string            // Technical | Cultural | Combined
     interviewFormat: 'Online' | 'Offline'
     roundNumber: number
-    scheduledAt: string              // ISO date
+    scheduledAt: string | null       // ISO date, null if not scheduled
     duration: number                 // minutes
     location?: string
     meetingLink?: string

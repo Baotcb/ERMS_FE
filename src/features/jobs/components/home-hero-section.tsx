@@ -74,17 +74,12 @@ export function HeroSection() {
     const router = useRouter()
     const [activeCategory, setActiveCategory] = useState<string>("marketing")
     const [keyword, setKeyword] = useState("")
-    const [locationFilter, setLocationFilter] = useState(ALL_LOCATIONS_LABEL)
-    const [locationInitialized, setLocationInitialized] = useState(false)
+    const [locationOverride, setLocationOverride] = useState<string | null>(null)
     const { location: userLocation } = useUserLocation()
-
-    // Pre-fill location dropdown khi detect được vị trí user
-    useEffect(() => {
-        if (!locationInitialized && userLocation?.city && LOCATIONS.includes(userLocation.city)) {
-            setLocationFilter(userLocation.city)
-            setLocationInitialized(true)
-        }
-    }, [userLocation, locationInitialized])
+    const autoLocation = userLocation?.city && LOCATIONS.includes(userLocation.city)
+        ? userLocation.city
+        : ALL_LOCATIONS_LABEL
+    const locationFilter = locationOverride ?? autoLocation
 
     const handleSearch = (event: React.FormEvent) => {
         event.preventDefault()
@@ -134,7 +129,7 @@ export function HeroSection() {
                             <div className="hidden md:block w-px h-7 bg-[#e8e8e8] flex-shrink-0" />
 
                             <div className="hidden md:block h-full">
-                                <LocationDropdown value={locationFilter} onChange={setLocationFilter} />
+                                <LocationDropdown value={locationFilter} onChange={setLocationOverride} />
                             </div>
 
                             <Button className="h-[42px] px-7 bg-[#1B5583] hover:bg-[#154360] text-white font-bold rounded-full shadow-none text-sm transition-colors flex items-center gap-2 flex-shrink-0">

@@ -75,7 +75,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
     const renderUrgency = (urgency: string) => {
         const Icon = URGENCY_ICONS[urgency] || Info;
         const colorClass = URGENCY_COLORS[urgency] || 'text-gray-500';
-        
+
         let label = 'Bình thường';
         if (urgency === 'High') label = 'Cao';
         if (urgency === 'Urgent') label = 'Khẩn cấp';
@@ -105,8 +105,8 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                     >
                         <ArrowRight className="mr-2 h-4 w-4" /> Kế hoạch đào tạo
                     </Button>
-                    <Button 
-                        onClick={() => setIsCreateOpen(true)} 
+                    <Button
+                        onClick={() => setIsCreateOpen(true)}
                         className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white shadow-lg shadow-blue-900/10 transition-all hover:scale-[1.02]"
                     >
                         <Plus className="mr-2 h-4 w-4" /> Gửi yêu cầu mới
@@ -188,7 +188,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-gray-600">
-                                        {request.estimatedBudget 
+                                        {request.estimatedBudget
                                             ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget)
                                             : 'N/A'}
                                     </TableCell>
@@ -209,7 +209,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-48">
                                                 <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="cursor-pointer"
                                                     onClick={() => {
                                                         setSelectedRequest(request);

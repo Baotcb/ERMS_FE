@@ -2,19 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import { memo, useCallback, useEffect, useMemo } from 'react'
 import {
-    LayoutDashboard,
+    BookOpen,
     CheckSquare,
     CreditCard,
-    BookOpen,
     FileText,
-    GraduationCap
+    GraduationCap,
+    LayoutDashboard,
 } from 'lucide-react'
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import { useEnterpriseInfo } from '@/features/enterprise'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { cn } from '@/lib/utils'
+import { useAppStore } from '@/stores/use-app-store'
 import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
 import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
 
@@ -25,7 +24,7 @@ interface SidebarItem {
     children?: { label: string; href: string }[]
 }
 
-const sidebarItems: SidebarItem[] = [
+const SIDEBAR_ITEMS: SidebarItem[] = [
     {
         title: 'Tổng quan',
         href: '/enterprise/director/dashboard',
@@ -55,22 +54,58 @@ const sidebarItems: SidebarItem[] = [
         title: 'Đào tạo',
         icon: GraduationCap,
         children: [
-            { label: 'Duyệt kế hoạch', href: '/enterprise/director/training-approval' }
-        ]
+            { label: 'Duyệt kế hoạch', href: '/enterprise/director/training-approval' },
+        ],
     },
 ]
 
-export function DirectorSidebar() {
+export const DirectorSidebar = memo(function DirectorSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
+    const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
+    const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
+    const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
 
-    const { enterpriseInfo } = useEnterpriseInfo()
+    const closeMobileSidebar = useCallback(() => {
+        setMobileSidebarOpen(false)
+    }, [setMobileSidebarOpen])
 
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 1024px)')
+        const handleViewportChange = (event: MediaQueryListEvent) => {
+            if (event.matches) {
+                setMobileSidebarOpen(false)
+            }
+        }
+
+        mediaQuery.addEventListener('change', handleViewportChange)
+
+        if (mediaQuery.matches) {
+            setMobileSidebarOpen(false)
+        }
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleViewportChange)
+        }
+    }, [setMobileSidebarOpen])
+
+    const dynamicSidebarItems = useMemo<SidebarItem[]>(() => {
+        if (!user?.isTrainer) {
+            return SIDEBAR_ITEMS
+        }
+
+        return SIDEBAR_ITEMS.map((item) => {
     const dynamicSidebarItems: SidebarItem[] = sidebarItems.map((item) => {
             if (item.title !== 'Đào tạo' || !item.children) {
                 return item
             }
 
+            const hasTrainerLink = item.children.some(
+                (child) => child.href === '/enterprise/director/teaching'
+            )
+
+            if (hasTrainerLink) {
+                return item
             let children = item.children
 
             if (canAccessTeachingWorkspace(user)) {
@@ -89,66 +124,56 @@ export function DirectorSidebar() {
 
             return {
                 ...item,
+                children: [
+                    ...item.children,
+                    { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' },
+                ],
+            }
+        })
+    }, [user?.isTrainer])
                 children,
             }
         })
 
-    return (
-        <div className="flex bg-white h-screen flex-col w-64 border-r border-gray-200">
-            {/* Logo Section */}
-            <div className="p-6 border-b border-gray-100">
-                <Link href="/enterprise/director/dashboard" className="flex items-center gap-3">
-                    {enterpriseInfo?.logoUrl ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
-                            <Image
-                                src={enterpriseInfo.logoUrl}
-                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
-                                width={32}
-                                height={32}
-                                className="object-contain"
-                            />
-                        </div>
-                    ) : (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
-                            <span className="text-white font-bold text-lg">GD</span>
-                        </div>
-                    )}
-                    <div>
-                        <h1 className="font-bold text-[#0F4C75] text-lg">ERMS</h1>
-                        <p className="text-xs text-gray-400 font-medium">Director Portal</p>
-                    </div>
-                </Link>
-            </div>
-
-            {/* Navigation Section */}
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+    const sidebarContent = (
+        <div className="flex h-full flex-col bg-white border-r border-gray-200">
+            <nav className="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Director navigation">
                 {dynamicSidebarItems.map((item) => {
                     const Icon = item.icon
-                    const hasChildren = 'children' in item && item.children && item.children.length > 0
-                    const isActive = item.href ? (pathname === item.href || pathname?.startsWith(item.href + '/')) : false
+                    const hasChildren = Boolean(item.children?.length)
+                    const isActive = item.href
+                        ? pathname === item.href || pathname.startsWith(`${item.href}/`)
+                        : false
 
                     if (hasChildren) {
                         return (
                             <div key={item.title} className="space-y-1">
-                                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600">
-                                    <Icon className="w-5 h-5 text-gray-400" />
+                                <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600">
+                                    <Icon className="h-5 w-5 text-gray-400" />
                                     {item.title}
                                 </div>
                                 <div className="ml-8 space-y-1">
-                                    {item.children?.map((child) => (
-                                        <Link
-                                            key={child.href}
-                                            href={child.href}
-                                            className={cn(
-                                                "block px-3 py-2 rounded-lg text-sm transition-all duration-200",
-                                                pathname === child.href
-                                                    ? "bg-blue-50 text-[#0F4C75]"
-                                                    : "text-gray-500 hover:bg-gray-50 hover:text-[#0F4C75]"
-                                            )}
-                                        >
-                                            {child.label}
-                                        </Link>
-                                    ))}
+                                    {item.children?.map((child) => {
+                                        const isChildActive =
+                                            pathname === child.href ||
+                                            pathname.startsWith(`${child.href}/`)
+
+                                        return (
+                                            <Link
+                                                key={child.href}
+                                                href={child.href}
+                                                onClick={closeMobileSidebar}
+                                                className={cn(
+                                                    'block rounded-lg px-3 py-2 text-sm transition-all duration-200',
+                                                    isChildActive
+                                                        ? 'bg-blue-50 text-[#0F4C75]'
+                                                        : 'text-gray-500 hover:bg-gray-50 hover:text-[#0F4C75]'
+                                                )}
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        )
+                                    })}
                                 </div>
                             </div>
                         )
@@ -158,24 +183,74 @@ export function DirectorSidebar() {
                         <Link
                             key={item.href}
                             href={item.href!}
+                            onClick={closeMobileSidebar}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                                 isActive
-                                    ? "bg-blue-50 text-[#0F4C75] shadow-sm"
-                                    : "text-gray-600 hover:bg-gray-50 hover:text-[#0F4C75]"
+                                    ? 'bg-blue-50 text-[#0F4C75] shadow-sm'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-[#0F4C75]'
                             )}
                         >
-                            <Icon className={cn("w-5 h-5", isActive ? "text-[#0F4C75]" : "text-gray-400 group-hover:text-[#0F4C75]")} />
+                            <Icon
+                                className={cn(
+                                    'h-5 w-5',
+                                    isActive ? 'text-[#0F4C75]' : 'text-gray-400'
+                                )}
+                            />
                             {item.title}
                         </Link>
                     )
                 })}
             </nav>
-
-            {/* Profile Section */}
-            <div className="p-4 border-t border-gray-100">
-                <AvatarDropdown />
-            </div>
         </div>
     )
-}
+
+    return (
+        <>
+            {isMobileSidebarOpen && (
+                <div
+                    className="fixed inset-x-0 bottom-0 top-14 z-40 bg-black/50 lg:hidden"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close sidebar"
+                    onClick={closeMobileSidebar}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            closeMobileSidebar()
+                        }
+                    }}
+                />
+            )}
+
+            <aside
+                id="director-sidebar-mobile"
+                className={cn(
+                    'fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-64 overscroll-y-contain transition-transform duration-300',
+                    'lg:hidden',
+                    isMobileSidebarOpen
+                        ? 'translate-x-0'
+                        : '-translate-x-full pointer-events-none'
+                )}
+                aria-hidden={!isMobileSidebarOpen}
+                inert={!isMobileSidebarOpen}
+            >
+                {sidebarContent}
+            </aside>
+
+            <aside
+                id="director-sidebar-desktop"
+                className={cn(
+                    'hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300',
+                    isSidebarOpen ? 'w-64' : 'w-0 pointer-events-none'
+                )}
+                aria-hidden={!isSidebarOpen}
+                inert={!isSidebarOpen}
+            >
+                <div className="h-full w-64">
+                    {sidebarContent}
+                </div>
+            </aside>
+        </>
+    )
+})

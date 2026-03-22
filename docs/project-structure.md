@@ -5,40 +5,71 @@ Phần lớn code nằm trong thư mục `src` và có cấu trúc như sau:
 ```sh
 src
 |
-+-- app               # Next.js App Router - lớp routing của ứng dụng
-|   |                 # Chỉ chứa các route pages và layouts
-|   +-- (auth)        # Nhóm routes auth
-|   +-- (dashboard)   # Nhóm routes dashboard
-|   +-- (recruitment) # Nhóm routes tuyển dụng
-|   +-- (setting)     # Nhóm routes settings
-|   +-- layout.tsx    # Root layout
-|   +-- page.tsx      # Trang chủ
++-- app                # Next.js App Router - lớp routing của ứng dụng
+|   |                  # Chỉ chứa các route pages và layouts
+|   +-- (auth)         # Nhóm routes auth (login, register, forgot-password, etc.)
+|   +-- (candidate)    # Nhóm routes ứng viên (jobs, applications, offers, etc.)
+|   +-- api            # API Route Handlers (auth session, Google OAuth)
+|   +-- enterprise     # Enterprise portal routes
+|   |   +-- dept-head  # Department Head portal
+|   |   +-- director   # Director portal
+|   |   +-- employee   # Employee portal
+|   |   +-- hr         # HR Manager portal
+|   |   +-- profile    # Shared profile page
+|   |   +-- settings   # Shared settings pages
+|   +-- providers      # App-level providers (Auth, SWR)
+|   +-- globals.css    # Tailwind CSS 4 config & design tokens
+|   +-- layout.tsx     # Root layout
+|   +-- page.tsx       # Trang chủ (landing/candidate home)
+|   +-- not-found.tsx  # 404 page
 |
-+-- components        # Shared components dùng chung trong toàn bộ ứng dụng
-|   +-- common        # Components reusable thông dụng
-|   +-- layout        # Layout components (navbar, footer, etc.)
-|   +-- ui            # UI primitives (shadcn/ui components)
++-- components         # Shared components dùng chung trong toàn bộ ứng dụng
+|   +-- common         # Components reusable (Alert, Avatar, Skeleton, Error, FileUpload, etc.)
+|   +-- icons          # Dynamic icon loader
+|   +-- layout         # Layout components (navbars, footers, sidebar, etc.)
+|   +-- shared         # Shared feature components (Coming Soon page, etc.)
+|   +-- ui             # UI primitives (shadcn/ui components)
 |
-+-- config            # Global configurations, env variables
++-- config             # Global configurations (site config)
 |
-+-- features          # Feature-based modules (business logic)
-|   +-- core          # Cross-cutting features (auth, user-profile)
-|   +-- dashboard     # Dashboard và statistics
-|   +-- home          # Trang chủ components
-|   +-- jobs          # Quản lý việc làm
-|   +-- recruitment   # Quản lý tuyển dụng HR
++-- features           # Feature-based modules (business logic)
+|   +-- candidate      # Ứng viên: ứng tuyển, xem offers, sidebar
+|   +-- core           # Cross-cutting: auth, user-profile
+|   +-- cv             # Upload CV
+|   +-- dashboard      # Dashboard widgets (stat cards)
+|   +-- dept-head      # Trưởng phòng: recruitment plans, interviews, training
+|   +-- director       # Ban giám đốc: approvals, reports
+|   +-- employee       # Nhân viên: interviews, teaching
+|   +-- enterprise     # Enterprise shared: sidebar, service
+|   +-- hr             # HR: departments, employees, job postings, applications,
+|   |                  #     offers, campaigns, interviews, training, dashboard
+|   +-- jobs           # Tìm việc: search, filter, detail, saved jobs
 |
-+-- hooks             # Shared hooks dùng chung trong toàn bộ ứng dụng
++-- hooks              # Shared hooks dùng chung (useDebounce, useCloudinaryUpload, useFormHandler, useToast)
 |
-+-- lib               # Reusable libraries được pre-configured cho ứng dụng
++-- lib                # Reusable libraries pre-configured
+|   +-- api-client.ts  # HTTP client với token, CSRF, error handling
+|   +-- server-fetch.ts # Server-side fetch utility
+|   +-- cloudinary/    # Cloudinary upload config
+|   +-- logger.ts      # Client-side logger
+|   +-- swr/           # SWR hooks & configuration
+|   +-- utils.ts       # cn() helper (clsx + tailwind-merge)
 |
-+-- stores            # Global state stores (Zustand)
++-- stores             # Global state stores (Zustand)
+|   +-- auth-store.ts  # Authentication state
+|   +-- use-app-store.ts # App-wide UI state
 |
-+-- types             # Shared types dùng chung trong ứng dụng
++-- types              # Shared types (User, ApiResponse, PaginationParams)
 |
-+-- utils             # Shared utility functions
++-- utils              # Shared utility functions
+|   +-- constants.ts   # USER_ROLES, ROLE_DASHBOARD_MAP, STORAGE_KEYS
+|   +-- error-handler.ts # Centralized error handling
+|   +-- jwt.ts         # JWT parsing utilities
+|   +-- logger.ts      # Logging utilities
+|   +-- sanitization.ts # Input sanitization
+|   +-- blocked-companies.ts # Company blocking logic
 |
-+-- middleware.ts     # Next.js middleware cho security & routing
++-- middleware.ts      # Next.js middleware: auth guards, CSRF, CSP headers, routing
 ```
 
 ## Tổ Chức Theo Features
@@ -48,7 +79,7 @@ src
 ### Tại Sao Theo Features?
 
 - ✅ **Ngăn chặn việc trộn lẫn** code của feature với shared components
-- ✅ **Đơn giản hơn để quản lý** so với flat folder structure  
+- ✅ **Đơn giản hơn để quản lý** so với flat folder structure
 - ✅ **Tăng cường collaboration** - ownership rõ ràng
 - ✅ **Dễ đọc hơn** - dễ tìm code
 - ✅ **Có khả năng mở rộng** - thêm features mà không làm lộn xộn
@@ -75,9 +106,7 @@ src/features/awesome-feature
 
 **LƯU Ý:** Bạn không cần tất cả các folders cho mỗi feature. Chỉ include những cái cần thiết.
 
-## Tổ Chức Features
-
-ERMS tổ chức features theo cấu trúc phẳng (flat structure) trong thư mục `features/`:
+## Tổ Chức Features Hiện Tại
 
 ### `features/core/` - Cross-cutting Features
 
@@ -87,49 +116,162 @@ Các features được sử dụng xuyên suốt ứng dụng:
 features/core/
 |
 +-- auth/              # Authentication & authorization
-|   +-- api/
-|   +-- components/
-|   +-- hooks/
-|   +-- schemas/
-|   +-- types/
+|   +-- actions/       # Server actions
+|   +-- api/           # Auth service (login, register, etc.)
+|   +-- components/    # Login form, Register form, Forgot password, etc.
+|   +-- hooks/         # useAuth, useCandidateAccess, etc.
+|   +-- schemas/       # Zod validation schemas
+|   +-- types/         # Auth types
+|   +-- utils/         # Cookie helpers, Google auth
 |   +-- index.ts
 |
 +-- user-profile/      # Quản lý user profile
-    +-- api/
-    +-- components/
+    +-- api/           # Profile service
+    +-- components/    # Profile forms, avatar section
+    +-- hooks/         # useProfileForm
+    +-- utils/         # Profile validation
     +-- index.ts
 ```
 
-**Ví dụ:** auth, user-profile, notifications, settings
+### `features/hr/` - HR Manager Feature
 
-### Business Domain Features
-
-Các features đặc thù cho business domains nằm trực tiếp trong `features/`:
+Feature lớn nhất, quản lý toàn bộ nghiệp vụ HR:
 
 ```sh
-features/
+features/hr/
 |
-+-- dashboard/         # Tổng quan và thống kê
-|   +-- components/
-|   +-- index.ts
++-- api/                        # API services
+|   +-- application-service.ts  # Screening ứng viên
+|   +-- course-content-service.ts
+|   +-- course-service.ts
+|   +-- dashboard-service.ts    # HR dashboard data
+|   +-- department-service.ts   # Quản lý phòng ban
+|   +-- employee-service.ts     # Quản lý nhân viên
+|   +-- hr-training-service.ts  # Đào tạo
+|   +-- interview-service.ts    # Phỏng vấn
+|   +-- job-posting-service.ts  # Tin tuyển dụng
+|   +-- offer-service.ts        # Offers
+|   +-- recruitment-campaign-service.ts
+|   +-- training-server-service.ts
 |
-+-- home/              # Trang chủ ứng viên
-|   +-- constants/
-|   +-- index.ts
++-- components/
+|   +-- application/            # CV Screening components
+|   +-- department/             # Department management
+|   +-- employee/               # Employee management
+|   +-- hr-dashboard.tsx        # HR dashboard view
+|   +-- dashboard-widgets.tsx   # Dashboard stat widgets
+|   +-- interview/              # Interview management
+|   +-- job-posting/            # Job posting management
+|   +-- offer/                  # Offer management
+|   +-- recruitment/            # Recruitment campaigns
+|   +-- sidebar/                # HR sidebar navigation
+|   +-- training/               # Training management
 |
-+-- jobs/              # Quản lý việc làm
-|   +-- components/
-|   +-- constants/
-|   +-- index.ts
-|
-+-- recruitment/       # Quản lý tuyển dụng HR
-    +-- components/
-    +-- data/
-    +-- types/
-    +-- index.ts
++-- hooks/                      # SWR hooks cho data fetching
++-- types/                      # TypeScript types
++-- index.ts
 ```
 
-**Ví dụ:** dashboard, home, jobs, recruitment
+### `features/dept-head/` - Department Head Feature
+
+```sh
+features/dept-head/
+|
++-- api/
+|   +-- dept-head-service.ts    # Recruitment plans, proposals
+|   +-- interview-service.ts    # Interview management
+|   +-- training-service.ts     # Training management
+|
++-- components/
+|   +-- dept-head-dashboard.tsx
+|   +-- dept-head-sidebar.tsx
+|   +-- interview/              # Interview: assign, schedule, feedback, shortlist
+|   +-- recruitment/            # Plans: create, detail, campaigns
+|   +-- training/               # Training: requests, plans, courses, assign
+|
++-- hooks/
++-- types/
+```
+
+### `features/director/` - Director Feature
+
+```sh
+features/director/
+|
++-- api/
+|   +-- director-training-service.ts
+|
++-- components/
+    +-- director-dashboard.tsx
+    +-- director-sidebar.tsx
+    +-- plan-approval-list.tsx
+    +-- training/               # Training approval
+```
+
+### `features/employee/` - Employee Feature
+
+```sh
+features/employee/
+|
++-- api/
+|   +-- interview-service.ts
+|
++-- components/
+|   +-- employee-sidebar.tsx
+|   +-- interview/              # My interviews, feedback
+|   +-- teaching/               # Teaching tasks, course dashboard, curriculum, exams
+|
++-- hooks/
++-- types/
++-- index.ts
+```
+
+### `features/candidate/` - Candidate Feature
+
+```sh
+features/candidate/
+|
++-- api/
+|   +-- application-service.ts  # Ứng tuyển
+|   +-- offer-service.ts        # Xem offers
+|
++-- components/
+|   +-- application-list.tsx
+|   +-- applied-job-card.tsx
+|   +-- candidate-offer-card.tsx
+|   +-- candidate-offer-detail.tsx
+|   +-- candidate-offer-list.tsx
+|   +-- candidate-sidebar.tsx
+|   +-- job-apply-form.tsx
+|   +-- screening-results-card.tsx
+|
++-- hooks/
++-- types/
+```
+
+### `features/jobs/` - Job Listing Feature
+
+```sh
+features/jobs/
+|
++-- api/                # Job search API
++-- components/         # Job cards, search, filters
++-- data/               # Static data
++-- hooks/              # Job-related hooks
++-- stores/             # Job filter state (Zustand)
++-- styles/             # CSS styles
++-- views/              # Page-level views
++-- constants.ts        # Job constants
++-- job-filtering.ts    # Filter logic
++-- types.ts            # Job types
++-- index.ts
+```
+
+### Các Features Khác
+
+- **`features/enterprise/`** - Shared enterprise sidebar, service
+- **`features/dashboard/`** - Shared dashboard widgets (StatCard, DashboardStats)
+- **`features/cv/`** - CV upload component
 
 ## Pattern Public API
 
@@ -206,9 +348,6 @@ Code phải flow theo một hướng: **shared → features → app**
 - ❌ **Features** KHÔNG THỂ import từ **features** khác
 
 
-```
-
-
 ## Trách Nhiệm Của Các Thư Mục
 
 ### `app/` - Application Layer
@@ -245,12 +384,12 @@ export default function LoginPage() {
 // ✅ NÊN: Complete feature implementation
 export const LoginForm = memo(function LoginForm() {
   const form = useForm({ resolver: zodResolver(loginSchema) })
-  
+
   const handleSubmit = async (data: LoginFormData) => {
     const response = await login(data)
     // Xử lý response
   }
-  
+
   return <form onSubmit={form.handleSubmit(handleSubmit)}>...</form>
 })
 ```
@@ -259,17 +398,45 @@ export const LoginForm = memo(function LoginForm() {
 
 **Trách nhiệm:** Reusable, generic components
 
-```typescript
-// ✅ NÊN: Generic, reusable
-export function Button({ children, onClick }: ButtonProps) {
-  return <button onClick={onClick}>{children}</button>
-}
-
-// ❌ KHÔNG NÊN: Business logic
-export function SubmitJobButton() {
-  const handleSubmit = () => submitJob() // Quá cụ thể!
-  return <button onClick={handleSubmit}>Submit</button>
-}
+```
+components/
+├── common/              # Business-agnostic reusable
+│   ├── alert.tsx
+│   ├── avatar-dropdown.tsx
+│   ├── brand-logo.tsx
+│   ├── dashboard/       # Shared dashboard widgets
+│   ├── error-boundary.tsx
+│   ├── error-dialog.tsx
+│   ├── file-upload.tsx
+│   ├── image-upload.tsx
+│   ├── loading-spinner.tsx
+│   ├── skeleton.tsx
+│   └── skeletons/       # Skeleton variants
+│
+├── icons/               # Dynamic icon loading
+│
+├── layout/              # App layout pieces
+│   ├── auth-navbar.tsx
+│   ├── auth-footer.tsx
+│   ├── brand-decoration.tsx
+│   ├── candidate-navbar.tsx
+│   ├── client-layout-elements.tsx
+│   ├── floating-menu.tsx
+│   ├── footer.tsx
+│   ├── nav-item.tsx
+│   └── settings-sidebar.tsx
+│
+├── shared/              # Domain-level shared components
+│   └── coming-soon-page.tsx
+│
+└── ui/                  # shadcn/ui primitives
+    ├── alert-dialog.tsx, alert.tsx, avatar.tsx, badge.tsx
+    ├── button.tsx, calendar.tsx, card.tsx, checkbox.tsx
+    ├── dialog.tsx, dropdown-menu.tsx, form.tsx, form-field.tsx
+    ├── input.tsx, label.tsx, popover.tsx, progress.tsx
+    ├── select.tsx, separator.tsx, sheet.tsx, skeleton.tsx
+    ├── switch.tsx, table.tsx, tabs.tsx, textarea.tsx
+    └── toast.tsx, tooltip.tsx
 ```
 
 ### `lib/` - Utility Libraries
@@ -277,14 +444,11 @@ export function SubmitJobButton() {
 **Trách nhiệm:** Pre-configured utilities, helpers
 
 ```typescript
-// ✅ NÊN: Generic utilities
-export function cn(...classes: ClassValue[]) {
-  return twMerge(clsx(classes))
-}
-
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString('vi-VN')
-}
+// api-client.ts - HTTP client với auth token, CSRF, error handling
+// server-fetch.ts - Server-side data fetching
+// swr/ - SWR hooks configuration
+// cloudinary/ - Cloudinary upload config
+// utils.ts - cn() helper
 ```
 
 ### `stores/` - Global State
@@ -292,15 +456,18 @@ export function formatDate(date: Date): string {
 **Trách nhiệm:** Application-wide state only
 
 ```typescript
-// ✅ NÊN: Global state (auth, theme, v.v.)
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  login: (user) => set({ user }),
-}))
+// auth-store.ts - User, token, login/logout
+// use-app-store.ts - App-wide UI state
+```
 
-// ❌ KHÔNG NÊN: Feature-specific state
-export const useJobFiltersStore = create(...)
-// Cái này nên nằm trong features/jobs/
+### `hooks/` - Shared Hooks
+
+```typescript
+// use-cloudinary-upload.ts - Upload file lên Cloudinary
+// use-debounce.ts - Debounce function calls
+// use-debounced-value.ts - Debounce state values
+// use-form-handler.ts - Generic form submission handler
+// use-toast.ts - Toast notification hook
 ```
 
 ## Lợi Ích Của Cấu Trúc Này
@@ -329,15 +496,6 @@ export const useJobFiltersStore = create(...)
 ✅ Onboarding dễ dàng → Cấu trúc rõ ràng
 ```
 
-### 4. Testing
-
-```
-✅ Test feature → Test toàn bộ feature folder
-✅ Mock dependencies → Ranh giới rõ ràng
-✅ Integration tests → Test feature như một đơn vị
-```
-
-
 ## Anti-Patterns Cần Tránh
 
 ### ❌ Circular Dependencies
@@ -346,31 +504,16 @@ export const useJobFiltersStore = create(...)
 // features/auth/index.ts
 import { JobCard } from '@/features/jobs'  // Tệ!
 
-// features/jobs/index.ts  
+// features/jobs/index.ts
 import { useAuth } from '@/features/auth'  // Tạo vòng lặp!
 ```
 
-**Giải pháp:** Compose ở app level:
-
-```typescript
-// app/page.tsx
-import { AuthProvider } from '@/features/auth'
-import { JobList } from '@/features/jobs'
-
-export default function Page() {
-  return (
-    <AuthProvider>
-      <JobList />
-    </AuthProvider>
-  )
-}
-```
+**Giải pháp:** Compose ở app level hoặc dùng shared hooks.
 
 ### ❌ Trộn Lẫn Concerns
 
 ```typescript
 // ❌ Tệ - Business logic trong app/
-// app/(auth)/login/page.tsx
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const handleSubmit = async () => {
@@ -400,38 +543,6 @@ function JobFilters() { /* filtering */ }
 function JobForm() { /* creating/editing */ }
 ```
 
-## Best Practices Tổ Chức File
-
-
-### 1. Sử Dụng Index Files Một Cách Khôn Ngoan
-
-```typescript
-// ✅ Tốt - Chỉ export public API
-// features/auth/index.ts
-export { LoginForm } from './components/login-form'
-export { useAuth } from './hooks/use-auth'
-// Không export internal helpers
-
-// ❌ Tệ - Export mọi thứ
-export * from './components'
-export * from './api'
-export * from './utils'
-```
-
-### 2. Naming Nhất Quán
-
-```
-feature-name/
-├── api/
-│   └── feature-name-service.ts
-├── components/
-│   └── feature-component.tsx
-├── hooks/
-│   └── use-feature.ts
-└── schemas/
-    └── feature-schemas.ts
-```
-
 ## Khi Nào Tạo Feature Mới
 
 ### Tạo Feature Mới Khi:
@@ -448,7 +559,4 @@ feature-name/
 - ❌ Chỉ là UI components (dùng `components/`)
 - ❌ Chỉ là utilities (dùng `lib/` hoặc `utils/`)
 
-
-
 ---
-

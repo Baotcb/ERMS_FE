@@ -4,43 +4,39 @@
 
 ## ESLint
 
-ESLint là công cụ linting quan trọng cho JavaScript, giúp lập trình viên duy trì chất lượng code và tuân theo các chuẩn mực coding. Bằng cách cấu hình các rules trong file `eslint.config.mjs`, ESLint giúp xác định và ngăn chặn các lỗi phổ biến, đảm bảo code chính xác và thúc đẩy sự nhất quán trong toàn bộ codebase.
+ERMS sử dụng **ESLint 9.x** với flat config mới (`eslint.config.mjs`):
 
 ### Cấu Hình
 
 ```javascript
 // eslint.config.mjs
-import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
-import reactPlugin from 'eslint-plugin-react'
-import reactHooksPlugin from 'eslint-plugin-react-hooks'
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-export default tseslint.config(
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    plugins: {
-      react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-    },
-    rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { 
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_'
-      }],
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-    },
-  }
-)
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
 ```
 
-[Cấu Hình ESLint - ERMS](../eslint.config.mjs)
+Chạy lint:
 
-
+```bash
+npm run lint
 ```
 
-[Cấu Hình TypeScript - ERMS](../tsconfig.json)
+## TypeScript
+
+ERMS sử dụng **TypeScript 5.x** với strict mode. Cấu hình trong `tsconfig.json`.
 
 **Thực Hành Tốt Nhất:**
 - ✅ Luôn sử dụng kiểu dữ liệu rõ ràng
@@ -84,9 +80,7 @@ function isUser(obj: unknown): obj is User {
 
 ## Absolute Imports
 
-Absolute imports đã được cấu hình và nên luôn được sử dụng vì nó giúp dễ dàng di chuyển files và tránh các đường dẫn import rối rắm như `../../../component`.
-
-### Cấu Hình
+Absolute imports đã được cấu hình với prefix `@/` mapping tới `./src/*`:
 
 ```json
 // tsconfig.json
@@ -110,45 +104,18 @@ import { LoginForm } from '../../../features/core/auth/components/login-form'
 import { LoginForm } from '@/features/core/auth'
 ```
 
-**Lợi ích:**
-- ✅ Dễ dàng di chuyển files
-- ✅ Imports sạch sẽ hơn
-- ✅ Phân biệt rõ ràng với `node_modules`
-- ✅ IDE autocomplete tốt hơn
-
 ## Quy Ước Đặt Tên File
-
-ERMS áp dụng quy ước đặt tên file để duy trì sự nhất quán và dễ điều hướng.
-
-### Quy Tắc
 
 | Loại | Quy Ước | Ví Dụ |
 |------|---------|-------|
 | Components | kebab-case.tsx | `login-form.tsx` |
 | Hooks | use-kebab-case.ts | `use-auth.ts` |
 | Utils | kebab-case.ts | `error-handler.ts` |
-| Types | kebab-case.ts | `auth-types.ts` |
-| Constants | kebab-case.ts | `api-constants.ts` |
-
-### Áp Dụng Với ESLint
-
-```javascript
-'check-file/filename-naming-convention': [
-  'error',
-  {
-    '**/*.{ts,tsx}': 'KEBAB_CASE',
-  },
-  {
-    ignoreMiddleExtensions: true,
-  },
-],
-'check-file/folder-naming-convention': [
-  'error',
-  {
-    'src/**/!(__tests__)': 'KEBAB_CASE',
-  },
-],
-```
+| Types | kebab-case.ts | `auth-types.ts`, `interview-types.ts` |
+| Constants | kebab-case.ts | `constants.ts` |
+| Services | kebab-case-service.ts | `employee-service.ts` |
+| Schemas | kebab-case-schemas.ts | `auth-schemas.ts` |
+| Stores | kebab-case-store.ts | `auth-store.ts` |
 
 ## Hướng Dẫn Code Style
 
@@ -162,7 +129,7 @@ import { ComponentProps } from './types'
 
 /**
  * ComponentName - Mô tả
- * 
+ *
  * @param props - Component props
  * @returns JSX Element
  */
@@ -188,21 +155,6 @@ export const ComponentName = memo(function ComponentName({
 })
 ```
 
-### Cấu Trúc Function
-
-```typescript
-/**
- * Mô tả function
- * 
- * @param param1 - Mô tả
- * @param param2 - Mô tả
- * @returns Mô tả
- */
-export function functionName(param1: Type1, param2: Type2): ReturnType {
-  // Triển khai
-}
-```
-
 ### Cấu Trúc Feature
 
 ```
@@ -217,7 +169,7 @@ features/[feature-name]/
 ├── schemas/                # Validation
 │   └── [feature]-schemas.ts
 ├── types/                  # Kiểu dữ liệu
-│   └── index.ts
+│   └── [feature]-types.ts
 └── index.ts                # Exports công khai
 ```
 
@@ -297,11 +249,11 @@ import './styles.css'
 ```typescript
 /**
  * Đăng nhập user với credentials
- * 
+ *
  * @param credentials - Email và password của user
  * @returns Response xác thực với token
  * @throws {ApiError} Khi credentials không hợp lệ
- * 
+ *
  * @example
  * ```ts
  * const response = await login({
@@ -327,12 +279,10 @@ const debouncedSearch = useDebounce(search, 300)
 setLoading(true)
 ```
 
-
-### Định Dạng Commit Message
+## Commit Message
 
 ```
 type(scope): subject
-
 ```
 
 **Các Types:**
@@ -346,8 +296,12 @@ type(scope): subject
 - `chore`: Thay đổi build process hoặc công cụ hỗ trợ
 
 **Ví dụ:**
+
 ```
 feat(auth): thêm chức năng quên mật khẩu
+fix(hr): sửa lỗi employee count trong department
+docs(readme): cập nhật tài liệu cấu trúc dự án
+refactor(jobs): tách job filtering thành file riêng
 ```
 
 ## Chuẩn Mực Hiệu Năng
@@ -355,20 +309,22 @@ feat(auth): thêm chức năng quên mật khẩu
 - ✅ Memoize các components tốn kém với `React.memo`
 - ✅ Sử dụng `useCallback` cho event handlers
 - ✅ Sử dụng `useMemo` cho các tính toán tốn kém
-- ✅ Debounce user inputs (search, filters)
+- ✅ Debounce user inputs (search, filters) - dùng `useDebounce` hook
 - ✅ Lazy load các components nặng
 - ✅ Tối ưu images với `next/image`
-- ✅ Code split ở cấp độ route
+- ✅ Code split ở cấp độ route (Next.js automatic)
+- ✅ Sử dụng `@tanstack/react-virtual` cho danh sách lớn
+- ✅ Dùng `optimizePackageImports` trong `next.config.ts`
 
 ## Chuẩn Mực Bảo Mật
 
-- ✅ Sanitize tất cả user inputs
-- ✅ Không bao giờ lưu dữ liệu nhạy cảm trong localStorage
-- ✅ Sử dụng HTTPS trong production
-- ✅ Triển khai CSP headers
-- ✅ Validate data với Zod
-- ✅ Sử dụng parameterized queries
-- ✅ Triển khai rate limiting
+- ✅ Sanitize tất cả user inputs (dùng `utils/sanitization.ts`)
+- ✅ Không bao giờ lưu JWT trong localStorage (dùng HttpOnly cookies)
+- ✅ CSRF protection qua middleware
+- ✅ CSP headers tự động qua middleware
+- ✅ Validate data với Zod schemas
+- ✅ API proxy qua Next.js rewrites (ẩn backend URL)
+- ✅ Security headers: HSTS, X-Content-Type-Options, X-Frame-Options, etc.
 
 ## Chuẩn Mực Accessibility
 
@@ -377,6 +333,6 @@ feat(auth): thêm chức năng quên mật khẩu
 - ✅ Hỗ trợ điều hướng bằng bàn phím
 - ✅ Độ tương phản màu phù hợp (WCAG AA)
 - ✅ Chỉ báo focus
-- ✅ Thân thiện với screen reader
+- ✅ Thân thiện với screen reader (Radix UI primitives)
 
 ---
