@@ -16,6 +16,67 @@ import {
     filterItemsByRole,
     type HRNavItem,
 } from './hr-navigation-config'
+import { useEnterpriseInfo } from '@/features/enterprise'
+
+interface NavItem {
+    label: string
+    href?: string
+    icon: React.ReactNode
+    children?: { label: string; href: string }[]
+    roles?: string[]
+}
+
+const NAV_ITEMS: NavItem[] = [
+    {
+        label: 'Dashboard',
+        href: '/enterprise/hr/dashboard',
+        icon: <LayoutDashboard className="w-5 h-5" />,
+        roles: []
+    },
+    {
+        label: 'Nhân sự',
+        icon: <Users className="w-5 h-5" />,
+        roles: ['HRManager', 'Director', 'DepartmentHead'],
+        children: [
+            { label: 'Phòng ban', href: '/enterprise/hr/departments' },
+            { label: 'Nhân viên', href: '/enterprise/hr/employees' }
+        ]
+    },
+    {
+        label: 'Tuyển dụng',
+        icon: <CalendarRange className="w-5 h-5" />,
+        roles: ['HRManager', 'Director'],
+        children: [
+            { label: 'Tin tuyển dụng', href: '/enterprise/hr/job-postings' },
+            { label: 'Chiến dịch tuyển dụng', href: '/enterprise/hr/recruitment-campaigns' }
+        ]
+    },
+    {
+        label: 'Phỏng vấn',
+        href: '/enterprise/hr/interviews',
+        icon: <CalendarCheck className="w-5 h-5" />,
+        roles: ['HRManager']
+    },
+    {
+        label: 'Quản lý Offer',
+        href: '/enterprise/hr/offers',
+        icon: <FileText className="w-5 h-5" />,
+        roles: ['HRManager']
+    },
+    {
+        label: 'Đào tạo',
+        icon: <GraduationCap className="w-5 h-5" />,
+        roles: ['HRManager', 'HR', 'Director', 'Admin'],
+        children: [
+            { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
+            { label: 'Danh sách khóa học', href: '/enterprise/hr/training/courses' },
+            { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
+            { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' },
+            { label: 'Khóa học của tôi', href: '/enterprise/hr/learning' },
+            { label: 'Quản lý Workshop', href: '/enterprise/hr/training/workshop' }
+        ]
+    }
+]
 
 const NavMenuItem = memo(function NavMenuItem({
     item,
@@ -78,7 +139,7 @@ const NavMenuItem = memo(function NavMenuItem({
             <div
                 className={cn(
                     'overflow-hidden transition-all duration-300',
-                    isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                    isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 )}
             >
                 <div className="ml-8 mt-1 space-y-1">

@@ -21,6 +21,8 @@ export interface Course {
     publishedAt?: string;
     lessonCount: number;
     enrollmentCount: number;
+    hasFinalQuiz?: boolean;
+    finalQuizId?: string;
     createdAt: string;
 }
 
@@ -44,6 +46,13 @@ export interface CreateCourseCommand {
 
 export interface UpdateCourseCommand extends CreateCourseCommand {
     id: string;
+}
+
+export interface PublishCourseCommand {
+    id: string;
+    startTime: string;
+    trainingType: 'Online' | 'Offline';
+    location: string;
 }
 
 export interface CourseResult {

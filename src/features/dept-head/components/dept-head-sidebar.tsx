@@ -47,6 +47,7 @@ const NAV_ITEMS: NavItem[] = [
             { label: 'Khóa học khả dụng', href: '/enterprise/dept-head/training/courses' },
             { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' },
         ],
+        ]
     },
     {
         icon: <ClipboardList className="h-5 w-5" />,
@@ -146,6 +147,13 @@ const NavMenuItem = memo(function NavMenuItem({
 })
 
 export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
+// Avatar Dropdown imported from shared component
+import { AvatarDropdown } from '@/components/common/avatar-dropdown'
+import { useEnterpriseInfo } from '@/features/enterprise'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
+
+export function DeptHeadSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
     const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
@@ -202,6 +210,7 @@ export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
         }
 
         return NAV_ITEMS.map((item) => {
+    const navItems = NAV_ITEMS.map((item) => {
             if (item.label !== 'Đào tạo' || !item.children) {
                 return item
             }
@@ -212,6 +221,20 @@ export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
 
             if (hasTrainerLink) {
                 return item
+            let children = item.children
+
+            if (canAccessTeachingWorkspace(user)) {
+                const hasTrainerLink = children.some((child) => child.href === '/enterprise/dept-head/teaching')
+                if (!hasTrainerLink) {
+                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' }]
+                }
+            }
+
+            if (canAccessLearningWorkspace(user)) {
+                const hasLearningLink = children.some((child) => child.href === '/enterprise/dept-head/learning')
+                if (!hasLearningLink) {
+                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/dept-head/learning' }]
+                }
             }
 
             return {
@@ -223,6 +246,9 @@ export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
             }
         })
     }, [user?.isTrainer])
+                children,
+            }
+        })
 
     const sidebarContent = (
         <div className="flex h-full flex-col bg-white border-r border-gray-200">

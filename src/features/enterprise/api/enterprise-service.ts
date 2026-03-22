@@ -19,7 +19,12 @@ export function useEnterpriseInfo() {
 
     const { data, error, isLoading } = useData<EnterpriseInfo>(
         '/api/Enterprise/get-url-avata-enterprise',
-        { fetcher }
+        {
+            fetcher,
+            shouldRetryOnError: false,
+            revalidateOnFocus: false,
+            dedupingInterval: 60000,
+        }
     )
 
     return {

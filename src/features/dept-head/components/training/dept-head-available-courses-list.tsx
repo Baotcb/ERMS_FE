@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function getDeploymentLabel(course: Course): string {
-    const hasTrainer = Boolean(course.trainerId);
+    const hasTrainer = Boolean(course.trainerEmail?.trim());
     const hasTrainees = (course.enrollmentCount || 0) > 0;
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
@@ -102,7 +102,6 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                         <TableRow>
                             <TableHead className="font-bold text-[#0F4C75]">Khóa học</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Giảng viên</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Cấp độ</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Bài học</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Học viên</TableHead>
                             <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
@@ -113,13 +112,13 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-12 text-gray-400">
+                                <TableCell colSpan={7} className="text-center py-12 text-gray-400">
                                     Đang tải dữ liệu...
                                 </TableCell>
                             </TableRow>
                         ) : courses.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-12 text-gray-400 italic">
+                                <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
                                     Chưa có khóa học nào trong công ty
                                 </TableCell>
                             </TableRow>
@@ -135,8 +134,7 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-gray-700">{course.trainerName || 'Chưa gán'}</TableCell>
-                                    <TableCell className="text-gray-700">{course.level || 'N/A'}</TableCell>
+                                    <TableCell className="text-gray-700">{course.trainerName || course.trainerEmail || 'Chưa gán'}</TableCell>
                                     <TableCell className="text-gray-700">{course.lessonCount || 0}</TableCell>
                                     <TableCell className="text-gray-700">{course.enrollmentCount || 0}</TableCell>
                                     <TableCell className="text-gray-500 text-sm">
@@ -178,21 +176,81 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                         </DialogDescription>
                     </DialogHeader>
 
-                    {selectedCourse && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div><span className="font-semibold">Tên khóa học:</span> {selectedCourse.courseName}</div>
-                            <div><span className="font-semibold">Mã khóa học:</span> {selectedCourse.courseCode}</div>
-                            <div><span className="font-semibold">Giảng viên:</span> {selectedCourse.trainerName || 'Chưa gán'}</div>
-                            <div><span className="font-semibold">Cấp độ:</span> {selectedCourse.level || 'N/A'}</div>
-                            <div><span className="font-semibold">Thời lượng:</span> {selectedCourse.durationMinutes || 0} phút</div>
-                            <div><span className="font-semibold">Số bài học:</span> {selectedCourse.lessonCount || 0}</div>
-                            <div><span className="font-semibold">Số học viên:</span> {selectedCourse.enrollmentCount || 0}</div>
-                            <div><span className="font-semibold">Trạng thái:</span> {getDeploymentLabel(selectedCourse)}</div>
-                            <div className="md:col-span-2">
-                                <span className="font-semibold">Mô tả:</span> {selectedCourse.description || 'Chưa có mô tả'}
+                    {selectedCourse && (() => {
+                        const raw = selectedCourse.description || '';
+                        const lines = raw.split('\n');
+                        let desc = '';
+                        let schedule = null as { start: string; end: string } | null;
+                        let location = null as string | null;
+
+                        for (const line of lines) {
+                            const m = line.match(/(?:\[DRAFT\] )?Lịch trình:\s*(.+?)\s*đến\s*(.+?)\.\s*Địa điểm:\s*(.+)/i);
+                            if (m) { schedule = { start: m[1], end: m[2] }; location = m[3].trim(); continue; }
+                            if (line.match(/Thông báo:\s*giangvien_khi_phancong/i)) continue;
+                            if (line.trim()) desc += (desc ? '\n' : '') + line.trim();
+                        }
+
+                        return (
+                            <div className="space-y-5">
+                                {/* Header */}
+                                <div className="flex items-start gap-3">
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center text-white shrink-0">
+                                        <BookOpen className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-bold text-[#0F4C75] leading-tight">{selectedCourse.courseName}</h3>
+                                        <p className="text-sm text-gray-500">{selectedCourse.courseCode}</p>
+                                    </div>
+                                    <Badge variant="outline" className={`border-0 font-semibold px-2.5 py-0.5 shrink-0 ${STATUS_COLORS[selectedCourse.status] || 'bg-gray-100 text-gray-700'}`}>
+                                        {getDeploymentLabel(selectedCourse)}
+                                    </Badge>
+                                </div>
+
+                                {/* Info grid */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {[
+                                        { label: 'Giảng viên', value: selectedCourse.trainerName || selectedCourse.trainerEmail || 'Chưa gán', icon: '👨‍🏫' },
+                                        { label: 'Thời lượng', value: `${selectedCourse.durationMinutes || 0} phút`, icon: '⏱️' },
+                                        { label: 'Bài học', value: String(selectedCourse.lessonCount || 0), icon: '📚' },
+                                        { label: 'Học viên', value: String(selectedCourse.enrollmentCount || 0), icon: '👥' },
+                                    ].map(({ label, value, icon }) => (
+                                        <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
+                                            <div className="text-lg mb-0.5">{icon}</div>
+                                            <p className="text-sm font-bold text-gray-800">{value}</p>
+                                            <p className="text-[11px] text-gray-500 uppercase tracking-wider">{label}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Schedule */}
+                                {(schedule || location) && (
+                                    <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 space-y-2">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-blue-600">🏢 Lịch trình</p>
+                                        {schedule && (
+                                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                                                <span>🗓️</span>
+                                                <span>{schedule.start} → {schedule.end}</span>
+                                            </div>
+                                        )}
+                                        {location && (
+                                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                                                <span>📍</span>
+                                                <span>{location}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Description */}
+                                {desc && (
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Mô tả</p>
+                                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{desc}</p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
         </div>

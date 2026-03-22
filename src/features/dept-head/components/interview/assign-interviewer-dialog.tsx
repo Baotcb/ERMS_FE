@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
+import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { useAssignInterviewer } from '../../hooks/use-interview'
 
 
@@ -43,6 +44,7 @@ export function AssignInterviewerDialog({
     open, onOpenChange, applicationId, candidateName, onSuccess, onAssignSuccess,
 }: AssignInterviewerDialogProps) {
     const { toast } = useToast()
+    const { user } = useAuth()
     const { trigger, isMutating } = useAssignInterviewer()
 
     const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -60,26 +62,13 @@ export function AssignInterviewerDialog({
         setPrevOpen(open)
     }
 
-    // Fetch employees and filter by department on client-side
-    // Backend returns departmentName per employee — we find the DeptHead's dept
-    // by detecting which department appears most (DeptHead is in that dept)
+    // Lấy nhân viên cùng phòng ban với DeptHead
     const { data: employeesData } = useSWR<{ items: EmployeeOption[] }>(
-        open ? ['/api/Employees', employeeSearch] : null,
-        () => apiClient.get(`/api/Employees?pageSize=100&search=${employeeSearch}`).then(r => r.json())
+        open && user?.departmentId ? ['/api/Employees', user.departmentId, employeeSearch] : null,
+        () => apiClient.get(`/api/Employees?pageSize=100&departmentId=${user!.departmentId}&search=${employeeSearch}`).then(r => r.json())
     )
 
-    // Auto-detect DeptHead's department: find the most common departmentName
-    const allEmployees = employeesData?.items ?? []
-    const deptCounts = allEmployees.reduce<Record<string, number>>((acc, emp) => {
-        acc[emp.departmentName] = (acc[emp.departmentName] || 0) + 1
-        return acc
-    }, {})
-    const mainDept = Object.entries(deptCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
-
-    // Only show employees from the same department
-    const employees = mainDept
-        ? allEmployees.filter(e => e.departmentName === mainDept)
-        : allEmployees
+    const employees = employeesData?.items ?? []
 
     const toggleEmployee = useCallback((id: string) => {
         setSelectedIds(prev =>

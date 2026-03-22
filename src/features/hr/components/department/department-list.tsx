@@ -41,8 +41,8 @@ export const DepartmentList = memo(function DepartmentList() {
         setIsOpen(true)
     }, [])
 
-    const handleDelete = useCallback((dept: Department) => {
-        console.log('Delete', dept)
+    const handleDelete = useCallback((_dept: Department) => {
+        // TODO: Implement department deletion with confirmation dialog
     }, [])
 
     const handleSuccess = useCallback(() => {

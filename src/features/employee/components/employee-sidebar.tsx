@@ -4,6 +4,18 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { memo, useCallback, useEffect } from 'react'
 import { CalendarDays, GraduationCap, LayoutDashboard } from 'lucide-react'
+import Image from 'next/image'
+import {
+    LayoutDashboard,
+    CalendarDays,
+    Menu,
+    X,
+    BookOpenCheck,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { AvatarDropdown } from '@/components/common/avatar-dropdown'
+import { useEnterpriseInfo } from '@/features/enterprise'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
@@ -26,6 +38,11 @@ const NAV_ITEMS: NavItem[] = [
         href: '/enterprise/employee/interviews',
         icon: <CalendarDays className="h-5 w-5" />,
     },
+    {
+        label: 'Khóa học của tôi',
+        href: '/enterprise/employee/learning',
+        icon: <BookOpenCheck className="w-5 h-5" />,
+    },
 ]
 
 const TRAINER_NAV_ITEMS: NavItem[] = [
@@ -33,6 +50,11 @@ const TRAINER_NAV_ITEMS: NavItem[] = [
         label: 'Nhiệm vụ giảng dạy',
         href: '/enterprise/employee/teaching',
         icon: <GraduationCap className="h-5 w-5" />,
+    },
+    {
+        label: 'Đánh giá từ học viên',
+        href: '/enterprise/employee/teaching/feedback',
+        icon: <BookOpenCheck className="w-5 h-5" />,
     },
 ]
 

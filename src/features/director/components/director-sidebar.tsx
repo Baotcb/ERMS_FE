@@ -14,6 +14,8 @@ import {
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
 
 interface SidebarItem {
     title: string
@@ -93,6 +95,7 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
         }
 
         return SIDEBAR_ITEMS.map((item) => {
+    const dynamicSidebarItems: SidebarItem[] = sidebarItems.map((item) => {
             if (item.title !== 'Đào tạo' || !item.children) {
                 return item
             }
@@ -103,6 +106,20 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
 
             if (hasTrainerLink) {
                 return item
+            let children = item.children
+
+            if (canAccessTeachingWorkspace(user)) {
+                const hasTrainerLink = children.some((child) => child.href === '/enterprise/director/teaching')
+                if (!hasTrainerLink) {
+                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/director/teaching' }]
+                }
+            }
+
+            if (canAccessLearningWorkspace(user)) {
+                const hasLearningLink = children.some((child) => child.href === '/enterprise/director/learning')
+                if (!hasLearningLink) {
+                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/director/learning' }]
+                }
             }
 
             return {
@@ -114,6 +131,9 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
             }
         })
     }, [user?.isTrainer])
+                children,
+            }
+        })
 
     const sidebarContent = (
         <div className="flex h-full flex-col bg-white border-r border-gray-200">
