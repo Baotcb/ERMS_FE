@@ -1,19 +1,22 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import {
-    LayoutDashboard,
-    GraduationCap,
-    ClipboardList,
     Briefcase,
     ChevronDown,
     ChevronRight,
+    ClipboardList,
+    GraduationCap,
+    LayoutDashboard,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
+import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
+import { cn } from '@/lib/utils'
+import { useAppStore } from '@/stores/use-app-store'
+import { USER_ROLES } from '@/utils/constants'
 
 interface NavItem {
     label: string
@@ -24,59 +27,62 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
     {
-        icon: <LayoutDashboard className="w-5 h-5" />,
+        icon: <LayoutDashboard className="h-5 w-5" />,
         label: 'Dashboard',
-        href: '/enterprise/dept-head/dashboard'
+        href: '/enterprise/dept-head/dashboard',
     },
     {
-        icon: <Briefcase className="w-5 h-5" />,
+        icon: <Briefcase className="h-5 w-5" />,
         label: 'Tuyển dụng',
         children: [
             { label: 'Chiến dịch tuyển dụng', href: '/enterprise/dept-head/recruitment' },
             { label: 'Đề xuất nhân sự', href: '/enterprise/dept-head/shortlisted' },
             { label: 'Phỏng vấn', href: '/enterprise/dept-head/interviews' },
-        ]
+        ],
     },
     {
-        icon: <GraduationCap className="w-5 h-5" />,
+        icon: <GraduationCap className="h-5 w-5" />,
         label: 'Đào tạo',
         children: [
             { label: 'Yêu cầu của tôi', href: '/enterprise/dept-head/training' },
             { label: 'Kế hoạch đào tạo', href: '/enterprise/dept-head/training/plans' },
             { label: 'Khóa học khả dụng', href: '/enterprise/dept-head/training/courses' },
             { label: 'Phân công đào tạo', href: '/enterprise/dept-head/training/assign' },
-        ]
+        ],
     },
     {
-        icon: <ClipboardList className="w-5 h-5" />,
+        icon: <ClipboardList className="h-5 w-5" />,
         label: 'Đánh giá',
-        href: '/enterprise/dept-head/evaluation'
-    }
+        href: '/enterprise/dept-head/evaluation',
+    },
 ]
 
 const NavMenuItem = memo(function NavMenuItem({
     item,
     isActive,
     isExpanded,
-    onToggle
+    onToggle,
+    pathname,
+    onNavigate,
 }: {
     item: NavItem
     isActive: boolean
     isExpanded: boolean
     onToggle: (label: string) => void
+    pathname: string
+    onNavigate: () => void
 }) {
-    const hasChildren = item.children && item.children.length > 0
+    const hasChildren = Boolean(item.children?.length)
 
     if (!hasChildren && item.href) {
         return (
             <Link
                 href={item.href}
+                onClick={onNavigate}
                 className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                    'flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
-                    isActive
-                        ? 'bg-[#0F4C75] text-white shadow-md'
-                        : 'text-gray-600'
+                    isActive ? 'bg-[#0F4C75] text-white shadow-md' : 'text-gray-600'
                 )}
             >
                 {item.icon}
@@ -88,98 +94,139 @@ const NavMenuItem = memo(function NavMenuItem({
     return (
         <div>
             <button
+                type="button"
                 onClick={() => onToggle(item.label)}
                 className={cn(
-                    'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200',
+                    'flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 transition-all duration-200',
                     'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
                     isExpanded ? 'bg-[#BBE1FA]/30 text-[#0F4C75]' : 'text-gray-600'
                 )}
+                aria-expanded={isExpanded}
             >
                 <div className="flex items-center gap-3">
                     {item.icon}
                     <span className="font-medium">{item.label}</span>
                 </div>
                 {isExpanded ? (
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="h-4 w-4" aria-hidden="true" />
                 ) : (
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
                 )}
             </button>
 
-            {/* Submenu */}
             <div
                 className={cn(
                     'overflow-hidden transition-all duration-300',
-                    isExpanded ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+                    isExpanded ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
                 )}
             >
                 <div className="ml-8 mt-1 space-y-1">
-                    {item.children?.map((child) => (
-                        <Link
-                            key={child.href}
-                            href={child.href}
-                            className={cn(
-                                'block px-4 py-2 rounded-lg text-sm transition-all duration-200',
-                                'hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]',
-                                'text-gray-500 hover:text-[#0F4C75]'
-                            )}
-                        >
-                            {child.label}
-                        </Link>
-                    ))}
+                    {item.children?.map((child) => {
+                        const isChildActive =
+                            pathname === child.href || pathname.startsWith(`${child.href}/`)
+
+                        return (
+                            <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={onNavigate}
+                                className={cn(
+                                    'block rounded-lg px-4 py-2 text-sm transition-all duration-200',
+                                    isChildActive
+                                        ? 'bg-[#BBE1FA]/30 font-medium text-[#0F4C75]'
+                                        : 'text-gray-500 hover:bg-[#BBE1FA]/20 hover:text-[#0F4C75]'
+                                )}
+                            >
+                                {child.label}
+                            </Link>
+                        )
+                    })}
                 </div>
             </div>
         </div>
     )
 })
 
-// Avatar Dropdown imported from shared component
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import { useEnterpriseInfo } from '@/features/enterprise'
-import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
-import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
-
-export function DeptHeadSidebar() {
+export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
+    const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
+    const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
+    const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
     const [expandedItems, setExpandedItems] = useState<string[]>(['Tuyển dụng', 'Đào tạo'])
-
-    const { enterpriseInfo } = useEnterpriseInfo()
 
     const toggleExpand = useCallback((label: string) => {
         setExpandedItems((prev) =>
             prev.includes(label)
-                ? prev.filter((l) => l !== label)
+                ? prev.filter((itemLabel) => itemLabel !== label)
                 : [...prev, label]
         )
     }, [])
 
-    const isItemActive = useCallback((item: NavItem): boolean => {
-        if (item.href) {
-            return pathname === item.href
-        }
-        return item.children?.some((child) => pathname === child.href) ?? false
-    }, [pathname])
+    const closeMobileSidebar = useCallback(() => {
+        setMobileSidebarOpen(false)
+    }, [setMobileSidebarOpen])
 
-    const navItems = NAV_ITEMS.map((item) => {
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 1024px)')
+        const handleViewportChange = (event: MediaQueryListEvent) => {
+            if (event.matches) {
+                setMobileSidebarOpen(false)
+            }
+        }
+
+        mediaQuery.addEventListener('change', handleViewportChange)
+
+        if (mediaQuery.matches) {
+            setMobileSidebarOpen(false)
+        }
+
+        return () => {
+            mediaQuery.removeEventListener('change', handleViewportChange)
+        }
+    }, [setMobileSidebarOpen])
+
+    const isItemActive = useCallback(
+        (item: NavItem): boolean => {
+            if (item.href) {
+                return pathname === item.href || pathname.startsWith(`${item.href}/`)
+            }
+
+            return (
+                item.children?.some(
+                    (child) => pathname === child.href || pathname.startsWith(`${child.href}/`)
+                ) ?? false
+            )
+        },
+        [pathname]
+    )
+
+    const navItems = useMemo<NavItem[]>(() => {
+        return NAV_ITEMS.map((item) => {
             if (item.label !== 'Đào tạo' || !item.children) {
                 return item
             }
 
-            let children = item.children
+            const children = [...item.children]
 
-            if (canAccessTeachingWorkspace(user)) {
-                const hasTrainerLink = children.some((child) => child.href === '/enterprise/dept-head/teaching')
-                if (!hasTrainerLink) {
-                    children = [...children, { label: 'Khóa học giảng dạy', href: '/enterprise/dept-head/teaching' }]
-                }
+            if (
+                canAccessTeachingWorkspace(user, USER_ROLES.DEPARTMENT_HEAD) &&
+                !children.some((child) => child.href === '/enterprise/dept-head/teaching')
+            ) {
+                children.push({
+                    label: 'Khóa học giảng dạy',
+                    href: '/enterprise/dept-head/teaching',
+                })
             }
 
-            if (canAccessLearningWorkspace(user)) {
-                const hasLearningLink = children.some((child) => child.href === '/enterprise/dept-head/learning')
-                if (!hasLearningLink) {
-                    children = [...children, { label: 'Khóa học của tôi', href: '/enterprise/dept-head/learning' }]
-                }
+            if (
+                canAccessLearningWorkspace(user, USER_ROLES.DEPARTMENT_HEAD) &&
+                !children.some((child) => child.href === '/enterprise/dept-head/learning')
+            ) {
+                children.push({
+                    label: 'Khóa học của tôi',
+                    href: '/enterprise/dept-head/learning',
+                })
             }
 
             return {
@@ -187,37 +234,14 @@ export function DeptHeadSidebar() {
                 children,
             }
         })
+    }, [user?.isTrainer, user?.role])
 
-    return (
-        <aside className="w-72 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col z-40 shrink-0">
-            {/* Logo area */}
-            <div className="p-6 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                    {enterpriseInfo?.logoUrl ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 bg-white flex items-center justify-center">
-                            <Image
-                                src={enterpriseInfo.logoUrl}
-                                alt={enterpriseInfo.enterpriseName || "Enterprise Logo"}
-                                width={32}
-                                height={32}
-                                className="object-contain"
-                            />
-                        </div>
-                    ) : (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center shadow-lg flex-shrink-0">
-                            <span className="text-white font-bold text-lg">DH</span>
-                        </div>
-                    )}
-
-                    <div>
-                        <h1 className="text-xl font-bold text-[#0F4C75]">ERMS</h1>
-                        <p className="text-xs text-gray-400 font-medium">Department Portal</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+    const sidebarContent = (
+        <div className="flex h-full flex-col border-r border-gray-200 bg-white">
+            <nav
+                className="flex-1 space-y-2 overflow-y-auto p-4"
+                aria-label="Department head navigation"
+            >
                 {navItems.map((item) => (
                     <NavMenuItem
                         key={item.label}
@@ -225,14 +249,58 @@ export function DeptHeadSidebar() {
                         isActive={isItemActive(item)}
                         isExpanded={expandedItems.includes(item.label)}
                         onToggle={toggleExpand}
+                        pathname={pathname}
+                        onNavigate={closeMobileSidebar}
                     />
                 ))}
             </nav>
-
-            {/* Profile Section with AvatarDropdown */}
-            <div className="p-4 border-t border-gray-100">
-                <AvatarDropdown />
-            </div>
-        </aside>
+        </div>
     )
-}
+
+    return (
+        <>
+            {isMobileSidebarOpen && (
+                <div
+                    className="fixed inset-x-0 bottom-0 top-14 z-40 bg-black/50 lg:hidden"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Close sidebar"
+                    onClick={closeMobileSidebar}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            closeMobileSidebar()
+                        }
+                    }}
+                />
+            )}
+
+            <aside
+                id="dept-head-sidebar-mobile"
+                className={cn(
+                    'fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-72 overscroll-y-contain transition-transform duration-300',
+                    'lg:hidden',
+                    isMobileSidebarOpen
+                        ? 'translate-x-0'
+                        : '-translate-x-full pointer-events-none'
+                )}
+                aria-hidden={!isMobileSidebarOpen}
+                inert={!isMobileSidebarOpen}
+            >
+                {sidebarContent}
+            </aside>
+
+            <aside
+                id="dept-head-sidebar-desktop"
+                className={cn(
+                    'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300 lg:block',
+                    isSidebarOpen ? 'w-72' : 'w-0 pointer-events-none'
+                )}
+                aria-hidden={!isSidebarOpen}
+                inert={!isSidebarOpen}
+            >
+                <div className="h-full w-72">{sidebarContent}</div>
+            </aside>
+        </>
+    )
+})

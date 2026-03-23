@@ -149,6 +149,7 @@ export function FinalDecisionPage({
     const [overallRating, setOverallRating] = useState(0)
     const [hoverRating, setHoverRating] = useState(0)
     const [overallFeedback, setOverallFeedback] = useState('')
+    const [feedbackError, setFeedbackError] = useState(false)
     const [note, setNote] = useState('')
 
     // NextRound: interviewer selection
@@ -186,6 +187,12 @@ export function FinalDecisionPage({
 
     const handleSubmit = useCallback(async () => {
         if (!decision) return
+
+        if (decision === 'Fail' && !overallFeedback.trim()) {
+            setFeedbackError(true)
+            return
+        }
+        setFeedbackError(false)
 
         try {
             await trigger({
@@ -377,7 +384,10 @@ export function FinalDecisionPage({
                                         <button
                                             key={opt.value}
                                             type="button"
-                                            onClick={() => setDecision(opt.value)}
+                                            onClick={() => {
+                                                setDecision(opt.value)
+                                                setFeedbackError(false)
+                                            }}
                                             className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-start gap-3 ${selected
                                                 ? opt.activeClass
                                                 : 'border-slate-200 hover:border-slate-300 bg-white'
@@ -500,15 +510,23 @@ export function FinalDecisionPage({
                             {/* Overall Feedback */}
                             <div className="space-y-1.5">
                                 <Label className="text-sm font-semibold text-slate-700">
-                                    Nhận xét tổng quan <span className="text-red-400">*</span>
+                                    Nhận xét tổng quan {decision === 'Fail' && <span className="text-red-400">*</span>}
                                 </Label>
-                                <Textarea
-                                    placeholder="Nhập lý do cho quyết định của bạn..."
-                                    value={overallFeedback}
-                                    onChange={e => setOverallFeedback(e.target.value)}
-                                    rows={3}
-                                    className="resize-none text-sm border-slate-200 focus:border-[#3282B8]"
-                                />
+                                <div>
+                                    <Textarea
+                                        placeholder="Nhập lý do cho quyết định của bạn..."
+                                        value={overallFeedback}
+                                        onChange={e => {
+                                            setOverallFeedback(e.target.value)
+                                            if (feedbackError && e.target.value.trim()) setFeedbackError(false)
+                                        }}
+                                        rows={3}
+                                        className={`resize-none text-sm focus:border-[#3282B8] ${feedbackError ? 'border-red-400 focus:border-red-400' : 'border-slate-200'}`}
+                                    />
+                                    {feedbackError && (
+                                        <p className="text-xs text-red-500 mt-1">Phải nhập nhận xét tổng quan khi từ chối ứng viên.</p>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Internal Note */}
@@ -529,7 +547,7 @@ export function FinalDecisionPage({
                             {/* Submit */}
                             <Button
                                 className="w-full bg-[#0F4C75] hover:bg-[#3282B8] h-10 font-semibold"
-                                disabled={!decision || isMutating}
+                                disabled={!decision || isMutating || (decision === 'Fail' && !overallFeedback.trim())}
                                 onClick={handleSubmit}
                             >
                                 {isMutating ? 'Đang xử lý...' : 'Xác nhận quyết định'}

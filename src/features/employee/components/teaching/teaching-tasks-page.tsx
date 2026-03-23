@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import {
     Clock, Users, ArrowRight, CheckCircle2, Search, GraduationCap, CalendarDays,
-    BookOpen, Layers, Send
+    BookOpen, Layers, Send, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/features/core/auth/hooks/use-auth';
 import { Course } from '@/features/hr/types/course-types';
@@ -55,6 +55,8 @@ export function TeachingTasksPage({
     const { user } = useAuth();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 6;
 
     const courses = useMemo(() => {
         if (!user) {
@@ -85,6 +87,19 @@ export function TeachingTasksPage({
             return course.status !== 'Published';
         });
     }, [initialCourses, search, user, statusFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(courses.length / PAGE_SIZE));
+    const paginatedCourses = courses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        setPage(1);
+    };
+
+    const handleStatusFilter = (key: 'all' | 'draft' | 'published') => {
+        setStatusFilter(key);
+        setPage(1);
+    };
 
     const stats = useMemo(() => {
         const all = initialCourses.filter(c => user ? isCourseOwnedByUser(c, user) : false);
@@ -133,7 +148,7 @@ export function TeachingTasksPage({
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Input
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)}
                         placeholder="Tìm khóa học theo tên hoặc mã..."
                         className="pl-12 h-12 rounded-2xl border-gray-200 bg-white shadow-sm text-sm focus:border-[#3282B8] focus:ring-[#3282B8]/20"
                     />
@@ -146,7 +161,7 @@ export function TeachingTasksPage({
                     ].map(({ key, label }) => (
                         <button
                             key={key}
-                            onClick={() => setStatusFilter(key)}
+                            onClick={() => handleStatusFilter(key)}
                             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                                 statusFilter === key ? 'bg-white text-[#0F4C75] shadow-sm' : 'text-gray-500 hover:text-gray-700'
                             }`}
@@ -159,7 +174,7 @@ export function TeachingTasksPage({
 
             {/* ── Course Grid ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.length === 0 ? (
+                {paginatedCourses.length === 0 ? (
                     <div className="col-span-full rounded-3xl border-2 border-dashed border-gray-200 bg-white p-16 text-center space-y-4">
                         <div className="w-16 h-16 bg-[#BBE1FA]/30 rounded-full flex items-center justify-center mx-auto">
                             {search.trim() ? <Search className="w-7 h-7 text-[#3282B8]" /> : <GraduationCap className="w-7 h-7 text-[#3282B8]" />}
@@ -172,7 +187,7 @@ export function TeachingTasksPage({
                         </p>
                     </div>
                 ) : (
-                    courses.map((course) => {
+                    paginatedCourses.map((course) => {
                         const currentStep = getStatusStep(course);
                         const stepConfig = STEPS[currentStep - 1];
                         const isPublished = course.status === 'Published';
@@ -248,6 +263,35 @@ export function TeachingTasksPage({
                     })
                 )}
             </div>
+
+            {/* Pagination */}
+            {courses.length > PAGE_SIZE && (
+                <div className="flex items-center justify-center gap-4 pt-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Trước
+                    </Button>
+                    <span className="text-sm font-medium text-slate-600">
+                        Trang {page} / {totalPages}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        Tiếp
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

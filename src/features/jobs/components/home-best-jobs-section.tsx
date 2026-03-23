@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,22 +20,15 @@ const FILTER_TABS = [
 
 export function BestJobsSection() {
     const { location: userLocation } = useUserLocation()
-    const [filter, setFilter] = useState("random")
+    const [manualFilter, setManualFilter] = useState<string | null>(null)
     const [page, setPage] = useState(1)
     const pageSize = 12
 
-    // Auto-select tab dựa trên vị trí user (chỉ 1 lần khi mount)
-    const filterInitializedRef = useRef(false)
-    useEffect(() => {
-        if (!filterInitializedRef.current && userLocation?.city) {
-            // Tìm tab có label chứa tên thành phố (VD: "Hà Nội" match tab "Hà Nội")
-            const matched = FILTER_TABS.find(t => t.label === userLocation.city)
-            filterInitializedRef.current = true
-            if (matched && matched.key !== 'random') {
-                queueMicrotask(() => setFilter(matched.key))
-            }
-        }
-    }, [userLocation])
+    const matchedTab = userLocation?.city
+        ? FILTER_TABS.find((tab) => tab.label === userLocation.city)
+        : undefined
+    const autoFilter = matchedTab && matchedTab.key !== "random" ? matchedTab.key : "random"
+    const filter = manualFilter ?? autoFilter
 
     const getLocation = (value: string) => {
         switch (value) {
@@ -103,7 +96,7 @@ export function BestJobsSection() {
                                         : "text-[#6f7882] border-[#e8e8e8] hover:text-[#1B5583] hover:border-[#1B5583] bg-white"
                                 )}
                                 onClick={() => {
-                                    setFilter(tab.key)
+                                    setManualFilter(tab.key)
                                     setPage(1)
                                 }}
                             >

@@ -50,6 +50,7 @@ interface RecruitmentPlan {
     createdByName?: string
     createdAt?: string
     endDate?: string
+    departmentName?: string
     planDetails?: RecruitmentPlanDetail[]
     [key: string]: unknown
 }
@@ -307,16 +308,17 @@ export async function getRecruitmentPerformance(): Promise<ChartData[]> {
         const data = await response.json() as ApiResponse
         if (!data.items || !Array.isArray(data.items) || data.items.length === 0) return []
 
+        // Fetch details cho tất cả plans + resolve department names
         const deptMap = await getDeptNameMap()
-
-        // Fetch details cho tất cả plans
         const detailResults = await Promise.allSettled(
             data.items.map(async (plan: RecruitmentPlan) => {
+                const creatorName = plan.createdByName || ''
+                const deptName = deptMap[creatorName] || plan.campaignName || 'Khác'
                 const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`)
-                if (!res.ok) return { creator: plan.createdByName || '', details: [] as RecruitmentPlanDetail[] }
+                if (!res.ok) return { departmentName: deptName, details: [] as RecruitmentPlanDetail[] }
                 const d = await res.json()
                 return {
-                    creator: plan.createdByName || '',
+                    departmentName: deptName,
                     details: (Array.isArray(d) ? d : (d.items || [])) as RecruitmentPlanDetail[]
                 }
             })
@@ -326,14 +328,13 @@ export async function getRecruitmentPerformance(): Promise<ChartData[]> {
         const grouped: Record<string, { total: number; done: number }> = {}
         detailResults.forEach((r) => {
             if (r.status !== 'fulfilled' || !r.value) return
-            const { creator, details } = r.value as { creator: string; details: RecruitmentPlanDetail[] }
-            const deptName = deptMap[creator] || creator || 'Khác'
-            if (!grouped[deptName]) grouped[deptName] = { total: 0, done: 0 }
+            const { departmentName, details } = r.value as { departmentName: string; details: RecruitmentPlanDetail[] }
+            if (!grouped[departmentName]) grouped[departmentName] = { total: 0, done: 0 }
             details.forEach((d: RecruitmentPlanDetail) => {
                 const qty = d.quantity || 1
-                grouped[deptName].total += qty
+                grouped[departmentName].total += qty
                 if (d.status === 'Recruiting' || d.status === 'Closed') {
-                    grouped[deptName].done += qty
+                    grouped[departmentName].done += qty
                 }
             })
         })

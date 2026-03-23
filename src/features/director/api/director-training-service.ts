@@ -13,6 +13,27 @@ function withPrefix(prefix: string, note: string): string {
 }
 
 export const directorTrainingService = {
+    async getPlans(params?: {
+        page?: number;
+        pageSize?: number;
+        status?: string;
+    }): Promise<TrainingPlansResult> {
+        const searchParams = new URLSearchParams({
+            status: params?.status || 'Pending',
+            page: String(params?.page ?? 1),
+            pageSize: String(params?.pageSize ?? 7),
+        });
+
+        const response = await apiClient.get(`/api/TrainingPlan?${searchParams}`);
+
+        if (!response.ok) {
+            throw new Error('Không thể tải danh sách kế hoạch chờ duyệt');
+        }
+
+        return response.json();
+    },
+
+    /** @deprecated Use getPlans() with pagination instead */
     async getPendingPlans(): Promise<TrainingPlansResult> {
         const allItems: TrainingPlansResult['items'] = [];
         let page = 1;

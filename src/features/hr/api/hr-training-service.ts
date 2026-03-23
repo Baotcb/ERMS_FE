@@ -3,12 +3,31 @@ import { TrainingRequestsResult } from '../../dept-head/types/training-types';
 import { CreateTrainingPlan, TrainingPlansResult } from '../types/training-plan-types';
 
 export const hrTrainingService = {
-    async getAllRequests(params?: {
+    async getRequests(params?: {
+        page?: number;
+        pageSize?: number;
         search?: string;
-        departmentId?: number;
         status?: string;
     }): Promise<TrainingRequestsResult> {
-        const status = params?.status || 'Pending';
+        const searchParams = new URLSearchParams({
+            page: String(params?.page ?? 1),
+            pageSize: String(params?.pageSize ?? 7),
+            status: params?.status || 'Pending',
+        });
+
+        if (params?.search) searchParams.set('search', params.search);
+
+        const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
+
+        if (!response.ok) {
+            throw new Error('Không thể tải danh sách yêu cầu');
+        }
+
+        return response.json();
+    },
+
+    /** Fetch ALL pending requests (no paging). Only used by consolidate-requests page. */
+    async getAllPendingRequests(): Promise<TrainingRequestsResult> {
         const allItems: TrainingRequestsResult['items'] = [];
         let page = 1;
         const pageSize = 20;
@@ -17,11 +36,8 @@ export const hrTrainingService = {
             const searchParams = new URLSearchParams({
                 page: String(page),
                 pageSize: String(pageSize),
-                status,
+                status: 'Pending',
             });
-
-            if (params?.search) searchParams.set('search', params.search);
-            if (params?.departmentId) searchParams.set('departmentId', String(params.departmentId));
 
             const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
 

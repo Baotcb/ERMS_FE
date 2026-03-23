@@ -42,7 +42,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
 
     const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
         '/api/TrainingRequest?status=Pending',
-        () => hrTrainingService.getAllRequests({ status: 'Pending' }),
+        () => hrTrainingService.getAllPendingRequests(),
         { fallbackData: initialData }
     );
 

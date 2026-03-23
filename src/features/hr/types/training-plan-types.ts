@@ -29,4 +29,7 @@ export interface CreateTrainingPlan {
 export interface TrainingPlansResult {
     items: TrainingPlan[];
     totalCount: number;
+    page?: number;
+    pageSize?: number;
+    totalPages?: number;
 }

@@ -22,6 +22,25 @@ async function fetchProfileSnapshot(token: string) {
     }
 }
 
+async function parseBackendResponse(response: Response) {
+    const rawText = await response.text()
+
+    if (!rawText) {
+        return {}
+    }
+
+    try {
+        return JSON.parse(rawText) as {
+            message?: string
+            token?: string
+        }
+    } catch {
+        return {
+            message: rawText,
+        }
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const body = await request.json()
@@ -36,12 +55,25 @@ export async function POST(request: Request) {
             body: JSON.stringify({ email, password }),
         })
 
-        const data = await backendRes.json()
+        const data = await parseBackendResponse(backendRes)
 
         if (!backendRes.ok) {
+            const message =
+                data.message ||
+                (backendRes.status === 429
+                    ? 'Too many login attempts. Please wait a minute and try again.'
+                    : `Login failed with status ${backendRes.status}`)
+
             return NextResponse.json(
-                { message: data.message || 'Login failed' },
+                { message },
                 { status: backendRes.status }
+            )
+        }
+
+        if (!data.token || typeof data.token !== 'string') {
+            return NextResponse.json(
+                { message: 'Login response is missing token.' },
+                { status: 502 }
             )
         }
 

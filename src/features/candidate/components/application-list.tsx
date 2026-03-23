@@ -26,7 +26,7 @@ export function ApplicationList() {
     const [stageFilter, setStageFilter] = useState<string>('all')
     const { isAuthenticated, isCandidate, isLoading: authLoading } = useCandidateAccess()
 
-    const { data, isLoading, error } = useMyApplications(
+    const { data, isLoading, error, mutate } = useMyApplications(
         stageFilter !== 'all' ? { stageFilter } : undefined,
         isCandidate
     )
@@ -148,7 +148,7 @@ export function ApplicationList() {
             ) : (
                 <div className="topcv-page__list">
                     {applications.map((app) => (
-                        <AppliedJobCard key={app.applicationId} application={app} />
+                        <AppliedJobCard key={app.applicationId} application={app} onRefresh={() => mutate()} />
                     ))}
                 </div>
             )}

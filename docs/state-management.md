@@ -2,9 +2,17 @@
 
 Quản lý state hiệu quả là rất quan trọng cho việc tối ưu hiệu năng. Thay vì lưu toàn bộ state trong một kho lưu trữ duy nhất, hãy chia nó thành các danh mục dựa trên cách sử dụng.
 
-## Component State
+## Tổng Quan State Types
 
-Component state là dành riêng cho từng component và không nên được chia sẻ toàn cục. Có thể truyền xuống các component con như props khi cần thiết.
+| Loại State | Công Cụ | Khi Nào Dùng | Ví Dụ |
+|-----------|--------|-------------|-------|
+| Component State | `useState`, `useReducer` | State nội bộ 1 component | Form inputs, toggles |
+| Application State | **Zustand** | State toàn app | Auth, UI settings |
+| Server State | **SWR** | Data từ API, cần cache | Employees list, dashboard data |
+| Form State | **React Hook Form** + **Zod** | Form validation & submission | Login form, Employee form |
+| URL State | `useSearchParams` | Filters, pagination | Search keywords, page numbers |
+
+## Component State
 
 ### useState
 
@@ -14,7 +22,7 @@ Cho các state đơn giản, độc lập:
 function JobFilter() {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
-  
+
   return (
     <div>
       <input value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -52,22 +60,17 @@ function reducer(state: State, action: Action): State {
       return state
   }
 }
-
-function JobList() {
-  const [state, dispatch] = useReducer(reducer, initialState)
-  
-  // ...
-}
 ```
 
-## Application State
+## Application State (Zustand)
 
-State toàn cục cho những thứ như thông tin user, state UI (modals, notifications), theme, v.v.
+ERMS sử dụng **Zustand 5.x** cho global state. Hiện tại có 2 stores:
 
-### Zustand (ERMS Sử Dụng)
+### Auth Store (`stores/auth-store.ts`)
+
+Store chính quản lý authentication:
 
 ```typescript
-// stores/auth-store.ts
 import { create } from 'zustand'
 
 interface AuthState {
@@ -82,22 +85,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isAuthenticated: false,
-  
+
   login: (token, user) => {
     localStorage.setItem('auth_token', token)
     set({ token, user, isAuthenticated: true })
   },
-  
+
   logout: () => {
     localStorage.removeItem('auth_token')
     set({ user: null, token: null, isAuthenticated: false })
   },
 }))
 
-// Sử dụng
+// Sử dụng trong components
 function ProfileMenu() {
   const { user, logout } = useAuthStore()
-  
+
   return (
     <div>
       <p>{user?.fullName}</p>
@@ -107,93 +110,175 @@ function ProfileMenu() {
 }
 ```
 
-[Ví Dụ Auth Store](../src/stores/auth-store.ts)
+### App Store (`stores/use-app-store.ts`)
 
-### Context + Hooks
-
-Cho state nhỏ, cục bộ:
+Store cho app-wide UI state:
 
 ```typescript
-// contexts/theme-context.tsx
-const ThemeContext = createContext<ThemeContextType | null>(null)
+export const useAppStore = create<AppState>((set) => ({
+  // UI state: sidebar collapsed, theme, etc.
+}))
+```
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
-  
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  )
+### Feature-level Store Ví Dụ (`features/jobs/stores/`)
+
+Các feature cũng có thể có store riêng cho state cụ thể:
+
+```typescript
+// features/jobs/stores/ - Job filter state
+// Chỉ dùng trong feature jobs
+```
+
+### Best Practices Zustand
+
+```typescript
+// ✅ Tốt - Sử dụng selectors (tránh re-renders)
+function UserName() {
+  const userName = useAuthStore(state => state.user?.fullName)
+  return <span>{userName}</span>
 }
 
-export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (!context) throw new Error('useTheme phải được sử dụng trong ThemeProvider')
-  return context
+// ❌ Tệ - Subscribe toàn bộ store
+function UserName() {
+  const { user } = useAuthStore()
+  return <span>{user?.fullName}</span>
 }
 ```
 
-## Server Cache State
+## Server State (SWR)
 
-Dữ liệu lấy từ server nên được cache đúng cách. Thay vì lưu trong Redux, hãy sử dụng các thư viện chuyên biệt.
+ERMS sử dụng **SWR 2.x** cho data fetching từ API. SWR tự động handle caching, revalidation, focus tracking.
 
+### Pattern: Service + Hook
 
-## Form State
+```typescript
+// 1. Service layer (features/hr/api/employee-service.ts)
+export async function getEmployees(params?: PaginationParams) {
+  const response = await apiClient.get('/api/Employees', { params })
+  return response.json()
+}
 
-Forms yêu cầu xử lý đặc biệt cho validation, submission, errors, v.v.
+// 2. Hook layer (features/hr/hooks/use-employees.ts)
+export function useEmployees(params?: PaginationParams) {
+  return useSWR(
+    ['/api/Employees', params],
+    () => getEmployees(params)
+  )
+}
 
-### React Hook Form + Zod 
+// 3. Component layer
+function EmployeeList() {
+  const { data, error, isLoading, mutate } = useEmployees({ page: 1, limit: 20 })
+
+  if (isLoading) return <ListSkeleton />
+  if (error) return <ErrorMessage error={error} />
+
+  return <EmployeeTable employees={data} onRefresh={() => mutate()} />
+}
+```
+
+### SWR Configuration
+
+ERMS có custom SWR provider (`app/providers/swr-provider.tsx`) và hooks (`lib/swr/`):
+
+```typescript
+// lib/swr/hooks.ts - Custom SWR hooks
+export function useData<T>(key: string | null, options?: {
+  fetcher?: () => Promise<T>
+}) {
+  // Pre-configured SWR hook with error handling
+}
+```
+
+### Mutations với SWR
+
+```typescript
+import useSWRMutation from 'swr/mutation'
+
+export function useCreateEmployee() {
+  return useSWRMutation(
+    '/api/Employees',
+    (_, { arg }: { arg: CreateEmployeeData }) =>
+      createEmployee(arg)
+  )
+}
+
+// Sử dụng
+function CreateEmployeeForm() {
+  const { trigger, isMutating } = useCreateEmployee()
+
+  const onSubmit = async (data: FormData) => {
+    await trigger(data)
+    // SWR auto-revalidate
+  }
+}
+```
+
+## Form State (React Hook Form + Zod)
+
+ERMS sử dụng **React Hook Form 7.x** + **Zod 4.x** cho form management:
+
+### Pattern Chuẩn
 
 ```typescript
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
-const schema = z.object({
-  title: z.string().min(5, 'Tiêu đề phải có ít nhất 5 ký tự'),
-  description: z.string().min(10, 'Mô tả phải có ít nhất 10 ký tự'),
-  salary: z.string(),
+// 1. Define schema
+const employeeSchema = z.object({
+  fullName: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
+  email: z.string().email('Email không hợp lệ'),
+  departmentId: z.string().min(1, 'Vui lòng chọn phòng ban'),
+  role: z.string().min(1, 'Vui lòng chọn vai trò'),
 })
 
-type FormData = z.infer<typeof schema>
+type EmployeeFormData = z.infer<typeof employeeSchema>
 
-function CreateJobForm() {
-  const form = useForm<FormData>({
-    resolver: zodResolver(schema),
+// 2. Use in component
+function EmployeeForm() {
+  const form = useForm<EmployeeFormData>({
+    resolver: zodResolver(employeeSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      salary: '',
+      fullName: '',
+      email: '',
+      departmentId: '',
+      role: '',
     },
   })
 
-  const onSubmit = async (data: FormData) => {
-    await createJob(data)
+  const onSubmit = async (data: EmployeeFormData) => {
+    await createEmployee(data)
   }
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
-      <input {...form.register('title')} />
-      {form.formState.errors.title && (
-        <span>{form.formState.errors.title.message}</span>
+      <input {...form.register('fullName')} />
+      {form.formState.errors.fullName && (
+        <span>{form.formState.errors.fullName.message}</span>
       )}
-      
-      <button type="submit">Tạo Việc Làm</button>
+
+      <button type="submit" disabled={form.formState.isSubmitting}>
+        Tạo Nhân Viên
+      </button>
     </form>
   )
 }
 ```
 
-[Ví Dụ Form](../src/features/core/auth/components/register-form.tsx)
+### Custom Form Handler Hook
+
+ERMS có shared hook `useFormHandler` cho common form patterns:
+
+```typescript
+// hooks/use-form-handler.ts
+// Wraps React Hook Form with standard error handling,
+// loading states, and success callbacks
+```
 
 ## URL State
 
-State trong URL parameters hoặc query strings:
+State trong URL parameters cho filtering/pagination:
 
 ```typescript
 import { useSearchParams } from 'next/navigation'
@@ -202,7 +287,7 @@ function JobList() {
   const searchParams = useSearchParams()
   const page = searchParams.get('page') || '1'
   const keyword = searchParams.get('keyword') || ''
-  
+
   return (
     <div>
       <p>Trang: {page}</p>
@@ -216,16 +301,16 @@ import { useRouter } from 'next/navigation'
 
 function JobFilter() {
   const router = useRouter()
-  
+
   const handleSearch = (keyword: string) => {
     router.push(`/jobs?keyword=${encodeURIComponent(keyword)}`)
   }
-  
+
   return <input onChange={(e) => handleSearch(e.target.value)} />
 }
 ```
 
-## Thực Hành Tốt Nhất Quản Lý State
+## Thực Hành Tốt Nhất
 
 ### 1. Bắt Đầu Cục Bộ, Di Chuyển Lên Khi Cần
 
@@ -255,18 +340,10 @@ function Page() {
   )
 }
 
-// ❌ Tệ - Prop drilling
+// ❌ Tệ - Prop drilling qua nhiều levels
 function Page() {
   const user = useUser()
   return <Layout user={user} />
-}
-
-function Layout({ user }) {
-  return <Sidebar user={user} />
-}
-
-function Sidebar({ user }) {
-  return <UserProfile user={user} />
 }
 ```
 
@@ -274,9 +351,8 @@ function Sidebar({ user }) {
 
 ```typescript
 // ✅ Tốt - Chia theo domain
-const useAuthStore = create(...)
-const useUIStore = create(...)
-const useNotificationStore = create(...)
+const useAuthStore = create(...)   // Auth only
+const useAppStore = create(...)    // App UI only
 
 // ❌ Tệ - Một store khổng lồ
 const useStore = create((set) => ({
@@ -292,17 +368,36 @@ const useStore = create((set) => ({
 ### 4. Sử Dụng Selectors
 
 ```typescript
-// ✅ Tốt - Sử dụng selectors
+// ✅ Tốt - Chỉ subscribe giá trị cần
 function UserName() {
   const userName = useAuthStore(state => state.user?.fullName)
   return <span>{userName}</span>
 }
 
-// ❌ Tệ - Subscribe toàn bộ store
+// ❌ Tệ - Subscribe toàn bộ store → re-render khi bất kỳ field nào thay đổi
 function UserName() {
   const { user } = useAuthStore()
   return <span>{user?.fullName}</span>
 }
+```
+
+### 5. Server State ≠ Client State
+
+```typescript
+// ✅ Tốt - Dùng SWR cho server data
+function EmployeeList() {
+  const { data: employees } = useSWR('/api/Employees', fetcher)
+  return <Table data={employees} />
+}
+
+// ❌ Tệ - Lưu server data vào Zustand
+const useStore = create((set) => ({
+  employees: [], // Không nên!
+  fetchEmployees: async () => {
+    const data = await fetch('/api/Employees')
+    set({ employees: data })
+  }
+}))
 ```
 
 ---

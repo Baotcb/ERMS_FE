@@ -56,3 +56,7 @@ export interface ApplicationsResponse {
 export interface ForwardApplicationRequest {
     hrNote?: string
 }
+
+export interface RejectApplicationRequest {
+    rejectionReason: string
+}

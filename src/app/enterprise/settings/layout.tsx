@@ -3,9 +3,11 @@ import { DeptHeadSidebar } from '@/features/dept-head/components/dept-head-sideb
 import { DirectorSidebar } from '@/features/director/components/director-sidebar';
 import { EmployeeSidebar } from '@/features/employee';
 import { HRSidebar } from '@/features/hr';
+import { HRNavbar } from '@/features/hr/components/hr-navbar';
+import { EnterpriseNavbar } from '@/components/layout/enterprise-navbar';
 import { getServerSession } from '@/lib/server-fetch';
 import { cn } from '@/lib/utils';
-import { USER_ROLES } from '@/utils/constants';
+import { USER_ROLES, ROLE_DASHBOARD_MAP, DEFAULT_ENTERPRISE_DASHBOARD } from '@/utils/constants';
 
 function EnterpriseRoleSidebar({ role }: { role?: string | null }) {
   if (role === USER_ROLES.DIRECTOR) {
@@ -34,27 +36,32 @@ export default async function EnterpriseSettingsLayout({
     redirect('/login');
   }
 
+  const dashboardHref = ROLE_DASHBOARD_MAP[session.role || ''] || DEFAULT_ENTERPRISE_DASHBOARD;
+  const isHR = session.role === USER_ROLES.HR;
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <EnterpriseRoleSidebar role={session.role} />
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#F0F9FF' }}>
+      {isHR ? <HRNavbar /> : <EnterpriseNavbar dashboardHref={dashboardHref} />}
+      <div className="flex flex-1 min-h-0">
+        <EnterpriseRoleSidebar role={session.role} />
 
-      <main
-        className={cn(
-          'enterprise-scale flex-1 overflow-y-auto',
-          session.role === USER_ROLES.DIRECTOR ? 'h-screen' : 'overflow-x-hidden'
-        )}
-      >
-        <div className="mx-auto max-w-4xl p-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Cài đặt tài khoản</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Quản lý thông tin cá nhân và bảo mật cho tài khoản của bạn.
-            </p>
+        <main
+          className={cn(
+            'enterprise-scale min-w-0 flex-1 overflow-y-auto overflow-x-hidden'
+          )}
+        >
+          <div className="mx-auto max-w-4xl p-8">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-900">Cài đặt tài khoản</h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Quản lý thông tin cá nhân và bảo mật cho tài khoản của bạn.
+              </p>
+            </div>
+
+            {children}
           </div>
-
-          {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -2,8 +2,8 @@
 
 import useSWR from 'swr'
 import useSWRMutation from 'swr/mutation'
-import type { CreateApplicationRequest, ApplicationHistoryParams } from '../types/application-types'
-import { createApplication, getMyApplications } from '../api/application-service'
+import type { CreateApplicationRequest, ApplicationHistoryParams, WithdrawApplicationRequest } from '../types/application-types'
+import { createApplication, getMyApplications, withdrawApplication } from '../api/application-service'
 
 const APPLICATIONS_KEY = '/api/Applications'
 const MY_APPLICATIONS_KEY = '/api/applications/my-applications'
@@ -29,5 +29,13 @@ export function useMyApplications(params?: ApplicationHistoryParams, enabled = t
             revalidateOnFocus: false,
             keepPreviousData: true,
         }
+    )
+}
+
+export function useWithdrawApplication() {
+    return useSWRMutation(
+        '/api/applications/withdraw',
+        (_, { arg }: { arg: { applicationId: string; data?: WithdrawApplicationRequest } }) =>
+            withdrawApplication(arg.applicationId, arg.data)
     )
 }

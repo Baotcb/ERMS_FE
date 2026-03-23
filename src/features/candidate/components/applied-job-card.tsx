@@ -1,15 +1,18 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import {
     MapPin, CheckCircle, Eye, Phone, ThumbsUp, ThumbsDown,
     Send, Briefcase, Clock, FileCheck, Award, UserCheck
 } from 'lucide-react'
 import type { CandidateApplicationDto } from '@/features/candidate/types/application-types'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { WithdrawApplicationDialog } from './withdraw-application-dialog'
 
 interface AppliedJobCardProps {
     application: CandidateApplicationDto
+    onRefresh?: () => void
 }
 
 const STAGE_CONFIG: Record<string, {
@@ -69,7 +72,10 @@ const STAGE_CONFIG: Record<string, {
     },
 }
 
-export const AppliedJobCard = memo(function AppliedJobCard({ application }: AppliedJobCardProps) {
+export const AppliedJobCard = memo(function AppliedJobCard({ application, onRefresh }: AppliedJobCardProps) {
+    const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false)
+    const terminalStages = ['Rejected', 'Withdrawn', 'Hired']
+    const canWithdraw = !terminalStages.includes(application.stage)
     const stageInfo = STAGE_CONFIG[application.stage] || STAGE_CONFIG.Applied
 
     const appliedDateDisplay = useMemo(() => {
@@ -126,12 +132,32 @@ export const AppliedJobCard = memo(function AppliedJobCard({ application }: Appl
                 <p className="applied-job-card__applied-date">{appliedDateDisplay}</p>
             </div>
 
-            {/* Right Section — Status */}
+            {/* Right Section — Status & Actions */}
             <div className="applied-job-card__right">
                 <span className={cn("applied-job-card__status", stageInfo.className)}>
                     <StatusIcon className="w-3.5 h-3.5" />
                     {stageInfo.label}
                 </span>
+                {canWithdraw && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 text-xs mt-2"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setWithdrawDialogOpen(true)
+                        }}
+                    >
+                        Rút đơn
+                    </Button>
+                )}
+                <WithdrawApplicationDialog
+                    open={withdrawDialogOpen}
+                    onOpenChange={setWithdrawDialogOpen}
+                    applicationId={application.applicationId}
+                    jobTitle={application.jobTitle}
+                    onSuccess={() => onRefresh?.()}
+                />
             </div>
         </div>
     )

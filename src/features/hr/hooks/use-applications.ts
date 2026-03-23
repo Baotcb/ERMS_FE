@@ -1,7 +1,7 @@
 import { useData } from '@/lib/swr/hooks'
 import useSWRMutation from 'swr/mutation'
 import * as service from '../api/application-service'
-import { ForwardApplicationRequest } from '../types/application-types'
+import { ForwardApplicationRequest, RejectApplicationRequest } from '../types/application-types'
 
 export function useApplications(jobPostingId: string, params?: {
     pageNumber?: number
@@ -25,5 +25,13 @@ export function useForwardApplication() {
         '/api/applications/forward',
         (_, { arg }: { arg: { id: string; data: ForwardApplicationRequest } }) =>
             service.forwardApplication(arg.id, arg.data)
+    )
+}
+
+export function useRejectApplication() {
+    return useSWRMutation(
+        '/api/applications/reject',
+        (_, { arg }: { arg: { id: string; data: RejectApplicationRequest } }) =>
+            service.rejectApplication(arg.id, arg.data)
     )
 }

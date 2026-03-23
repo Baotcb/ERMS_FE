@@ -51,8 +51,9 @@ const nextConfig: NextConfig = {
     }
     return [
       {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
+        // Keep Next.js local auth route handlers reachable.
+        source: '/api/:path((?!auth/session|auth/google).*)',
+        destination: `${apiUrl}/api/:path`,
       },
     ]
   },
