@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Search, BookOpen, Eye } from 'lucide-react';
+import { Search, BookOpen, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { courseService } from '@/features/hr/api/course-service';
-import type { Course } from '@/features/hr/types/course-types';
+import type { Course, CourseResult } from '@/features/hr/types/course-types';
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,8 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
+
+const PAGE_SIZE = 7;
 
 const STATUS_COLORS: Record<string, string> = {
     Published: 'bg-green-100 text-green-800',
@@ -58,20 +60,28 @@ function getDeploymentLabel(course: Course): string {
     return 'Khóa học nháp';
 }
 
-export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { items: Course[] } }) {
+export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: CourseResult }) {
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
     const debouncedSearch = useDebouncedValue(search, 300);
 
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-    const { data, isLoading } = useSWR<{ items: Course[] }>(
-        ['/api/Course', 'dept-head-available-courses', debouncedSearch],
-        () => courseService.getAllCourses({ search: debouncedSearch, pageSize: 100 }),
+    const { data, isLoading } = useSWR<CourseResult>(
+        ['/api/Course', 'dept-head-available-courses', debouncedSearch, page],
+        () => courseService.getAllCourses({ search: debouncedSearch, page, pageSize: PAGE_SIZE }),
         { fallbackData: initialData }
     );
 
     const courses = data?.items || [];
+    const totalPages = data?.totalPages ?? 1;
+    const totalCount = data?.totalCount ?? courses.length;
+
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        setPage(1);
+    };
 
     return (
         <div className="space-y-6">
@@ -79,7 +89,7 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Khóa học khả dụng</h2>
                     <p className="text-sm text-gray-500 mt-1">
-                        Danh sách các khóa học trong công ty, kèm trạng thái sẵn sàng triển khai
+                        Danh sách các khóa học trong công ty ({totalCount} khóa học)
                     </p>
                 </div>
             </div>
@@ -91,80 +101,109 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: { 
                         placeholder="Tìm kiếm khóa học..."
                         className="pl-10 border-gray-200 focus:border-[#3282B8]"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)}
                     />
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-gray-50">
-                        <TableRow>
-                            <TableHead className="font-bold text-[#0F4C75]">Khóa học</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Giảng viên</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Bài học</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Học viên</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>
-                            <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[420px]">
+                <div className="flex-1 overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-gray-50">
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-gray-400">
-                                    Đang tải dữ liệu...
-                                </TableCell>
+                                <TableHead className="font-bold text-[#0F4C75]">Khóa học</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Giảng viên</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Bài học</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Học viên</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>
+                                <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
                             </TableRow>
-                        ) : courses.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
-                                    Chưa có khóa học nào trong công ty
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            courses.map((course) => (
-                                <TableRow key={course.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="font-medium text-gray-900">
-                                        <div className="flex items-center gap-2">
-                                            <BookOpen className="w-4 h-4 text-blue-500" />
-                                            <div>
-                                                <div>{course.courseName}</div>
-                                                <div className="text-xs text-gray-500">{course.courseCode}</div>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-gray-700">{course.trainerName || course.trainerEmail || 'Chưa gán'}</TableCell>
-                                    <TableCell className="text-gray-700">{course.lessonCount || 0}</TableCell>
-                                    <TableCell className="text-gray-700">{course.enrollmentCount || 0}</TableCell>
-                                    <TableCell className="text-gray-500 text-sm">
-                                        {format(new Date(course.createdAt), 'dd/MM/yyyy')}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge
-                                            variant="outline"
-                                            className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[course.status] || 'bg-gray-100 text-gray-700'}`}
-                                        >
-                                            {getDeploymentLabel(course)}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            className="h-8 px-2 text-[#0F4C75] hover:bg-blue-50"
-                                            onClick={() => {
-                                                setSelectedCourse(course);
-                                                setIsDetailOpen(true);
-                                            }}
-                                        >
-                                            <Eye className="h-4 w-4 mr-1" /> Xem
-                                        </Button>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-12 text-gray-400">
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : courses.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
+                                        Chưa có khóa học nào trong công ty
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                courses.map((course) => (
+                                    <TableRow key={course.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <TableCell className="font-medium text-gray-900">
+                                            <div className="flex items-center gap-2">
+                                                <BookOpen className="w-4 h-4 text-blue-500" />
+                                                <div>
+                                                    <div>{course.courseName}</div>
+                                                    <div className="text-xs text-gray-500">{course.courseCode}</div>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-gray-700">{course.trainerName || course.trainerEmail || 'Chưa gán'}</TableCell>
+                                        <TableCell className="text-gray-700">{course.lessonCount || 0}</TableCell>
+                                        <TableCell className="text-gray-700">{course.enrollmentCount || 0}</TableCell>
+                                        <TableCell className="text-gray-500 text-sm">
+                                            {format(new Date(course.createdAt), 'dd/MM/yyyy')}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant="outline"
+                                                className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[course.status] || 'bg-gray-100 text-gray-700'}`}
+                                            >
+                                                {getDeploymentLabel(course)}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 px-2 text-[#0F4C75] hover:bg-blue-50"
+                                                onClick={() => {
+                                                    setSelectedCourse(course);
+                                                    setIsDetailOpen(true);
+                                                }}
+                                            >
+                                                <Eye className="h-4 w-4 mr-1" /> Xem
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Pagination */}
+                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Trước
+                    </Button>
+                    <span className="text-sm font-medium text-slate-600">
+                        Trang {page} / {totalPages}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        Tiếp
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
             </div>
 
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

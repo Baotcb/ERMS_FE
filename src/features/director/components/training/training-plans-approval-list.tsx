@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Check, RotateCcw, X, Info } from 'lucide-react';
+import { Check, RotateCcw, X, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { directorTrainingService } from '../../api/director-training-service';
 import { TrainingPlan } from '../../../hr/types/training-plan-types';
+import type { TrainingPlansResult } from '../../../hr/types/training-plan-types';
 
-export function TrainingPlansApprovalList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
+const PAGE_SIZE = 7;
+
+export function TrainingPlansApprovalList({ initialData }: { initialData?: TrainingPlansResult }) {
     const { toast } = useToast();
+    const [page, setPage] = useState(1);
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isApproveOpen, setIsApproveOpen] = useState(false);
     const [isResubmitRequestOpen, setIsResubmitRequestOpen] = useState(false);
@@ -38,13 +42,15 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
     const [rejectReason, setRejectReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { data, isLoading, mutate } = useSWR<{ items: TrainingPlan[] }>(
-        '/api/TrainingPlan?status=Pending',
-        () => directorTrainingService.getPendingPlans(),
+    const { data, isLoading, mutate } = useSWR<TrainingPlansResult>(
+        ['/api/TrainingPlan', 'director-approval', page],
+        () => directorTrainingService.getPlans({ status: 'Pending', page, pageSize: PAGE_SIZE }),
         { fallbackData: initialData }
     );
 
     const plans = data?.items || [];
+    const totalPages = data?.totalPages ?? 1;
+    const totalCount = data?.totalCount ?? plans.length;
 
     const handleApprove = async () => {
         if (!selectedPlan) return;
@@ -80,10 +86,10 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
                 setResubmitRequestNote('');
                 mutate();
             } else {
-                toast({ title: 'Lỗi', description: 'Không thể gửi yêu cầu chỉnh sửa kế hoạch.', variant: 'destructive' });
+                toast({ title: 'Lỗi', description: 'Không thể gửi yêu cầu chỉnh sửa.', variant: 'destructive' });
             }
         } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Không thể gửi yêu cầu chỉnh sửa kế hoạch. Vui lòng thử lại.';
+            const msg = err instanceof Error ? err.message : 'Không thể gửi yêu cầu. Vui lòng thử lại.';
             toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
@@ -94,12 +100,9 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
         if (!selectedPlan || !rejectReason.trim()) return;
         setIsSubmitting(true);
         try {
-            const res = await directorTrainingService.rejectPlan(
-                selectedPlan.id,
-                rejectReason.trim()
-            );
+            const res = await directorTrainingService.rejectPlan(selectedPlan.id, rejectReason.trim());
             if (res.ok) {
-                toast({ title: 'Đã từ chối', description: 'Kế hoạch đã bị từ chối.' });
+                toast({ title: 'Đã từ chối', description: 'Kế hoạch đào tạo đã bị từ chối.' });
                 setIsRejectOpen(false);
                 setRejectReason('');
                 mutate();
@@ -116,61 +119,133 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
 
     return (
         <div className="space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-[#0F4C75]">Duyệt kế hoạch đào tạo</h2>
-                    <p className="text-sm text-gray-500 mt-1">Xem xét và phê duyệt các kế hoạch đào tạo năm từ phòng HR</p>
-                </div>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Phê duyệt kế hoạch đào tạo</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                    Duyệt các kế hoạch đào tạo do HR đề xuất ({totalCount} kế hoạch chờ duyệt)
+                </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-gray-50">
-                        <TableRow>
-                            <TableHead className="font-bold text-[#0F4C75]">Kế hoạch</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Năm</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Tổng ngân sách</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Ngày gửi</TableHead>
-                            <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow><TableCell colSpan={6} className="text-center py-10">Đang tải...</TableCell></TableRow>
-                        ) : plans?.length === 0 ? (
-                            <TableRow><TableCell colSpan={6} className="text-center py-10 italic text-gray-400">Không có kế hoạch nào cần phê duyệt</TableCell></TableRow>
-                        ) : (
-                            plans?.map((plan: TrainingPlan) => (
-                                <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="font-medium text-gray-900">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold">{plan.planName}</span>
-                                            <span className="text-xs text-gray-400">{plan.planCode}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell><Badge variant="outline">{new Date(plan.startDate).getFullYear()}</Badge></TableCell>
-                                    <TableCell className="font-semibold text-[#0F4C75]">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
-                                    </TableCell>
-                                    <TableCell className="text-gray-500">{format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
-                                                <Check className="w-4 h-4 mr-1" /> Phê duyệt
-                                            </Button>
-                                            <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}>
-                                                <RotateCcw className="w-4 h-4 mr-1" /> Yêu cầu gửi lại
-                                            </Button>
-                                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}>
-                                                <X className="w-4 h-4 mr-1" /> Từ chối
-                                            </Button>
-                                        </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[420px]">
+                <div className="flex-1 overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-gray-50">
+                            <TableRow>
+                                <TableHead className="font-bold text-[#0F4C75]">Tên kế hoạch</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Năm</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Số khóa học</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Tổng ngân sách</TableHead>
+                                <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
+                                <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-12 text-gray-400">
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : plans.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-12 text-gray-400 italic">
+                                        Không có kế hoạch nào chờ duyệt
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                plans.map((plan) => (
+                                    <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <TableCell className="font-medium text-gray-900">
+                                            <div>
+                                                <p className="font-semibold">{plan.planName}</p>
+                                                <p className="text-xs text-gray-500">{plan.planCode}</p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-0">
+                                                {plan.year}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-gray-600">{plan.totalCourses} khóa học</TableCell>
+                                        <TableCell className="text-gray-900 font-semibold">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
+                                        </TableCell>
+                                        <TableCell className="text-gray-500 text-sm">
+                                            {format(new Date(plan.createdAt), 'dd/MM/yyyy')}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center gap-1 justify-end">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                                                    onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}
+                                                    title="Phê duyệt"
+                                                >
+                                                    <Check className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                                                    onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}
+                                                    title="Yêu cầu gửi lại"
+                                                >
+                                                    <RotateCcw className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                    onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}
+                                                    title="Từ chối"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-gray-500 hover:bg-gray-50"
+                                                    onClick={() => setSelectedPlan(plan)}
+                                                    title="Chi tiết"
+                                                >
+                                                    <Info className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Pagination */}
+                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Trước
+                    </Button>
+                    <span className="text-sm font-medium text-slate-600">
+                        Trang {page} / {totalPages}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
+                    >
+                        Tiếp
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
             </div>
 
             {/* Approve Dialog */}
@@ -182,38 +257,34 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
                             Bạn có chắc chắn muốn phê duyệt kế hoạch <strong>{selectedPlan?.planName}</strong>?
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 flex gap-3">
-                        <Info className="w-5 h-5 text-blue-500 shrink-0" />
-                        <p className="text-sm text-blue-700">Sau khi phê duyệt, HR sẽ nhận được thông báo để triển khai kế hoạch.</p>
-                    </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsApproveOpen(false)}>Hủy</Button>
-                        <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleApprove} disabled={isSubmitting}>
-                            {isSubmitting ? 'Đang xử lý...' : 'Đồng ý phê duyệt'}
+                        <Button onClick={handleApprove} disabled={isSubmitting} className="bg-green-600 hover:bg-green-700 text-white">
+                            {isSubmitting ? 'Đang xử lý...' : 'Phê duyệt'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Request Resubmission Dialog */}
+            {/* Resubmit Request Dialog */}
             <Dialog open={isResubmitRequestOpen} onOpenChange={setIsResubmitRequestOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-amber-700">Yêu cầu gửi lại kế hoạch</DialogTitle>
-                        <DialogDescription>Vui lòng cung cấp nội dung cần chỉnh sửa để HR cập nhật và gửi lại kế hoạch.</DialogDescription>
+                        <DialogTitle>Yêu cầu gửi lại</DialogTitle>
+                        <DialogDescription>
+                            Ghi chú cho HR về nội dung cần chỉnh sửa trong kế hoạch <strong>{selectedPlan?.planName}</strong>.
+                        </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <Textarea 
-                            placeholder="Nhập nội dung yêu cầu chỉnh sửa..." 
-                            value={resubmitRequestNote}
-                            onChange={(e) => setResubmitRequestNote(e.target.value)}
-                            className="min-h-[100px]"
-                        />
-                    </div>
+                    <Textarea
+                        placeholder="Nhập nội dung cần chỉnh sửa..."
+                        value={resubmitRequestNote}
+                        onChange={(e) => setResubmitRequestNote(e.target.value)}
+                        className="min-h-[100px]"
+                    />
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsResubmitRequestOpen(false)}>Hủy</Button>
-                        <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleRequestResubmission} disabled={!resubmitRequestNote.trim() || isSubmitting}>
-                            {isSubmitting ? 'Đang xử lý...' : 'Gửi yêu cầu gửi lại'}
+                        <Button variant="outline" onClick={() => { setIsResubmitRequestOpen(false); setResubmitRequestNote(''); }}>Hủy</Button>
+                        <Button onClick={handleRequestResubmission} disabled={isSubmitting || !resubmitRequestNote.trim()} className="bg-amber-500 hover:bg-amber-600 text-white">
+                            {isSubmitting ? 'Đang xử lý...' : 'Gửi yêu cầu'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -223,21 +294,21 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: { ite
             <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="text-red-600">Từ chối kế hoạch</DialogTitle>
-                        <DialogDescription>Vui lòng nhập lý do từ chối để HR nắm rõ và lưu vết phê duyệt.</DialogDescription>
+                        <DialogTitle>Từ chối kế hoạch</DialogTitle>
+                        <DialogDescription>
+                            Lý do từ chối kế hoạch <strong>{selectedPlan?.planName}</strong>.
+                        </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <Textarea
-                            placeholder="Nhập lý do từ chối..."
-                            value={rejectReason}
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            className="min-h-[100px]"
-                        />
-                    </div>
+                    <Textarea
+                        placeholder="Nhập lý do từ chối..."
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        className="min-h-[100px]"
+                    />
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsRejectOpen(false)}>Hủy</Button>
-                        <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleReject} disabled={!rejectReason.trim() || isSubmitting}>
-                            {isSubmitting ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+                        <Button variant="outline" onClick={() => { setIsRejectOpen(false); setRejectReason(''); }}>Hủy</Button>
+                        <Button onClick={handleReject} disabled={isSubmitting || !rejectReason.trim()} variant="destructive">
+                            {isSubmitting ? 'Đang xử lý...' : 'Từ chối'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
