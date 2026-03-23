@@ -13,6 +13,9 @@ import { courseContentService } from '@/features/hr/api/course-content-service';
 import { quizService } from '@/features/hr/api/quiz-service';
 import { feedbackService } from '@/features/employee/api/feedback-service';
 import type { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
+import { useAuth } from '@/features/core/auth/hooks';
+import { CertificateExportDialog } from './certificate-export-dialog';
+import { format } from 'date-fns';
 
 const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
 
@@ -189,6 +192,10 @@ export function CourseQuizPage({
     const [result, setResult] = useState<LearnerQuizResultDto | null>(null);
     const [activeTab, setActiveTab] = useState<'lessons' | 'quiz'>('lessons');
 
+    // Quiz attempt tracking
+    const [quizMaxAttempts, setQuizMaxAttempts] = useState<number | null>(null);
+    const [quizAttemptCount, setQuizAttemptCount] = useState(0);
+
     // Feedback form
     const [feedbackCourseRating, setFeedbackCourseRating] = useState(0);
     const [feedbackTrainerRating, setFeedbackTrainerRating] = useState(0);
@@ -196,6 +203,10 @@ export function CourseQuizPage({
     const [feedbackAnonymous, setFeedbackAnonymous] = useState(false);
     const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+    // Certificate export
+    const { user } = useAuth();
+    const [showCertDialog, setShowCertDialog] = useState(false);
 
     // Quiz countdown timer
     const [quizRemainingSeconds, setQuizRemainingSeconds] = useState<number | null>(null);
@@ -224,6 +235,38 @@ export function CourseQuizPage({
     }, [stopTimer]);
 
     useEffect(() => stopTimer, [stopTimer]);
+
+    // Load existing quiz result + feedback status on mount
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const [existingResult, hasFeedback] = await Promise.all([
+                    learningQuizService.getQuizResult(initialCourse.id),
+                    feedbackService.checkFeedback(initialCourse.id),
+                ]);
+                if (cancelled) return;
+                if (existingResult) {
+                    setResult({
+                        score: existingResult.score,
+                        isPassed: existingResult.isPassed,
+                        correctAnswers: existingResult.correctAnswers,
+                        totalQuestions: existingResult.totalQuestions,
+                    });
+                    setQuizAttemptCount(existingResult.attemptCount);
+                    if (existingResult.maxAttempts != null) {
+                        setQuizMaxAttempts(existingResult.maxAttempts);
+                    }
+                }
+                if (hasFeedback) {
+                    setFeedbackSubmitted(true);
+                }
+            } catch {
+                // Silently ignore — user can still start quiz normally
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [initialCourse.id]);
 
     const allLessons = useMemo(() => sections.flatMap((section) => section.lessons || []), [sections]);
 
@@ -479,15 +522,19 @@ export function CourseQuizPage({
             setAnswers({});
             setResult(null);
 
-            // Start countdown timer
+            // Start countdown timer + get quiz info
             try {
                 const quizInfo = await quizService.getCourseQuiz(initialCourse.id);
                 if (quizInfo.timeLimitMinutes && quizInfo.timeLimitMinutes > 0) {
                     startTimer(quizInfo.timeLimitMinutes);
                 }
+                if (quizInfo.maxAttempts) {
+                    setQuizMaxAttempts(quizInfo.maxAttempts);
+                }
             } catch {
                 // Timer is optional, don't block quiz start
             }
+            setQuizAttemptCount(prev => prev + 1);
 
             toast({ title: 'Bắt đầu bài thi', description: 'Bạn có thể trả lời từng câu và nộp bài khi hoàn tất.' });
         } catch (error) {
@@ -699,22 +746,30 @@ export function CourseQuizPage({
                                 {activeLesson.videoUrl && (() => {
                                     const url = activeLesson.videoUrl;
                                     const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+                                    const isDrive = url.includes('drive.google.com');
                                     let youtubeVideoId: string | null = null;
+                                    let driveFileId: string | null = null;
+
                                     if (isYouTube) {
                                         const match = url.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/|\/e\/|watch\?.*v=)([a-zA-Z0-9_-]{11})/);
                                         youtubeVideoId = match ? match[1] : null;
                                     }
+
+                                    if (isDrive) {
+                                        const match = url.match(/\/(?:file\/d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/);
+                                        driveFileId = match ? match[1] : null;
+                                    }
+
                                     return (
                                         <div className="rounded-2xl border border-gray-100 overflow-hidden">
                                             {isYouTube && youtubeVideoId ? (
                                                 <div className="relative">
                                                     <iframe
-                                                        src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?rel=0`}
+                                                        src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0&modestbranding=1`}
                                                         className="w-full aspect-video"
                                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                                         allowFullScreen
                                                         title={activeLesson.title}
-                                                        referrerPolicy="strict-origin-when-cross-origin"
                                                     />
                                                     <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
                                                         <span className="text-xs text-gray-500">Video bài giảng</span>
@@ -728,14 +783,35 @@ export function CourseQuizPage({
                                                         </a>
                                                     </div>
                                                 </div>
-                                            ) : isYouTube ? (
+                                            ) : isDrive && driveFileId ? (
+                                                <div className="relative">
+                                                    <iframe
+                                                        src={`https://drive.google.com/file/d/${driveFileId}/preview`}
+                                                        className="w-full aspect-video"
+                                                        allow="autoplay; encrypted-media"
+                                                        allowFullScreen
+                                                        title={activeLesson.title}
+                                                    />
+                                                    <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
+                                                        <span className="text-xs text-gray-500">Video từ Google Drive</span>
+                                                        <a
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs font-semibold text-[#3282B8] hover:underline"
+                                                        >
+                                                            Mở trên Drive ↗
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ) : isYouTube || isDrive ? (
                                                 <a
                                                     href={url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex items-center gap-4 p-5 bg-gradient-to-r from-red-50 to-white hover:from-red-100 transition-colors"
+                                                    className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-white hover:from-blue-100 transition-colors"
                                                 >
-                                                    <div className="w-16 h-16 rounded-xl bg-red-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                                                    <div className={`w-16 h-16 rounded-xl ${isYouTube ? 'bg-red-600' : 'bg-blue-600'} flex items-center justify-center flex-shrink-0 shadow-lg`}>
                                                         <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                                                     </div>
                                                     <div>
@@ -829,42 +905,96 @@ export function CourseQuizPage({
             {/* === TAB: Quiz === */}
             {activeTab === 'quiz' && (
             <div className="space-y-5">
-                    <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                            <div>
-                                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Final Quiz</p>
-                                <h3 className="text-xl font-black text-[#0F3B64]">Đánh giá cuối khóa</h3>
-                                <p className="text-sm text-gray-500 mt-1">Hoàn thành tất cả bài học để mở khóa bài kiểm tra cuối khóa. Quiz sẽ được lấy tự động theo khóa học.</p>
+                    {/* Show result card when quiz has been submitted */}
+                    {result ? (
+                        <div className="space-y-5">
+                            <div className={`rounded-3xl border-2 p-8 text-center space-y-4 ${result.isPassed ? 'border-green-200 bg-gradient-to-b from-green-50 to-white' : 'border-amber-200 bg-gradient-to-b from-amber-50 to-white'}`}>
+                                <div className="text-5xl">{result.isPassed ? '🎉' : '💪'}</div>
+                                <h3 className={`text-2xl font-black ${result.isPassed ? 'text-green-700' : 'text-amber-700'}`}>
+                                    {result.isPassed ? 'Chúc mừng, bạn đã ĐẠT!' : 'Chưa đạt, hãy thử lại!'}
+                                </h3>
+                                <div className="flex items-center justify-center gap-6 text-sm">
+                                    <div className="text-center">
+                                        <p className={`text-3xl font-black ${result.isPassed ? 'text-green-600' : 'text-amber-600'}`}>{result.score}%</p>
+                                        <p className="text-gray-500 text-xs font-medium">Điểm số</p>
+                                    </div>
+                                    <div className="w-px h-10 bg-gray-200" />
+                                    <div className="text-center">
+                                        <p className={`text-3xl font-black ${result.isPassed ? 'text-green-600' : 'text-amber-600'}`}>{result.correctAnswers}/{result.totalQuestions}</p>
+                                        <p className="text-gray-500 text-xs font-medium">Câu đúng</p>
+                                    </div>
+                                </div>
+
+                                {quizMaxAttempts && (
+                                    <p className="text-xs text-gray-400 font-medium">
+                                        Đã làm: {quizAttemptCount}/{quizMaxAttempts} lượt
+                                    </p>
+                                )}
+
+                                <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+                                    {result.isPassed && (
+                                        <Button
+                                            onClick={() => setShowCertDialog(true)}
+                                            className="bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-6 py-5 font-bold text-sm gap-2 shadow-lg transition-all active:scale-95"
+                                        >
+                                            📜 Xuất chứng chỉ
+                                        </Button>
+                                    )}
+                                    {!result.isPassed && (!quizMaxAttempts || quizAttemptCount < quizMaxAttempts) && (
+                                        <Button
+                                            onClick={handleStartQuiz}
+                                            disabled={isStarting}
+                                            className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-6 py-5 font-bold text-sm gap-2"
+                                        >
+                                            {isStarting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                                            🔄 Làm lại ({quizMaxAttempts ? `còn ${quizMaxAttempts - quizAttemptCount} lượt` : 'thử lại'})
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
+                    ) : (
+                        /* Show start quiz prompt when no result yet */
+                        <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
+                            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                <div>
+                                    <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Final Quiz</p>
+                                    <h3 className="text-xl font-black text-[#0F3B64]">Đánh giá cuối khóa</h3>
+                                    <p className="text-sm text-gray-500 mt-1">Hoàn thành tất cả bài học để mở khóa bài kiểm tra cuối khóa.</p>
+                                </div>
+                            </div>
 
-                        <div className="flex flex-wrap gap-2">
-                            <Button
-                                onClick={handleStartQuiz}
-                                disabled={isStarting || !canViewQuizSection}
-                                className="bg-[#145DA0] hover:bg-[#0F4C75] text-white"
-                            >
-                                {isStarting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                Bắt đầu làm quiz
-                            </Button>
-                        </div>
-
-                        {!canViewQuizSection ? (
-                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                                {initialCourse.isOnline === false ? (
-                                    <>
-                                        <strong>Workshop chưa được xác nhận.</strong> HR cần xác nhận hoàn thành workshop trước khi bạn có thể làm bài kiểm tra. Vui lòng liên hệ HR nếu workshop đã diễn ra.
-                                    </>
-                                ) : (
-                                    <>
-                                        Quiz chưa được mở. Tiến độ local của bạn hiện là {completedLessonsCount}/{knownTotalLessons} lesson.
-                                    </>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <Button
+                                    onClick={handleStartQuiz}
+                                    disabled={isStarting || !canViewQuizSection}
+                                    className="bg-[#145DA0] hover:bg-[#0F4C75] text-white"
+                                >
+                                    {isStarting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                    Bắt đầu làm quiz
+                                </Button>
+                                {quizMaxAttempts && (
+                                    <span className="text-sm text-gray-500 font-medium">
+                                        Số lượt: {quizAttemptCount}/{quizMaxAttempts} (còn {quizMaxAttempts - quizAttemptCount} lượt)
+                                    </span>
                                 )}
                             </div>
-                        ) : null}
 
-
-                    </div>
+                            {!canViewQuizSection ? (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                    {initialCourse.isOnline === false ? (
+                                        <>
+                                            <strong>Workshop chưa được xác nhận.</strong> HR cần xác nhận hoàn thành workshop trước khi bạn có thể làm bài kiểm tra.
+                                        </>
+                                    ) : (
+                                        <>
+                                            Quiz chưa được mở. Tiến độ local của bạn hiện là {completedLessonsCount}/{knownTotalLessons} lesson.
+                                        </>
+                                    )}
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
 
             {quizQuestions.length > 0 && (
                 <div className="space-y-4">
@@ -919,24 +1049,22 @@ export function CourseQuizPage({
                 </div>
             )}
 
-            {result && (
-                <div className={`rounded-3xl border-2 p-8 text-center space-y-4 ${result.isPassed ? 'border-green-200 bg-gradient-to-b from-green-50 to-white' : 'border-amber-200 bg-gradient-to-b from-amber-50 to-white'}`}>
-                    <div className="text-5xl">{result.isPassed ? '🎉' : '💪'}</div>
-                    <h3 className={`text-2xl font-black ${result.isPassed ? 'text-green-700' : 'text-amber-700'}`}>
-                        {result.isPassed ? 'Chúc mừng, bạn đã ĐẠT!' : 'Chưa đạt, hãy thử lại!'}
-                    </h3>
-                    <div className="flex items-center justify-center gap-6 text-sm">
-                        <div className="text-center">
-                            <p className={`text-3xl font-black ${result.isPassed ? 'text-green-600' : 'text-amber-600'}`}>{result.score}%</p>
-                            <p className="text-gray-500 text-xs font-medium">Điểm số</p>
-                        </div>
-                        <div className="w-px h-10 bg-gray-200" />
-                        <div className="text-center">
-                            <p className={`text-3xl font-black ${result.isPassed ? 'text-green-600' : 'text-amber-600'}`}>{result.correctAnswers}/{result.totalQuestions}</p>
-                            <p className="text-gray-500 text-xs font-medium">Câu đúng</p>
-                        </div>
-                    </div>
-                </div>
+
+            {result?.isPassed && (
+                <CertificateExportDialog
+                    open={showCertDialog}
+                    onOpenChange={setShowCertDialog}
+                    data={{
+                        learnerName: user?.fullName || '',
+                        learnerEmail: user?.email || '',
+                        departmentName: user?.departmentName || '',
+                        courseName: initialCourse.courseName,
+                        courseCode: initialCourse.courseCode,
+                        trainerName: initialCourse.trainerName || initialCourse.trainerEmail || '',
+                        score: result.score,
+                        completionDate: format(new Date(), 'yyyy-MM-dd'),
+                    }}
+                />
             )}
 
             {/* Feedback Form — appears after quiz result */}

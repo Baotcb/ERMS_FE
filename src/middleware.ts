@@ -58,6 +58,7 @@ const CSP_TEMPLATE = `
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob: https://github.com https://*.githubusercontent.com https://images.unsplash.com https://res.cloudinary.com https://lh3.googleusercontent.com;
   font-src 'self' data:;
+  frame-src https://www.youtube.com https://youtube.com https://drive.google.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';

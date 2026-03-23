@@ -20,7 +20,7 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
 }
 
 export const quizService = {
-    async getCourseQuiz(courseId: string): Promise<{ quizId: string | null; hasFinalQuiz: boolean; timeLimitMinutes?: number }> {
+    async getCourseQuiz(courseId: string): Promise<{ quizId: string | null; hasFinalQuiz: boolean; timeLimitMinutes?: number; maxAttempts?: number }> {
         const response = await apiClient.get(`/api/Course/${courseId}`);
         if (!response.ok) {
             throw new Error('Không thể tải trạng thái quiz của khóa học');
@@ -31,19 +31,21 @@ export const quizService = {
         const hasFinalQuiz = Boolean(result.hasFinalQuiz);
 
         let timeLimitMinutes: number | undefined;
+        let maxAttempts: number | undefined;
         if (quizId) {
             try {
                 const quizRes = await apiClient.get(`/api/quizzes/${quizId}`);
                 if (quizRes.ok) {
-                    const quizData = await quizRes.json() as { timeLimitMinutes?: number };
+                    const quizData = await quizRes.json() as { timeLimitMinutes?: number; maxAttempts?: number };
                     timeLimitMinutes = quizData.timeLimitMinutes;
+                    maxAttempts = quizData.maxAttempts;
                 }
             } catch {
                 // Quiz details fetch is optional
             }
         }
 
-        return { quizId, hasFinalQuiz, timeLimitMinutes };
+        return { quizId, hasFinalQuiz, timeLimitMinutes, maxAttempts };
     },
 
     async createQuiz(courseId: string, data: CreateQuizCommand): Promise<{ quizId: string }> {

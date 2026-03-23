@@ -55,4 +55,15 @@ export const feedbackService = {
         if (!res.ok) throw new Error('Không thể tải đánh giá của bạn.');
         return res.json();
     },
+
+    async checkFeedback(courseId: string): Promise<boolean> {
+        try {
+            const res = await apiClient.get(`/api/Feedback/check/${courseId}`);
+            if (!res.ok) return false;
+            const data = await res.json() as { hasSubmitted?: boolean };
+            return data.hasSubmitted === true;
+        } catch {
+            return false;
+        }
+    },
 };
