@@ -8,7 +8,6 @@ import type {
 const APPLICATIONS_URL = '/api/applications'
 
 // ===== GET danh sách phỏng vấn của employee đang login =====
-// Backend: GET /api/applications/my-interviews (CHƯA CÓ — cần tạo)
 export async function getMyInterviews(
     params?: { pageNumber?: number; pageSize?: number; status?: string }
 ): Promise<MyInterviewsResponse> {

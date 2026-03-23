@@ -158,117 +158,120 @@ export function PlanApprovalList() {
                 </div>
             </div>
 
-            <div className="border rounded-md">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Mã kế hoạch</TableHead>
-                            <TableHead>Tên kế hoạch</TableHead>
-                            <TableHead>Người tạo</TableHead>
-                            <TableHead>Ngày gửi</TableHead>
-                            <TableHead>Ngân sách</TableHead>
-                            <TableHead>Ngân sách chiến dịch</TableHead>
-                            <TableHead className="text-right">Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8">
-                                    Đang tải dữ liệu...
-                                </TableCell>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[420px]">
+                <div className="flex-1 overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-slate-50/80 border-b border-slate-100">
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Mã kế hoạch</TableHead>
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Tên kế hoạch</TableHead>
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Người tạo</TableHead>
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Ngày gửi</TableHead>
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Ngân sách</TableHead>
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4">Ngân sách chiến dịch</TableHead>
+                                <TableHead className="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 text-right">Thao tác</TableHead>
                             </TableRow>
-                        ) : data?.items?.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                    Không có kế hoạch nào cần duyệt
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            data?.items?.map((plan) => {
-                                const overBudget = isPlanOverBudget(plan)
-                                const budget = budgetMap[plan.campaignId]
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-8">
+                                        Đang tải dữ liệu...
+                                    </TableCell>
+                                </TableRow>
+                            ) : data?.items?.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                        Không có kế hoạch nào cần duyệt
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                data?.items?.map((plan) => {
+                                    const overBudget = isPlanOverBudget(plan)
+                                    const budget = budgetMap[plan.campaignId]
 
-                                return (
-                                    <TableRow key={plan.id} className={overBudget ? 'bg-amber-50/50' : ''}>
-                                        <TableCell className="font-mono text-xs">{plan.planCode}</TableCell>
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-2">
-                                                {plan.planName}
-                                                {overBudget && (
+                                    return (
+                                        <TableRow key={plan.id} className={overBudget ? 'bg-amber-50/50' : ''}>
+                                            <TableCell className="font-mono text-xs">{plan.planCode}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    {plan.planName}
+                                                    {overBudget && (
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger>
+                                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                                                                        <AlertTriangle className="w-3 h-3" />
+                                                                        Vượt ngân sách
+                                                                    </span>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent className="max-w-xs">
+                                                                    <p>Ngân sách kế hoạch ({formatVND(plan.totalBudget)}) vượt ngân sách còn lại của chiến dịch ({formatVND(budget?.remainingBudget ?? 0)})</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{plan.createdByName}</TableCell>
+                                            <TableCell>{plan.updatedAt ? format(new Date(plan.updatedAt), 'dd/MM/yyyy') : format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
+                                            <TableCell className={overBudget ? 'text-amber-700 font-semibold' : ''}>
+                                                {formatVND(plan.totalBudget)}
+                                            </TableCell>
+                                            <TableCell>
+                                                {budget ? (
                                                     <TooltipProvider>
                                                         <Tooltip>
                                                             <TooltipTrigger>
-                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                                                                    <AlertTriangle className="w-3 h-3" />
-                                                                    Vượt ngân sách
-                                                                </span>
+                                                                <div className="text-xs space-y-0.5">
+                                                                    <p className="text-gray-500">Còn lại: <span className={overBudget ? 'text-amber-600 font-semibold' : 'text-blue-600 font-semibold'}>{formatVND(budget.remainingBudget)}</span></p>
+                                                                    <p className="text-gray-400">/ {formatVND(budget.totalBudgetCeiling)}</p>
+                                                                </div>
                                                             </TooltipTrigger>
                                                             <TooltipContent className="max-w-xs">
-                                                                <p>Ngân sách kế hoạch ({formatVND(plan.totalBudget)}) vượt ngân sách còn lại của chiến dịch ({formatVND(budget?.remainingBudget ?? 0)})</p>
+                                                                <div className="space-y-1 text-xs">
+                                                                    <p>Tổng ngân sách: {formatVND(budget.totalBudgetCeiling)}</p>
+                                                                    <p>Đã phân bổ: {formatVND(budget.usedBudget)}</p>
+                                                                    <p>Đang chờ duyệt: {formatVND(budget.pendingBudget)}</p>
+                                                                    <p className="font-semibold">Còn lại: {formatVND(budget.remainingBudget)}</p>
+                                                                    {budget.actualCost > 0 && (
+                                                                        <p className="font-semibold text-green-600 border-t border-gray-200 pt-1 mt-1">Chi phí thực tế: {formatVND(budget.actualCost)}</p>
+                                                                    )}
+                                                                </div>
                                                             </TooltipContent>
                                                         </Tooltip>
                                                     </TooltipProvider>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
                                                 )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{plan.createdByName}</TableCell>
-                                        <TableCell>{plan.updatedAt ? format(new Date(plan.updatedAt), 'dd/MM/yyyy') : format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
-                                        <TableCell className={overBudget ? 'text-amber-700 font-semibold' : ''}>
-                                            {formatVND(plan.totalBudget)}
-                                        </TableCell>
-                                        <TableCell>
-                                            {budget ? (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger>
-                                                            <div className="text-xs space-y-0.5">
-                                                                <p className="text-gray-500">Còn lại: <span className={overBudget ? 'text-amber-600 font-semibold' : 'text-blue-600 font-semibold'}>{formatVND(budget.remainingBudget)}</span></p>
-                                                                <p className="text-gray-400">/ {formatVND(budget.totalBudgetCeiling)}</p>
-                                                            </div>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent className="max-w-xs">
-                                                            <div className="space-y-1 text-xs">
-                                                                <p>Tổng ngân sách: {formatVND(budget.totalBudgetCeiling)}</p>
-                                                                <p>Đã phân bổ: {formatVND(budget.usedBudget)}</p>
-                                                                <p>Đang chờ duyệt: {formatVND(budget.pendingBudget)}</p>
-                                                                <p className="font-semibold">Còn lại: {formatVND(budget.remainingBudget)}</p>
-                                                                {budget.actualCost > 0 && (
-                                                                    <p className="font-semibold text-green-600 border-t border-gray-200 pt-1 mt-1">Chi phí thực tế: {formatVND(budget.actualCost)}</p>
-                                                                )}
-                                                            </div>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            ) : (
-                                                <span className="text-xs text-gray-400">—</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button variant="outline" size="sm" onClick={() => window.location.href = `/enterprise/director/recruitment-plans/${plan.id}`}>
-                                                <Eye className="w-4 h-4 mr-1" /> Xem
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                className="bg-green-600 hover:bg-green-700"
-                                                onClick={() => handleAction(plan, 'approve')}
-                                            >
-                                                <Check className="w-4 h-4 mr-1" /> Duyệt
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="destructive"
-                                                onClick={() => handleAction(plan, 'reject')}
-                                            >
-                                                <X className="w-4 h-4 mr-1" /> Từ chối
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })
-                        )}
-                    </TableBody>
-                </Table>
+                                            </TableCell>
+                                            <TableCell className="text-right space-x-2">
+                                                <Button variant="outline" size="sm" onClick={() => window.location.href = `/enterprise/director/recruitment-plans/${plan.id}`}>
+                                                    <Eye className="w-4 h-4 mr-1" /> Xem
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                    onClick={() => handleAction(plan, 'approve')}
+                                                >
+                                                    <Check className="w-4 h-4 mr-1" /> Duyệt
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => handleAction(plan, 'reject')}
+                                                >
+                                                    <X className="w-4 h-4 mr-1" /> Từ chối
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
             </div>
 
             {/* Confirmation Dialog */}

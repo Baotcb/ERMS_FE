@@ -1,5 +1,11 @@
 import { BrandLogo } from '@/components/common/brand-logo'
 import { AuthNavbar, AuthFooter } from '@/components/layout'
+import { Plus_Jakarta_Sans } from 'next/font/google'
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+})
 
 export default function AuthLayout({
   children,
@@ -7,7 +13,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 font-sans antialiased flex flex-col">
+    <div className={`${plusJakartaSans.className} min-h-screen bg-gray-50 dark:bg-slate-900 font-sans antialiased flex flex-col`}>
       {/* Header */}
       <header className="w-full border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -25,7 +31,7 @@ export default function AuthLayout({
       <footer className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            © 2026 ERMS Inc. All rights reserved.
+            © 2026 Enterprise Resource Management System. All rights reserved.
           </p>
           <AuthFooter />
         </div>
