@@ -131,7 +131,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                     <ArrowRight className="h-5 w-5 shrink-0 text-blue-500" />
                     <span className="flex-1">
                         Một số yêu cầu của bạn đã được thêm vào kế hoạch đào tạo và được Giám đốc phê duyệt.
-                        Hãy vào <strong>Kế hoạch đào tạo</strong> để xem khóa học HR đã khởi tạo và phân công trainer, trainee.
+                        Hãy vào <strong>Kế hoạch đào tạo</strong> để xem khóa học HR đã khởi tạo và phân công giảng viên, học viên.
                     </span>
                     <Button
                         size="sm"
@@ -155,28 +155,11 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                 </div>
             </div>
 
-<<<<<<< HEAD
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-gray-50">
-                        <TableRow>
-                            <TableHead className="font-bold text-[#0F4C75]">Chủ đề đào tạo</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Mức độ ưu tiên</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">SL Dự kiến</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Ngân sách</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Ngày gửi</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>
-                            <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-=======
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[420px]">
                 <div className="flex-1 overflow-x-auto">
                     <Table>
                         <TableHeader className="bg-gray-50">
->>>>>>> dev
                             <TableRow>
                                 <TableHead className="font-bold text-[#0F4C75]">Chủ đề</TableHead>
                                 <TableHead className="font-bold text-[#0F4C75]">Phòng ban</TableHead>
@@ -187,69 +170,12 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                                 <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>
                                 <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
                             </TableRow>
-<<<<<<< HEAD
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={8} className="text-center py-12 text-gray-400">
                                         Đang tải dữ liệu...
-=======
-                        ) : data?.items?.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-gray-400 italic">
-                                    Chưa có yêu cầu đào tạo nào được gửi
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            data?.items?.map((request) => (
-                                <TableRow key={request.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="font-medium text-gray-900 max-w-[250px] truncate">
-                                        {request.subject}
-                                    </TableCell>
-                                    <TableCell>
-                                        {renderUrgency(request.urgency)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1.5 text-gray-600">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            {request.estimatedParticipants || 0} học viên
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-gray-600">
-                                        {request.estimatedBudget
-                                            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget)
-                                            : 'N/A'}
-                                    </TableCell>
-                                    <TableCell className="text-gray-500 text-sm">
-                                        {format(new Date(request.createdAt), 'dd/MM/yyyy')}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[request.status] || 'bg-gray-100'}`}>
-                                            {STATUS_LABELS[request.status] || request.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48">
-                                                <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                                                <DropdownMenuItem
-                                                    className="cursor-pointer"
-                                                    onClick={() => {
-                                                        setSelectedRequest(request);
-                                                        setIsDetailOpen(true);
-                                                    }}
-                                                >
-                                                    <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
->>>>>>> 17f611a01f129ea84d94a3a291154f47af9f1b4c
                                     </TableCell>
                                 </TableRow>
                             ) : requests.length === 0 ? (

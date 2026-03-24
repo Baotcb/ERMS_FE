@@ -90,7 +90,7 @@ export function WorkshopConfirmationDialog({
             });
             toast({
                 title: 'Xác nhận thành công!',
-                description: 'Workshop đã được xác nhận hoàn thành. Các trainee giờ có thể làm bài kiểm tra.',
+                description: 'Buổi đào tạo đã được xác nhận hoàn thành. Các học viên giờ có thể làm bài kiểm tra.',
             });
             onOpenChange(false);
             onConfirmed?.();
@@ -112,7 +112,7 @@ export function WorkshopConfirmationDialog({
                     </DialogTitle>
                     <DialogDescription className="text-gray-500">
                         Xác nhận rằng workshop <strong className="text-gray-700">{courseName}</strong> đã diễn ra thành công.
-                        Upload ảnh minh chứng để trainee có thể làm bài kiểm tra.
+                        Upload ảnh minh chứng để học viên có thể làm bài kiểm tra.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -170,7 +170,7 @@ export function WorkshopConfirmationDialog({
                     <div className="space-y-2">
                         <Label className="text-sm font-bold text-gray-700">Ghi chú (tùy chọn)</Label>
                         <Textarea
-                            placeholder="VD: Workshop diễn ra tốt đẹp, 25/30 trainee tham dự..."
+                            placeholder="VD: Buổi đào tạo diễn ra tốt đẹp, 25/30 học viên tham dự..."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             className="min-h-[80px] rounded-xl border-gray-200"

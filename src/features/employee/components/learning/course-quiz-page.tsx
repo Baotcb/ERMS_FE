@@ -297,6 +297,7 @@ export function CourseQuizPage({
             }
         })();
         return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialCourse.id]);
 
     const allLessons = useMemo(() => sections.flatMap((section) => section.lessons || []), [sections]);

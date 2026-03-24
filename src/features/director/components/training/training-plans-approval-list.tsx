@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Check, RotateCcw, X, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, RotateCcw, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -126,50 +126,7 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                 </p>
             </div>
 
-<<<<<<< HEAD
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-gray-50">
-                        <TableRow>
-                            <TableHead className="font-bold text-[#0F4C75]">Kế hoạch</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Năm</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Tổng ngân sách</TableHead>
-                            <TableHead className="font-bold text-[#0F4C75]">Ngày gửi</TableHead>
-                            <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow><TableCell colSpan={5} className="text-center py-10">Đang tải...</TableCell></TableRow>
-                        ) : plans?.length === 0 ? (
-                            <TableRow><TableCell colSpan={5} className="text-center py-10 italic text-gray-400">Không có kế hoạch nào cần phê duyệt</TableCell></TableRow>
-                        ) : (
-                            plans?.map((plan: TrainingPlan) => (
-                                <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="font-medium text-gray-900">
-                                        <div className="flex flex-col">
-                                            <span className="font-bold">{plan.planName}</span>
-                                            <span className="text-xs text-gray-400">{plan.planCode}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell><Badge variant="outline">{new Date(plan.startDate).getFullYear()}</Badge></TableCell>
-                                    <TableCell className="font-semibold text-[#0F4C75]">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
-                                    </TableCell>
-                                    <TableCell className="text-gray-500">{format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
-                                                <Check className="w-4 h-4 mr-1" /> Phê duyệt
-                                            </Button>
-                                            <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}>
-                                                <RotateCcw className="w-4 h-4 mr-1" /> Yêu cầu gửi lại
-                                            </Button>
-                                            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}>
-                                                <X className="w-4 h-4 mr-1" /> Từ chối
-                                            </Button>
-                                        </div>
-=======
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[420px]">
                 <div className="flex-1 overflow-x-auto">
                     <Table>
@@ -188,7 +145,6 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-12 text-gray-400">
                                         Đang tải dữ liệu...
->>>>>>> dev
                                     </TableCell>
                                 </TableRow>
                             ) : plans.length === 0 ? (
@@ -201,9 +157,9 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                 plans.map((plan) => (
                                     <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
                                         <TableCell className="font-medium text-gray-900">
-                                            <div>
-                                                <p className="font-semibold">{plan.planName}</p>
-                                                <p className="text-xs text-gray-500">{plan.planCode}</p>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold">{plan.planName}</span>
+                                                <span className="text-xs text-gray-400">{plan.planCode}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -212,49 +168,20 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-gray-600">{plan.totalCourses} khóa học</TableCell>
-                                        <TableCell className="text-gray-900 font-semibold">
+                                        <TableCell className="font-semibold text-[#0F4C75]">
                                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
                                         </TableCell>
-                                        <TableCell className="text-gray-500 text-sm">
-                                            {format(new Date(plan.createdAt), 'dd/MM/yyyy')}
-                                        </TableCell>
+                                        <TableCell className="text-gray-500">{format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex items-center gap-1 justify-end">
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-green-600 hover:bg-green-50 hover:text-green-700"
-                                                    onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}
-                                                    title="Phê duyệt"
-                                                >
-                                                    <Check className="h-4 w-4" />
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
+                                                    <Check className="w-4 h-4 mr-1" /> Phê duyệt
                                                 </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                                                    onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}
-                                                    title="Yêu cầu gửi lại"
-                                                >
-                                                    <RotateCcw className="h-4 w-4" />
+                                                <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}>
+                                                    <RotateCcw className="w-4 h-4 mr-1" /> Gửi lại
                                                 </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                                                    onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}
-                                                    title="Từ chối"
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-gray-500 hover:bg-gray-50"
-                                                    onClick={() => setSelectedPlan(plan)}
-                                                    title="Chi tiết"
-                                                >
-                                                    <Info className="h-4 w-4" />
+                                                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}>
+                                                    <X className="w-4 h-4 mr-1" /> Từ chối
                                                 </Button>
                                             </div>
                                         </TableCell>

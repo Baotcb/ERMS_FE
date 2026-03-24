@@ -42,7 +42,7 @@ function getDeploymentLabel(course: Course): string {
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
     if (course.status === 'Published') {
-        return 'Đã xuất bản';
+        return 'Đã mở khóa';
     }
 
     if (hasTrainer && hasTrainees && hasSchedule) {

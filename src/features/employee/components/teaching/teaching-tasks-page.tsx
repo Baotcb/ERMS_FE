@@ -121,7 +121,7 @@ export function TeachingTasksPage({
                     <div className="space-y-2">
                         <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">Quản lý giảng dạy</p>
                         <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-                            Xin chào, {user?.fullName?.split(' ').pop() || 'Trainer'} 👋
+                            Xin chào, {user?.fullName?.split(' ').pop() || 'Giảng viên'} 👋
                         </h1>
                         <p className="text-[#BBE1FA]/80 text-sm">Quản lý các khóa đào tạo được phân công cho bạn.</p>
                     </div>
