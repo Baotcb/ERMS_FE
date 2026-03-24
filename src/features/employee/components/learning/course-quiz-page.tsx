@@ -43,7 +43,6 @@ export function CourseQuizPage({
     const { toast } = useToast();
 
     const [progress, setProgress] = useState<CourseProgressDto | null>(initialProgress);
-    const [, setIsLoadingProgress] = useState(false);
     const [sections, setSections] = useState<CourseSection[]>([]);
     const [isLoadingCurriculum, setIsLoadingCurriculum] = useState(false);
     const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
@@ -175,7 +174,6 @@ export function CourseQuizPage({
         };
     }, [examMode]);
 
-    // Exit exam mode helper
     const exitExamMode = useCallback(() => {
         setExamMode(false);
         try {
@@ -187,10 +185,22 @@ export function CourseQuizPage({
         }
     }, []);
 
+    // Warn before leaving during exam mode
+    useEffect(() => {
+        if (!examMode) return;
+        const handler = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [examMode]);
+
     // Load existing quiz result + feedback status on mount, and restore in-progress quiz
     useEffect(() => {
         let cancelled = false;
-        const storageKey = `quiz_attempt_${initialCourse.id}`;
+        const storageKey = `quiz_attempt_${user?.id || 'anon'}_${initialCourse.id}`;
+        const timerKey = `quiz_timer_${user?.id || 'anon'}_${initialCourse.id}`;
 
         (async () => {
             try {
@@ -225,11 +235,24 @@ export function CourseQuizPage({
                                 setAttemptId(storedAttemptId);
                                 setQuestions(loadedQuestions);
                                 setAnswers({});
-                                // Also restore timer
+                                // Restore timer with remaining time
                                 try {
                                     const quizInfo = await quizService.getCourseQuiz(initialCourse.id);
                                     if (quizInfo.timeLimitMinutes && quizInfo.timeLimitMinutes > 0) {
-                                        startTimer(quizInfo.timeLimitMinutes);
+                                        const savedStart = sessionStorage.getItem(timerKey);
+                                        if (savedStart) {
+                                            const elapsedMs = Date.now() - Number(savedStart);
+                                            const elapsedMinutes = elapsedMs / 60000;
+                                            const remaining = quizInfo.timeLimitMinutes - elapsedMinutes;
+                                            if (remaining > 0) {
+                                                startTimer(remaining);
+                                            } else {
+                                                // Time already expired — auto-submit
+                                                startTimer(0.01); // triggers immediate auto-submit
+                                            }
+                                        } else {
+                                            startTimer(quizInfo.timeLimitMinutes);
+                                        }
                                     }
                                 } catch { /* timer is optional */ }
                             }
@@ -253,6 +276,13 @@ export function CourseQuizPage({
     const allLessons = useMemo(() => sections.flatMap((section) => section.lessons || []), [sections]);
 
     const completedLessonSet = useMemo(() => new Set(completedLessonIds), [completedLessonIds]);
+
+    // Pre-compute lesson index map to avoid O(n²) findIndex in render
+    const lessonIndexMap = useMemo(() => {
+        const map = new Map<string, number>();
+        allLessons.forEach((lesson, index) => map.set(lesson.id, index));
+        return map;
+    }, [allLessons]);
 
     const completedLessonsCount = useMemo(() => allLessons.filter((lesson) => completedLessonSet.has(lesson.id)).length, [allLessons, completedLessonSet]);
     const knownTotalLessons = allLessons.length > 0
@@ -356,6 +386,32 @@ export function CourseQuizPage({
         void loadCurriculum();
     }, [initialCourse.id, initialProgress?.totalLessons, toast]);
 
+    const loadProgress = async () => {
+        try {
+            const data = await learningQuizService.getCourseProgress(initialCourse.id);
+            setProgress(data);
+
+            if (sections.length === 0 && data.totalLessons > 0) {
+                const materialMirror = loadLocalMaterialMirror(initialCourse.id, user?.id);
+                const draftSections = loadLocalDraftCurriculum(initialCourse.id, user?.id);
+                if (draftSections.length > 0) {
+                    setSections(mergeMaterialMirror(draftSections, materialMirror));
+                    const firstDraftLesson = draftSections.flatMap((section) => section.lessons || [])[0];
+                    if (firstDraftLesson) {
+                        setActiveLessonId(firstDraftLesson.id);
+                    }
+                } else {
+                    const fallbackSections = buildFallbackSections(initialCourse.id, data.totalLessons);
+                    setSections(mergeMaterialMirror(fallbackSections, materialMirror));
+                    setActiveLessonId(`fallback-lesson-${initialCourse.id}-1`);
+                }
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Không thể tải tiến độ khóa học.';
+            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
+        }
+    };
+
     useEffect(() => {
         void loadProgress();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -439,34 +495,7 @@ export function CourseQuizPage({
         return quizQuestions.filter((question) => Boolean(answers[question.id])).length;
     }, [answers, quizQuestions]);
 
-    const loadProgress = async () => {
-        setIsLoadingProgress(true);
-        try {
-            const data = await learningQuizService.getCourseProgress(initialCourse.id);
-            setProgress(data);
 
-            if (sections.length === 0 && data.totalLessons > 0) {
-                const materialMirror = loadLocalMaterialMirror(initialCourse.id, user?.id);
-                const draftSections = loadLocalDraftCurriculum(initialCourse.id, user?.id);
-                if (draftSections.length > 0) {
-                    setSections(mergeMaterialMirror(draftSections, materialMirror));
-                    const firstDraftLesson = draftSections.flatMap((section) => section.lessons || [])[0];
-                    if (firstDraftLesson) {
-                        setActiveLessonId(firstDraftLesson.id);
-                    }
-                } else {
-                    const fallbackSections = buildFallbackSections(initialCourse.id, data.totalLessons);
-                    setSections(mergeMaterialMirror(fallbackSections, materialMirror));
-                    setActiveLessonId(`fallback-lesson-${initialCourse.id}-1`);
-                }
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Không thể tải tiến độ khóa học.';
-            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
-        } finally {
-            setIsLoadingProgress(false);
-        }
-    };
 
     const handleStartQuiz = async () => {
         if (!initialCourse.hasFinalQuiz) {
@@ -503,7 +532,8 @@ export function CourseQuizPage({
             setQuestions(loadedQuestions);
             setAnswers({});
             setResult(null);
-            sessionStorage.setItem(`quiz_attempt_${initialCourse.id}`, startedAttemptId);
+            sessionStorage.setItem(`quiz_attempt_${user?.id || 'anon'}_${initialCourse.id}`, startedAttemptId);
+            sessionStorage.setItem(`quiz_timer_${user?.id || 'anon'}_${initialCourse.id}`, String(Date.now()));
 
             // Start timer + get quiz info
             try {
@@ -541,19 +571,27 @@ export function CourseQuizPage({
 
         setIsSubmitting(true);
         try {
-            for (const question of quizQuestions) {
-                if (answers[question.id]) {
-                    await learningQuizService.submitAnswer(attemptId, {
+            // Submit all answers in parallel
+            const answeredQuestions = quizQuestions.filter((q) => answers[q.id]);
+            const submissionResults = await Promise.allSettled(
+                answeredQuestions.map((question) =>
+                    learningQuizService.submitAnswer(attemptId, {
                         questionId: question.id,
                         selectedAnswer: answers[question.id],
-                    });
-                }
+                    })
+                )
+            );
+
+            const failedCount = submissionResults.filter((r) => r.status === 'rejected').length;
+            if (failedCount > 0) {
+                toast({ title: 'Cảnh báo', description: `${failedCount} câu trả lời không gửi được, nhưng bài thi vẫn được nộp.`, variant: 'destructive' });
             }
 
             const submittedResult = await learningQuizService.submitQuiz(attemptId);
             setResult(submittedResult);
             setQuizCompletionDate(format(new Date(), 'yyyy-MM-dd'));
-            sessionStorage.removeItem(`quiz_attempt_${initialCourse.id}`);
+            sessionStorage.removeItem(`quiz_attempt_${user?.id || 'anon'}_${initialCourse.id}`);
+            sessionStorage.removeItem(`quiz_timer_${user?.id || 'anon'}_${initialCourse.id}`);
             exitExamMode();
             toast({ title: force ? 'Hết giờ — Đã nộp bài tự động' : 'Đã nộp bài', description: submittedResult.isPassed ? 'Chúc mừng, bạn đã đạt bài thi cuối khóa.' : 'Bạn chưa đạt, vui lòng xem lại nội dung và thử lại.' });
         } catch (error) {
@@ -671,7 +709,7 @@ export function CourseQuizPage({
                                     </div>
                                     <div className="p-2 space-y-1.5">
                                         {section.lessons.map((lesson: Lesson) => {
-                                            const lessonGlobalIndex = allLessons.findIndex((l) => l.id === lesson.id);
+                                            const lessonGlobalIndex = lessonIndexMap.get(lesson.id) ?? -1;
                                             const isCompleted = completedLessonSet.has(lesson.id);
                                             const isActive = activeLesson?.id === lesson.id;
                                             const isLocked = lessonGlobalIndex > 0 && !completedLessonSet.has(allLessons[lessonGlobalIndex - 1].id);
@@ -701,7 +739,7 @@ export function CourseQuizPage({
                                                             <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                                         ) : (
                                                             <Badge className={isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
-                                                                {isCompleted ? 'Done' : 'Todo'}
+                                                                {isCompleted ? 'Hoàn thành' : 'Chưa làm'}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -1128,7 +1166,7 @@ export function CourseQuizPage({
             )}
 
             {/* Feedback Form — appears after quiz result */}
-            {result?.isPassed && !feedbackSubmitted && (
+            {result && !feedbackSubmitted && (
                 <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 space-y-5">
                     <div>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đánh giá</p>
