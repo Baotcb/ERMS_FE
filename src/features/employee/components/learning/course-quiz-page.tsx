@@ -195,6 +195,7 @@ export function CourseQuizPage({
     // Quiz attempt tracking
     const [quizMaxAttempts, setQuizMaxAttempts] = useState<number | null>(null);
     const [quizAttemptCount, setQuizAttemptCount] = useState(0);
+    const [quizCompletionDate, setQuizCompletionDate] = useState<string | null>(null);
 
     // Feedback form
     const [feedbackCourseRating, setFeedbackCourseRating] = useState(0);
@@ -236,9 +237,11 @@ export function CourseQuizPage({
 
     useEffect(() => stopTimer, [stopTimer]);
 
-    // Load existing quiz result + feedback status on mount
+    // Load existing quiz result + feedback status on mount, and restore in-progress quiz
     useEffect(() => {
         let cancelled = false;
+        const storageKey = `quiz_attempt_${initialCourse.id}`;
+
         (async () => {
             try {
                 const [existingResult, hasFeedback] = await Promise.all([
@@ -256,6 +259,34 @@ export function CourseQuizPage({
                     setQuizAttemptCount(existingResult.attemptCount);
                     if (existingResult.maxAttempts != null) {
                         setQuizMaxAttempts(existingResult.maxAttempts);
+                    }
+                    if (existingResult.completedAt) {
+                        setQuizCompletionDate(format(new Date(existingResult.completedAt), 'yyyy-MM-dd'));
+                    }
+                    // Clear stored attempt since quiz is completed
+                    sessionStorage.removeItem(storageKey);
+                } else {
+                    // Try to restore in-progress attempt from sessionStorage
+                    const storedAttemptId = sessionStorage.getItem(storageKey);
+                    if (storedAttemptId && !cancelled) {
+                        try {
+                            const loadedQuestions = await learningQuizService.getQuizQuestions(storedAttemptId);
+                            if (!cancelled && loadedQuestions.length > 0) {
+                                setAttemptId(storedAttemptId);
+                                setQuestions(loadedQuestions);
+                                setAnswers({});
+                                // Also restore timer
+                                try {
+                                    const quizInfo = await quizService.getCourseQuiz(initialCourse.id);
+                                    if (quizInfo.timeLimitMinutes && quizInfo.timeLimitMinutes > 0) {
+                                        startTimer(quizInfo.timeLimitMinutes);
+                                    }
+                                } catch { /* timer is optional */ }
+                            }
+                        } catch {
+                            // Stored attempt is invalid, clear it
+                            sessionStorage.removeItem(storageKey);
+                        }
                     }
                 }
                 if (hasFeedback) {
@@ -521,6 +552,7 @@ export function CourseQuizPage({
             setQuestions(loadedQuestions);
             setAnswers({});
             setResult(null);
+            sessionStorage.setItem(`quiz_attempt_${initialCourse.id}`, startedAttemptId);
 
             // Start countdown timer + get quiz info
             try {
@@ -545,13 +577,13 @@ export function CourseQuizPage({
         }
     };
 
-    const handleSubmitQuiz = async () => {
+    const handleSubmitQuiz = async (force = false) => {
         if (!attemptId || quizQuestions.length === 0) {
             toast({ title: 'Chưa có lượt làm bài', description: 'Vui lòng bắt đầu quiz trước khi nộp.', variant: 'destructive' });
             return;
         }
 
-        if (completedCount !== quizQuestions.length) {
+        if (!force && completedCount !== quizQuestions.length) {
             toast({ title: 'Chưa hoàn tất', description: 'Vui lòng trả lời tất cả câu hỏi trước khi nộp bài.', variant: 'destructive' });
             return;
         }
@@ -559,15 +591,19 @@ export function CourseQuizPage({
         setIsSubmitting(true);
         try {
             for (const question of quizQuestions) {
-                await learningQuizService.submitAnswer(attemptId, {
-                    questionId: question.id,
-                    selectedAnswer: answers[question.id],
-                });
+                if (answers[question.id]) {
+                    await learningQuizService.submitAnswer(attemptId, {
+                        questionId: question.id,
+                        selectedAnswer: answers[question.id],
+                    });
+                }
             }
 
             const submittedResult = await learningQuizService.submitQuiz(attemptId);
             setResult(submittedResult);
-            toast({ title: 'Đã nộp bài', description: submittedResult.isPassed ? 'Chúc mừng, bạn đã đạt bài thi cuối khóa.' : 'Bạn chưa đạt, vui lòng xem lại nội dung và thử lại.' });
+            setQuizCompletionDate(format(new Date(), 'yyyy-MM-dd'));
+            sessionStorage.removeItem(`quiz_attempt_${initialCourse.id}`);
+            toast({ title: force ? 'Hết giờ — Đã nộp bài tự động' : 'Đã nộp bài', description: submittedResult.isPassed ? 'Chúc mừng, bạn đã đạt bài thi cuối khóa.' : 'Bạn chưa đạt, vui lòng xem lại nội dung và thử lại.' });
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Không thể nộp bài thi.';
             toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
@@ -575,6 +611,14 @@ export function CourseQuizPage({
             setIsSubmitting(false);
         }
     };
+
+    // Auto-submit when timer reaches 0
+    useEffect(() => {
+        if (quizRemainingSeconds === 0 && attemptId && !result && !isSubmitting) {
+            handleSubmitQuiz(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [quizRemainingSeconds]);
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto px-1">
@@ -1041,7 +1085,7 @@ export function CourseQuizPage({
                     ))}
 
                     <div className="rounded-2xl bg-gradient-to-r from-[#0F4C75] to-[#1B262C] p-6 shadow-sm">
-                        <Button onClick={handleSubmitQuiz} disabled={isSubmitting} className="w-full bg-white text-[#0F4C75] hover:bg-[#BBE1FA] py-6 rounded-xl font-bold text-base gap-2">
+                        <Button onClick={() => handleSubmitQuiz()} disabled={isSubmitting} className="w-full bg-white text-[#0F4C75] hover:bg-[#BBE1FA] py-6 rounded-xl font-bold text-base gap-2">
                             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                             Nộp bài thi
                         </Button>
@@ -1062,7 +1106,7 @@ export function CourseQuizPage({
                         courseCode: initialCourse.courseCode,
                         trainerName: initialCourse.trainerName || initialCourse.trainerEmail || '',
                         score: result.score,
-                        completionDate: format(new Date(), 'yyyy-MM-dd'),
+                        completionDate: quizCompletionDate || format(new Date(), 'yyyy-MM-dd'),
                     }}
                 />
             )}

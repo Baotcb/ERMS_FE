@@ -254,7 +254,7 @@ export const learningQuizService = {
         return response.json();
     },
 
-    async getQuizResult(courseId: string): Promise<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null } | null> {
+    async getQuizResult(courseId: string): Promise<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null; completedAt: string | null } | null> {
         try {
             const response = await apiClient.get(`/api/Course/${courseId}/quiz-result`);
             if (response.status === 204 || !response.ok) return null;

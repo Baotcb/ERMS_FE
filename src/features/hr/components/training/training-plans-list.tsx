@@ -28,9 +28,6 @@ import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan, TrainingPlansResult } from '../../types/training-plan-types';
 import { useRouter } from 'next/navigation';
 import { TrainingPlanDetail } from './training-plan-detail';
-<<<<<<< HEAD
-import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote } from '../../utils/training-status-utils';
-=======
 
 const PAGE_SIZE = 7;
 
@@ -75,7 +72,6 @@ function getDisplayReviewNote(rawNote?: string): string {
         .replace(FINAL_REJECT_PREFIX, '')
         .trim();
 }
->>>>>>> dev
 
 export function TrainingPlansList({ initialData }: { initialData?: TrainingPlansResult }) {
     const router = useRouter();

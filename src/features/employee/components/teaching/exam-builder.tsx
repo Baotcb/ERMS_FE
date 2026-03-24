@@ -546,7 +546,11 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                             <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={() => removeQuestion(question.id)}
+                                onClick={() => {
+                                    if (window.confirm(`Bạn có chắc muốn xóa câu hỏi ${qIdx + 1}?`)) {
+                                        removeQuestion(question.id);
+                                    }
+                                }}
                                 className="text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />

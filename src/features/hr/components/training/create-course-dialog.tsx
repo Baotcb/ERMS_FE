@@ -38,12 +38,12 @@ interface CreateCourseDialogProps {
 }
 
 function buildDefaultCourseCode(plan: TrainingPlan): string {
-    const suffix = Date.now().toString().slice(-6);
+    const suffix = Date.now().toString(36).slice(-4).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
     return `${plan.planCode}-C${suffix}`;
 }
 
 function buildQuickCourseCode(): string {
-    const suffix = Date.now().toString().slice(-6);
+    const suffix = Date.now().toString(36).slice(-4).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
     return `COURSE-${suffix}`;
 }
 

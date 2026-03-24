@@ -108,7 +108,7 @@ export function LearningCoursesPage({
 
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">My Learning</p>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">Học tập</p>
                         <h1 className="text-3xl md:text-4xl font-black tracking-tight">Khóa học của tôi</h1>
                         <p className="text-[#BBE1FA]/80 text-sm max-w-md">Theo dõi tiến độ học tập và hoàn thành các khóa đào tạo được phân công.</p>
                     </div>
@@ -228,7 +228,7 @@ export function LearningCoursesPage({
                                                 ? 'bg-green-50 text-green-700'
                                                 : 'bg-amber-50 text-amber-700'
                                         }`}>
-                                            {quizUnlocked ? '✓ Quiz mở' : '🔒 Quiz khóa'}
+                                            {quizUnlocked ? '✓ Đã mở khóa' : '🔒 Chưa mở khóa'}
                                         </Badge>
                                     </div>
 

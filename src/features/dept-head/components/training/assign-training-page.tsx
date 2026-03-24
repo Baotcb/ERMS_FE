@@ -66,7 +66,7 @@ export function AssignTrainingPage({
     // Fetch Courses
     const { data: coursesData, isLoading: isLoadingCourses } = useSWR<CourseResult>(
         ['/api/Course', 'assignment'],
-        () => courseService.getAllCourses({ status: 'Draft', pageSize: 100 }),
+        () => courseService.getAllCourses({ pageSize: 100 }),
         { fallbackData: initialCourses }
     );
 
