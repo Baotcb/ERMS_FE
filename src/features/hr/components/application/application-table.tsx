@@ -24,6 +24,7 @@ import { AIScoreBadge } from './ai-score-badge'
 import { ApplicationDetailModal } from './application-detail-modal'
 import { ForwardApplicationDialog } from './forward-application-dialog'
 import { ConfirmScheduleDialog } from '../interview/confirm-schedule-dialog'
+import { RejectApplicationDialog } from './reject-application-dialog'
 import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
@@ -39,6 +40,8 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
     const [detailOpen, setDetailOpen] = useState(false)
     const [forwardOpen, setForwardOpen] = useState(false)
     const [scheduleOpen, setScheduleOpen] = useState(false)
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+    const [selectedAppForReject, setSelectedAppForReject] = useState<ApplicationDto | null>(null)
 
     const handleViewDetail = (app: ApplicationDto) => {
         setSelectedApp(app)
@@ -56,12 +59,8 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
     }
 
     const handleReject = (app: ApplicationDto) => {
-        // Mock Implementation for now
-        toast({
-            title: "Tính năng đang phát triển",
-            description: `Tính năng từ chối ứng viên ${app.candidateName} sẽ sớm được cập nhật.`,
-            variant: "default", // or destructive if implemented
-        })
+        setSelectedAppForReject(app)
+        setRejectDialogOpen(true)
     }
 
     if (isLoading) {
@@ -149,25 +148,23 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                     </a>
                                                 </DropdownMenuItem>
 
-                                                {(app.stage === 'Applied' || app.stage === 'Reviewing') && (
-                                                    <>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => handleForward(app)} className="cursor-pointer text-brand-primary focus:text-brand-primary focus:bg-brand-primary/10">
-                                                            <Send className="mr-2 h-4 w-4" /> Chuyển tiếp (Shortlist)
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleReject(app)} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
-                                                            <XCircle className="mr-2 h-4 w-4" /> Từ chối
-                                                        </DropdownMenuItem>
-                                                    </>
+                                                {(app.stage === 'Applied' || app.stage === 'Reviewing' || app.stage === 'Shortlisted') && (
+                                                    <DropdownMenuSeparator />
                                                 )}
-
+                                                {(app.stage === 'Applied' || app.stage === 'Reviewing') && (
+                                                    <DropdownMenuItem onClick={() => handleForward(app)} className="cursor-pointer text-brand-primary focus:text-brand-primary focus:bg-brand-primary/10">
+                                                        <Send className="mr-2 h-4 w-4" /> Chuyển tiếp (Shortlist)
+                                                    </DropdownMenuItem>
+                                                )}
                                                 {app.stage === 'Shortlisted' && (
-                                                    <>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem onClick={() => handleSchedule(app)} className="cursor-pointer text-[#0F4C75] focus:text-[#0F4C75] focus:bg-[#BBE1FA]/10">
-                                                            <CalendarCheck className="mr-2 h-4 w-4" /> Xác nhận lịch PV
-                                                        </DropdownMenuItem>
-                                                    </>
+                                                    <DropdownMenuItem onClick={() => handleSchedule(app)} className="cursor-pointer text-[#0F4C75] focus:text-[#0F4C75] focus:bg-[#BBE1FA]/10">
+                                                        <CalendarCheck className="mr-2 h-4 w-4" /> Xác nhận lịch PV
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {(app.stage === 'Applied' || app.stage === 'Reviewing' || app.stage === 'Shortlisted') && (
+                                                    <DropdownMenuItem onClick={() => handleReject(app)} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                        <XCircle className="mr-2 h-4 w-4" /> Từ chối
+                                                    </DropdownMenuItem>
                                                 )}
 
 
@@ -212,6 +209,19 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                     applicationId={selectedApp.id}
                     candidateName={selectedApp.candidateName}
                     onSuccess={onRefresh}
+                />
+            )}
+
+            {selectedAppForReject && (
+                <RejectApplicationDialog
+                    open={rejectDialogOpen}
+                    onOpenChange={setRejectDialogOpen}
+                    applicationId={selectedAppForReject.id}
+                    candidateName={selectedAppForReject.candidateName}
+                    onSuccess={() => {
+                        setSelectedAppForReject(null)
+                        onRefresh()
+                    }}
                 />
             )}
 

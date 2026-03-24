@@ -1,12 +1,14 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { memo, useCallback, useEffect } from 'react'
-import { CalendarDays, GraduationCap, LayoutDashboard } from 'lucide-react'
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
-import { useEnterpriseInfo } from '@/features/enterprise'
+import {
+    BookOpenCheck,
+    CalendarDays,
+    GraduationCap,
+    LayoutDashboard,
+} from 'lucide-react'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
@@ -29,6 +31,11 @@ const NAV_ITEMS: NavItem[] = [
         href: '/enterprise/employee/interviews',
         icon: <CalendarDays className="h-5 w-5" />,
     },
+    {
+        label: 'Khóa học của tôi',
+        href: '/enterprise/employee/learning',
+        icon: <BookOpenCheck className="h-5 w-5" />,
+    },
 ]
 
 const TRAINER_NAV_ITEMS: NavItem[] = [
@@ -37,12 +44,16 @@ const TRAINER_NAV_ITEMS: NavItem[] = [
         href: '/enterprise/employee/teaching',
         icon: <GraduationCap className="h-5 w-5" />,
     },
+    {
+        label: 'Đánh giá từ học viên',
+        href: '/enterprise/employee/teaching/feedback',
+        icon: <BookOpenCheck className="h-5 w-5" />,
+    },
 ]
 
 export const EmployeeSidebar = memo(function EmployeeSidebar() {
     const pathname = usePathname()
     const { user } = useAuth()
-    const { enterpriseInfo } = useEnterpriseInfo()
     const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
     const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
     const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
@@ -70,36 +81,11 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
         }
     }, [setMobileSidebarOpen])
 
-    const sidebarContent = (
-        <div className="flex h-full flex-col bg-white border-r border-gray-200">
-            <div className="border-b border-gray-100 p-6">
-                <Link
-                    href="/enterprise/employee/dashboard"
-                    onClick={closeMobileSidebar}
-                    className="flex items-center gap-3"
-                >
-                    {enterpriseInfo?.logoUrl ? (
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg">
-                            <Image
-                                src={enterpriseInfo.logoUrl}
-                                alt={enterpriseInfo.enterpriseName || 'Enterprise Logo'}
-                                width={32}
-                                height={32}
-                                className="object-contain"
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] shadow-lg">
-                            <span className="text-lg font-bold text-white">E</span>
-                        </div>
-                    )}
-                    <div>
-                        <h1 className="text-lg font-bold text-[#0F4C75]">ERMS</h1>
-                        <p className="text-xs text-gray-400">Employee Portal</p>
-                    </div>
-                </Link>
-            </div>
+    const showTrainerWorkspace =
+        user?.isTrainer || user?.role === USER_ROLES.TRAINER
 
+    const sidebarContent = (
+        <div className="flex h-full flex-col border-r border-gray-200 bg-white">
             <nav className="flex-1 space-y-2 overflow-y-auto p-4" aria-label="Employee navigation">
                 <div className="space-y-1">
                     {NAV_ITEMS.map((item) => {
@@ -126,7 +112,7 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                     })}
                 </div>
 
-                {(user?.isTrainer || user?.role === USER_ROLES.TRAINER) && (
+                {showTrainerWorkspace && (
                     <div className="mt-8 space-y-1 border-t border-gray-100 pt-6">
                         <p className="mb-2 px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                             Giảng vụ
@@ -156,10 +142,6 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
                     </div>
                 )}
             </nav>
-
-            <div className="border-t border-gray-100 p-4">
-                <AvatarDropdown />
-            </div>
         </div>
     )
 
@@ -199,15 +181,13 @@ export const EmployeeSidebar = memo(function EmployeeSidebar() {
             <aside
                 id="employee-sidebar-desktop"
                 className={cn(
-                    'hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300',
+                    'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300 lg:block',
                     isSidebarOpen ? 'w-72' : 'w-0 pointer-events-none'
                 )}
                 aria-hidden={!isSidebarOpen}
                 inert={!isSidebarOpen}
             >
-                <div className="h-full w-72">
-                    {sidebarContent}
-                </div>
+                <div className="h-full w-72">{sidebarContent}</div>
             </aside>
         </>
     )

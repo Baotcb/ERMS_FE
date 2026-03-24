@@ -102,11 +102,11 @@ export function HRInterviewTable({ data, onSchedule }: HRInterviewTableProps) {
 
                         {/* Round / Type */}
                         <TableCell className="px-6 py-4 align-middle">
-                            <div className="flex flex-col gap-1">
-                                <Badge variant="outline" className="text-xs min-w-[80px] justify-center bg-slate-50 text-slate-500 border-slate-200 w-fit">
+                            <div className="flex flex-col gap-1 w-[90px]">
+                                <Badge variant="outline" className="text-xs bg-slate-50 text-slate-500 border-slate-200 w-full justify-center">
                                     Vòng {item.roundNumber}
                                 </Badge>
-                                <Badge variant="outline" className="text-xs min-w-[80px] justify-center bg-purple-50 text-purple-700 border-purple-200 w-fit">
+                                <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200 w-full justify-center">
                                     {item.interviewType}
                                 </Badge>
                             </div>

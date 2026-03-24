@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { AvatarDropdown } from '@/components/common/avatar-dropdown'
+
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { useEnterpriseInfo } from '@/features/enterprise'
 
@@ -228,10 +228,6 @@ export const EnterpriseSidebar = memo(function EnterpriseSidebar() {
                     />
                 ))}
             </nav>
-
-            <div className="p-4 border-t border-gray-100">
-                <AvatarDropdown />
-            </div>
         </div>
     )
 

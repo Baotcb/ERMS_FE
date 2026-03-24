@@ -4,27 +4,19 @@ import { redirect } from 'next/navigation';
 import { TeachingTasksPage } from '@/features/employee/components/teaching/teaching-tasks-page';
 import { getServerSession } from '@/lib/server-fetch';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
+import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access';
 
 export default async function Page() {
     const session = await getServerSession();
-    const canAccess = Boolean(session.user?.isTrainer || session.role === 'Trainer');
+    const canAccess = canAccessTeachingWorkspace(session.user, session.role);
 
     if (!canAccess) {
         redirect('/enterprise/director/dashboard');
     }
 
     const allCourses = await trainingServerService.getAllCourses({ pageSize: 100 }).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
-    const initialCourses = allCourses.items.filter((course) => {
-        if (course.trainerId === session.user?.id) {
-            return true;
-        }
-
-        if (session.user?.fullName && course.trainerName) {
-            return course.trainerName.trim().toLowerCase() === session.user.fullName.trim().toLowerCase();
-        }
-
-        return false;
-    });
+    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user));
 
     return (
         <Suspense

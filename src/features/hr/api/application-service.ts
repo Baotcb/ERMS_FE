@@ -3,6 +3,7 @@ import type {
     ApplicationDto,
     ApplicationsResponse,
     ForwardApplicationRequest,
+    RejectApplicationRequest,
     CVScreeningResult,
 } from '../types/application-types'
 
@@ -121,4 +122,20 @@ export async function forwardApplication(
     })
     if (!response.ok) throw new Error('Không thể chuyển hồ sơ')
     return response.json()
+}
+
+// Reject application (HR)
+// Backend: PATCH /api/applications/reject — { applicationId, rejectionReason } in body
+export async function rejectApplication(
+    id: string,
+    data: RejectApplicationRequest
+): Promise<void> {
+    const response = await apiClient.patch(`${BASE_URL}/reject`, {
+        applicationId: id,
+        rejectionReason: data.rejectionReason,
+    })
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
+        throw new Error(error.message || 'Không thể từ chối hồ sơ')
+    }
 }

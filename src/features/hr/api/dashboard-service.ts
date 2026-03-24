@@ -308,14 +308,17 @@ export async function getRecruitmentPerformance(): Promise<ChartData[]> {
         const data = await response.json() as ApiResponse
         if (!data.items || !Array.isArray(data.items) || data.items.length === 0) return []
 
-        // Fetch details cho tất cả plans
+        // Fetch details cho tất cả plans + resolve department names
+        const deptMap = await getDeptNameMap()
         const detailResults = await Promise.allSettled(
             data.items.map(async (plan: RecruitmentPlan) => {
+                const creatorName = plan.createdByName || ''
+                const deptName = deptMap[creatorName] || plan.campaignName || 'Khác'
                 const res = await apiClient.get(`/api/plan-details?recruitmentPlanId=${plan.id}`)
-                if (!res.ok) return { departmentName: plan.departmentName || plan.createdByName || 'Khác', details: [] as RecruitmentPlanDetail[] }
+                if (!res.ok) return { departmentName: deptName, details: [] as RecruitmentPlanDetail[] }
                 const d = await res.json()
                 return {
-                    departmentName: plan.departmentName || plan.createdByName || 'Khác',
+                    departmentName: deptName,
                     details: (Array.isArray(d) ? d : (d.items || [])) as RecruitmentPlanDetail[]
                 }
             })

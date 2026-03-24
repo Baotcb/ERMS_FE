@@ -106,7 +106,7 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
     }, [data?.items, search, sortBy])
 
     const totalCount = data?.totalCount ?? 0
-    const totalPages = data ? Math.ceil(totalCount / data.pageSize) : 1
+    const totalPages = Math.max(1, data ? Math.ceil(totalCount / data.pageSize) : 1)
     const startItem = (page - 1) * pageSize + 1
     const endItem = Math.min(page * pageSize, totalCount)
 

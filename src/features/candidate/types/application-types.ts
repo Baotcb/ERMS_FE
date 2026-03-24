@@ -60,3 +60,7 @@ export interface ApplicationHistoryParams {
     pageSize?: number
     stageFilter?: string
 }
+
+export interface WithdrawApplicationRequest {
+    reason?: string
+}

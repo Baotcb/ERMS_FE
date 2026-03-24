@@ -4,10 +4,12 @@ import { notFound, redirect } from 'next/navigation';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 import { getServerSession } from '@/lib/server-fetch';
 import { TrainerCourseDashboard } from '@/features/employee/components/teaching/trainer-course-dashboard';
+import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
+import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession();
-    const canAccess = Boolean(session.user?.isTrainer || session.role === 'Trainer');
+    const canAccess = canAccessTeachingWorkspace(session.user, session.role);
 
     if (!canAccess) {
         redirect('/enterprise/dept-head/dashboard');
@@ -20,13 +22,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         notFound();
     }
 
-    const normalizedTrainerName = course.trainerName?.trim().toLowerCase();
-    const normalizedUserFullName = session.user?.fullName?.trim().toLowerCase();
-    const ownsCourse = course.trainerId === session.user?.id || (
-        Boolean(normalizedTrainerName) &&
-        Boolean(normalizedUserFullName) &&
-        normalizedTrainerName === normalizedUserFullName
-    );
+    const ownsCourse = isCourseOwnedByUser(course, session.user);
 
     if (!ownsCourse) {
         notFound();

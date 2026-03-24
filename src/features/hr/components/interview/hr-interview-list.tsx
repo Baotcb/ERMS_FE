@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useDeferredValue } from 'react'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,8 @@ const STATUS_TABS = [
 ]
 
 const PAGE_SIZE = 10
+/** Khi search active, fetch toàn bộ để filter client-side chính xác */
+const SEARCH_PAGE_SIZE = 200
 
 export function HRInterviewList() {
     const [statusFilter, setStatusFilter] = useState('')
@@ -26,23 +28,34 @@ export function HRInterviewList() {
     const [page, setPage] = useState(1)
     const [scheduleDialog, setScheduleDialog] = useState<{ open: boolean; item: InterviewDto | null }>({ open: false, item: null })
 
+    // Debounce search để tránh fetch liên tục
+    const deferredSearch = useDeferredValue(search)
+    const isSearching = deferredSearch.trim().length > 0
+
     const { data, isLoading, error, mutate } = useAllInterviews({
-        pageNumber: page,
-        pageSize: PAGE_SIZE,
+        pageNumber: isSearching ? 1 : page,
+        pageSize: isSearching ? SEARCH_PAGE_SIZE : PAGE_SIZE,
         statusFilter: statusFilter || undefined,
     })
 
-    const totalCount = data?.totalCount ?? 0
-    const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-
     const interviews = data?.items ?? []
 
-    // Client-side search filter
-    const filteredInterviews = interviews.filter(i => {
-        if (!search) return true
-        const q = search.toLowerCase()
-        return i.candidateName.toLowerCase().includes(q) || i.jobTitle.toLowerCase().includes(q)
-    })
+    // Client-side search filter (chỉ áp dụng khi có keyword)
+    const filteredInterviews = isSearching
+        ? interviews.filter(i => {
+            const q = deferredSearch.toLowerCase()
+            return i.candidateName.toLowerCase().includes(q) || i.jobTitle.toLowerCase().includes(q)
+        })
+        : interviews
+
+    // Tính pagination: khi search, phân trang theo kết quả đã filter
+    const totalCount = isSearching ? filteredInterviews.length : (data?.totalCount ?? 0)
+    const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+    // Khi search, phân trang local trên kết quả filtered
+    const pagedInterviews = isSearching
+        ? filteredInterviews.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+        : filteredInterviews
 
     return (
         <div className="flex flex-col gap-6">
@@ -65,7 +78,7 @@ export function HRInterviewList() {
                         <Input
                             placeholder="Tìm ứng viên hoặc vị trí..."
                             value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            onChange={e => { setSearch(e.target.value); setPage(1) }}
                             className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-sky-200 focus-visible:border-sky-300"
                         />
                     </div>
@@ -105,7 +118,7 @@ export function HRInterviewList() {
                         </div>
                     ) : (
                         <HRInterviewTable
-                            data={filteredInterviews}
+                            data={pagedInterviews}
                             onSchedule={(item) => setScheduleDialog({ open: true, item })}
                         />
                     )}
