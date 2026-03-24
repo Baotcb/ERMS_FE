@@ -17,9 +17,14 @@ interface DepartmentTrainingResultRecord {
     employeeEmail: string;
     departmentName: string;
     courseName: string;
+    courseCode: string;
     assignedAt: string;
+    completedAt: string | null;
     progressPercentage: number;
+    totalLessons: number;
+    completedLessons: number;
     quizScore: number | null;
+    attemptCount: number;
     learningStatus: 'InProgress' | 'Completed' | 'NotStarted';
     evaluationStatus: 'Passed' | 'Failed' | 'Pending';
     note?: string;
@@ -106,9 +111,14 @@ function normalizeDepartmentTrainingResult(item: unknown, index: number): Depart
         employeeEmail: pickString(record, 'employeeEmail', 'EmployeeEmail', 'email', 'Email', 'employeeUsername', 'EmployeeUsername'),
         departmentName: pickString(record, 'departmentName', 'DepartmentName', 'department', 'Department'),
         courseName,
+        courseCode: pickString(record, 'courseCode', 'CourseCode'),
         assignedAt: pickString(record, 'assignedAt', 'AssignedAt', 'enrolledAt', 'EnrolledAt', 'createdAt', 'CreatedAt') || new Date(0).toISOString(),
+        completedAt: pickString(record, 'completedAt', 'CompletedAt') || null,
         progressPercentage: Math.max(0, Math.min(100, pickNumber(record, 'progressPercentage', 'ProgressPercentage', 'progress', 'Progress', 'completionRate', 'CompletionRate') ?? 0)),
+        totalLessons: pickNumber(record, 'totalLessons', 'TotalLessons') ?? 0,
+        completedLessons: pickNumber(record, 'completedLessons', 'CompletedLessons') ?? 0,
         quizScore: pickNumber(record, 'quizScore', 'QuizScore', 'score', 'Score', 'quizResult', 'QuizResult'),
+        attemptCount: pickNumber(record, 'attemptCount', 'AttemptCount') ?? 0,
         learningStatus: normalizeLearningStatus(pickString(record, 'learningStatus', 'LearningStatus', 'status', 'Status') || 'NotStarted'),
         evaluationStatus: normalizeEvaluationStatus(pickString(record, 'evaluationStatus', 'EvaluationStatus', 'result', 'Result') || 'Pending'),
         note: pickString(record, 'note', 'Note', 'remarks', 'Remarks', 'comment', 'Comment') || undefined,

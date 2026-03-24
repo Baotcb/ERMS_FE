@@ -81,16 +81,17 @@ export const useAuthStore = create<AuthState>((set) => ({
             const userRole = getCookie(STORAGE_KEYS.USER_ROLE)
             const userNameEncoded = getCookie(STORAGE_KEYS.USER_NAME)
             const userAvatarEncoded = getCookie(STORAGE_KEYS.USER_AVATAR)
+            const userIdCookie = getCookie(STORAGE_KEYS.USER_ID)
+            const userEmailEncoded = getCookie(STORAGE_KEYS.USER_EMAIL)
 
             if (userRole) {
                 const fullName = userNameEncoded ? decodeURIComponent(userNameEncoded) : 'User'
                 const avatarUrl = userAvatarEncoded ? decodeURIComponent(userAvatarEncoded) : undefined
+                const email = userEmailEncoded ? decodeURIComponent(userEmailEncoded) : ''
 
-                // We don't have ID or Email in the public cookie, but we can assume session is valid for UI
-                // Critical data fetching will fail if the HttpOnly token is missing/invalid
                 const user: User = {
-                    id: 'current', // Placeholder
-                    email: '',     // Placeholder
+                    id: userIdCookie || 'current',
+                    email,
                     fullName,
                     role: userRole,
                     avatarUrl

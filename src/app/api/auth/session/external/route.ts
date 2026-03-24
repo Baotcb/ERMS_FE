@@ -50,6 +50,12 @@ export async function POST(request: Request) {
 
         // Set Public Cookies
         response.cookies.set(STORAGE_KEYS.USER_ROLE, role, { ...cookieOptions, httpOnly: false })
+        if (user.id) {
+            response.cookies.set(STORAGE_KEYS.USER_ID, String(user.id), { ...cookieOptions, httpOnly: false })
+        }
+        if (user.email) {
+            response.cookies.set(STORAGE_KEYS.USER_EMAIL, encodeURIComponent(String(user.email)), { ...cookieOptions, httpOnly: false })
+        }
         if (displayName) {
             response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(displayName), { ...cookieOptions, httpOnly: false })
         }

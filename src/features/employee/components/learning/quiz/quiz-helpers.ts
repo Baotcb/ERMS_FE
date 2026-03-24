@@ -63,14 +63,14 @@ export function buildFallbackSections(courseId: string, totalLessons: number): C
         {
             id: `fallback-section-${courseId}`,
             courseId,
-            title: 'Learning Path (Fallback)',
+            title: 'Nội dung khóa học',
             orderIndex: 1,
             lessons: Array.from({ length: totalLessons }).map((_, index) => ({
                 id: `fallback-lesson-${courseId}-${index + 1}`,
                 courseId,
-                title: `Lesson ${index + 1}`,
-                description: 'Backend chưa trả curriculum chi tiết. Đây là lesson placeholder theo tổng số lesson từ tiến độ backend.',
-                content: 'Vui lòng học theo tài liệu/video đã được trainer cung cấp. Khi backend mở curriculum endpoint, hệ thống sẽ hiển thị lesson chi tiết.',
+                title: `Bài ${index + 1}`,
+                description: 'Trainer chưa tạo nội dung cho bài học này trên hệ thống.',
+                content: 'Vui lòng học theo tài liệu/video đã được trainer cung cấp. Khi trainer tạo nội dung bài học, hệ thống sẽ hiển thị chi tiết.',
                 durationMinutes: 0,
                 orderIndex: index + 1,
                 materials: [],
@@ -79,54 +79,3 @@ export function buildFallbackSections(courseId: string, totalLessons: number): C
     ];
 }
 
-/** Load curriculum draft from localStorage (user-scoped). */
-export function loadLocalDraftCurriculum(courseId: string, userId?: string): CourseSection[] {
-    if (typeof window === 'undefined') return [];
-
-    try {
-        const raw = window.localStorage.getItem(`teaching-curriculum-draft:${userId || 'anon'}:${courseId}`);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw) as CourseSection[];
-        if (!Array.isArray(parsed)) return [];
-        return parsed.filter((section) => Array.isArray(section.lessons) && section.lessons.length > 0);
-    } catch {
-        return [];
-    }
-}
-
-/** Load material mirror from localStorage (user-scoped). */
-export function loadLocalMaterialMirror(courseId: string, userId?: string): MaterialMirrorItem[] {
-    if (typeof window === 'undefined') return [];
-
-    try {
-        const raw = window.localStorage.getItem(`teaching-materials-draft:${userId || 'anon'}:${courseId}`);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw) as MaterialMirrorItem[];
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
-}
-
-/** Merge material mirror data into sections (matches by lessonId or orderIndex). */
-export function mergeMaterialMirror(sections: CourseSection[], materialMirror: MaterialMirrorItem[]): CourseSection[] {
-    if (materialMirror.length === 0 || sections.length === 0) return sections;
-
-    const byLessonId = new Map(materialMirror.map((item) => [item.lessonId, item]));
-    const byOrderIndex = new Map(materialMirror.map((item) => [item.orderIndex, item]));
-
-    return sections.map((section) => ({
-        ...section,
-        lessons: (section.lessons || []).map((lesson) => {
-            const source = byLessonId.get(lesson.id) || byOrderIndex.get(lesson.orderIndex);
-            if (!source || source.materials.length === 0) return lesson;
-            return {
-                ...lesson,
-                materials: source.materials.map((material) => ({
-                    ...material,
-                    lessonId: lesson.id,
-                })),
-            };
-        }),
-    }));
-}

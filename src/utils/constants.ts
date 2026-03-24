@@ -7,6 +7,8 @@ export const STORAGE_KEYS = {
     AUTH_TOKEN: 'auth_token',
     USER_ROLE: 'user_role',
     USER_NAME: 'user_name',
+    USER_EMAIL: 'user_email',
+    USER_ID: 'user_id',
     USER_AVATAR: 'user_avatar',
     SAVED_JOBS: 'erms-saved-jobs',
 } as const

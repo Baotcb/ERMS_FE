@@ -2,9 +2,9 @@ import { notFound, redirect } from 'next/navigation';
 
 import { getServerSession } from '@/lib/server-fetch';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
-import { CourseLessonsPage } from '@/features/employee/components/learning/course-lessons-page';
+import { CourseQuizSection } from '@/features/employee/components/learning/course-quiz-section';
 
-export default async function Page({
+export default async function QuizPage({
     params,
 }: {
     params: Promise<{ id: string }>;
@@ -21,9 +21,9 @@ export default async function Page({
         trainingServerService.getCourseProgress(id).catch(() => null),
     ]);
 
-    if (!course || !progress) {
+    if (!course) {
         notFound();
     }
 
-    return <CourseLessonsPage initialCourse={course} initialProgress={progress} />;
+    return <CourseQuizSection initialCourse={course} initialProgress={progress} />;
 }

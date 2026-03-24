@@ -7,6 +7,8 @@ export async function POST() {
     // Clear all auth cookies
     response.cookies.delete(STORAGE_KEYS.AUTH_TOKEN)
     response.cookies.delete(STORAGE_KEYS.USER_ROLE)
+    response.cookies.delete(STORAGE_KEYS.USER_ID)
+    response.cookies.delete(STORAGE_KEYS.USER_EMAIL)
     response.cookies.delete(STORAGE_KEYS.USER_NAME)
     response.cookies.delete(STORAGE_KEYS.USER_AVATAR)
 
