@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TrainingRequest } from '../../types/training-types';
+import { formatVND } from '@/lib/utils';
 
 interface TrainingRequestDetailProps {
     request: TrainingRequest | null;
@@ -112,7 +113,7 @@ export function TrainingRequestDetail({ request, open, onOpenChange }: TrainingR
                                     <DollarSign className="w-3.5 h-3.5" /> Ngân sách dự kiến
                                 </span>
                                 <p className="text-sm font-bold text-blue-600">
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget || 0)}
+                                    {formatVND(request.estimatedBudget || 0)}
                                 </p>
                             </div>
                         </div>

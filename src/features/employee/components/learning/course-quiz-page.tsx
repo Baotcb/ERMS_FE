@@ -17,154 +17,21 @@ import { useAuth } from '@/features/core/auth/hooks';
 import { CertificateExportDialog } from './certificate-export-dialog';
 import { format } from 'date-fns';
 
-const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
+// Extracted modules
+import {
+    ANSWER_LABELS,
+    isServerLessonId,
+    parseOptions,
+    getLessonCompletionKey,
+    buildFallbackSections,
+    loadLocalDraftCurriculum,
+    loadLocalMaterialMirror,
+    mergeMaterialMirror,
+} from './quiz/quiz-helpers';
+import { useQuizTimer } from './quiz/use-quiz-timer';
 
-const GUID_REGEX = /^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$/;
-
-function isServerLessonId(lessonId: string): boolean {
-    if (!lessonId) {
-        return false;
-    }
-
-    if (lessonId.startsWith('fallback-') || lessonId.startsWith('local-')) {
-        return false;
-    }
-
-    return GUID_REGEX.test(lessonId);
-}
-
-function parseOptions(raw: string): string[] {
-    if (!raw) {
-        return [];
-    }
-
-    try {
-        const parsed = JSON.parse(raw) as unknown;
-        if (Array.isArray(parsed)) {
-            return parsed.map((item) => String(item));
-        }
-
-        if (parsed && typeof parsed === 'object') {
-            return Object.values(parsed as Record<string, unknown>).map((item) => String(item));
-        }
-    } catch {
-        // Fallback for legacy/plain-text formats.
-    }
-
-    return raw.split('|').map((item) => item.trim()).filter(Boolean);
-}
-
-// getLearnerQuizIdKey removed — no longer used
-
-function getLessonCompletionKey(courseId: string, userId?: string): string {
-    return `learner-lesson-completion:${userId || 'anon'}:${courseId}`;
-}
-
-function buildFallbackSections(courseId: string, totalLessons: number): CourseSection[] {
-    if (totalLessons <= 0) {
-        return [];
-    }
-
-    return [
-        {
-            id: `fallback-section-${courseId}`,
-            courseId,
-            title: 'Learning Path (Fallback)',
-            orderIndex: 1,
-            lessons: Array.from({ length: totalLessons }).map((_, index) => ({
-                id: `fallback-lesson-${courseId}-${index + 1}`,
-                courseId,
-                title: `Lesson ${index + 1}`,
-                description: 'Backend chưa trả curriculum chi tiết. Đây là lesson placeholder theo tổng số lesson từ tiến độ backend.',
-                content: 'Vui lòng học theo tài liệu/video đã được trainer cung cấp. Khi backend mở curriculum endpoint, hệ thống sẽ hiển thị lesson chi tiết.',
-                durationMinutes: 0,
-                orderIndex: index + 1,
-                materials: [],
-            })),
-        },
-    ];
-}
-
-function loadLocalDraftCurriculum(courseId: string): CourseSection[] {
-    if (typeof window === 'undefined') {
-        return [];
-    }
-
-    try {
-        const raw = window.localStorage.getItem(`teaching-curriculum-draft:${userId || 'anon'}:${courseId}`);
-        if (!raw) {
-            return [];
-        }
-
-        const parsed = JSON.parse(raw) as CourseSection[];
-        if (!Array.isArray(parsed)) {
-            return [];
-        }
-
-        return parsed.filter((section) => Array.isArray(section.lessons) && section.lessons.length > 0);
-    } catch {
-        return [];
-    }
-}
-
-interface MaterialMirrorItem {
-    lessonId: string;
-    orderIndex: number;
-    lessonTitle: string;
-    materials: Array<{
-        id: string;
-        lessonId: string;
-        title: string;
-        fileUrl: string;
-        fileType: string;
-        fileSize: number;
-    }>;
-}
-
-function loadLocalMaterialMirror(courseId: string): MaterialMirrorItem[] {
-    if (typeof window === 'undefined') {
-        return [];
-    }
-
-    try {
-        const raw = window.localStorage.getItem(`teaching-materials-draft:${userId || 'anon'}:${courseId}`);
-        if (!raw) {
-            return [];
-        }
-
-        const parsed = JSON.parse(raw) as MaterialMirrorItem[];
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
-}
-
-function mergeMaterialMirror(sections: CourseSection[], materialMirror: MaterialMirrorItem[]): CourseSection[] {
-    if (materialMirror.length === 0 || sections.length === 0) {
-        return sections;
-    }
-
-    const byLessonId = new Map(materialMirror.map((item) => [item.lessonId, item]));
-    const byOrderIndex = new Map(materialMirror.map((item) => [item.orderIndex, item]));
-
-    return sections.map((section) => ({
-        ...section,
-        lessons: (section.lessons || []).map((lesson) => {
-            const source = byLessonId.get(lesson.id) || byOrderIndex.get(lesson.orderIndex);
-            if (!source || source.materials.length === 0) {
-                return lesson;
-            }
-
-            return {
-                ...lesson,
-                materials: source.materials.map((material) => ({
-                    ...material,
-                    lessonId: lesson.id,
-                })),
-            };
-        }),
-    }));
-}
+// Helper functions extracted to quiz/quiz-helpers.ts
+// Timer + exam mode hook extracted to quiz/use-quiz-timer.ts
 
 export function CourseQuizPage({
     initialCourse,
@@ -417,7 +284,7 @@ export function CourseQuizPage({
 
     useEffect(() => {
         try {
-            const raw = localStorage.getItem(getLessonCompletionKey(initialCourse.id));
+            const raw = localStorage.getItem(getLessonCompletionKey(initialCourse.id, user?.id));
             if (!raw) {
                 setCompletedLessonIds([]);
                 return;
@@ -435,11 +302,11 @@ export function CourseQuizPage({
             setIsLoadingCurriculum(true);
             try {
                 const data = await courseContentService.getCourseCurriculum(initialCourse.id);
-                const materialMirror = loadLocalMaterialMirror(initialCourse.id);
+                const materialMirror = loadLocalMaterialMirror(initialCourse.id, user?.id);
                 if ((data || []).length > 0) {
                     setSections(mergeMaterialMirror(data || [], materialMirror));
                 } else {
-                    const draftSections = loadLocalDraftCurriculum(initialCourse.id);
+                    const draftSections = loadLocalDraftCurriculum(initialCourse.id, user?.id);
                     if (draftSections.length > 0) {
                         setSections(mergeMaterialMirror(draftSections, materialMirror));
                     } else if ((initialProgress?.totalLessons ?? 0) > 0) {
@@ -456,7 +323,7 @@ export function CourseQuizPage({
                         setActiveLessonId(firstLesson.id);
                     }
                 } else {
-                    const draftSections = loadLocalDraftCurriculum(initialCourse.id);
+                    const draftSections = loadLocalDraftCurriculum(initialCourse.id, user?.id);
                     const firstDraftLesson = draftSections.flatMap((section) => section.lessons || [])[0];
 
                     if (firstDraftLesson) {
@@ -468,7 +335,7 @@ export function CourseQuizPage({
             } catch (error) {
                 const message = error instanceof Error ? error.message : 'Không thể tải nội dung khóa học.';
                 toast({ title: 'Lỗi', description: message, variant: 'destructive' });
-                const draftSections = loadLocalDraftCurriculum(initialCourse.id);
+                const draftSections = loadLocalDraftCurriculum(initialCourse.id, user?.id);
                 if (draftSections.length > 0) {
                     setSections(draftSections);
                     const firstDraftLesson = draftSections.flatMap((section) => section.lessons || [])[0];
@@ -501,7 +368,7 @@ export function CourseQuizPage({
             }
 
             const next = [...prev, lessonId];
-            localStorage.setItem(getLessonCompletionKey(initialCourse.id), JSON.stringify(next));
+            localStorage.setItem(getLessonCompletionKey(initialCourse.id, user?.id), JSON.stringify(next));
             return next;
         });
     };
@@ -579,8 +446,8 @@ export function CourseQuizPage({
             setProgress(data);
 
             if (sections.length === 0 && data.totalLessons > 0) {
-                const materialMirror = loadLocalMaterialMirror(initialCourse.id);
-                const draftSections = loadLocalDraftCurriculum(initialCourse.id);
+                const materialMirror = loadLocalMaterialMirror(initialCourse.id, user?.id);
+                const draftSections = loadLocalDraftCurriculum(initialCourse.id, user?.id);
                 if (draftSections.length > 0) {
                     setSections(mergeMaterialMirror(draftSections, materialMirror));
                     const firstDraftLesson = draftSections.flatMap((section) => section.lessons || [])[0];

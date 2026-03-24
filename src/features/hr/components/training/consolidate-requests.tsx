@@ -27,6 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '../../api/hr-training-service';
 import type { TrainingRequest } from '../../../dept-head/types/training-types';
+import { formatVND } from '@/lib/utils';
 
 export function ConsolidateRequests({ initialData }: { initialData?: { items: TrainingRequest[] } }) {
     const router = useRouter();
@@ -204,7 +205,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                             </TableCell>
                                             <TableCell>{request.estimatedParticipants} học viên</TableCell>
                                             <TableCell className="text-right font-medium">
-                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget || 0)}
+                                                {formatVND(request.estimatedBudget || 0)}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -271,7 +272,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500">Ngân sách đã nhập:</span>
                                     <span className="font-bold text-[#0F4C75]">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(plannedBudget) || 0)}
+                                        {formatVND(Number(plannedBudget) || 0)}
                                     </span>
                                 </div>
                             </div>

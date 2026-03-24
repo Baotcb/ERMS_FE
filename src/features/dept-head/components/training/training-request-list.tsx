@@ -28,6 +28,7 @@ import {
 import { TrainingRequestForm } from './training-request-form';
 import { trainingService } from '../../api/training-service';
 import type { TrainingRequestsResult } from '../../types/training-types';
+import { formatVND } from '@/lib/utils';
 
 const PAGE_SIZE = 7;
 
@@ -202,7 +203,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                                         </TableCell>
                                         <TableCell className="text-gray-600">
                                             {request.estimatedBudget 
-                                                ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget)
+                                                ? formatVND(request.estimatedBudget)
                                                 : 'N/A'}
                                         </TableCell>
                                         <TableCell className="text-gray-500 text-sm">

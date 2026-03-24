@@ -11,6 +11,7 @@ import {
 import { format } from 'date-fns';
 import { TrainingPlan } from '../../types/training-plan-types';
 import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote, getReviewNoteHeading } from '../../utils/training-status-utils';
+import { formatVND } from '@/lib/utils';
 
 interface TrainingPlanDetailProps {
     plan: TrainingPlan | null;
@@ -55,7 +56,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                             <DollarSign className="w-5 h-5 text-green-600 mb-2" />
                             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tổng ngân sách</span>
                             <span className="text-lg font-bold text-green-700">
-                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
+                                {formatVND(plan.totalBudget)}
                             </span>
                         </div>
                         <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50 flex flex-col items-center text-center">

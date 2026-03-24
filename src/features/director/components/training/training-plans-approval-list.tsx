@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { Check, RotateCcw, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatVND } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -169,7 +170,7 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                         </TableCell>
                                         <TableCell className="text-gray-600">{plan.totalCourses} khóa học</TableCell>
                                         <TableCell className="font-semibold text-[#0F4C75]">
-                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
+                                            {formatVND(plan.totalBudget)}
                                         </TableCell>
                                         <TableCell className="text-gray-500">{format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
                                         <TableCell className="text-right">

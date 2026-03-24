@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { CourseSection } from '@/features/hr/types/course-content-types';
 import { courseContentService } from '@/features/hr/api/course-content-service';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/features/core/auth/hooks';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
 
 interface CurriculumManagerProps {
@@ -39,6 +40,7 @@ interface MaterialMirrorItem {
 
 export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [sections, setSections] = useState<CourseSection[]>([]);
     const [lastSavedAt, setLastSavedAt] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
@@ -59,8 +61,8 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
 
     const isLocalId = (id: string) => id.startsWith('local-');
     const isUnsyncedLessonId = (id: string) => !id.trim() || isLocalId(id);
-    const draftStorageKey = `teaching-curriculum-draft:${courseId}`;
-    const materialMirrorStorageKey = `teaching-materials-draft:${courseId}`;
+    const draftStorageKey = `teaching-curriculum-draft:${user?.id || 'anon'}:${courseId}`;
+    const materialMirrorStorageKey = `teaching-materials-draft:${user?.id || 'anon'}:${courseId}`;
 
     const loadDraftSections = useCallback((): CourseSection[] => {
         if (typeof window === 'undefined') {
@@ -452,7 +454,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
 
                     toast({
                         title: 'Đã upload tài liệu (Cloudinary)',
-                        description: 'Backend chưa có endpoint material, hệ thống đã dùng Cloudinary fallback để trainee vẫn xem được tài liệu.',
+                        description: 'Backend chưa có endpoint material, hệ thống đã dùng Cloudinary fallback để học viên vẫn xem được tài liệu.',
                     });
                     return;
                 } catch (fallbackError) {
