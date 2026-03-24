@@ -2,13 +2,12 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/features/core/auth/hooks';
 import type { Course } from '@/features/hr/types/course-types';
 import type { CourseProgressDto } from '@/features/employee/types/learning-quiz-types';
 import type { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
 import { learningQuizService } from '@/features/employee/api/learning-quiz-service';
 import { courseContentService } from '@/features/hr/api/course-content-service';
-import { isServerLessonId, getLessonCompletionKey, buildFallbackSections } from '../components/learning/quiz/quiz-helpers';
+import { isServerLessonId } from '../components/learning/quiz/quiz-helpers';
 
 // ─── Return type ───
 
@@ -22,8 +21,7 @@ export interface CourseLearningContext {
     activeLessonId: string;
     activeLessonIndex: number;
 
-    // Completion
-    completedLessonIds: string[];
+    // Completion (backend-driven)
     completedLessonSet: Set<string>;
     completedLessonsCount: number;
     knownTotalLessons: number;
@@ -37,7 +35,6 @@ export interface CourseLearningContext {
 
     // Actions
     setActiveLessonId: (id: string) => void;
-    markLessonComplete: (lessonId: string) => void;
     handleCompleteActiveLesson: () => Promise<void>;
     handleNavigateLesson: (dir: 'prev' | 'next') => void;
 }
@@ -49,7 +46,6 @@ export function useCourseLearning(
     initialProgress: CourseProgressDto | null = null,
 ): CourseLearningContext {
     const { toast } = useToast();
-    const { user } = useAuth();
 
     // ─── State ───
     const [progress, setProgress] = useState<CourseProgressDto | null>(initialProgress);
@@ -88,18 +84,6 @@ export function useCourseLearning(
     );
     const activeLessonIndex = activeLesson ? (lessonIndexMap.get(activeLesson.id) ?? -1) : -1;
 
-    // ─── Load saved lesson completion from localStorage ───
-    useEffect(() => {
-        try {
-            const raw = localStorage.getItem(getLessonCompletionKey(initialCourse.id, user?.id));
-            if (!raw) return;
-            const parsed = JSON.parse(raw) as unknown;
-            setCompletedLessonIds(Array.isArray(parsed) ? parsed.map((id) => String(id)) : []);
-        } catch {
-            setCompletedLessonIds([]);
-        }
-    }, [initialCourse.id, user?.id]);
-
     // ─── Load curriculum from backend ───
     useEffect(() => {
         const loadCurriculum = async () => {
@@ -110,63 +94,73 @@ export function useCourseLearning(
                     setSections(data);
                     const firstLesson = data.flatMap((s) => s.lessons || [])[0];
                     if (firstLesson) setActiveLessonId(firstLesson.id);
-                } else if ((initialProgress?.totalLessons ?? 0) > 0) {
-                    setSections(buildFallbackSections(initialCourse.id, initialProgress?.totalLessons ?? 0));
-                    setActiveLessonId(`fallback-lesson-${initialCourse.id}-1`);
                 } else {
                     setSections([]);
                 }
             } catch (error) {
                 const msg = error instanceof Error ? error.message : 'Không thể tải nội dung khóa học.';
                 toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
-                if ((initialProgress?.totalLessons ?? 0) > 0) {
-                    setSections(buildFallbackSections(initialCourse.id, initialProgress?.totalLessons ?? 0));
-                    setActiveLessonId(`fallback-lesson-${initialCourse.id}-1`);
-                }
             } finally {
                 setIsLoadingCurriculum(false);
             }
         };
         void loadCurriculum();
-    }, [initialCourse.id, initialProgress?.totalLessons, toast]);
+    }, [initialCourse.id, toast]);
 
-    // ─── Load progress from backend ───
+    // ─── Load progress from backend (source of truth for completion) ───
     useEffect(() => {
         const loadProgress = async () => {
             try {
                 const data = await learningQuizService.getCourseProgress(initialCourse.id);
                 setProgress(data);
-                if (sections.length === 0 && data.totalLessons > 0) {
-                    setSections(buildFallbackSections(initialCourse.id, data.totalLessons));
-                    setActiveLessonId(`fallback-lesson-${initialCourse.id}-1`);
-                }
             } catch (error) {
                 const msg = error instanceof Error ? error.message : 'Không thể tải tiến độ khóa học.';
                 toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
             }
         };
         void loadProgress();
-    }, [initialCourse.id, sections.length, toast]);
+    }, [initialCourse.id, toast]);
+
+    // ─── Load per-lesson completion from backend ───
+    useEffect(() => {
+        if (allLessons.length === 0) return;
+
+        const loadLessonProgress = async () => {
+            try {
+                const progressData = await learningQuizService.getCourseProgress(initialCourse.id);
+                // Use the completedLessons count from backend to verify
+                // Also try to load per-lesson progress if enrollment exists
+                if (progressData && progressData.completedLessons > 0) {
+                    // Fetch per-lesson progress via the lesson-progress endpoint
+                    try {
+                        const lessonProgressList = await learningQuizService.getLessonProgressByCourse(initialCourse.id);
+                        if (lessonProgressList && lessonProgressList.length > 0) {
+                            const completed = lessonProgressList
+                                .filter((lp: { status: string }) => lp.status === 'Completed')
+                                .map((lp: { lessonId: string }) => lp.lessonId);
+                            setCompletedLessonIds(completed);
+                        }
+                    } catch {
+                        // Fallback: no per-lesson data available yet
+                    }
+                }
+            } catch {
+                // ignore — progress already loaded above
+            }
+        };
+        void loadLessonProgress();
+    }, [initialCourse.id, allLessons.length]);
 
     // ─── Actions ───
-    const markLessonComplete = useCallback((lessonId: string) => {
-        setCompletedLessonIds((prev) => {
-            if (prev.includes(lessonId)) return prev;
-            const next = [...prev, lessonId];
-            localStorage.setItem(getLessonCompletionKey(initialCourse.id, user?.id), JSON.stringify(next));
-            return next;
-        });
-    }, [initialCourse.id, user?.id]);
-
     const handleCompleteActiveLesson = useCallback(async () => {
         if (!activeLesson || completedLessonSet.has(activeLesson.id)) return;
 
         if (!isServerLessonId(activeLesson.id)) {
-            markLessonComplete(activeLesson.id);
-            toast({ title: 'Đã hoàn thành bài học', description: 'Tiến độ được ghi nhận trên thiết bị này.' });
-            if (activeLessonIndex >= 0 && activeLessonIndex < allLessons.length - 1) {
-                setActiveLessonId(allLessons[activeLessonIndex + 1].id);
-            }
+            toast({
+                title: '⚠️ Không thể ghi nhận',
+                description: 'Bài học chưa được tạo trên hệ thống backend. Tiến độ sẽ không được lưu. Vui lòng liên hệ trainer.',
+                variant: 'destructive',
+            });
             return;
         }
 
@@ -178,11 +172,19 @@ export function useCourseLearning(
                 lastPosition: undefined,
                 timeSpentMinutes: activeLesson.durationMinutes || 1,
             });
-            markLessonComplete(activeLesson.id);
+
+            // Add to local completed set immediately for UI responsiveness
+            setCompletedLessonIds((prev) => {
+                if (prev.includes(activeLesson.id)) return prev;
+                return [...prev, activeLesson.id];
+            });
+
+            // Refresh progress from backend
             try {
                 const p = await learningQuizService.getCourseProgress(initialCourse.id);
                 setProgress(p);
             } catch { /* keep local */ }
+
             toast({ title: 'Đã cập nhật tiến độ', description: 'Bài học đã được ghi nhận hoàn thành.' });
         } catch (error) {
             toast({
@@ -198,7 +200,7 @@ export function useCourseLearning(
         if (activeLessonIndex >= 0 && activeLessonIndex < allLessons.length - 1) {
             setActiveLessonId(allLessons[activeLessonIndex + 1].id);
         }
-    }, [activeLesson, activeLessonIndex, allLessons, completedLessonSet, initialCourse.id, markLessonComplete, toast]);
+    }, [activeLesson, activeLessonIndex, allLessons, completedLessonSet, initialCourse.id, toast]);
 
     const handleNavigateLesson = useCallback((dir: 'prev' | 'next') => {
         const newIdx = dir === 'prev' ? activeLessonIndex - 1 : activeLessonIndex + 1;
@@ -213,7 +215,6 @@ export function useCourseLearning(
         activeLesson,
         activeLessonId,
         activeLessonIndex,
-        completedLessonIds,
         completedLessonSet,
         completedLessonsCount,
         knownTotalLessons,
@@ -223,7 +224,6 @@ export function useCourseLearning(
         isLoadingCurriculum,
         isUpdatingLesson,
         setActiveLessonId,
-        markLessonComplete,
         handleCompleteActiveLesson,
         handleNavigateLesson,
     };

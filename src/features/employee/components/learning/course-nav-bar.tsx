@@ -10,6 +10,7 @@ interface CourseNavBarProps {
     completedLessons: number;
     totalLessons: number;
     isAllLessonsComplete: boolean;
+    hasLessons?: boolean;
     hasQuizResult?: boolean;
     hasFeedback?: boolean;
 }
@@ -21,6 +22,7 @@ export function CourseNavBar({
     completedLessons,
     totalLessons,
     isAllLessonsComplete,
+    hasLessons = true,
     hasQuizResult = false,
     hasFeedback = false,
 }: CourseNavBarProps) {
@@ -28,14 +30,14 @@ export function CourseNavBar({
     const base = `${BASE}/${courseId}`;
 
     const tabs = [
-        {
+        ...(hasLessons ? [{
             href: base,
             label: 'Bài học',
             icon: BookOpen,
             badge: `${completedLessons}/${totalLessons}`,
             matchExact: true,
             disabled: false,
-        },
+        }] : []),
         {
             href: `${base}/quiz`,
             label: 'Kiểm tra',

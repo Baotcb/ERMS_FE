@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Course } from '@/features/hr/types/course-types';
 import type { CourseProgressDto } from '@/features/employee/types/learning-quiz-types';
 import { useCourseLearning } from '@/features/employee/hooks/use-course-learning';
@@ -16,6 +18,19 @@ export function CourseLessonsPage({
     initialProgress?: CourseProgressDto | null;
 }) {
     const ctx = useCourseLearning(initialCourse, initialProgress);
+    const router = useRouter();
+
+    // Redirect to quiz if course has no lessons
+    useEffect(() => {
+        if (!ctx.isLoadingCurriculum && ctx.knownTotalLessons === 0) {
+            router.replace(`/enterprise/employee/learning/course/${initialCourse.id}/quiz`);
+        }
+    }, [ctx.isLoadingCurriculum, ctx.knownTotalLessons, initialCourse.id, router]);
+
+    // Don't render lessons UI if no lessons
+    if (!ctx.isLoadingCurriculum && ctx.knownTotalLessons === 0) {
+        return null;
+    }
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto px-1">
@@ -34,6 +49,7 @@ export function CourseLessonsPage({
                 completedLessons={ctx.completedLessonsCount}
                 totalLessons={ctx.knownTotalLessons}
                 isAllLessonsComplete={ctx.isAllLessonsComplete}
+                hasLessons={ctx.knownTotalLessons > 0}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5">
@@ -62,3 +78,4 @@ export function CourseLessonsPage({
         </div>
     );
 }
+

@@ -175,6 +175,16 @@ export const learningQuizService = {
         return response.json();
     },
 
+    async getLessonProgressByCourse(courseId: string): Promise<{ lessonId: string; status: string; watchPercentage: number; completedAt: string | null }[]> {
+        try {
+            const response = await apiClient.get(`/api/Lessons/lesson-progress/course/${courseId}`);
+            if (!response.ok) return [];
+            return response.json();
+        } catch {
+            return [];
+        }
+    },
+
     async updateLessonProgress(data: UpdateLessonProgressCommand): Promise<void> {
         const response = await apiClient.post('/api/Lessons/lesson-progress', data, { retries: 0 });
         if (!response.ok) {

@@ -305,14 +305,6 @@ export function CourseQuizSection({
                     {quizMaxAttempts !== null && quizAttemptCount >= quizMaxAttempts && (
                         <p className="text-xs text-red-500 font-medium">Bạn đã dùng hết số lượt làm bài.</p>
                     )}
-
-                    <Button
-                        variant="ghost"
-                        onClick={() => router.push(`/enterprise/employee/learning/course/${initialCourse.id}`)}
-                        className="text-gray-400 text-sm"
-                    >
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại bài học
-                    </Button>
                 </div>
             </div>
         );

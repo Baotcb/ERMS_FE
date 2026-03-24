@@ -1,6 +1,5 @@
 'use strict';
 
-import type { CourseSection } from '@/features/hr/types/course-content-types';
 
 // ─── Constants ───
 export const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
@@ -49,33 +48,3 @@ export function parseOptions(raw: string): string[] {
 
     return raw.split('|').map((item) => item.trim()).filter(Boolean);
 }
-
-/** Get localStorage key scoped to user+course for lesson completion tracking. */
-export function getLessonCompletionKey(courseId: string, userId?: string): string {
-    return `learner-lesson-completion:${userId || 'anon'}:${courseId}`;
-}
-
-/** Build fallback sections when backend curriculum is unavailable. */
-export function buildFallbackSections(courseId: string, totalLessons: number): CourseSection[] {
-    if (totalLessons <= 0) return [];
-
-    return [
-        {
-            id: `fallback-section-${courseId}`,
-            courseId,
-            title: 'Nội dung khóa học',
-            orderIndex: 1,
-            lessons: Array.from({ length: totalLessons }).map((_, index) => ({
-                id: `fallback-lesson-${courseId}-${index + 1}`,
-                courseId,
-                title: `Bài ${index + 1}`,
-                description: 'Trainer chưa tạo nội dung cho bài học này trên hệ thống.',
-                content: 'Vui lòng học theo tài liệu/video đã được trainer cung cấp. Khi trainer tạo nội dung bài học, hệ thống sẽ hiển thị chi tiết.',
-                durationMinutes: 0,
-                orderIndex: index + 1,
-                materials: [],
-            })),
-        },
-    ];
-}
-
