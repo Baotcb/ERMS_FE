@@ -6,6 +6,9 @@ import { AppliedJobCard } from './applied-job-card'
 import { useMyApplications } from '@/features/candidate/hooks/use-applications'
 import { useCandidateAccess } from '@/features/core/auth/hooks'
 import Link from 'next/link'
+import { useJobPreview } from '@/features/jobs/hooks/use-job-preview'
+import { JobPreviewPopup } from '@/features/jobs/components/job-preview-popup'
+import { JobPreviewWrapper } from '@/features/jobs/components/job-preview-wrapper'
 import '@/features/jobs/styles/Jobs.css'
 
 const STAGE_OPTIONS: { value: string; label: string }[] = [
@@ -25,6 +28,7 @@ const STAGE_OPTIONS: { value: string; label: string }[] = [
 export function ApplicationList() {
     const [stageFilter, setStageFilter] = useState<string>('all')
     const { isAuthenticated, isCandidate, isLoading: authLoading } = useCandidateAccess()
+    const { preview, showPreview, hidePreview } = useJobPreview()
 
     const { data, isLoading, error } = useMyApplications(
         stageFilter !== 'all' ? { stageFilter } : undefined,
@@ -148,9 +152,24 @@ export function ApplicationList() {
             ) : (
                 <div className="topcv-page__list">
                     {applications.map((app) => (
-                        <AppliedJobCard key={app.applicationId} application={app} />
+                        <JobPreviewWrapper
+                            key={app.applicationId}
+                            jobId={app.jobPostingId}
+                            onHover={showPreview}
+                            onLeave={hidePreview}
+                        >
+                            <AppliedJobCard application={app} />
+                        </JobPreviewWrapper>
                     ))}
                 </div>
+            )}
+
+            {preview && (
+                <JobPreviewPopup
+                    job={preview.job}
+                    isLoading={preview.isLoading}
+                    anchorRect={preview.anchorRect}
+                />
             )}
         </div>
     )
