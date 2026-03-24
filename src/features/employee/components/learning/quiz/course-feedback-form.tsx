@@ -11,6 +11,8 @@ interface CourseFeedbackFormProps {
     onSubmitted: () => void;
 }
 
+const RATING_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Tốt', 'Xuất sắc'];
+
 export function CourseFeedbackForm({ courseId, onSubmitted }: CourseFeedbackFormProps) {
     const { toast } = useToast();
     const [courseRating, setCourseRating] = useState(0);
@@ -44,14 +46,8 @@ export function CourseFeedbackForm({ courseId, onSubmitted }: CourseFeedbackForm
     };
 
     return (
-        <div className="learning-card p-6 space-y-5">
-            <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Đánh giá</p>
-                <h3 className="text-xl font-black text-[#0F3B64]">⭐ Đánh giá khóa học</h3>
-                <p className="text-sm text-gray-500 mt-1">Chia sẻ trải nghiệm của bạn để cải thiện chất lượng đào tạo.</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <StarRatingField label="Chất lượng khóa học" value={courseRating} onChange={setCourseRating} />
                 <StarRatingField label="Giảng viên" value={trainerRating} onChange={setTrainerRating} />
             </div>
@@ -62,19 +58,23 @@ export function CourseFeedbackForm({ courseId, onSubmitted }: CourseFeedbackForm
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     placeholder="Chia sẻ ý kiến của bạn về khóa học và giảng viên..."
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#3282B8]/30 focus:border-[#3282B8]"
-                    rows={3}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#3282B8]/30 focus:border-[#3282B8] transition"
+                    rows={5}
                 />
             </div>
 
             <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="rounded border-gray-300" />
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={anonymous} onChange={(e) => setAnonymous(e.target.checked)} className="rounded border-gray-300 text-[#0F4C75] focus:ring-[#3282B8]" />
                     <span className="text-sm text-gray-600">Gửi đánh giá ẩn danh</span>
                 </label>
             </div>
 
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-[#145DA0] hover:bg-[#0F4C75] text-white">
+            <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:from-[#1B262C] hover:to-[#0F4C75] text-white font-bold rounded-xl py-5 shadow-lg transition-all"
+            >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Gửi đánh giá
             </Button>
@@ -82,19 +82,36 @@ export function CourseFeedbackForm({ courseId, onSubmitted }: CourseFeedbackForm
     );
 }
 
-/* ─── Star Rating Sub-Component ─── */
+/* ─── Star Rating Sub-Component with Hover Preview ─── */
 
 function StarRatingField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+    const [hoverValue, setHoverValue] = useState(0);
+    const displayValue = hoverValue || value;
+
     return (
         <div className="space-y-2">
             <label className="text-sm font-semibold text-[#0F4C75]">{label}</label>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
                 {[1, 2, 3, 4, 5].map((star) => (
-                    <button key={star} type="button" onClick={() => onChange(star)} className="feedback-star">
-                        <Star className={`w-7 h-7 ${star <= value ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                    <button
+                        key={star}
+                        type="button"
+                        onClick={() => onChange(star)}
+                        onMouseEnter={() => setHoverValue(star)}
+                        onMouseLeave={() => setHoverValue(0)}
+                        className="relative group transition-transform duration-150 hover:scale-110 active:scale-125"
+                    >
+                        <Star className={`w-8 h-8 transition-colors duration-150 ${
+                            star <= displayValue
+                                ? 'fill-amber-400 text-amber-400 drop-shadow-sm'
+                                : 'text-gray-300 group-hover:text-amber-200'
+                        }`} />
                     </button>
                 ))}
-                <span className="ml-2 text-sm text-gray-500">{value > 0 ? `${value}/5` : ''}</span>
+                <span className={`ml-3 text-sm font-medium transition-opacity duration-150 ${displayValue > 0 ? 'opacity-100' : 'opacity-0'}`}>
+                    <span className="text-amber-500">{displayValue}/5</span>
+                    <span className="text-gray-400 ml-1">— {RATING_LABELS[displayValue]}</span>
+                </span>
             </div>
         </div>
     );

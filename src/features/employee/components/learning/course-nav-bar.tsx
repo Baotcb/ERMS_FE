@@ -44,7 +44,7 @@ export function CourseNavBar({
             icon: ClipboardCheck,
             badge: undefined,
             matchExact: false,
-            disabled: false,
+            disabled: hasLessons && !isAllLessonsComplete,
         },
         {
             href: `${base}/result`,

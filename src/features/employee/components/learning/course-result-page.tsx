@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Course } from '@/features/hr/types/course-types';
 import { learningQuizService } from '@/features/employee/api/learning-quiz-service';
+import { apiClient } from '@/lib/api-client';
 import { CertificateExportDialog } from './certificate-export-dialog';
 import type { CertificateData } from './certificate-export-dialog';
 import { CourseNavBar } from './course-nav-bar';
+import type { CourseProgressDto } from '@/features/employee/types/learning-quiz-types';
 
 interface QuizResult {
     score: number;
@@ -21,22 +23,39 @@ interface QuizResult {
     completedAt: string | null;
 }
 
+interface UserProfile {
+    fullName?: string;
+    email?: string;
+    departmentName?: string;
+    enterpriseName?: string;
+    enterpriseLogoUrl?: string;
+}
+
 export function CourseResultPage({ initialCourse }: { initialCourse: Course }) {
     const router = useRouter();
     const { toast } = useToast();
     const [result, setResult] = useState<QuizResult | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [progress, setProgress] = useState<CourseProgressDto | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showCertDialog, setShowCertDialog] = useState(false);
 
     useEffect(() => {
         const load = async () => {
             try {
-                const data = await learningQuizService.getQuizResult(initialCourse.id);
-                if (!data) {
+                const [quizData, profileRes, progressData] = await Promise.all([
+                    learningQuizService.getQuizResult(initialCourse.id),
+                    apiClient.get('/api/User/profile').then(r => r.ok ? r.json() as Promise<UserProfile> : null).catch(() => null),
+                    learningQuizService.getCourseProgress(initialCourse.id).catch(() => null),
+                ]);
+
+                if (!quizData) {
                     router.replace(`/enterprise/employee/learning/course/${initialCourse.id}/quiz`);
                     return;
                 }
-                setResult(data);
+                setResult(quizData);
+                if (profileRes) setProfile(profileRes);
+                if (progressData) setProgress(progressData);
             } catch (error) {
                 toast({ title: 'Lỗi', description: error instanceof Error ? error.message : 'Không thể tải kết quả.', variant: 'destructive' });
             } finally { setIsLoading(false); }
@@ -55,28 +74,31 @@ export function CourseResultPage({ initialCourse }: { initialCourse: Course }) {
     if (!result) return null;
 
     const canRetry = result.maxAttempts === null || result.attemptCount < result.maxAttempts;
+    const totalLessons = progress?.totalLessons ?? 0;
+    const completedLessons = progress?.completedLessons ?? 0;
 
     const certData: CertificateData = {
-        learnerName: '',
-        learnerEmail: '',
-        departmentName: '',
+        learnerName: profile?.fullName || '',
+        learnerEmail: profile?.email || '',
+        departmentName: profile?.departmentName || '',
         courseName: initialCourse.courseName,
         courseCode: initialCourse.courseCode,
         trainerName: '',
         score: result.score,
         completionDate: result.completedAt ? new Date(result.completedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        companyName: '',
-        companyLogoUrl: '',
+        companyName: profile?.enterpriseName || '',
+        companyLogoUrl: profile?.enterpriseLogoUrl || '',
     };
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto px-4 py-8">
             <CourseNavBar
                 courseId={initialCourse.id}
-                completedLessons={0}
-                totalLessons={0}
-                isAllLessonsComplete
+                completedLessons={completedLessons}
+                totalLessons={totalLessons}
+                isAllLessonsComplete={totalLessons > 0 && completedLessons >= totalLessons}
                 hasQuizResult
+                hasLessons={totalLessons > 0}
             />
 
             {/* Result Card */}

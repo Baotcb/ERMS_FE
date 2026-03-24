@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Printer, X, Loader2 } from 'lucide-react';
+import { Printer, X, Loader2, Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -21,6 +21,7 @@ interface CertificateExportDialogProps {
 export function CertificateExportDialog({ open, onOpenChange, data: initialData }: CertificateExportDialogProps) {
     const [formData, setFormData] = useState<CertificateData>(initialData);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const previewRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(0.5);
@@ -32,12 +33,16 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
             const res = await apiClient.get('/api/User/profile');
             if (!res.ok) return;
             const profile = await res.json() as {
+                fullName?: string;
+                email?: string;
                 departmentName?: string;
                 enterpriseName?: string;
                 enterpriseLogoUrl?: string;
             };
             setFormData(prev => ({
                 ...prev,
+                learnerName: prev.learnerName || profile.fullName || '',
+                learnerEmail: prev.learnerEmail || profile.email || '',
                 departmentName: prev.departmentName || profile.departmentName || '',
                 companyName: prev.companyName || profile.enterpriseName || '',
                 companyLogoUrl: prev.companyLogoUrl || profile.enterpriseLogoUrl || '',
@@ -101,20 +106,90 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
         }, 2000);
     };
 
+    const handleDownloadPNG = async () => {
+        const certElement = document.getElementById('certificate-print-area');
+        if (!certElement) return;
+
+        setIsDownloading(true);
+        try {
+            const html2canvasModule = await import('html2canvas');
+            const html2canvas = html2canvasModule.default || html2canvasModule;
+
+            const canvas = await html2canvas(certElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                width: certElement.scrollWidth,
+                height: certElement.scrollHeight,
+                onclone: (clonedDoc: Document) => {
+                    // 1. Neutralize Radix UI's lab()/oklch() CSS variables
+                    const root = clonedDoc.documentElement;
+                    const cs = getComputedStyle(document.documentElement);
+                    for (let i = 0; i < cs.length; i++) {
+                        const prop = cs[i];
+                        if (prop.startsWith('--')) {
+                            const val = cs.getPropertyValue(prop).trim();
+                            if (val.includes('lab(') || val.includes('oklch(') || val.includes('oklab(')) {
+                                root.style.setProperty(prop, 'transparent');
+                            }
+                        }
+                    }
+
+                    // 2. Replace linear-gradient backgrounds with solid colors
+                    // html2canvas crashes on gradient patterns when element height/width ≤ 1px
+                    const certClone = clonedDoc.getElementById('certificate-print-area');
+                    if (certClone) {
+                        // 3. Remove parent's transform:scale() so cert renders at full 297mm size
+                        let parent = certClone.parentElement;
+                        while (parent && parent !== clonedDoc.body) {
+                            parent.style.transform = 'none';
+                            parent.style.overflow = 'visible';
+                            parent.style.width = 'auto';
+                            parent.style.height = 'auto';
+                            parent = parent.parentElement;
+                        }
+
+                        certClone.querySelectorAll('*').forEach((el) => {
+                            const htmlEl = el as HTMLElement;
+                            const bg = htmlEl.style.background || '';
+                            if (bg.includes('linear-gradient')) {
+                                const colors = bg.match(/#[0-9A-Fa-f]{3,6}|rgb[a]?\([^)]+\)/g) || [];
+                                const solidColor = colors.find(c => c !== 'transparent') || '#ccc';
+                                htmlEl.style.background = solidColor;
+                            }
+                        });
+                    }
+                },
+            });
+
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `Certificate_${formData.learnerName || 'user'}_${formData.courseCode || 'course'}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error('[Cert] PNG download failed:', err);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     const certHeight = 210 * 3.7795 * scale; // scaled height in px
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-[95vw] w-full lg:max-w-5xl max-h-[90vh] overflow-y-auto p-0 bg-gray-50">
-                <DialogHeader className="px-5 pt-5 pb-2">
+            <DialogContent className="max-w-[95vw] w-full lg:max-w-5xl max-h-[90vh] p-0 bg-gray-50 flex flex-col overflow-hidden">
+                <DialogHeader className="px-5 pt-5 pb-2 shrink-0">
                     <DialogTitle className="text-lg font-black text-[#0F4C75] flex items-center gap-2">
                         🏆 Chứng chỉ hoàn thành
                     </DialogTitle>
-                    <DialogDescription>Xem và in chứng chỉ dưới dạng PDF</DialogDescription>
+                    <DialogDescription>Xem, in hoặc tải chứng chỉ dưới dạng PDF / ảnh PNG</DialogDescription>
                 </DialogHeader>
 
-                {/* Certificate Preview — fills dialog width */}
-                <div ref={containerRef} className="px-4 pb-2">
+                {/* Certificate Preview — scrollable area */}
+                <div ref={containerRef} className="px-4 pb-2 flex-1 overflow-y-auto min-h-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-20">
                             <Loader2 className="w-6 h-6 animate-spin text-[#0F4C75]" />
@@ -139,12 +214,21 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
                     )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-between px-5 pb-5 pt-1">
+                {/* Actions — sticky footer */}
+                <div className="flex items-center justify-between px-5 py-4 border-t border-gray-200 bg-white shrink-0">
                     <Button variant="ghost" onClick={() => handleOpenChange(false)} className="text-gray-500">
                         <X className="w-4 h-4 mr-1" /> Đóng
                     </Button>
                     <div className="flex gap-2">
+                        <Button
+                            onClick={handleDownloadPNG}
+                            disabled={isDownloading}
+                            variant="outline"
+                            className="border-[#0F4C75] text-[#0F4C75] px-5"
+                        >
+                            {isDownloading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Download className="w-4 h-4 mr-1.5" />}
+                            Tải ảnh PNG
+                        </Button>
                         <Button onClick={handlePrint} className="bg-[#0F4C75] hover:bg-[#1B262C] text-white px-5">
                             <Printer className="w-4 h-4 mr-1.5" /> In / Lưu PDF
                         </Button>
@@ -154,3 +238,4 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
         </Dialog>
     );
 }
+
