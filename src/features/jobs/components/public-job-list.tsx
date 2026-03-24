@@ -10,6 +10,9 @@ import { ListingJobCard } from './listing-job-card'
 import { JobPagination } from './job-pagination'
 import { usePublicJobFilterOptions, usePublicJobs } from '../hooks/use-public-jobs'
 import { EMPLOYMENT_OPTIONS, PUBLIC_JOB_PAGE_SIZE, SORT_OPTIONS, getSalaryRangeFromValue, mergeJobSearchParams, parseJobPageParam } from '../job-filtering'
+import { useJobPreview } from '../hooks/use-job-preview'
+import { JobPreviewPopup } from './job-preview-popup'
+import { JobPreviewWrapper } from './job-preview-wrapper'
 import '@/features/jobs/styles/Jobs.css'
 
 function ListingSkeleton() {
@@ -40,6 +43,7 @@ function ListingSkeleton() {
 function PublicJobListContent() {
     const router = useRouter()
     const pathname = usePathname()
+    const { preview, showPreview, hidePreview } = useJobPreview()
     const searchParams = useSearchParams()
 
     const search = searchParams.get('q') || undefined
@@ -164,7 +168,14 @@ function PublicJobListContent() {
                 <div className="topcv-page__list">
                     {items.length > 0 ? (
                         items.map((job) => (
-                            <ListingJobCard key={job.id} job={job} />
+                            <JobPreviewWrapper
+                                key={job.id}
+                                jobId={job.id}
+                                onHover={showPreview}
+                                onLeave={hidePreview}
+                            >
+                                <ListingJobCard job={job} />
+                            </JobPreviewWrapper>
                         ))
                     ) : (
                         <div className="topcv-empty" style={{ padding: '40px 0' }}>
@@ -193,6 +204,14 @@ function PublicJobListContent() {
                     />
                 )}
             </div>
+
+            {preview && (
+                <JobPreviewPopup
+                    job={preview.job}
+                    isLoading={preview.isLoading}
+                    anchorRect={preview.anchorRect}
+                />
+            )}
         </div>
     )
 }
