@@ -8,13 +8,8 @@ import { courseService } from '@/features/hr/api/course-service';
 import { Course, CourseResult } from '@/features/hr/types/course-types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { apiClient } from '@/lib/api-client';
+import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import {
     Table,
     TableBody,
@@ -58,24 +53,11 @@ export function AssignTrainingPage({
     const [selectedTraineeIds, setSelectedTraineeIds] = useState<string[]>([]);
     const [notifyTrainer, setNotifyTrainer] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSelectingAll, setIsSelectingAll] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('all');
 
     const debouncedTraineeSearch = useDebouncedValue(traineeSearch, 300);
-
-    // Fetch Courses
-    const { data: coursesData, isLoading: isLoadingCourses } = useSWR<CourseResult>(
-        ['/api/Course', 'assignment'],
-        () => courseService.getAllCourses({ pageSize: 100 }),
-        { fallbackData: initialCourses }
-    );
-
-    // Fetch Departments for filter
-    const { data: departmentsData } = useSWR(
-        '/api/Departments/list',
-        () => getDepartments({ pageSize: 100 }),
-    );
-    const departments: Department[] = departmentsData?.items || [];
 
     // Fetch Potential Trainees with real pagination & department filter
     const { data: traineesData, isLoading: isLoadingTrainees } = useSWR(
@@ -112,6 +94,20 @@ export function AssignTrainingPage({
         }
     );
 
+    // Fetch Already Enrolled Employees
+    const { data: enrolledEmployeeIds = [] } = useSWR<string[]>(
+        selectedCourseId ? `/api/Course/${selectedCourseId}/enrolled-employees` : null,
+        async (url: string) => {
+            try {
+                const response = await apiClient.get(url, { retries: 1 });
+                if (response.ok) return response.json();
+                return [];
+            } catch {
+                return [];
+            }
+        }
+    );
+
     useEffect(() => {
         if (!invitedTrainer?.id) {
             return;
@@ -121,14 +117,8 @@ export function AssignTrainingPage({
     }, [invitedTrainer?.id]);
 
     const courses = useMemo(() => {
-        const allCourses = coursesData?.items || [];
-
-        if (!selectedPlanId) {
-            return allCourses;
-        }
-
-        return allCourses.filter((course) => course.trainingPlanId === selectedPlanId);
-    }, [coursesData?.items, selectedPlanId]);
+        return initialCourses?.items || [];
+    }, [initialCourses]);
 
     useEffect(() => {
         if (!preselectedCourseId) {
@@ -192,8 +182,10 @@ export function AssignTrainingPage({
             return;
         }
 
-        if (selectedTraineeIds.length === 0) {
-            toast({ title: 'Lỗi', description: 'Vui lòng chọn ít nhất một học viên.', variant: 'destructive' });
+        const validSelectedIds = selectedTraineeIds.filter(id => !enrolledEmployeeIds.includes(id));
+
+        if (validSelectedIds.length === 0) {
+            toast({ title: 'Lỗi', description: 'Vui lòng chọn ít nhất một học viên hợp lệ (chưa tham gia).', variant: 'destructive' });
             return;
         }
 
@@ -201,7 +193,7 @@ export function AssignTrainingPage({
         try {
             await courseService.assignEmployees(
                 selectedCourseId,
-                selectedTraineeIds,
+                validSelectedIds,
                 {
                     meetUrl: currentCourse.isOnline ? (currentCourse.location || '') : '',
                     notifyTrainer,
@@ -227,6 +219,35 @@ export function AssignTrainingPage({
         return (traineesData?.items || []).filter((employee) => employee.id !== trainerId);
     }, [invitedTrainer?.id, traineesData?.items]);
 
+    // Handle "Select All" checking only valid potential trainees
+    const assignableTrainees = useMemo(() => {
+        return potentialTrainees.filter((t: Employee) => !enrolledEmployeeIds.includes(t.id));
+    }, [potentialTrainees, enrolledEmployeeIds]);
+
+    const handleSelectAllAcrossPages = async () => {
+        setIsSelectingAll(true);
+        try {
+            const result = await getEmployees({
+                search: debouncedTraineeSearch,
+                page: 1,
+                pageSize: 10000,
+                departmentId: selectedDepartmentId !== 'all' ? Number(selectedDepartmentId) : undefined,
+            });
+
+            // Filter out trainer and already enrolled
+            const validIds = result.items
+                .filter((emp: Employee) => emp.id !== invitedTrainer?.id && !enrolledEmployeeIds.includes(emp.id))
+                .map((emp: Employee) => emp.id);
+
+            setSelectedTraineeIds(validIds);
+            toast({ title: 'Thành công', description: `Đã chọn ${validIds.length} học viên thỏa mãn điều kiện tìm kiếm và chưa tham gia khóa học.` });
+        } catch {
+            toast({ title: 'Lỗi', description: 'Không thể tải toàn bộ danh sách. Vui lòng thử lại.', variant: 'destructive' });
+        } finally {
+            setIsSelectingAll(false);
+        }
+    };
+
     return (
         <div className="w-full max-w-7xl mx-auto space-y-6">
             {/* Header */}
@@ -242,7 +263,7 @@ export function AssignTrainingPage({
                 </div>
                 <Button 
                     onClick={handleSaveAssignment} 
-                    disabled={isSubmitting || !selectedCourseId}
+                    disabled={isSubmitting || !selectedCourseId || selectedTraineeIds.length === 0}
                     className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white px-8 rounded-full"
                 >
                     {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -278,27 +299,26 @@ export function AssignTrainingPage({
                     </div>
                     <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Chọn khóa học đào tạo cần phân công</p>
-                        <Select 
-                            value={selectedCourseId} 
-                            onValueChange={(val) => {
-                                setSelectedCourseId(val);
-                                setSelectedTraineeIds([]); // Clear trainees when course changes
-                            }}
-                        >
-                            <SelectTrigger className="w-full md:w-[600px] border-gray-300">
-                                <SelectValue placeholder={isLoadingCourses ? "Đang tải danh sách..." : "Chọn khóa học"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {courses.map(course => (
-                                    <SelectItem key={course.id} value={course.id}>
-                                        {course.courseName} (Mã: {course.courseCode})
-                                    </SelectItem>
-                                ))}
-                                {courses.length === 0 && !isLoadingCourses && (
-                                    <SelectItem value="none" disabled>Không có khóa học sẵn sàng để phân công</SelectItem>
-                                )}
-                            </SelectContent>
-                        </Select>
+                        <div className="mt-3">
+                            <SearchableCombobox<Course>
+                                value={selectedCourseId}
+                                onValueChange={(val) => {
+                                    setSelectedCourseId(val);
+                                    setSelectedTraineeIds([]);
+                                }}
+                                fetcher={async (search, page) => {
+                                    const res = await courseService.getAllCourses({ search, page, pageSize: 20 });
+                                    const total = res.totalPages || 1;
+                                    return { items: res.items, hasNextPage: page < total };
+                                }}
+                                renderItem={(c) => `${c.courseName} (Mã: ${c.courseCode})`}
+                                extractValue={(c) => c.id}
+                                placeholder="Chọn khóa học đào tạo..."
+                                searchPlaceholder="Tìm tên hoặc mã khóa học..."
+                                defaultItems={courses}
+                                className="w-full md:w-[600px]"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -374,19 +394,20 @@ export function AssignTrainingPage({
                                         className="pl-9 w-[220px] bg-white border-gray-200" 
                                     />
                                 </div>
-                                <Select value={selectedDepartmentId} onValueChange={setSelectedDepartmentId}>
-                                    <SelectTrigger className="w-[200px] bg-white border-gray-200">
-                                        <SelectValue placeholder="Tất cả phòng ban" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Tất cả phòng ban</SelectItem>
-                                        {departments.map((dept) => (
-                                            <SelectItem key={dept.id} value={String(dept.id)}>
-                                                {dept.departmentName}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <SearchableCombobox<Department>
+                                    value={selectedDepartmentId === 'all' ? undefined : selectedDepartmentId}
+                                    onValueChange={(val) => setSelectedDepartmentId(val)}
+                                    fetcher={async (search, page) => {
+                                        const res = await getDepartments({ search, page, pageSize: 20 });
+                                        const total = res.totalPages || 1;
+                                        return { items: res.items, hasNextPage: page < total };
+                                    }}
+                                    renderItem={(d) => d.departmentName}
+                                    extractValue={(d) => String(d.id)}
+                                    placeholder="Tất cả phòng ban"
+                                    searchPlaceholder="Tìm phòng ban..."
+                                    className="w-[200px]"
+                                />
                             </div>
                         </div>
 
@@ -403,15 +424,43 @@ export function AssignTrainingPage({
                         </div>
 
                         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden min-h-[400px]">
+                            {/* "Select All Across Pages" Banner */}
+                            {assignableTrainees.length > 0 && 
+                             assignableTrainees.every((t: Employee) => selectedTraineeIds.includes(t.id)) && 
+                             totalCount > assignableTrainees.length && (
+                                <div className="bg-blue-50/80 border-b border-blue-100 px-4 py-2.5 text-sm flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <span className="text-gray-600">
+                                        Đã chọn tất cả <strong>{assignableTrainees.length}</strong> học viên trên trang này.
+                                    </span>
+                                    <Button 
+                                        variant="link" 
+                                        onClick={handleSelectAllAcrossPages}
+                                        disabled={isSelectingAll}
+                                        className="h-auto p-0 font-bold text-[#0F4C75] hover:text-[#1A5F8C]"
+                                    >
+                                        {isSelectingAll ? (
+                                            <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Đang chọn tất cả...</>
+                                        ) : (
+                                            `Chọn tất cả nhân viên phù hợp`
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
+
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
                                         <TableHead className="w-[50px]">
                                             <Checkbox 
-                                                checked={potentialTrainees.length > 0 && selectedTraineeIds.length === potentialTrainees.length}
+                                                checked={assignableTrainees.length > 0 && assignableTrainees.every((t: Employee) => selectedTraineeIds.includes(t.id))}
                                                 onCheckedChange={(checked) => {
-                                                    if (checked) setSelectedTraineeIds(potentialTrainees.map((p: Employee) => p.id));
-                                                    else setSelectedTraineeIds([]);
+                                                    if (checked) {
+                                                        const newIds = new Set([...selectedTraineeIds, ...assignableTrainees.map((p: Employee) => p.id)]);
+                                                        setSelectedTraineeIds(Array.from(newIds));
+                                                    } else {
+                                                        const pageIds = new Set(assignableTrainees.map((p: Employee) => p.id));
+                                                        setSelectedTraineeIds(selectedTraineeIds.filter(id => !pageIds.has(id)));
+                                                    }
                                                 }}
                                             />
                                         </TableHead>
@@ -425,11 +474,13 @@ export function AssignTrainingPage({
                                     {isLoadingTrainees ? (
                                         <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" /></TableCell></TableRow>
                                     ) : potentialTrainees.map((trainee: Employee) => {
+                                        const isEnrolled = enrolledEmployeeIds.includes(trainee.id);
                                         return (
-                                            <TableRow key={trainee.id}>
+                                            <TableRow key={trainee.id} className={isEnrolled ? "bg-gray-50/50 grayscale-[0.3]" : ""}>
                                                 <TableCell>
                                                     <Checkbox
-                                                        checked={selectedTraineeIds.includes(trainee.id)}
+                                                        checked={selectedTraineeIds.includes(trainee.id) || isEnrolled}
+                                                        disabled={isEnrolled}
                                                         onCheckedChange={(checked) => {
                                                             if (checked) setSelectedTraineeIds([...selectedTraineeIds, trainee.id]);
                                                             else setSelectedTraineeIds(selectedTraineeIds.filter(id => id !== trainee.id));
@@ -438,13 +489,21 @@ export function AssignTrainingPage({
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar className="w-8 h-8 border-2 border-white shadow-sm ring-1 ring-gray-100">
+                                                        <Avatar className={`w-8 h-8 border-2 border-white shadow-sm ring-1 ring-gray-100 ${isEnrolled ? "opacity-60" : ""}`}>
                                                             <AvatarFallback className="bg-[#0F4C75] text-white text-[10px] font-bold">
                                                                 {trainee.fullName?.split(' ').pop()?.[0]}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div>
-                                                            <span className="font-medium text-gray-900">{trainee.fullName}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`font-medium ${isEnrolled ? "text-gray-500" : "text-gray-900"}`}>{trainee.fullName}</span>
+                                                                {isEnrolled && (
+                                                                    <Badge variant="secondary" className="bg-gray-200 hover:bg-gray-200 text-gray-500 text-[10px] px-2 py-0 h-4">
+                                                                        Đã tham gia
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-gray-400 mt-0.5">{trainee.email}</div>
                                                         </div>
                                                     </div>
                                                 </TableCell>

@@ -15,17 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { SearchableCombobox } from '@/components/ui/searchable-combobox';
+import { hrTrainingService } from '@/features/hr/api/hr-training-service';
 import { courseService } from '@/features/hr/api/course-service';
 import type { CreateCourseCommand } from '@/features/hr/types/course-types';
+import { useAuth } from '@/features/core/auth/hooks/use-auth';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 
 interface CreateCourseDialogProps {
@@ -56,11 +52,13 @@ export function CreateCourseDialog({
     availablePlans = [],
 }: CreateCourseDialogProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
+    const userEmail = user?.email || '';
     const [courseName, setCourseName] = useState('');
     const [courseCode, setCourseCode] = useState('');
     const [description, setDescription] = useState('');
     const [trainerEmail, setTrainerEmail] = useState('');
-    const [selectedPlanId, setSelectedPlanId] = useState('');
+    const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [durationMinutes, setDurationMinutes] = useState('');
     const [maxEnrollments, setMaxEnrollments] = useState('');
     const [completionCriteria, setCompletionCriteria] = useState('Quiz');
@@ -77,7 +75,7 @@ export function CreateCourseDialog({
         setCourseCode(plan ? buildDefaultCourseCode(plan) : buildQuickCourseCode());
         setDescription(plan?.description || '');
         setTrainerEmail('');
-        setSelectedPlanId(plan?.id || '');
+        setSelectedPlan(plan);
         setDurationMinutes('');
         setMaxEnrollments('');
         setCompletionCriteria('Quiz');
@@ -85,8 +83,7 @@ export function CreateCourseDialog({
         setWizardStep(1);
     }, [open, plan]);
 
-    const resolvedPlanId = plan?.id || selectedPlanId;
-    const selectedPlan = plan ?? availablePlans.find((item) => item.id === selectedPlanId) ?? null;
+    const resolvedPlanId = plan?.id || selectedPlan?.id || '';
 
     const handleNextStep = () => {
         if (!resolvedPlanId) {
@@ -197,6 +194,14 @@ export function CreateCourseDialog({
                     : 'Đã tạo khóa học theo training plan đã chọn.',
             });
 
+            // Check if trainer is external → show additional info toast (no extra fetch)
+            if (userEmail && trainerEmail.trim().toLowerCase() !== userEmail.toLowerCase()) {
+                toast({
+                    title: '📋 Bạn là người quản lý nội dung',
+                    description: `Trainer "${trainerEmail.trim()}" ngoài hệ thống. Bạn có thể upload tài liệu tại mục "Giảng dạy (Content)" trong sidebar.`,
+                });
+            }
+
             onOpenChange(false);
             onCreated(result.courseId, resolvedPlanId);
         } catch (error) {
@@ -245,21 +250,23 @@ export function CreateCourseDialog({
                 <div className="grid gap-5 py-2">
                     {wizardStep === 1 && (
                         <>
-                            {!plan && availablePlans.length > 0 && (
+                            {!plan && (
                                 <div className="grid gap-2">
                                     <Label>Training plan</Label>
-                                    <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Chọn kế hoạch đào tạo đã duyệt" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availablePlans.map((item) => (
-                                                <SelectItem key={item.id} value={item.id}>
-                                                    {item.planName} ({item.planCode})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <SearchableCombobox<TrainingPlan>
+                                        value={selectedPlan?.id}
+                                        onValueChange={(_, item) => setSelectedPlan(item || null)}
+                                        fetcher={async (search, page) => {
+                                            const res = await hrTrainingService.getPlans({ search, page, pageSize: 20, status: 'Approved' });
+                                            const totalPages = res.totalPages || 1;
+                                            return { items: res.items, hasNextPage: page < totalPages };
+                                        }}
+                                        renderItem={(p) => `${p.planName} (${p.planCode})`}
+                                        extractValue={(p) => p.id}
+                                        placeholder="Chọn kế hoạch đào tạo đã duyệt"
+                                        searchPlaceholder="Tìm tên hoặc mã kế hoạch..."
+                                        defaultItems={availablePlans.length > 0 ? availablePlans : (selectedPlan ? [selectedPlan] : [])}
+                                    />
                                     <p className="text-xs text-gray-500">
                                         Mỗi khóa học phải gắn với một training plan đã được duyệt.
                                     </p>

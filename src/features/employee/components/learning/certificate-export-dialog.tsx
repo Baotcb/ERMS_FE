@@ -77,33 +77,11 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
     }, [open]);
 
     const handlePrint = () => {
-        const printContent = document.getElementById('certificate-print-area');
-        if (!printContent) return;
-
-        const iframe = document.createElement('iframe');
-        Object.assign(iframe.style, { position: 'fixed', top: '-10000px', left: '-10000px', width: '297mm', height: '210mm' });
-        document.body.appendChild(iframe);
-
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!doc) { document.body.removeChild(iframe); return; }
-
-        doc.open();
-        doc.write(`<!DOCTYPE html>
-<html><head><meta charset="utf-8"/><title>Chứng nhận - ${formData.learnerName}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&display=swap&subset=vietnamese" rel="stylesheet"/>
-<style>@page{size:A4 landscape;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{margin:0;padding:0;font-family:'Noto Serif','Roboto',serif}</style>
-</head><body>${printContent.outerHTML}</body></html>`);
-        doc.close();
-
-        iframe.onload = () => {
-            setTimeout(() => { iframe.contentWindow?.print(); setTimeout(() => { document.body.removeChild(iframe); }, 1000); }, 500);
-        };
+        // Trigger native print dialog. 
+        // The embedded @media print CSS below handles layout and hiding background elements.
         setTimeout(() => {
-            try { iframe.contentWindow?.print(); } catch { /* ignore */ }
-            setTimeout(() => { try { document.body.removeChild(iframe); } catch { /* ignore */ } }, 1000);
-        }, 2000);
+            window.print();
+        }, 100);
     };
 
     const handleDownloadPNG = async () => {
@@ -180,6 +158,40 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
+            {open && (
+                <style dangerouslySetInnerHTML={{__html: `
+                    @media print {
+                        @page {
+                            size: A4 landscape;
+                            margin: 0;
+                        }
+                        body * {
+                            visibility: hidden;
+                        }
+                        #certificate-print-area, #certificate-print-area * {
+                            visibility: visible;
+                        }
+                        #certificate-print-area {
+                            position: fixed !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            width: 297mm !important;
+                            height: 210mm !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            transform: scale(1) !important;
+                            z-index: 99999 !important;
+                        }
+                        .print-transform-wrapper {
+                            transform: scale(1) !important;
+                        }
+                        /* Hide dialog overlay and close buttons during print */
+                        [data-radix-focus-guard], [role="dialog"] button {
+                            display: none !important;
+                        }
+                    }
+                `}} />
+            )}
             <DialogContent className="max-w-[95vw] w-full lg:max-w-5xl max-h-[90vh] p-0 bg-gray-50 flex flex-col overflow-hidden">
                 <DialogHeader className="px-5 pt-5 pb-2 shrink-0">
                     <DialogTitle className="text-lg font-black text-[#0F4C75] flex items-center gap-2">
@@ -201,7 +213,7 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
                             className="rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white"
                             style={{ height: `${certHeight + 16}px` }}
                         >
-                            <div style={{
+                            <div className="print-transform-wrapper" style={{
                                 transform: `scale(${scale})`,
                                 transformOrigin: 'top center',
                                 width: '297mm',

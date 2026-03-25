@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -134,13 +135,26 @@ export function TrainingResultsTrackingPage({
                         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
                         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm nhân viên, email, khóa học..." className="pl-9" />
                     </div>
-                    <Select value={courseFilter} onValueChange={setCourseFilter}>
-                        <SelectTrigger><SelectValue placeholder="Khóa học" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả khóa học</SelectItem>
-                            {courseOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                    <SearchableCombobox<string>
+                        value={courseFilter === 'all' ? undefined : courseFilter}
+                        onValueChange={(val) => setCourseFilter(val || 'all')}
+                        fetcher={async (searchQuery, page) => {
+                            let filtered = courseOptions;
+                            if (searchQuery) {
+                                const q = searchQuery.toLowerCase();
+                                filtered = courseOptions.filter(c => c.toLowerCase().includes(q));
+                            }
+                            const pageSize = 20;
+                            const start = (page - 1) * pageSize;
+                            const items = filtered.slice(start, start + pageSize);
+                            return { items, hasNextPage: start + pageSize < filtered.length };
+                        }}
+                        renderItem={(c) => c}
+                        extractValue={(c) => c}
+                        placeholder="Tất cả khóa học"
+                        searchPlaceholder="Tìm khóa học..."
+                        className="w-[200px]"
+                    />
                     <Select value={evalFilter} onValueChange={setEvalFilter}>
                         <SelectTrigger><SelectValue placeholder="Kết quả" /></SelectTrigger>
                         <SelectContent>
@@ -250,69 +264,7 @@ export function TrainingResultsTrackingPage({
                 })}
             </div>
 
-            {/* Full Table (all items) */}
-            <div className="learning-card overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-[#F8FBFF] to-white">
-                    <h2 className="font-black tracking-tight text-[#0F4C75]">Chi tiết toàn bộ kết quả</h2>
-                    <p className="text-[11px] text-gray-400 mt-1">{filteredItems.length} bản ghi</p>
-                </div>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader className="bg-slate-50">
-                            <TableRow>
-                                <TableHead>Nhân viên</TableHead>
-                                <TableHead>Khóa học</TableHead>
-                                <TableHead>Tiến độ</TableHead>
-                                <TableHead>Quiz</TableHead>
-                                <TableHead>Lượt thi</TableHead>
-                                <TableHead>Trạng thái</TableHead>
-                                <TableHead>Kết quả</TableHead>
-                                <TableHead>Ngày cử đi</TableHead>
-                                <TableHead>Hoàn thành</TableHead>
-                                <TableHead>Ghi chú</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredItems.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={10} className="py-12 text-center text-sm text-gray-500">Không có dữ liệu phù hợp với bộ lọc hiện tại.</TableCell>
-                                </TableRow>
-                            ) : filteredItems.map((item) => (
-                                <TableRow key={item.id}>
-                                    <TableCell>
-                                        <div className="font-semibold text-gray-800 text-sm">{item.employeeName}</div>
-                                        <div className="text-xs text-gray-400">{item.employeeEmail}</div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="font-medium text-gray-800 text-sm">{item.courseName}</div>
-                                        {item.courseCode && <div className="text-xs text-gray-400">{item.courseCode}</div>}
-                                    </TableCell>
-                                    <TableCell className="min-w-[150px]">
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between text-xs text-gray-500">
-                                                <span>{item.completedLessons}/{item.totalLessons}</span>
-                                                <span className="font-semibold">{item.progressPercentage}%</span>
-                                            </div>
-                                            <Progress value={item.progressPercentage} className="h-1.5" />
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {item.quizScore !== null ? (
-                                            <span className={`font-bold ${item.quizScore >= 70 ? 'text-emerald-600' : item.quizScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{item.quizScore}%</span>
-                                        ) : <span className="text-gray-400">—</span>}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-gray-600">{item.attemptCount || '—'}</TableCell>
-                                    <TableCell><Badge variant="outline" className={learnBadgeClass(item.learningStatus)}>{LEARN_LABELS[item.learningStatus] || item.learningStatus}</Badge></TableCell>
-                                    <TableCell><Badge variant="outline" className={evalBadgeClass(item.evaluationStatus)}>{EVAL_LABELS[item.evaluationStatus] || item.evaluationStatus}</Badge></TableCell>
-                                    <TableCell className="text-sm text-gray-600 whitespace-nowrap">{format(new Date(item.assignedAt), 'dd/MM/yyyy')}</TableCell>
-                                    <TableCell className="text-sm text-gray-600 whitespace-nowrap">{item.completedAt ? format(new Date(item.completedAt), 'dd/MM/yyyy') : '—'}</TableCell>
-                                    <TableCell className="text-sm text-gray-500 max-w-[200px] truncate">{item.note || '—'}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </div>
+
         </div>
     );
 }

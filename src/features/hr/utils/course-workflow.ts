@@ -19,11 +19,18 @@ export function isCourseOwnedByUser(course: Course, user: CourseUserIdentity | n
         return false;
     }
 
-    const normalizedTrainerEmail = normalizeEmail(course.trainerEmail);
     const normalizedUserEmail = normalizeEmail(user.email);
 
-    if (normalizedTrainerEmail && normalizedUserEmail) {
-        return normalizedTrainerEmail === normalizedUserEmail;
+    // Match by trainerEmail
+    const normalizedTrainerEmail = normalizeEmail(course.trainerEmail);
+    if (normalizedTrainerEmail && normalizedUserEmail && normalizedTrainerEmail === normalizedUserEmail) {
+        return true;
+    }
+
+    // Match by contentManagerEmail (HR fallback for external trainers)
+    const normalizedContentManagerEmail = normalizeEmail(course.contentManagerEmail);
+    if (normalizedContentManagerEmail && normalizedUserEmail && normalizedContentManagerEmail === normalizedUserEmail) {
+        return true;
     }
 
     if (course.trainerId && user.id) {

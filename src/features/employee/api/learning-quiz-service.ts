@@ -264,7 +264,7 @@ export const learningQuizService = {
         return response.json();
     },
 
-    async getQuizResult(courseId: string): Promise<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null; completedAt: string | null } | null> {
+    async getQuizResult(courseId: string): Promise<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null; completedAt: string | null; attemptId?: string } | null> {
         try {
             const response = await apiClient.get(`/api/Course/${courseId}/quiz-result`);
             if (response.status === 204 || !response.ok) return null;
@@ -272,5 +272,13 @@ export const learningQuizService = {
         } catch {
             return null;
         }
+    },
+
+    async getQuizReview(attemptId: string): Promise<import('@/features/employee/types/learning-quiz-types').QuizReviewDto> {
+        const response = await apiClient.get(`/api/quizzes/attempts/${attemptId}/review`);
+        if (!response.ok) {
+            throw new Error(await readErrorMessage(response, 'Không thể tải chi tiết đáp án.'));
+        }
+        return response.json();
     },
 };

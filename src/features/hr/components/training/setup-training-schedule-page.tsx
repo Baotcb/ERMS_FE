@@ -13,13 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { courseService } from '@/features/hr/api/course-service';
 import { Course, CourseResult, UpdateCourseCommand } from '@/features/hr/types/course-types';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import { CreateCourseDialog } from './create-course-dialog';
 
 function isValidHttpUrl(value: string): boolean {
@@ -94,6 +88,7 @@ export function SetupTrainingSchedulePage({
     const [notifyTrainerOnAssignment, setNotifyTrainerOnAssignment] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const buildDateTime = (date: string, time: string): Date | null => {
         if (!date || !time) {
@@ -114,12 +109,7 @@ export function SetupTrainingSchedulePage({
         return null;
     };
 
-    // Fetch Courses
-    const { data: coursesData, isLoading: isLoadingCourses, mutate: mutateCourses } = useSWR<CourseResult>(
-        ['/api/Course', 'scheduling'],
-        () => courseService.getAllCourses({ status: 'Draft', pageSize: 100 }),
-        { fallbackData: initialCourses }
-    );
+    // (Removed static pageSize: 100 courses fetch to use SearchableCombobox)
 
     // Fetch Details for summary
     const { data: currentCourse, isLoading: isLoadingDetails } = useSWR<Course>(
@@ -271,11 +261,10 @@ export function SetupTrainingSchedulePage({
     const handleCourseCreated = async (courseId: string) => {
         setSelectedCourseId(courseId);
         setIsCreateCourseOpen(false);
-        await mutateCourses();
+        setRefreshKey(prev => prev + 1);
         toast({ title: 'Đã tạo khóa học', description: 'Khóa học đã được tạo.' });
     };
 
-    const courses = coursesData?.items || [];
 
     return (
         <div className="w-full max-w-6xl mx-auto space-y-6 pb-20">
@@ -326,27 +315,24 @@ export function SetupTrainingSchedulePage({
                         </Button>
                     </div>
 
-                    {courses.length === 0 && !isLoadingCourses ? (
-                        <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white px-4 py-4 text-sm text-[#0F4C75]">
-                            Chưa có khóa học nháp để lập lịch. Hãy tạo khóa học theo kế hoạch ngay tại trang này.
-                        </div>
-                    ) : (
                         <div className="mt-3">
-                            <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
-                                <SelectTrigger className="w-full md:w-[600px] bg-white border-gray-200">
-                                    <SelectValue placeholder={isLoadingCourses ? "Đang tải danh sách..." : "Chọn khóa học..."} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {courses.map(course => (
-                                        <SelectItem key={course.id} value={course.id}>
-                                            {course.courseName} (Mã: {course.courseCode})
-                                            {course.startTime ? ' ✓ Đã thiết lập' : ''}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <SearchableCombobox<Course>
+                                key={refreshKey}
+                                value={selectedCourseId}
+                                onValueChange={setSelectedCourseId}
+                                fetcher={async (search, page) => {
+                                    const res = await courseService.getAllCourses({ search, page, pageSize: 20, status: 'Draft' });
+                                    const totalPages = res.totalPages || 1;
+                                    return { items: res.items, hasNextPage: page < totalPages };
+                                }}
+                                renderItem={(c) => `${c.courseName} (Mã: ${c.courseCode})${c.startTime ? ' ✓ Đã thiết lập' : ''}`}
+                                extractValue={(c) => c.id}
+                                placeholder="Chọn khóa học..."
+                                searchPlaceholder="Tìm theo tên hoặc mã khóa học..."
+                                defaultItems={initialCourses?.items || []}
+                                className="w-full md:w-[600px]"
+                            />
                         </div>
-                    )}
                 </div>
 
                 {!selectedCourseId && (

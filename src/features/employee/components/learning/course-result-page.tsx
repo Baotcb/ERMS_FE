@@ -11,7 +11,8 @@ import { apiClient } from '@/lib/api-client';
 import { CertificateExportDialog } from './certificate-export-dialog';
 import type { CertificateData } from './certificate-export-dialog';
 import { CourseNavBar } from './course-nav-bar';
-import type { CourseProgressDto } from '@/features/employee/types/learning-quiz-types';
+import { QuizReviewAnswers } from './quiz/quiz-review-answers';
+import type { CourseProgressDto, QuizReviewItemDto } from '@/features/employee/types/learning-quiz-types';
 
 interface QuizResult {
     score: number;
@@ -21,6 +22,7 @@ interface QuizResult {
     attemptCount: number;
     maxAttempts: number | null;
     completedAt: string | null;
+    attemptId?: string;
 }
 
 interface UserProfile {
@@ -37,6 +39,7 @@ export function CourseResultPage({ initialCourse }: { initialCourse: Course }) {
     const [result, setResult] = useState<QuizResult | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [progress, setProgress] = useState<CourseProgressDto | null>(null);
+    const [reviewItems, setReviewItems] = useState<QuizReviewItemDto[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showCertDialog, setShowCertDialog] = useState(false);
 
@@ -53,9 +56,22 @@ export function CourseResultPage({ initialCourse }: { initialCourse: Course }) {
                     router.replace(`/enterprise/employee/learning/course/${initialCourse.id}/quiz`);
                     return;
                 }
+
                 setResult(quizData);
                 if (profileRes) setProfile(profileRes);
                 if (progressData) setProgress(progressData);
+
+                // Fetch review data if attemptId is present
+                if (quizData.attemptId) {
+                    try {
+                        const reviewData = await learningQuizService.getQuizReview(quizData.attemptId);
+                        if (reviewData && reviewData.items) {
+                            setReviewItems(reviewData.items);
+                        }
+                    } catch (err) {
+                        console.error('Failed to load quiz review:', err);
+                    }
+                }
             } catch (error) {
                 toast({ title: 'Lỗi', description: error instanceof Error ? error.message : 'Không thể tải kết quả.', variant: 'destructive' });
             } finally { setIsLoading(false); }
@@ -125,8 +141,15 @@ export function CourseResultPage({ initialCourse }: { initialCourse: Course }) {
                 </div>
             </div>
 
+            {/* Answer Review Section */}
+            {reviewItems.length > 0 && (
+                <div className="max-w-2xl mx-auto">
+                    <QuizReviewAnswers items={reviewItems} />
+                </div>
+            )}
+
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 {result.isPassed && (
                     <Button
                         onClick={() => setShowCertDialog(true)}
