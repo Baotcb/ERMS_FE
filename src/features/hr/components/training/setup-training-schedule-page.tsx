@@ -15,15 +15,11 @@ import { Course, CourseResult, UpdateCourseCommand } from '@/features/hr/types/c
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import { CreateCourseDialog } from './create-course-dialog';
-
-function isValidHttpUrl(value: string): boolean {
-    try {
-        const url = new URL(value);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-        return false;
-    }
-}
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { trainingScheduleSchema } from '@/features/hr/schema/training-schedule-schema';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 function sanitizePlainText(value: string): string {
     return value
@@ -77,18 +73,28 @@ export function SetupTrainingSchedulePage({
     const searchParams = useSearchParams();
     const initialCourseId = searchParams.get('courseId') || initialCourseDetails?.id || '';
 
-    const [selectedCourseId, setSelectedCourseId] = useState<string>(initialCourseId);
-    const [locationType, setLocationType] = useState<'online' | 'offline'>('online');
-    const [startDate, setStartDate] = useState('');
-    const [startTime, setStartTime] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [endTime, setEndTime] = useState('');
-    const [meetingLink, setMeetingLink] = useState('');
-    const [offlineLocation, setOfflineLocation] = useState('');
-    const [notifyTrainerOnAssignment, setNotifyTrainerOnAssignment] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const form = useForm<z.infer<typeof trainingScheduleSchema>>({
+        resolver: zodResolver(trainingScheduleSchema),
+        defaultValues: {
+            selectedCourseId: initialCourseId,
+            locationType: 'online',
+            startDate: '',
+            startTime: '',
+            endDate: '',
+            endTime: '',
+            meetingLink: '',
+            offlineLocation: '',
+            notifyTrainerOnAssignment: true,
+        },
+        mode: 'onChange',
+    });
+
+    const locationType = form.watch('locationType');
+    const selectedCourseId = form.watch('selectedCourseId');
 
     const buildDateTime = (date: string, time: string): Date | null => {
         if (!date || !time) {
@@ -98,13 +104,13 @@ export function SetupTrainingSchedulePage({
         return Number.isNaN(value.getTime()) ? null : value;
     };
 
-    const resolveStartTimeIso = (): string | null => {
-        const dateTime = buildDateTime(startDate, startTime);
+    const resolveStartTimeIso = (data: z.infer<typeof trainingScheduleSchema>, currentCourseData?: Course): string | null => {
+        const dateTime = buildDateTime(data.startDate, data.startTime);
         if (dateTime) {
             return dateTime.toISOString();
         }
-        if (currentCourse?.startTime) {
-            return currentCourse.startTime;
+        if (currentCourseData?.startTime) {
+            return currentCourseData.startTime;
         }
         return null;
     };
@@ -118,12 +124,7 @@ export function SetupTrainingSchedulePage({
         { fallbackData: selectedCourseId === initialCourseDetails?.id ? initialCourseDetails : undefined }
     );
 
-    const handleSaveDraft = async () => {
-        if (!selectedCourseId) {
-            toast({ title: 'Lỗi', description: 'Vui lòng chọn khóa học', variant: 'destructive' });
-            return;
-        }
-
+    const onSubmit = async (data: z.infer<typeof trainingScheduleSchema>, isDraft: boolean) => {
         if (!currentCourse) {
             toast({ title: 'Lỗi', description: 'Chưa tải được thông tin khóa học. Vui lòng thử lại.', variant: 'destructive' });
             return;
@@ -135,98 +136,7 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        const normalizedMeetingLink = meetingLink.trim();
-        const normalizedOfflineLocation = sanitizePlainText(offlineLocation);
-
-        if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
-            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ. Để trống nếu muốn hệ thống tự tạo Zoom.', variant: 'destructive' });
-            return;
-        }
-
-        const draftStart = buildDateTime(startDate, startTime);
-        const draftEnd = buildDateTime(endDate, endTime);
-        if (draftStart && draftEnd && draftEnd < draftStart) {
-            toast({ title: 'Lỗi', description: 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu', variant: 'destructive' });
-            return;
-        }
-
-        if (locationType === 'offline' && !normalizedOfflineLocation) {
-            toast({ title: 'Lỗi', description: 'Vui lòng nhập phòng họp/địa điểm tổ chức', variant: 'destructive' });
-            return;
-        }
-
-        const resolvedStartTime = resolveStartTimeIso();
-        if (!resolvedStartTime) {
-            toast({ title: 'Lỗi', description: 'Khóa học chưa có thời gian bắt đầu hợp lệ. Vui lòng chọn ngày giờ.', variant: 'destructive' });
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const { baseDescription } = parseScheduleConfig(currentCourse?.description);
-            const locationValue = locationType === 'online' ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') : normalizedOfflineLocation;
-            await courseService.updateCourse(selectedCourseId, {
-                ...currentCourse!,
-                trainerEmail: normalizedTrainerEmail,
-                startTime: resolvedStartTime,
-                isOnline: locationType === 'online',
-                location: locationValue,
-                description: buildScheduleDescription(baseDescription, { startDate, startTime, endDate, endTime }, locationValue, notifyTrainerOnAssignment, true),
-            } as UpdateCourseCommand);
-            toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
-        } catch (err) {
-            const errorMessage = err instanceof Error
-                ? err.message
-                : 'Không thể lưu bản nháp lịch trình. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handlePublish = async () => {
-        if (!selectedCourseId) {
-            toast({ title: 'Lỗi', description: 'Vui lòng chọn khóa học', variant: 'destructive' });
-            return;
-        }
-
-        if (!currentCourse) {
-            toast({ title: 'Lỗi', description: 'Chưa tải được thông tin khóa học. Vui lòng thử lại.', variant: 'destructive' });
-            return;
-        }
-
-        const normalizedTrainerEmail = (currentCourse.trainerEmail || '').trim().toLowerCase();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedTrainerEmail)) {
-            toast({ title: 'Lỗi', description: 'Khóa học chưa có email giảng viên hợp lệ.', variant: 'destructive' });
-            return;
-        }
-
-        const normalizedMeetingLink = meetingLink.trim();
-        const normalizedOfflineLocation = sanitizePlainText(offlineLocation);
-
-        if (!startDate || !endDate || !startTime || !endTime) {
-            toast({ title: 'Lỗi', description: 'Vui lòng điền đầy đủ ngày và giờ bắt đầu/kết thúc', variant: 'destructive' });
-            return;
-        }
-
-        const publishStart = buildDateTime(startDate, startTime);
-        const publishEnd = buildDateTime(endDate, endTime);
-        if (!publishStart || !publishEnd || publishEnd < publishStart) {
-            toast({ title: 'Lỗi', description: 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu', variant: 'destructive' });
-            return;
-        }
-
-        if (locationType === 'offline' && !normalizedOfflineLocation) {
-            toast({ title: 'Lỗi', description: 'Vui lòng nhập phòng họp/địa điểm tổ chức', variant: 'destructive' });
-            return;
-        }
-
-        if (locationType === 'online' && normalizedMeetingLink && !isValidHttpUrl(normalizedMeetingLink)) {
-            toast({ title: 'Lỗi', description: 'Link cuộc họp không hợp lệ. Để trống nếu muốn hệ thống tự tạo Zoom.', variant: 'destructive' });
-            return;
-        }
-
-        const resolvedStartTime = resolveStartTimeIso();
+        const resolvedStartTime = resolveStartTimeIso(data, currentCourse);
         if (!resolvedStartTime) {
             toast({ title: 'Lỗi', description: 'Không xác định được thời gian bắt đầu hợp lệ.', variant: 'destructive' });
             return;
@@ -235,19 +145,34 @@ export function SetupTrainingSchedulePage({
         setIsSubmitting(true);
         try {
             const { baseDescription } = parseScheduleConfig(currentCourse?.description);
-            const locationValue = locationType === 'online' ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') : normalizedOfflineLocation;
+            const normalizedMeetingLink = (data.meetingLink || '').trim();
+            const normalizedOfflineLocation = sanitizePlainText(data.offlineLocation || '');
+            
+            const locationValue = data.locationType === 'online' 
+                ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') 
+                : normalizedOfflineLocation;
+                
             await courseService.updateCourse(selectedCourseId, {
-                ...currentCourse!,
+                ...currentCourse,
                 trainerEmail: normalizedTrainerEmail,
                 startTime: resolvedStartTime,
-                isOnline: locationType === 'online',
+                isOnline: data.locationType === 'online',
                 location: locationValue,
-                description: buildScheduleDescription(baseDescription, { startDate, startTime, endDate, endTime }, locationValue, notifyTrainerOnAssignment, false),
+                description: buildScheduleDescription(
+                    baseDescription, 
+                    { startDate: data.startDate, startTime: data.startTime, endDate: data.endDate, endTime: data.endTime }, 
+                    locationValue, 
+                    data.notifyTrainerOnAssignment, 
+                    isDraft
+                ),
             } as UpdateCourseCommand);
 
-            // 2. Complete scheduling step only (no curriculum/lesson/publish calls here).
-            toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học. Email trainer sẽ được gửi cùng lúc khi phân công học viên.' });
-            router.push(publishRedirectPath);
+            if (isDraft) {
+                toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
+            } else {
+                toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học. Email trainer sẽ được gửi cùng lúc khi phân công học viên.' });
+                router.push(publishRedirectPath);
+            }
         } catch (error: unknown) {
             const errorMessage = error instanceof Error
                 ? error.message
@@ -259,7 +184,7 @@ export function SetupTrainingSchedulePage({
     };
 
     const handleCourseCreated = async (courseId: string) => {
-        setSelectedCourseId(courseId);
+        form.setValue('selectedCourseId', courseId, { shouldValidate: true });
         setIsCreateCourseOpen(false);
         setRefreshKey(prev => prev + 1);
         toast({ title: 'Đã tạo khóa học', description: 'Khóa học đã được tạo.' });
@@ -277,6 +202,8 @@ export function SetupTrainingSchedulePage({
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-8 space-y-10 border border-gray-100">
+            <Form {...form}>
+                <form className="space-y-10">
 
                 {/* Stepper */}
                 <div className="flex items-center w-full px-4 pt-2">
@@ -319,7 +246,7 @@ export function SetupTrainingSchedulePage({
                             <SearchableCombobox<Course>
                                 key={refreshKey}
                                 value={selectedCourseId}
-                                onValueChange={setSelectedCourseId}
+                                onValueChange={(id) => form.setValue('selectedCourseId', id, { shouldValidate: true })}
                                 fetcher={async (search, page) => {
                                     const res = await courseService.getAllCourses({ search, page, pageSize: 20, status: 'Draft' });
                                     const totalPages = res.totalPages || 1;
@@ -352,49 +279,64 @@ export function SetupTrainingSchedulePage({
                             </div>
                             
                             <div className="grid grid-cols-2 gap-6 bg-gray-50/50 p-5 rounded-xl border border-gray-100">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-600">Ngày bắt đầu</label>
-                                    <div className="relative">
-                                        <Input 
-                                            type="date"
-                                            value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
-                                            className="bg-white border-gray-200" 
-                                        />
-                                        <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-600">Ngày kết thúc</label>
-                                    <div className="relative">
-                                        <Input 
-                                            type="date"
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                            min={startDate}
-                                            className="bg-white border-gray-200" 
-                                        />
-                                        <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-600">Giờ bắt đầu</label>
-                                    <Input
-                                        type="time"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                        className="bg-white border-gray-200"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-gray-600">Giờ kết thúc</label>
-                                    <Input
-                                        type="time"
-                                        value={endTime}
-                                        onChange={(e) => setEndTime(e.target.value)}
-                                        className="bg-white border-gray-200"
-                                    />
-                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="startDate"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2">
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <label className="text-sm font-semibold text-gray-600 block mb-2">Ngày bắt đầu</label>
+                                                    <Input type="date" {...field} className="bg-white border-gray-200" />
+                                                    <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-9 pointer-events-none" />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="endDate"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2">
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <label className="text-sm font-semibold text-gray-600 block mb-2">Ngày kết thúc</label>
+                                                    <Input type="date" min={form.watch('startDate')} {...field} className="bg-white border-gray-200" />
+                                                    <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-9 pointer-events-none" />
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="startTime"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-600 block">Giờ bắt đầu</label>
+                                            <FormControl>
+                                                <Input type="time" {...field} className="bg-white border-gray-200" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="endTime"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-600 block">Giờ kết thúc</label>
+                                            <FormControl>
+                                                <Input type="time" {...field} className="bg-white border-gray-200" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </div>
 
@@ -407,7 +349,8 @@ export function SetupTrainingSchedulePage({
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <button 
-                                    onClick={() => setLocationType('online')}
+                                    type="button"
+                                    onClick={() => form.setValue('locationType', 'online', { shouldValidate: true })}
                                     className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all ${locationType === 'online' ? 'border-[#0F4C75] bg-blue-50/20' : 'border-gray-100 hover:border-blue-100 bg-white'}`}
                                 >
                                     <div className={`p-3 rounded-full ${locationType === 'online' ? 'bg-[#0F4C75] text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -417,7 +360,8 @@ export function SetupTrainingSchedulePage({
                                 </button>
                                 
                                 <button 
-                                    onClick={() => setLocationType('offline')}
+                                    type="button"
+                                    onClick={() => form.setValue('locationType', 'offline', { shouldValidate: true })}
                                     className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all ${locationType === 'offline' ? 'border-[#0F4C75] bg-blue-50/20' : 'border-gray-100 hover:border-blue-100 bg-white'}`}
                                 >
                                     <div className={`p-3 rounded-full ${locationType === 'offline' ? 'bg-[#0F4C75] text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -436,24 +380,42 @@ export function SetupTrainingSchedulePage({
                                             <p className="text-xs text-blue-600 mt-0.5">Hệ thống sẽ tự động tạo phòng họp Zoom và gửi link cho giảng viên + học viên khi phân công. Bạn có thể bỏ trống hoặc nhập link thủ công.</p>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-gray-600">Link cuộc họp (tùy chọn)</label>
-                                        <Input
-                                            value={meetingLink}
-                                            onChange={(e) => setMeetingLink(e.target.value)}
-                                            placeholder="Để trống để tự động tạo Zoom, hoặc nhập https://..."
-                                            className="bg-gray-50/50 border-gray-200 font-medium"
-                                        />
-                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="meetingLink"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-2">
+                                                <label className="text-sm font-semibold text-gray-600">Link cuộc họp (tùy chọn)</label>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        placeholder="Để trống để tự động tạo Zoom, hoặc nhập https://..."
+                                                        className="bg-gray-50/50 border-gray-200 font-medium"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             ) : (
                                 <div className="space-y-2 mt-4 animate-in fade-in duration-300">
-                                    <label className="text-sm font-semibold text-gray-600">Phòng họp / Địa điểm</label>
-                                    <Input
-                                        value={offlineLocation}
-                                        onChange={(e) => setOfflineLocation(e.target.value)}
-                                        placeholder="Nhập tên phòng hoặc địa chỉ..."
-                                        className="bg-gray-50/50 border-gray-200 font-medium"
+                                    <FormField
+                                        control={form.control}
+                                        name="offlineLocation"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-2">
+                                                <label className="text-sm font-semibold text-gray-600">Phòng họp / Địa điểm</label>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        placeholder="Nhập tên phòng hoặc địa chỉ..."
+                                                        className="bg-gray-50/50 border-gray-200 font-medium"
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
                             )}
@@ -467,18 +429,26 @@ export function SetupTrainingSchedulePage({
                             </div>
                             
                             <div className="bg-gray-50/50 p-6 rounded-xl border border-gray-100 space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
-                                            <Users className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold text-gray-700">Thông báo giảng viên khi phân công học viên</span>
-                                            <p className="text-xs text-gray-500 mt-1">Email giảng viên sẽ được gửi cùng lúc với email học viên ở bước phân công.</p>
-                                        </div>
-                                    </div>
-                                    <Switch checked={notifyTrainerOnAssignment} onCheckedChange={setNotifyTrainerOnAssignment} className="data-[state=checked]:bg-[#0F4C75]" />
-                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="notifyTrainerOnAssignment"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
+                                                    <Users className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-gray-700">Thông báo giảng viên khi phân công học viên</span>
+                                                    <p className="text-xs text-gray-500 mt-1">Email giảng viên sẽ được gửi cùng lúc với email học viên ở bước phân công.</p>
+                                                </div>
+                                            </div>
+                                            <FormControl>
+                                                <Switch checked={field.value} onCheckedChange={field.onChange} className="data-[state=checked]:bg-[#0F4C75]" />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </div>
                     </div>
@@ -538,16 +508,18 @@ export function SetupTrainingSchedulePage({
                         <ChevronLeft className="w-4 h-4 mr-1" /> Quay lại
                     </Button>
                     <div className="flex gap-3">
-                        <Button 
+                        <Button
+                            type="button"
                             variant="outline" 
-                            onClick={handleSaveDraft}
+                            onClick={form.handleSubmit((data) => onSubmit(data, true))}
                             disabled={isSubmitting || !selectedCourseId}
                             className="px-6 rounded-full border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-700"
                         >
                             Lưu nháp
                         </Button>
-                        <Button 
-                            onClick={handlePublish}
+                        <Button
+                            type="button"
+                            onClick={form.handleSubmit((data) => onSubmit(data, false))}
                             disabled={isSubmitting || !selectedCourseId}
                             className="px-6 rounded-full bg-gradient-to-r from-[#0F4C75] to-[#1A5F8C] hover:opacity-90 text-white min-w-[220px] shadow-md transition-all active:scale-95"
                         >
@@ -560,6 +532,8 @@ export function SetupTrainingSchedulePage({
                     </div>
                 </div>
 
+                </form>
+            </Form>
             </div>
 
             <CreateCourseDialog
