@@ -1,24 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { 
-    PlusCircle, GripVertical, FileText, Video,
-    Trash2, Loader2, MoreVertical, Clock, Layers, Upload, Paperclip, RefreshCw
-} from 'lucide-react';
+import { Loader2, PlusCircle, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import { 
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter 
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CourseSection } from '@/features/hr/types/course-content-types';
+import type { CourseSection, Material } from '@/features/hr/types/course-content-types';
 import { courseContentService } from '@/features/hr/api/course-content-service';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/core/auth/hooks';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
+import { CurriculumSectionItem } from './curriculum-section-item';
 
 interface CurriculumManagerProps {
     courseId: string;
@@ -47,13 +42,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const [isAddingSection, setIsAddingSection] = useState(false);
     const [newSectionTitle, setNewSectionTitle] = useState('');
 
-    // Lesson addition state
-    const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-    const [lessonTitle, setLessonTitle] = useState('');
-    const [lessonVideoUrl, setLessonVideoUrl] = useState('');
-
-    const [lessonDuration, setLessonDuration] = useState(15);
-    const [isAddingLesson, setIsAddingLesson] = useState(false);
+    // Lesson addition state is now encapsulated in CurriculumSectionItem
     const [uploadingLessonId, setUploadingLessonId] = useState<string | null>(null);
     const [syncingLessonId, setSyncingLessonId] = useState<string | null>(null);
     const [isCurriculumUnavailable, setIsCurriculumUnavailable] = useState(false);
@@ -124,33 +113,119 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         }
     }, [materialMirrorStorageKey]);
 
+    const loadMaterialMirror = useCallback((): Record<string, Material[]> => {
+        if (typeof window === 'undefined') return {};
+        try {
+            const raw = window.localStorage.getItem(materialMirrorStorageKey);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw) as MaterialMirrorItem[];
+            const result: Record<string, Material[]> = {};
+            for (const item of parsed) {
+                if (item.materials && item.materials.length > 0) {
+                    result[item.lessonId] = item.materials;
+                }
+            }
+            return result;
+        } catch {
+            return {};
+        }
+    }, [materialMirrorStorageKey]);
+
     const mergeServerWithDraft = useCallback((serverSections: CourseSection[], draftSections: CourseSection[]) => {
-        if (!draftSections.length) {
-            return serverSections;
+        const materialMirror = loadMaterialMirror();
+        const serverLessonsFlat = serverSections.flatMap(s => s.lessons || []);
+        const serverLessonMap = new Map(serverLessonsFlat.map(l => [l.id, l]));
+
+        if (!draftSections.length && serverSections.length > 0) {
+            // No draft, just return server sections with locally mirrored materials appended
+            return serverSections.map(s => ({
+                ...s,
+                lessons: (s.lessons || []).map(lesson => {
+                    const localMaterials = materialMirror[lesson.id] || [];
+                    const serverMaterialIds = new Set(lesson.materials?.map(m => m.id) || []);
+                    const uniqueLocalMaterials = localMaterials.filter(m => !serverMaterialIds.has(m.id));
+                    return {
+                        ...lesson,
+                        materials: [...(lesson.materials || []), ...uniqueLocalMaterials]
+                    };
+                })
+            }));
         }
 
-        const draftBySectionId = new Map(draftSections.map(section => [section.id, section]));
+        const usedServerLessonIds = new Set<string>();
 
-        const mergedServerSections = serverSections.map((serverSection) => {
-            const draftSection = draftBySectionId.get(serverSection.id);
-            if (!draftSection) {
-                return serverSection;
-            }
+        // 1. We process local draft sections and inject any synced server lessons back into them.
+        const processedDraftSections = draftSections.map(section => {
+            const processedLessons = (section.lessons || []).map(draftLesson => {
+                const serverLesson = serverLessonMap.get(draftLesson.id);
+                // If the lesson exists on the server, we use the server data 
+                // but keep it in this local section structure!
+                const baseLesson = serverLesson || draftLesson;
+                
+                if (serverLesson) {
+                    usedServerLessonIds.add(serverLesson.id);
+                }
 
-            const localDraftLessons = (draftSection.lessons || []).filter((lesson) => isLocalId(lesson.id));
-            if (!localDraftLessons.length) {
-                return serverSection;
-            }
+                const localMaterials = materialMirror[baseLesson.id] || [];
+                const serverMaterialIds = new Set(baseLesson.materials?.map(m => m.id) || []);
+                const uniqueLocalMaterials = localMaterials.filter(m => !serverMaterialIds.has(m.id));
+
+                return {
+                    ...baseLesson,
+                    materials: [...(baseLesson.materials || []), ...uniqueLocalMaterials]
+                };
+            });
 
             return {
-                ...serverSection,
-                lessons: [...serverSection.lessons, ...localDraftLessons],
+                ...section,
+                lessons: processedLessons
             };
         });
 
-        const localDraftSections = draftSections.filter((section) => isLocalId(section.id));
-        return [...mergedServerSections, ...localDraftSections];
-    }, []);
+        // 2. Are there any server lessons that are NOT in the draft structure?
+        // Maybe they were added from another device.
+        const leftoverServerLessons = serverLessonsFlat.filter(l => !usedServerLessonIds.has(l.id));
+
+        if (leftoverServerLessons.length === 0) {
+            return processedDraftSections;
+        }
+
+        // 3. We have leftover server lessons. We try to put them in their original server sections.
+        const missingServerSections = serverSections
+            .map(s => ({
+                ...s,
+                // Only keep leftover lessons
+                lessons: (s.lessons || []).filter(l => !usedServerLessonIds.has(l.id)).map(lesson => {
+                    const localMaterials = materialMirror[lesson.id] || [];
+                    const serverMaterialIds = new Set(lesson.materials?.map(m => m.id) || []);
+                    const uniqueLocalMaterials = localMaterials.filter(m => !serverMaterialIds.has(m.id));
+                    return {
+                        ...lesson,
+                        materials: [...(lesson.materials || []), ...uniqueLocalMaterials]
+                    };
+                })
+            }))
+            .filter(s => s.lessons.length > 0);
+
+        // Deduplicate section names if the backend provided a 'Course Lessons' but we also have one
+        const draftTitles = new Set(processedDraftSections.map(s => s.title.trim().toLowerCase()));
+        
+        const finalLeftoverSections = missingServerSections.filter(s => {
+            return !draftTitles.has(s.title.trim().toLowerCase());
+        });
+
+        // If 'Course Lessons' is filtered out but it had lessons, append them to the existing one!
+        missingServerSections.forEach(s => {
+            if (draftTitles.has(s.title.trim().toLowerCase())) {
+                const matchingDraft = processedDraftSections.find(ds => ds.title.trim().toLowerCase() === s.title.trim().toLowerCase());
+                if (matchingDraft) {
+                    matchingDraft.lessons.push(...s.lessons);
+                }
+            }
+        });
+
+        return [...finalLeftoverSections, ...processedDraftSections];
+    }, [loadMaterialMirror]);
 
     const loadCurriculum = useCallback(async () => {
         setIsLoading(true);
@@ -273,44 +348,44 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         return data.secure_url;
     };
 
-    const handleAddLesson = async () => {
-        if (!lessonTitle.trim() || !activeSectionId) return;
-        setIsAddingLesson(true);
+    const handleAddLesson = async (
+        sectionId: string,
+        payload: { title: string; videoUrl?: string; durationMinutes: number }
+    ) => {
+        const targetSection = sections.find((s) => s.id === sectionId);
+        if (!targetSection) {
+            toast({ title: 'Lỗi', description: 'Không tìm thấy học phần để thêm bài giảng.', variant: 'destructive' });
+            return;
+        }
+
+        const orderIndex = (targetSection.lessons?.length || 0) + 1;
+        
         try {
-            const targetSection = sections.find((s) => s.id === activeSectionId);
-            const orderIndex = (targetSection?.lessons.length || 0) + 1;
-
-            if (!targetSection) {
-                throw new Error('Không tìm thấy học phần để thêm bài giảng.');
-            }
-
             const createPayload = {
                 courseId,
                 sectionId: getSectionIdForCreate(targetSection.id),
-                title: lessonTitle,
-                description: lessonTitle,
-                content: lessonTitle,
-                videoUrl: lessonVideoUrl || undefined,
-                durationMinutes: lessonDuration || 15,
+                title: payload.title,
+                description: payload.title,
+                content: payload.title,
+                videoUrl: payload.videoUrl || undefined,
+                durationMinutes: payload.durationMinutes || 15,
                 orderIndex,
             };
 
             const newLesson = await courseContentService.createLesson(createPayload);
 
-            setSections(prev => prev.map(s =>
-                s.id === activeSectionId
-                    ? { ...s, lessons: [...s.lessons, newLesson] }
-                    : s
-            ));
+            setSections((prev) =>
+                prev.map((s) =>
+                    s.id === sectionId
+                        ? { ...s, lessons: [...(s.lessons || []), newLesson] }
+                        : s
+                )
+            );
 
-            setLessonTitle('');
-            setLessonVideoUrl('');
-
-            setActiveSectionId(null);
-            toast({ title: 'Đã đồng bộ server', description: 'Bài giảng đã được lưu trên hệ thống.' });
+            toast({ title: 'Thêm bài giảng thành công', description: 'Bài giảng đã được lưu trên hệ thống.' });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Không thể thêm bài giảng.';
-            const missingServerSectionHint = isLocalId(activeSectionId || '')
+            const missingServerSectionHint = isLocalId(sectionId)
                 ? ' Học phần hiện chưa có ID backend nên lesson có thể bị backend từ chối (400).'
                 : '';
             toast({
@@ -320,8 +395,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                     : `${message}${missingServerSectionHint}`,
                 variant: 'destructive',
             });
-        } finally {
-            setIsAddingLesson(false);
+            throw error;
         }
     };
 
@@ -544,199 +618,20 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                     </div>
                 ) : (
                     sections.map((section, sIdx) => (
-                        <div key={section.id} className="bg-gray-50/50 rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-                            <div className="p-5 flex items-center justify-between bg-white border-b border-gray-100">
-                                <div className="flex items-center gap-3">
-                                    <GripVertical className="w-4 h-4 text-gray-300 cursor-grab" />
-                                    <div>
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Học phần {sIdx + 1}</span>
-                                        <h4 className="font-bold text-[#0F4C75] text-lg">{section.title}</h4>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="rounded-xl h-9 w-9 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                        onClick={() => handleDeleteSection(section.id)}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="p-5 space-y-3">
-                                {section.lessons.map((lesson, lIdx) => (
-                                    <div key={lesson.id} className="space-y-3">
-                                        <div className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-[#3282B8]/30 hover:shadow-md transition-all">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-blue-50 text-[#3282B8] rounded-xl flex items-center justify-center text-sm font-bold">
-                                                    {lIdx + 1}
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-bold text-gray-800 group-hover:text-[#3282B8] transition-colors">{lesson.title}</h5>
-                                                    <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                                                        {isLocalId(lesson.id) ? (
-                                                            <span className="flex items-center gap-1 text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                                                                Nháp local
-                                                            </span>
-                                                        ) : (
-                                                            <span className="flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                                                                Đã đồng bộ
-                                                            </span>
-                                                        )}
-                                                        <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
-                                                                <FileText className="w-3 h-3" /> Văn bản
-                                                            </span>
-                                                        {lesson.videoUrl && (
-                                                            <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full hover:bg-purple-100 transition-colors">
-                                                                <Video className="w-3 h-3" /> Video
-                                                            </a>
-                                                        )}
-                                                        <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
-                                                            <Clock className="w-3 h-3" /> {lesson.durationMinutes} phút
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {isLocalId(lesson.id) ? (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="rounded-xl border-amber-300 text-amber-700 hover:bg-amber-50"
-                                                        onClick={() => void handleSyncLocalLesson(section.id, lesson.id)}
-                                                        disabled={syncingLessonId === lesson.id || uploadingLessonId === lesson.id}
-                                                    >
-                                                        {syncingLessonId === lesson.id ? (
-                                                            <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                                                        ) : (
-                                                            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                                                        )}
-                                                        Đồng bộ server
-                                                    </Button>
-                                                ) : null}
-                                                <Button asChild variant="outline" size="sm" className="rounded-xl border-gray-200">
-                                                    <label htmlFor={`upload-material-${lesson.id}`} className="cursor-pointer inline-flex items-center gap-1.5">
-                                                        {uploadingLessonId === lesson.id ? (
-                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                        ) : (
-                                                            <Upload className="w-3.5 h-3.5" />
-                                                        )}
-                                                        {isUnsyncedLessonId(lesson.id) ? 'Chưa đồng bộ' : 'Tải lên tài liệu'}
-                                                    </label>
-                                                </Button>
-                                                <input
-                                                    id={`upload-material-${lesson.id}`}
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(event) => {
-                                                        void handleUploadMaterial(lesson.id, event.target.files?.[0] || null);
-                                                        event.target.value = '';
-                                                    }}
-                                                    disabled={uploadingLessonId === lesson.id || isUnsyncedLessonId(lesson.id)}
-                                                />
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm" className="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <MoreVertical className="w-4 h-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="rounded-xl min-w-[160px]">
-                                                        <DropdownMenuItem
-                                                            className="gap-2 font-medium text-red-600 focus:text-red-600 focus:bg-red-50"
-                                                            onClick={() => handleDeleteLesson(section.id, lesson.id)}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" /> Xóa bài giảng
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
-                                        </div>
-                                        {lesson.materials && lesson.materials.length > 0 ? (
-                                            <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
-                                                <p className="text-[11px] font-bold text-[#0F4C75] uppercase tracking-wider mb-2">Tài liệu học tập ({lesson.materials.length})</p>
-                                                <div className="space-y-1.5">
-                                                    {lesson.materials.map((material) => (
-                                                        <a
-                                                            key={material.id}
-                                                            href={material.fileUrl}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="flex items-center justify-between rounded-lg bg-white border border-blue-100 px-3 py-2 text-sm text-[#0F4C75] hover:border-blue-300"
-                                                        >
-                                                            <span className="inline-flex items-center gap-2 truncate">
-                                                                <Paperclip className="w-3.5 h-3.5 shrink-0" />
-                                                                <span className="truncate">{material.title || 'Tài liệu đính kèm'}</span>
-                                                            </span>
-                                                            <span className="text-[11px] text-gray-500 ml-3 shrink-0">{material.fileType || 'FILE'}</span>
-                                                        </a>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                ))}
-
-                                <Dialog open={activeSectionId === section.id} onOpenChange={(open) => !open && setActiveSectionId(null)}>
-                                    <DialogTrigger asChild>
-                                        <Button 
-                                            variant="ghost" 
-                                            onClick={() => setActiveSectionId(section.id)}
-                                            className="w-full border border-dashed border-gray-200 rounded-2xl py-8 hover:bg-blue-50 hover:border-blue-200 hover:text-[#0F4C75] text-gray-400 gap-2 transition-all font-bold group"
-                                        >
-                                            <PlusCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                            Thêm bài giảng mới
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="rounded-3xl max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
-                                        <DialogHeader>
-                                            <DialogTitle className="text-[#0F4C75] font-bold text-xl">Thêm bài giảng mới</DialogTitle>
-                                            <DialogDescription className="text-sm text-gray-500">Điền thông tin cơ bản của bài giảng trước khi upload tài liệu học tập.</DialogDescription>
-                                        </DialogHeader>
-                                        <div className="py-6 space-y-4">
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tiêu đề bài giảng</Label>
-                                                    <Input 
-                                                        placeholder="VD: Tổng quan về React..." 
-                                                        value={lessonTitle}
-                                                        onChange={(e) => setLessonTitle(e.target.value)}
-                                                        className="rounded-xl border-gray-200 h-11"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Link video bài giảng (tùy chọn)</Label>
-                                                    <Input 
-                                                        placeholder="https://youtube.com/watch?v=... hoặc URL video khác" 
-                                                        value={lessonVideoUrl}
-                                                        onChange={(e) => setLessonVideoUrl(e.target.value)}
-                                                        className="rounded-xl border-gray-200 h-11"
-                                                    />
-                                                    <p className="text-xs text-gray-400">Hỗ trợ YouTube, Vimeo hoặc link video trực tiếp</p>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Thời lượng dự kiến (phút)</Label>
-                                                    <Input 
-                                                        type="number"
-                                                        value={lessonDuration}
-                                                        onChange={(e) => setLessonDuration(parseInt(e.target.value))}
-                                                        className="rounded-xl border-gray-200 h-11"
-                                                    />
-                                                </div>
-                                        </div>
-                                        <DialogFooter>
-                                            <Button 
-                                                onClick={handleAddLesson} 
-                                                className="w-full bg-[#0F4C75] text-white rounded-2xl py-7 font-bold text-lg shadow-lg shadow-blue-100"
-                                                disabled={isAddingLesson}
-                                            >
-                                                {isAddingLesson ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Lưu bài giảng'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            </div>
-                        </div>
+                        <CurriculumSectionItem
+                            key={section.id}
+                            section={section}
+                            index={sIdx}
+                            syncingLessonId={syncingLessonId}
+                            uploadingLessonId={uploadingLessonId}
+                            isLocalId={isLocalId}
+                            isUnsyncedLessonId={isUnsyncedLessonId}
+                            onDeleteSection={handleDeleteSection}
+                            onAddLesson={handleAddLesson}
+                            onSyncLocalLesson={handleSyncLocalLesson}
+                            onUploadMaterial={handleUploadMaterial}
+                            onDeleteLesson={handleDeleteLesson}
+                        />
                     ))
                 )}
             </div>

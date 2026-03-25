@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { handleApiError } from '@/features/employee/utils/api-error-handler';
 import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import { hrTrainingService } from '@/features/hr/api/hr-training-service';
 import { courseService } from '@/features/hr/api/course-service';
@@ -205,12 +206,7 @@ export function CreateCourseDialog({
             onOpenChange(false);
             onCreated(result.courseId, resolvedPlanId);
         } catch (error) {
-            const rawMessage = error instanceof Error ? error.message : 'Không thể tạo khóa học.';
-            toast({
-                title: 'Không thể tạo khóa học',
-                description: rawMessage,
-                variant: 'destructive',
-            });
+            handleApiError(error, toast, 'Không thể tạo khóa học');
         } finally {
             setIsSubmitting(false);
         }
