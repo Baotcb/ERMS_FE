@@ -90,57 +90,21 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
 
         setIsDownloading(true);
         try {
-            const html2canvasModule = await import('html2canvas');
-            const html2canvas = html2canvasModule.default || html2canvasModule;
+            // Use dom-to-image-more for better modern CSS/SVG support
+            const domtoimage = (await import('dom-to-image-more')).default;
 
-            const canvas = await html2canvas(certElement, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: certElement.scrollWidth,
-                height: certElement.scrollHeight,
-                onclone: (clonedDoc: Document) => {
-                    // 1. Neutralize Radix UI's lab()/oklch() CSS variables
-                    const root = clonedDoc.documentElement;
-                    const cs = getComputedStyle(document.documentElement);
-                    for (let i = 0; i < cs.length; i++) {
-                        const prop = cs[i];
-                        if (prop.startsWith('--')) {
-                            const val = cs.getPropertyValue(prop).trim();
-                            if (val.includes('lab(') || val.includes('oklch(') || val.includes('oklab(')) {
-                                root.style.setProperty(prop, 'transparent');
-                            }
-                        }
-                    }
-
-                    // 2. Replace linear-gradient backgrounds with solid colors
-                    // html2canvas crashes on gradient patterns when element height/width ≤ 1px
-                    const certClone = clonedDoc.getElementById('certificate-print-area');
-                    if (certClone) {
-                        // 3. Remove parent's transform:scale() so cert renders at full 297mm size
-                        let parent = certClone.parentElement;
-                        while (parent && parent !== clonedDoc.body) {
-                            parent.style.transform = 'none';
-                            parent.style.overflow = 'visible';
-                            parent.style.width = 'auto';
-                            parent.style.height = 'auto';
-                            parent = parent.parentElement;
-                        }
-
-                        certClone.querySelectorAll('*').forEach((el) => {
-                            const htmlEl = el as HTMLElement;
-                            const bg = htmlEl.style.background || '';
-                            if (bg.includes('linear-gradient')) {
-                                const colors = bg.match(/#[0-9A-Fa-f]{3,6}|rgb[a]?\([^)]+\)/g) || [];
-                                const solidColor = colors.find(c => c !== 'transparent') || '#ccc';
-                                htmlEl.style.background = solidColor;
-                            }
-                        });
-                    }
-                },
+            const dataUrl = await domtoimage.toPng(certElement, {
+                quality: 1,
+                bgcolor: '#ffffff',
+                // To get higher resolution (scale 2x)
+                width: certElement.clientWidth * 2,
+                height: certElement.clientHeight * 2,
+                style: {
+                    transform: 'scale(2)',
+                    transformOrigin: 'top left'
+                }
             });
 
-            const dataUrl = canvas.toDataURL('image/png');
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = `Certificate_${formData.learnerName || 'user'}_${formData.courseCode || 'course'}.png`;

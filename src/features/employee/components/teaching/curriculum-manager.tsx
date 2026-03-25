@@ -498,7 +498,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                 Thêm học phần
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="rounded-2xl max-w-md">
+                        <DialogContent className="rounded-2xl max-w-md" onInteractOutside={(e) => e.preventDefault()}>
                             <DialogHeader>
                                 <DialogTitle className="text-[#0F4C75] font-bold">Thêm học phần mới</DialogTitle>
                                 <DialogDescription className="text-sm text-gray-500">Nhập tiêu đề để tổ chức các bài giảng trong khóa học.</DialogDescription>
@@ -689,7 +689,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                                             Thêm bài giảng mới
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="rounded-3xl max-w-2xl">
+                                    <DialogContent className="rounded-3xl max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
                                         <DialogHeader>
                                             <DialogTitle className="text-[#0F4C75] font-bold text-xl">Thêm bài giảng mới</DialogTitle>
                                             <DialogDescription className="text-sm text-gray-500">Điền thông tin cơ bản của bài giảng trước khi upload tài liệu học tập.</DialogDescription>

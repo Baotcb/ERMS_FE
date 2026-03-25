@@ -73,6 +73,8 @@ export function CourseLessonsPage({
                     isUpdating={ctx.isUpdatingLesson}
                     onComplete={ctx.handleCompleteActiveLesson}
                     onNavigate={ctx.handleNavigateLesson}
+                    prevLesson={ctx.allLessons[ctx.activeLessonIndex - 1]}
+                    nextLesson={ctx.allLessons[ctx.activeLessonIndex + 1]}
                 />
             </div>
         </div>

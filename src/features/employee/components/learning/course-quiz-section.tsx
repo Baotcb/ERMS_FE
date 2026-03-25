@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/core/auth/hooks';
 import type { Course } from '@/features/hr/types/course-types';
 import type { CourseProgressDto, LearnerQuizQuestionDto, LearnerQuizResultDto } from '@/features/employee/types/learning-quiz-types';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { learningQuizService } from '@/features/employee/api/learning-quiz-service';
 import { quizService } from '@/features/hr/api/quiz-service';
 import { parseOptions } from './quiz/quiz-helpers';
@@ -293,14 +294,36 @@ export function CourseQuizSection({
                         </ul>
                     </div>
 
-                    <Button
-                        onClick={handleStartQuiz}
-                        disabled={isStarting || (quizMaxAttempts !== null && quizAttemptCount >= quizMaxAttempts)}
-                        className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98]"
-                    >
-                        {isStarting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ShieldCheck className="w-5 h-5 mr-2" />}
-                        Bắt đầu làm bài
-                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button
+                                disabled={isStarting || (quizMaxAttempts !== null && quizAttemptCount >= quizMaxAttempts)}
+                                className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98]"
+                            >
+                                {isStarting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ShieldCheck className="w-5 h-5 mr-2" />}
+                                Bắt đầu làm bài
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md rounded-2xl">
+                            <DialogHeader>
+                                <DialogTitle className="text-[#0F4C75] font-bold">Xác nhận bắt đầu thi</DialogTitle>
+                                <DialogDescription className="text-gray-500">
+                                    Thời gian làm bài sẽ đếm ngược liên tục. Bạn có chắc chắn muốn bắt đầu lúc này?
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="flex gap-2 sm:justify-end mt-4">
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" className="rounded-xl font-semibold">
+                                        Cần chuẩn bị thêm
+                                    </Button>
+                                </DialogTrigger>
+                                <Button onClick={handleStartQuiz} disabled={isStarting} className="bg-[#0F4C75] text-white rounded-xl shadow-lg font-bold">
+                                    {isStarting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                    Đồng ý, bắt đầu ngay
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
 
                     {quizMaxAttempts !== null && quizAttemptCount >= quizMaxAttempts && (
                         <p className="text-xs text-red-500 font-medium">Bạn đã dùng hết số lượt làm bài.</p>

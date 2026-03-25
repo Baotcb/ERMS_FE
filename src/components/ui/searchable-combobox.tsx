@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Search, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -68,7 +68,34 @@ export function SearchableCombobox<T>({
     const [searchTerm, setSearchTerm] = React.useState('');
     const debouncedSearch = useDebounceValue(searchTerm, 300);
 
+    const [activeIndex, setActiveIndex] = React.useState(-1);
+
+    // Reset active index when search changes or popover opens
+    React.useEffect(() => {
+        setActiveIndex(-1);
+    }, [searchTerm, open]);
+
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
+    // Track scroll for active item
+    React.useEffect(() => {
+        if (activeIndex >= 0 && scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const activeEl = container.children[0]?.children[activeIndex] as HTMLElement;
+            if (activeEl) {
+                const containerTop = container.scrollTop;
+                const containerBottom = containerTop + container.clientHeight;
+                const elemTop = activeEl.offsetTop - container.offsetTop;
+                const elemBottom = elemTop + activeEl.clientHeight;
+
+                if (elemTop < containerTop) {
+                    container.scrollTop = elemTop;
+                } else if (elemBottom > containerBottom) {
+                    container.scrollTop = elemBottom - container.clientHeight;
+                }
+            }
+        }
+    }, [activeIndex]);
 
     // Track selected item for the trigger display
     const selectedItem = React.useMemo(() => {
@@ -143,10 +170,24 @@ export function SearchableCombobox<T>({
                     disabled={disabled}
                     className={cn('w-full justify-between font-normal bg-white', className, !value && 'text-muted-foreground')}
                 >
-                    <span className="truncate">
+                    <span className="truncate pr-4 relative">
                         {value && selectedItem ? renderItem(selectedItem) : placeholder}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <div className="flex items-center">
+                        {value && (
+                            <div 
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    onValueChange('', undefined); 
+                                    setSearchTerm(''); 
+                                }}
+                                className="mr-1 p-0.5 hover:bg-gray-100 rounded-md cursor-pointer transition-colors"
+                            >
+                                <X className="h-4 w-4 shrink-0 opacity-50 hover:opacity-100" />
+                            </div>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </div>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -157,6 +198,22 @@ export function SearchableCombobox<T>({
                             placeholder={searchPlaceholder}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    setActiveIndex(prev => prev < items.length - 1 ? prev + 1 : prev);
+                                } else if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    setActiveIndex(prev => prev > 0 ? prev - 1 : prev);
+                                } else if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    if (activeIndex >= 0 && activeIndex < items.length) {
+                                        const item = items[activeIndex];
+                                        onValueChange(extractValue(item), item);
+                                        setOpen(false);
+                                    }
+                                }
+                            }}
                             className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
                         />
                     </div>
@@ -171,9 +228,10 @@ export function SearchableCombobox<T>({
                             </div>
                         ) : (
                             <div className="flex flex-col gap-1">
-                                {items.map((item) => {
+                                {items.map((item, index) => {
                                     const itemValue = extractValue(item);
                                     const isSelected = value === itemValue;
+                                    const isActive = activeIndex === index;
                                     return (
                                         <div
                                             key={itemValue}
@@ -181,9 +239,12 @@ export function SearchableCombobox<T>({
                                                 onValueChange(itemValue, item);
                                                 setOpen(false);
                                             }}
+                                            onMouseEnter={() => setActiveIndex(index)}
                                             className={cn(
-                                                'relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none hover:bg-gray-100/80 transition-colors',
-                                                isSelected && 'bg-blue-50/50 text-[#0F4C75] font-medium'
+                                                'relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors',
+                                                isSelected && 'bg-blue-50/50 text-[#0F4C75] font-medium',
+                                                !isSelected && isActive && 'bg-gray-100/80',
+                                                !isSelected && !isActive && 'hover:bg-gray-100/80'
                                             )}
                                         >
                                             <span className="flex-1 truncate pr-6">{renderItem(item)}</span>

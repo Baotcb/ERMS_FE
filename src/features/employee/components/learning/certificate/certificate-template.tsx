@@ -14,18 +14,12 @@ export function CertificateTemplate({ data }: { data: CertificateData }) {
     return (
         <div
             id="certificate-print-area"
-            className="certificate-page"
-            style={{
-                width: '297mm', minHeight: '210mm', padding: 0, margin: '0 auto',
-                background: '#fff', position: 'relative',
-                fontFamily: "'Noto Serif', 'Roboto', serif",
-                overflow: 'hidden', boxSizing: 'border-box',
-            }}
+            className="w-[297mm] min-h-[210mm] p-0 mx-auto bg-white relative font-serif overflow-hidden box-border"
         >
             {/* Outer border */}
-            <div style={{ position: 'absolute', inset: '8mm', border: '3px solid #0F4C75', borderRadius: '4px', pointerEvents: 'none' }} />
+            <div className="absolute inset-[8mm] border-[3px] border-[#0F4C75] rounded pointer-events-none" />
             {/* Inner border */}
-            <div style={{ position: 'absolute', inset: '11mm', border: '1px solid #3282B8', borderRadius: '2px', pointerEvents: 'none' }} />
+            <div className="absolute inset-[11mm] border border-[#3282B8] rounded-sm pointer-events-none" />
 
             {/* Corner decorations */}
             {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => {
@@ -45,83 +39,81 @@ export function CertificateTemplate({ data }: { data: CertificateData }) {
                 );
             })}
 
-            {/* Content */}
-            <div style={{
-                padding: '20mm 30mm 18mm', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', minHeight: '210mm',
-                boxSizing: 'border-box', textAlign: 'center',
-            }}>
+            {/* Content box */}
+            <div className="pt-[20mm] px-[30mm] pb-[18mm] flex flex-col items-center justify-center min-h-[210mm] box-border text-center relative z-10">
+                
                 {/* Logo + Company Name */}
-                <div style={{ marginBottom: '4mm' }}>
+                <div className="mb-[4mm]">
                     {data.companyLogoUrl ? (
                         <img
                             src={data.companyLogoUrl}
                             alt={data.companyName || 'Company Logo'}
-                            style={{ width: '20mm', height: '20mm', objectFit: 'contain', margin: '0 auto 3mm', display: 'block' }}
+                            className="w-[20mm] h-[20mm] object-contain mx-auto mb-[3mm] block"
                         />
                     ) : (
-                        <div style={{
-                            width: '18mm', height: '18mm', margin: '0 auto 3mm',
-                            background: 'linear-gradient(135deg, #0F4C75, #3282B8)',
-                            borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            color: '#fff', fontSize: '24px', fontWeight: 'bold',
-                        }}>{(data.companyName || 'E').charAt(0).toUpperCase()}</div>
+                        <div className="w-[18mm] h-[18mm] mx-auto mb-[3mm] bg-gradient-to-br from-[#0F4C75] to-[#3282B8] rounded-full flex items-center justify-center text-white text-[24px] font-bold">
+                            {(data.companyName || 'E').charAt(0).toUpperCase()}
+                        </div>
                     )}
-                    <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#0F4C75', textTransform: 'uppercase', fontWeight: 700, margin: 0 }}>
+                    <p className="text-[12px] tracking-[3px] text-[#0F4C75] uppercase font-bold m-0">
                         {data.companyName || 'ERMS'}
                     </p>
-                    <p style={{ fontSize: '9px', letterSpacing: '2px', color: '#999', textTransform: 'uppercase', margin: '1mm 0 0' }}>
+                    <p className="text-[9px] tracking-[2px] text-gray-400 uppercase mt-[1mm] mb-0">
                         Certificate of Completion
                     </p>
                 </div>
 
-                <div style={{ width: '60%', height: '1px', background: 'linear-gradient(90deg, transparent, #3282B8, transparent)', margin: '5mm 0' }} />
+                {/* Divider */}
+                <div className="w-[60%] h-[1px] bg-gradient-to-r from-transparent via-[#3282B8] to-transparent my-[5mm]" />
 
-                <h1 style={{ fontSize: '32px', fontWeight: 700, color: '#0F4C75', letterSpacing: '6px', textTransform: 'uppercase', margin: '0 0 2mm' }}>
+                {/* Title */}
+                <h1 className="text-[32px] font-bold text-[#0F4C75] tracking-[6px] uppercase m-0 mb-[2mm]">
                     Chứng Nhận
                 </h1>
-                <p style={{ fontSize: '14px', letterSpacing: '4px', color: '#666', textTransform: 'uppercase', margin: '0 0 8mm' }}>
+                <p className="text-[14px] tracking-[4px] text-gray-500 uppercase m-0 mb-[8mm]">
                     Hoàn Thành Khóa Đào Tạo
                 </p>
 
-                <p style={{ fontSize: '13px', color: '#555', margin: '0 0 4mm', fontStyle: 'italic' }}>Chứng nhận rằng</p>
+                <p className="text-[13px] text-gray-600 m-0 mb-[4mm] italic">Chứng nhận rằng</p>
 
-                <h2 style={{
-                    fontSize: '36px', fontWeight: 700, color: '#0F4C75', margin: '0 0 2mm',
-                    borderBottom: '2px solid #BBE1FA', paddingBottom: '3mm', display: 'inline-block', minWidth: '60%',
-                }}>{data.learnerName || 'Họ và Tên'}</h2>
+                {/* Learner Name */}
+                <h2 className="text-[36px] font-bold text-[#0F4C75] m-0 mb-[2mm] border-b-2 border-[#BBE1FA] pb-[3mm] inline-block min-w-[60%]">
+                    {data.learnerName || 'Họ và Tên'}
+                </h2>
 
                 {data.departmentName && (
-                    <p style={{ fontSize: '12px', color: '#888', margin: '2mm 0 0' }}>Bộ phận: {data.departmentName}</p>
+                    <p className="text-[12px] text-gray-400 mt-[2mm] mb-0">Bộ phận: {data.departmentName}</p>
                 )}
 
-                <p style={{ fontSize: '13px', color: '#555', margin: '6mm 0 3mm', fontStyle: 'italic' }}>Đã hoàn thành xuất sắc khóa đào tạo</p>
+                <p className="text-[13px] text-gray-600 mt-[6mm] mb-[3mm] italic">Đã hoàn thành xuất sắc khóa đào tạo</p>
 
-                <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#1B262C', margin: '0 0 2mm' }}>
+                {/* Course Name */}
+                <h3 className="text-[22px] font-bold text-[#1B262C] m-0 mb-[2mm]">
                     &ldquo;{data.courseName}&rdquo;
                 </h3>
-                <p style={{ fontSize: '11px', color: '#999', margin: '0 0 5mm', letterSpacing: '1px' }}>Mã khóa: {data.courseCode}</p>
+                <p className="text-[11px] text-gray-400 m-0 mb-[5mm] tracking-[1px]">Mã khóa: {data.courseCode}</p>
 
                 {/* Score & date */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12mm', margin: '0 0 8mm', fontSize: '13px', color: '#333' }}>
-                    <span>Điểm đạt: <strong style={{ color: '#0F4C75', fontSize: '16px' }}>{data.score}%</strong></span>
-                    <span style={{ color: '#ccc' }}>|</span>
+                <div className="flex items-center justify-center gap-[12mm] m-0 mb-[8mm] text-[13px] text-gray-700">
+                    <span>Điểm đạt: <strong className="text-[#0F4C75] text-[16px]">{data.score}%</strong></span>
+                    <span className="text-gray-300">|</span>
                     <span>Ngày hoàn thành: <strong>{displayDate}</strong></span>
                 </div>
 
-                <div style={{ width: '40%', height: '1px', background: 'linear-gradient(90deg, transparent, #ddd, transparent)', margin: '2mm 0 8mm' }} />
+                {/* Divider bottom */}
+                <div className="w-[40%] h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-[8mm] mt-[2mm]" />
 
                 {/* Signatures */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '75%', margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ width: '50mm', height: '0.5px', background: '#999', margin: '0 auto 2mm' }} />
-                        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#0F4C75', margin: '0 0 1mm' }}>{data.trainerName || 'Giảng viên'}</p>
-                        <p style={{ fontSize: '10px', color: '#999', margin: 0 }}>Giảng viên</p>
+                <div className="flex justify-between w-[75%] mx-auto">
+                    <div className="text-center flex-1">
+                        <div className="w-[50mm] h-[1px] bg-gray-400 mx-auto mb-[2mm]" />
+                        <p className="text-[12px] font-bold text-[#0F4C75] m-0 mb-[1mm]">{data.trainerName || 'Giảng viên'}</p>
+                        <p className="text-[10px] text-gray-500 m-0">Giảng viên</p>
                     </div>
-                    <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ width: '50mm', height: '0.5px', background: '#999', margin: '0 auto 2mm' }} />
-                        <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#0F4C75', margin: '0 0 1mm' }}>Phòng Nhân sự</p>
-                        <p style={{ fontSize: '10px', color: '#999', margin: 0 }}>Xác nhận</p>
+                    <div className="text-center flex-1">
+                        <div className="w-[50mm] h-[1px] bg-gray-400 mx-auto mb-[2mm]" />
+                        <p className="text-[12px] font-bold text-[#0F4C75] m-0 mb-[1mm]">Phòng Nhân sự</p>
+                        <p className="text-[10px] text-gray-500 m-0">Xác nhận</p>
                     </div>
                 </div>
             </div>

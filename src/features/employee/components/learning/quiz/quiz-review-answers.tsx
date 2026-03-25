@@ -71,8 +71,9 @@ export function QuizReviewAnswers({ items }: QuizReviewAnswersProps) {
                                 {/* Options */}
                                 <div className="space-y-2 ml-11">
                                     {options.map((opt, optIdx) => {
-                                        const isSelected = opt === item.selectedAnswer;
-                                        const isCorrectOption = opt === item.correctAnswer;
+                                        const optLetter = String.fromCharCode(65 + optIdx);
+                                        const isSelected = optLetter === item.selectedAnswer;
+                                        const isCorrectOption = optLetter === item.correctAnswer;
 
                                         let className = 'rounded-xl border px-4 py-2.5 text-sm transition-all flex items-center gap-2 ';
                                         if (isCorrectOption) {

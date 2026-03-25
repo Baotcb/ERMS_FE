@@ -218,7 +218,7 @@ export function CreateCourseDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[720px]">
+            <DialogContent className="sm:max-w-[720px]" onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                         <DialogTitle>{plan ? 'Tạo khóa học từ kế hoạch' : 'Lập lịch kế hoạch mới'}</DialogTitle>
                     <DialogDescription>

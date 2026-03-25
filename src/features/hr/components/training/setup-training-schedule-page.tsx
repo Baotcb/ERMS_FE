@@ -371,6 +371,7 @@ export function SetupTrainingSchedulePage({
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
+                                            min={startDate}
                                             className="bg-white border-gray-200" 
                                         />
                                         <CalendarIcon className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
