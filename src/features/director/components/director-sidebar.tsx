@@ -123,7 +123,7 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
                 children,
             }
         })
-    }, [user?.isTrainer, user?.role])
+    }, [user])
 
     const sidebarContent = (
         <div className="flex h-full flex-col border-r border-gray-200 bg-white">
