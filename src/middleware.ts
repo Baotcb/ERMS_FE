@@ -21,6 +21,7 @@ const PUBLIC_ROUTES = [
 ] as const
 
 const PROTECTED_ROUTE_PATTERNS = [
+  '/admin',
   '/dashboard',
   '/departments',
   '/employees',
@@ -140,6 +141,18 @@ function buildLoginRedirect(request: NextRequest, pathname: string): NextRespons
   return NextResponse.redirect(loginUrl)
 }
 
+function getSafeAuthRedirectPath(role?: string): string {
+  if (role === USER_ROLES.CANDIDATE) {
+    return '/'
+  }
+
+  if (role && ROLE_DASHBOARD_MAP[role]) {
+    return ROLE_DASHBOARD_MAP[role]
+  }
+
+  return '/unauthorized'
+}
+
 function applySecurityHeaders(
   response: NextResponse,
   options: { csrfToken?: string; nonce?: string; needsNonce: boolean }
@@ -187,7 +200,9 @@ export function middleware(request: NextRequest) {
   const csrfToken = request.cookies.get(CSRF_COOKIE_NAME)?.value || crypto.randomUUID()
   const authCookie = request.cookies.get('auth_token')?.value
   const isExpired = authCookie ? isTokenExpired(authCookie) : true
-  const role = request.cookies.get('user_role')?.value || getTokenRole(authCookie)
+  const tokenRole = getTokenRole(authCookie)
+  const cookieRole = request.cookies.get('user_role')?.value
+  const role = tokenRole || (!authCookie ? cookieRole : undefined)
 
   if (pathname === '/' && !isMutation && authCookie && !isExpired && role && role !== USER_ROLES.CANDIDATE) {
     const dashboard = ROLE_DASHBOARD_MAP[role] || DEFAULT_ENTERPRISE_DASHBOARD
@@ -211,6 +226,20 @@ export function middleware(request: NextRequest) {
 
   if (pathname.startsWith('/enterprise') && authCookie && !isExpired && role === USER_ROLES.CANDIDATE) {
     return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  if (pathname.startsWith('/enterprise') && authCookie && !isExpired && role === USER_ROLES.ADMIN) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
+  if ((pathname === '/admin' || pathname === '/admin/') && authCookie && !isExpired && role === USER_ROLES.ADMIN) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
+  if (pathname.startsWith('/admin') && authCookie && !isExpired) {
+    if (role !== USER_ROLES.ADMIN) {
+      return NextResponse.redirect(new URL(getSafeAuthRedirectPath(role), request.url))
+    }
   }
 
   if ((isPublic || pathname === '/enterprise' || pathname === '/enterprise/') && authCookie && !isExpired) {

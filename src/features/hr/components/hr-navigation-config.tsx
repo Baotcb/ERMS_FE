@@ -66,7 +66,7 @@ export const HR_NAV_ITEMS: HRNavItem[] = [
     {
         label: 'Đào tạo',
         icon: GraduationCap,
-        roles: [USER_ROLES.HR_MANAGER, USER_ROLES.HR, USER_ROLES.DIRECTOR, USER_ROLES.ADMIN],
+        roles: [USER_ROLES.HR_MANAGER, USER_ROLES.HR, USER_ROLES.DIRECTOR],
         children: [
             { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
             { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },

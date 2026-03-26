@@ -12,7 +12,6 @@ const LEARNING_ENABLED_ROLES = new Set<string>([
     USER_ROLES.DIRECTOR,
     USER_ROLES.HR,
     USER_ROLES.HR_MANAGER,
-    USER_ROLES.ADMIN,
 ]);
 
 export function canAccessLearningWorkspace(
