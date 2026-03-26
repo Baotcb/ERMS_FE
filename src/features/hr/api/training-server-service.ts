@@ -260,6 +260,17 @@ export const trainingServerService = {
         });
     },
 
+    async getCourseEnrolledEmployees(courseId: string): Promise<string[]> {
+        try {
+            return await serverFetch<string[]>(`/api/Course/${courseId}/enrolled-employees`, {
+                requireAuth: true,
+                cache: 'no-store',
+            });
+        } catch {
+            return [];
+        }
+    },
+
     async getDepartmentTrainingResults(): Promise<DepartmentTrainingResultsResponse> {
         const endpoints = ['/api/Course/department-training-results'];
 

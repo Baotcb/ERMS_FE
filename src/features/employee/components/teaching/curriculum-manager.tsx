@@ -12,7 +12,9 @@ import type { CourseSection, Material } from '@/features/hr/types/course-content
 import { courseContentService } from '@/features/hr/api/course-content-service';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/core/auth/hooks';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
+import { encryptData, decryptData } from '@/features/core/utils/encryption';
 import { CurriculumSectionItem } from './curriculum-section-item';
 
 interface CurriculumManagerProps {
@@ -64,7 +66,13 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                 return [];
             }
 
-            const parsed = JSON.parse(raw) as CourseSection[];
+            // Attempt decryption. If it fails (e.g., legacy plain text draft), fallback to raw.
+            let decrypted = decryptData(raw);
+            if (!decrypted) {
+                decrypted = raw;
+            }
+
+            const parsed = JSON.parse(decrypted) as CourseSection[];
             return Array.isArray(parsed) ? parsed : [];
         } catch {
             return [];
@@ -77,7 +85,8 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         }
 
         try {
-            window.localStorage.setItem(draftStorageKey, JSON.stringify(nextSections));
+            const encryptedData = encryptData(JSON.stringify(nextSections));
+            window.localStorage.setItem(draftStorageKey, encryptedData);
             setLastSavedAt(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         } catch {
             // Ignore storage write errors to avoid breaking UI actions.
@@ -107,7 +116,8 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                 }))
                 .filter((item) => item.materials.length > 0);
 
-            window.localStorage.setItem(materialMirrorStorageKey, JSON.stringify(mirror));
+            const encryptedData = encryptData(JSON.stringify(mirror));
+            window.localStorage.setItem(materialMirrorStorageKey, encryptedData);
         } catch {
             // Ignore storage write errors to avoid blocking uploads.
         }
@@ -118,7 +128,13 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         try {
             const raw = window.localStorage.getItem(materialMirrorStorageKey);
             if (!raw) return {};
-            const parsed = JSON.parse(raw) as MaterialMirrorItem[];
+
+            let decrypted = decryptData(raw);
+            if (!decrypted) {
+                decrypted = raw;
+            }
+
+            const parsed = JSON.parse(decrypted) as MaterialMirrorItem[];
             const result: Record<string, Material[]> = {};
             for (const item of parsed) {
                 if (item.materials && item.materials.length > 0) {
@@ -546,9 +562,26 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-[#0F4C75]" />
-                <p className="text-gray-400 font-medium">Đang tải chương trình học...</p>
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-8 w-[250px] bg-gray-200" />
+                    <Skeleton className="h-10 w-[140px] bg-gray-200 rounded-xl" />
+                </div>
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="border border-gray-100 rounded-2xl p-4 space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Skeleton className="h-8 w-8 rounded-full bg-gray-200" />
+                                <Skeleton className="h-5 w-[200px] bg-gray-200" />
+                                <Skeleton className="h-5 w-[100px] bg-gray-200 ml-auto" />
+                            </div>
+                            <div className="pl-11 space-y-2">
+                                <Skeleton className="h-12 w-full bg-gray-100 rounded-xl" />
+                                <Skeleton className="h-12 w-full bg-gray-100 rounded-xl" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }

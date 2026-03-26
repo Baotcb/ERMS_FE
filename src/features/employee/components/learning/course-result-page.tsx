@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trophy, AlertTriangle, RotateCcw, Star, Award, Loader2 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import type { Course } from '@/features/hr/types/course-types';
@@ -60,6 +61,18 @@ export function CourseResultPage({ initialCourse }: { initialCourse: Course }) {
                 setResult(quizData);
                 if (profileRes) setProfile(profileRes);
                 if (progressData) setProgress(progressData);
+
+                // Trigger Confetti if passed
+                if (quizData.isPassed) {
+                    const duration = 3 * 1000;
+                    const end = Date.now() + duration;
+                    const frame = () => {
+                        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, zIndex: 9999 });
+                        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, zIndex: 9999 });
+                        if (Date.now() < end) requestAnimationFrame(frame);
+                    };
+                    frame();
+                }
 
                 // Fetch review data if attemptId is present
                 if (quizData.attemptId) {

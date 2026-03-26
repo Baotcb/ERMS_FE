@@ -27,7 +27,18 @@ export function LessonSidebar(props: LessonSidebarProps) {
         <div className="flex flex-col h-full bg-white">
             <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-[#F8FBFF] to-white shrink-0">
                 <h2 className="font-black tracking-tight text-[#0F4C75]">Nội dung khóa học</h2>
-                <p className="text-[11px] text-gray-400 mt-1 font-medium">{props.completedCount}/{props.totalLessons} bài đã hoàn thành</p>
+                <div className="flex items-center gap-2 mt-2">
+                    <div className="bg-blue-100 rounded-full h-1.5 flex-1 overflow-hidden">
+                        <div 
+                            className="bg-[#3282B8] h-full transition-all duration-500 ease-out" 
+                            style={{ width: `${props.totalLessons > 0 ? (props.completedCount / props.totalLessons) * 100 : 0}%` }}
+                        />
+                    </div>
+                    <span className="text-[11px] font-bold text-[#0F4C75]">
+                        {props.totalLessons > 0 ? Math.round((props.completedCount / props.totalLessons) * 100) : 0}%
+                    </span>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1.5 font-medium">{props.completedCount}/{props.totalLessons} bài đã hoàn thành</p>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
