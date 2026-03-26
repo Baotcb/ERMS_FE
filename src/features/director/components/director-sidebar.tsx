@@ -98,7 +98,11 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
                 children,
             }
         })
+<<<<<<< HEAD
     }, [])
+=======
+    }, [user])
+>>>>>>> dev
 
     const sidebarContent = (
         <div className="flex h-full flex-col border-r border-gray-200 bg-white">

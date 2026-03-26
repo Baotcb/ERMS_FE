@@ -1,46 +1,45 @@
-<<<<<<< HEAD
-import { trainingServerService } from '@/features/hr/api/training-server-service';
-import type { Course } from '@/features/hr/types/course-types';
-import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
+import { trainingServerService } from '@/features/hr/api/training-server-service'
+import type { Course } from '@/features/hr/types/course-types'
+import type { TrainingPlan } from '@/features/hr/types/training-plan-types'
 
 async function getAllPlans(status?: string): Promise<TrainingPlan[]> {
-    const pageSize = 50;
-    const allItems: TrainingPlan[] = [];
-    let page = 1;
+    const pageSize = 50
+    const allItems: TrainingPlan[] = []
+    let page = 1
 
     while (true) {
-        const response = await trainingServerService.getPlans({ page, pageSize, status }).catch(() => ({ items: [], totalCount: 0 }));
-        allItems.push(...(response.items || []));
+        const response = await trainingServerService.getPlans({ page, pageSize, status }).catch(() => ({ items: [], totalCount: 0 }))
+        allItems.push(...(response.items || []))
 
         if (!response.items || response.items.length < pageSize || allItems.length >= (response.totalCount || 0)) {
-            break;
+            break
         }
 
-        page += 1;
+        page += 1
     }
 
-    return allItems;
+    return allItems
 }
 
 async function getAllCourses(status?: string): Promise<Course[]> {
-    const pageSize = 50;
-    const allItems: Course[] = [];
-    let page = 1;
+    const pageSize = 50
+    const allItems: Course[] = []
+    let page = 1
 
     while (true) {
         const response = await trainingServerService
             .getAllCourses({ page, pageSize, status })
-            .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize, totalPages: 0 }));
-        allItems.push(...(response.items || []));
+            .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize, totalPages: 0 }))
+        allItems.push(...(response.items || []))
 
         if (!response.items || response.items.length < pageSize || allItems.length >= (response.totalCount || 0)) {
-            break;
+            break
         }
 
-        page += 1;
+        page += 1
     }
 
-    return allItems;
+    return allItems
 }
 
 export default async function TrainingReportPage() {
@@ -50,28 +49,28 @@ export default async function TrainingReportPage() {
         getAllPlans('Rejected'),
         getAllCourses(),
         getAllCourses('Published'),
-    ]);
+    ])
 
-    const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length;
-    const totalBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
-    const totalCourses = allCourses.length;
-    const publishedRate = totalCourses > 0 ? Math.round((publishedCourses.length / totalCourses) * 100) : 0;
+    const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length
+    const totalBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0)
+    const totalCourses = allCourses.length
+    const publishedRate = totalCourses > 0 ? Math.round((publishedCourses.length / totalCourses) * 100) : 0
 
-    const totalEnrollments = publishedCourses.reduce((sum, course) => sum + (course.enrollmentCount || 0), 0);
-    const averageEnrollments = publishedCourses.length > 0 ? Math.round(totalEnrollments / publishedCourses.length) : 0;
+    const totalEnrollments = publishedCourses.reduce((sum, course) => sum + (course.enrollmentCount || 0), 0)
+    const averageEnrollments = publishedCourses.length > 0 ? Math.round(totalEnrollments / publishedCourses.length) : 0
 
-    const completionReadyCourses = publishedCourses.filter((course) => (course.lessonCount || 0) > 0).length;
+    const completionReadyCourses = publishedCourses.filter((course) => (course.lessonCount || 0) > 0).length
     const completionReadyRate = publishedCourses.length > 0
         ? Math.round((completionReadyCourses / publishedCourses.length) * 100)
-        : 0;
+        : 0
 
     const statusBars = [
-        { label: 'Chờ duyệt', value: pendingPlans.length, color: 'bg-yellow-500' },
-        { label: 'Đã duyệt', value: approvedPlans.length, color: 'bg-green-500' },
-        { label: 'Từ chối', value: rejectedPlans.length, color: 'bg-red-500' },
-    ];
+        { label: 'Pending', value: pendingPlans.length, color: 'bg-yellow-500' },
+        { label: 'Approved', value: approvedPlans.length, color: 'bg-green-500' },
+        { label: 'Rejected', value: rejectedPlans.length, color: 'bg-red-500' },
+    ]
 
-    const maxStatusValue = Math.max(1, ...statusBars.map((item) => item.value));
+    const maxStatusValue = Math.max(1, ...statusBars.map((item) => item.value))
 
     return (
         <div className="space-y-6">
@@ -84,25 +83,25 @@ export default async function TrainingReportPage() {
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Kế hoạch đào tạo</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{totalPlans}</p>
-                    <p className="text-xs text-gray-500 mt-2">Chờ duyệt {pendingPlans.length} | Đã duyệt {approvedPlans.length}</p>
+                    <p className="text-xs text-gray-500 mt-2">Pending {pendingPlans.length} | Approved {approvedPlans.length}</p>
                 </div>
 
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ngân sách đã duyệt</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(totalBudget)}</p>
-                    <p className="text-xs text-gray-500 mt-2">Tính trên các kế hoạch Đã duyệt</p>
+                    <p className="text-xs text-gray-500 mt-2">Tính trên các kế hoạch Approved</p>
                 </div>
 
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Khóa học đang triển khai</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Khóa học xuất bản</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{publishedCourses.length}/{totalCourses}</p>
-                    <p className="text-xs text-gray-500 mt-2">Tỷ lệ triển khai {publishedRate}%</p>
+                    <p className="text-xs text-gray-500 mt-2">Tỷ lệ xuất bản {publishedRate}%</p>
                 </div>
 
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mức sẵn sàng học</p>
                     <p className="text-3xl font-bold text-[#0F4C75] mt-2">{completionReadyRate}%</p>
-                    <p className="text-xs text-gray-500 mt-2">Khóa đang triển khai đã có ít nhất 1 bài học</p>
+                    <p className="text-xs text-gray-500 mt-2">Khóa published đã có ít nhất 1 bài học</p>
                 </div>
             </div>
 
@@ -111,7 +110,7 @@ export default async function TrainingReportPage() {
                     <h2 className="text-lg font-bold text-[#0F4C75]">Phân bố trạng thái kế hoạch</h2>
                     <div className="space-y-3">
                         {statusBars.map((item) => {
-                            const widthPercent = Math.round((item.value / maxStatusValue) * 100);
+                            const widthPercent = Math.round((item.value / maxStatusValue) * 100)
 
                             return (
                                 <div key={item.label} className="space-y-1">
@@ -123,7 +122,7 @@ export default async function TrainingReportPage() {
                                         <div className={`h-full ${item.color}`} style={{ width: `${widthPercent}%` }} />
                                     </div>
                                 </div>
-                            );
+                            )
                         })}
                     </div>
                 </div>
@@ -147,8 +146,5 @@ export default async function TrainingReportPage() {
                 </div>
             </div>
         </div>
-    );
+    )
 }
-=======
-export { default } from '@/features/director/components/training-report-page'
->>>>>>> dev
