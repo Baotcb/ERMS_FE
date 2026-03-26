@@ -2,12 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { ArrowLeft, BookOpen, MessageSquare, Layout } from 'lucide-react';
+import { ArrowLeft, BookOpen, MessageSquare, Layout, Pencil } from 'lucide-react';
 import type { Course } from '@/features/hr/types/course-types';
 import type { CourseFeedbackDto } from '@/features/employee/api/feedback-service';
 import { Button } from '@/components/ui/button';
 import { CourseDetailContent } from '../components/course-detail-content';
 import { FeedbackTab } from '../components/feedback-tab';
+import { UpdateCourseDialog } from '@/features/hr/components/training/update-course-dialog';
 
 export function CourseWorkspaceClient({
     course,
@@ -21,6 +22,7 @@ export function CourseWorkspaceClient({
     const router = useRouter();
     const pathname = usePathname();
     const [localSearch, setLocalSearch] = useState('');
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const updateUrl = useCallback((newTab: string) => {
         const params = new URLSearchParams();
@@ -55,9 +57,16 @@ export function CourseWorkspaceClient({
                 </div>
 
                 {/* Sub-Navigation Tabs */}
-                <div className="flex bg-gray-100/80 p-1 rounded-xl shadow-inner shrink-0">
-                    <button
-                        onClick={() => updateUrl('overview')}
+                <div className="flex items-center gap-3 shrink-0">
+                    <Button 
+                        onClick={() => setIsEditOpen(true)}
+                        className="bg-white text-[#0F4C75] border border-gray-200 hover:bg-gray-50 shadow-sm rounded-xl px-4 font-semibold"
+                    >
+                        <Pencil className="w-4 h-4 mr-2" /> Sửa thông tin
+                    </Button>
+                    <div className="flex bg-gray-100/80 p-1 rounded-xl shadow-inner shrink-0">
+                        <button
+                            onClick={() => updateUrl('overview')}
                         className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                             initialTab === 'overview' 
                                 ? 'bg-white text-[#0F4C75] shadow-sm ring-1 ring-gray-200/50' 
@@ -76,6 +85,7 @@ export function CourseWorkspaceClient({
                     >
                         <MessageSquare className="w-4 h-4" /> Phản hồi
                     </button>
+                </div>
                 </div>
             </div>
 
@@ -98,6 +108,15 @@ export function CourseWorkspaceClient({
                     />
                 )}
             </div>
+
+            <UpdateCourseDialog 
+                course={course}
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
+                onSuccess={() => {
+                    router.refresh(); // Refresh RSC data
+                }}
+            />
         </div>
     );
 }

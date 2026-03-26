@@ -40,6 +40,11 @@ const courseSchema = z.object({
 
 type CourseFormValues = z.infer<typeof courseSchema>;
 
+const cleanDescription = (desc: string) => {
+    if (!desc) return '';
+    return desc.replace(/(?:isonline|IsOnline)=\w+/gi, '').replace(/^,\s*/, '').trim();
+};
+
 /* ── Step configuration ── */
 const WIZARD_STEPS = [
     { key: 'basics', label: 'Thông tin', icon: Layout },
@@ -122,7 +127,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
         resolver: zodResolver(courseSchema),
         defaultValues: {
             courseName: initialCourse.courseName,
-            description: initialCourse.description || '',
+            description: cleanDescription(initialCourse.description || ''),
             durationMinutes: initialCourse.durationMinutes || 60,
         },
     });

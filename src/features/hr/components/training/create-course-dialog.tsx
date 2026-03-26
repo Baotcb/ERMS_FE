@@ -84,19 +84,23 @@ export function CreateCourseDialog({
             return;
         }
 
-        setSelectedPlan(plan);
-        form.reset({
-            trainingPlanId: plan?.id || '',
-            courseName: plan?.planName || '',
-            courseCode: plan ? buildDefaultCourseCode(plan) : buildQuickCourseCode(),
-            description: plan?.description || '',
-            trainerEmail: '',
-            durationMinutes: '',
-            maxEnrollments: '',
-            completionCriteria: 'Quiz',
-            isMandatory: false,
-        });
-        setWizardStep(1);
+        const timer = setTimeout(() => {
+            setSelectedPlan(prev => prev?.id !== plan?.id ? plan : prev);
+            form.reset({
+                trainingPlanId: plan?.id || '',
+                courseName: plan?.planName || '',
+                courseCode: plan ? buildDefaultCourseCode(plan) : buildQuickCourseCode(),
+                description: plan?.description || '',
+                trainerEmail: '',
+                durationMinutes: '',
+                maxEnrollments: '',
+                completionCriteria: 'Quiz',
+                isMandatory: false,
+            });
+            setWizardStep(1);
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, [open, plan, form]);
 
     const handleNextStep = async () => {
@@ -177,7 +181,7 @@ export function CreateCourseDialog({
                         onClick={() => setWizardStep(1)}
                         className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${wizardStep === 1 ? 'border-[#0F4C75] bg-blue-50 text-[#0F4C75]' : 'border-gray-200 bg-white text-gray-500 hover:border-blue-200'}`}
                     >
-                        <p className="font-semibold">Wizard 1</p>
+                        <p className="font-semibold">Thông tin chung</p>
                         <p className="text-xs">Thông tin khóa học</p>
                     </button>
                     <button
@@ -185,7 +189,7 @@ export function CreateCourseDialog({
                         onClick={handleNextStep}
                         className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${wizardStep === 2 ? 'border-[#0F4C75] bg-blue-50 text-[#0F4C75]' : 'border-gray-200 bg-white text-gray-500 hover:border-blue-200'}`}
                     >
-                        <p className="font-semibold">Wizard 2</p>
+                        <p className="font-semibold">Lịch trình</p>
                         <p className="text-xs">Thiết lập đào tạo</p>
                     </button>
                 </div>

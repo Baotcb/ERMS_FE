@@ -96,5 +96,28 @@ export const hrTrainingService = {
             ok: true,
             planId: result.id || result.trainingRequestId
         };
+    },
+
+    async getPlanDetail(id: string) {
+        const response = await apiClient.get(`/api/TrainingPlan/${id}`);
+        if (!response.ok) {
+            throw new Error('Không thể tải chi tiết kế hoạch');
+        }
+        return response.json();
+    },
+
+    async updatePlan(data: import('../types/training-plan-types').UpdateTrainingPlan): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/update', data);
+
+        if (!response.ok) {
+            let message = 'Không thể cập nhật kế hoạch đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch { /* response body is not JSON */ }
+            throw new Error(message);
+        }
+
+        return { ok: true };
     }
 };

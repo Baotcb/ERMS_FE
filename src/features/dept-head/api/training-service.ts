@@ -89,5 +89,16 @@ export const trainingService = {
             ok: true,
             trainingRequestId: result.trainingRequestId
         };
+    },
+
+    async updateRequest(data: import('../types/training-types').UpdateTrainingRequest): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingRequest/update', data);
+
+        if (!response.ok) {
+            const rawMessage = await readApiErrorMessage(response, 'Không thể cập nhật yêu cầu đào tạo');
+            throw new Error(rawMessage || 'Lỗi khi cập nhật yêu cầu đào tạo');
+        }
+
+        return { ok: true };
     }
 };

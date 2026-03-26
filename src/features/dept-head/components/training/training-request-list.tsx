@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info, ArrowRight, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
@@ -119,7 +119,10 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                         <ArrowRight className="mr-2 h-4 w-4" /> Kế hoạch đào tạo
                     </Button>
                     <Button
-                        onClick={() => setIsCreateOpen(true)}
+                        onClick={() => {
+                            setSelectedRequest(null);
+                            setIsCreateOpen(true);
+                        }}
                         className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white shadow-lg shadow-blue-900/10 transition-all hover:scale-[1.02]"
                     >
                         <Plus className="mr-2 h-4 w-4" /> Gửi yêu cầu mới
@@ -232,6 +235,17 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                                                     >
                                                         <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                                                     </DropdownMenuItem>
+                                                    {['Pending', 'Rejected'].includes(request.status) && (
+                                                        <DropdownMenuItem 
+                                                            className="cursor-pointer text-[#0F4C75]"
+                                                            onClick={() => {
+                                                                setSelectedRequest(request);
+                                                                setIsCreateOpen(true);
+                                                            }}
+                                                        >
+                                                            <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -272,14 +286,21 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
 
             <TrainingRequestForm
                 open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
+                onOpenChange={(open) => {
+                    setIsCreateOpen(open);
+                    if (!open) setTimeout(() => setSelectedRequest(null), 300);
+                }}
                 onSuccess={() => mutate()}
+                initialData={selectedRequest || undefined}
             />
 
             <TrainingRequestDetail
                 request={selectedRequest}
                 open={isDetailOpen}
-                onOpenChange={setIsDetailOpen}
+                onOpenChange={(open) => {
+                    setIsDetailOpen(open);
+                    if (!open) setTimeout(() => setSelectedRequest(null), 300);
+                }}
             />
         </div>
     );

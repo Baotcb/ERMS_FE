@@ -117,4 +117,11 @@ export const quizService = {
 
         return { importedCount: result.importedCount ?? result.count ?? 0 };
     },
+
+    async deleteQuiz(quizId: string): Promise<void> {
+        const response = await apiClient.delete(`/api/quizzes/${quizId}`);
+        if (!response.ok) {
+            throw new Error(await readErrorMessage(response, 'Không thể xóa bài thi cuối khóa cũ.'));
+        }
+    },
 };

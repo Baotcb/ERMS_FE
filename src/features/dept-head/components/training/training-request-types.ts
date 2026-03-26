@@ -15,6 +15,7 @@ export interface TrainingRequestFormProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
+    initialData?: import('../../types/training-types').TrainingRequest;
 }
 
 export const TRAINING_REQUEST_DEFAULTS: TrainingRequestValues = {

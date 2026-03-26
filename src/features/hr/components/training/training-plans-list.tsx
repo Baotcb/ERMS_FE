@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Plus, Search, MoreHorizontal, Eye, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, BookOpen, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
@@ -28,6 +28,7 @@ import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan, TrainingPlansResult } from '../../types/training-plan-types';
 import { useRouter } from 'next/navigation';
 import { TrainingPlanDetail } from './training-plan-detail';
+import { EditPlanDialog } from './edit-plan-dialog';
 import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote } from '../../utils/training-status-utils';
 import { formatVND } from '@/lib/utils';
 
@@ -41,7 +42,7 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
     const [page, setPage] = useState(1);
     const debouncedSearch = useDebouncedValue(search, 300);
 
-    const { data, isLoading } = useSWR<TrainingPlansResult>(
+    const { data, isLoading, mutate } = useSWR<TrainingPlansResult>(
         ['/api/TrainingPlan', debouncedSearch, page],
         () => hrTrainingService.getPlans({ search: debouncedSearch, page, pageSize: PAGE_SIZE }),
         { fallbackData: initialData }
@@ -52,6 +53,7 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
     const totalCount = data?.totalCount ?? plans.length;
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const handleSearch = (value: string) => {
         setSearch(value);
@@ -168,6 +170,17 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
                                                     >
                                                         <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                                                     </DropdownMenuItem>
+                                                    {['Pending', 'Rejected'].includes(plan.status) && (
+                                                        <DropdownMenuItem 
+                                                            className="cursor-pointer text-[#0F4C75]"
+                                                            onClick={() => {
+                                                                setSelectedPlan(plan);
+                                                                setIsEditOpen(true);
+                                                            }}
+                                                        >
+                                                            <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa kế hoạch
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -209,7 +222,20 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
             <TrainingPlanDetail
                 plan={selectedPlan}
                 open={isDetailOpen}
-                onOpenChange={setIsDetailOpen}
+                onOpenChange={(open) => {
+                    setIsDetailOpen(open);
+                    if (!open) setTimeout(() => setSelectedPlan(null), 300);
+                }}
+            />
+
+            <EditPlanDialog
+                plan={selectedPlan}
+                open={isEditOpen}
+                onOpenChange={(open) => {
+                    setIsEditOpen(open);
+                    if (!open) setTimeout(() => setSelectedPlan(null), 300);
+                }}
+                onSuccess={() => mutate()}
             />
         </div>
     );

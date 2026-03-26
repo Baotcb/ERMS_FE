@@ -26,6 +26,17 @@ export interface CreateTrainingPlan {
     trainingRequestIds: string[];
 }
 
+export interface UpdateTrainingPlan {
+    id: string;
+    planName: string;
+    planCode: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    totalBudget?: number;
+    trainingRequestIds: string[];
+}
+
 export interface TrainingPlansResult {
     items: TrainingPlan[];
     totalCount: number;
