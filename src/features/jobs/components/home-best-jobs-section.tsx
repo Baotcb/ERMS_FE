@@ -9,6 +9,10 @@ import { usePublicJobs } from "../hooks/use-public-jobs"
 import { buildJobsHref } from "../job-filtering"
 import { cn } from "@/lib/utils"
 import { useUserLocation } from "../hooks/use-user-location"
+import { useJobPreview } from "../hooks/use-job-preview"
+import { JobPreviewPopup } from "./job-preview-popup"
+import { JobPreviewWrapper } from "./job-preview-wrapper"
+import type { Job } from "../types"
 
 const FILTER_TABS = [
     { key: "random", label: "Tất cả" },
@@ -121,13 +125,7 @@ export function BestJobsSection() {
                         <p className="text-[#a6acb2] text-sm mt-1">Vui lòng thử lọc với tiêu chí khác</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {data.items.map((job) => (
-                            <Link key={job.id} href={`/jobs/${job.id}`} className="block h-full">
-                                <JobCard {...job} />
-                            </Link>
-                        ))}
-                    </div>
+                    <BestJobsGrid jobs={data.items} />
                 )}
 
                 {data && data.totalPages > 1 && (
@@ -171,5 +169,40 @@ export function BestJobsSection() {
                 </div>
             </div>
         </section>
+    )
+}
+
+/* =========================================
+   Sub-component: Grid với hover preview
+   ========================================= */
+
+function BestJobsGrid({ jobs }: { jobs: Job[] }) {
+    const { preview, showPreview, hidePreview } = useJobPreview()
+
+    return (
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {jobs.map((job) => (
+                    <JobPreviewWrapper
+                        key={job.id}
+                        jobId={job.id}
+                        onHover={showPreview}
+                        onLeave={hidePreview}
+                        className="block h-full"
+                    >
+                        <Link href={`/jobs/${job.id}`} className="block h-full">
+                            <JobCard {...job} />
+                        </Link>
+                    </JobPreviewWrapper>
+                ))}
+            </div>
+            {preview && (
+                <JobPreviewPopup
+                    job={preview.job}
+                    isLoading={preview.isLoading}
+                    anchorRect={preview.anchorRect}
+                />
+            )}
+        </>
     )
 }
