@@ -96,6 +96,8 @@ export function SavedJobList() {
         }
     }, [fetchSavedJobIds, isCandidate])
 
+    const { preview, showPreview, hidePreview } = useJobPreview()
+
     if (authLoading || isLoading) {
         return (
             <div className="topcv-empty">
@@ -187,8 +189,6 @@ export function SavedJobList() {
         hidden: { opacity: 0, y: 12 },
         show: { opacity: 1, y: 0 }
     }
-
-    const { preview, showPreview, hidePreview } = useJobPreview()
 
     return (
         <>
