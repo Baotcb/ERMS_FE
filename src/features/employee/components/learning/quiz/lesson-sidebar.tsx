@@ -1,11 +1,15 @@
 'use client';
 
-import { Clock3, Lock, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { CheckCircle2, PlayCircle, Lock, Loader2, ChevronDown } from 'lucide-react';
 import type { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
 import type { CourseProgressDto } from '@/features/employee/types/learning-quiz-types';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 
 interface LessonSidebarProps {
+    courseName: string;
     sections: CourseSection[];
     allLessons: Lesson[];
     completedLessonSet: Set<string>;
@@ -18,93 +22,131 @@ interface LessonSidebarProps {
     onSelectLesson: (lessonId: string) => void;
 }
 
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-
 export function LessonSidebar(props: LessonSidebarProps) {
+    const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+    const [initializedSections, setInitializedSections] = useState(false);
+
+    // Expand all modules after sections load (only once)
+    if (props.sections.length > 0 && !initializedSections) {
+        setExpandedModules(new Set(props.sections.map(s => s.id)));
+        setInitializedSections(true);
+    }
+
+    const toggleModule = (id: string) => {
+        setExpandedModules(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
     const listContent = (
         <div className="flex flex-col h-full bg-white">
-            <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-[#F8FBFF] to-white shrink-0">
-                <h2 className="font-black tracking-tight text-[#0F4C75]">Nội dung khóa học</h2>
-                <div className="flex items-center gap-2 mt-2">
-                    <div className="bg-blue-100 rounded-full h-1.5 flex-1 overflow-hidden">
-                        <div 
-                            className="bg-[#3282B8] h-full transition-all duration-500 ease-out" 
-                            style={{ width: `${props.totalLessons > 0 ? (props.completedCount / props.totalLessons) * 100 : 0}%` }}
-                        />
-                    </div>
-                    <span className="text-[11px] font-bold text-[#0F4C75]">
-                        {props.totalLessons > 0 ? Math.round((props.completedCount / props.totalLessons) * 100) : 0}%
-                    </span>
-                </div>
-                <p className="text-[11px] text-gray-400 mt-1.5 font-medium">{props.completedCount}/{props.totalLessons} bài đã hoàn thành</p>
+            {/* ── Course Title ── */}
+            <div className="px-5 py-5 border-b border-gray-100 shrink-0">
+                <h2 className="text-lg font-bold text-[#0F4C75] leading-snug">
+                    {props.courseName}
+                </h2>
             </div>
 
+            {/* ── Module Accordion List ── */}
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {props.isLoading ? (
-                    <div className="p-6 flex items-center gap-2 text-sm text-gray-500">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Đang tải curriculum...
+                    <div className="p-6 flex items-center gap-2 text-sm text-gray-400">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
                     </div>
                 ) : props.allLessons.length === 0 ? (
-                    <div className="p-6 space-y-2 text-sm text-gray-500">
-                        <p>Chưa có bài học nào trong curriculum của khóa học này.</p>
-                        {props.progress && props.progress.totalLessons > 0 ? (
-                            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
-                                Backend đang ghi nhận {props.progress.totalLessons} lesson nhưng API curriculum chưa trả danh sách chi tiết lesson.
-                            </p>
-                        ) : null}
+                    <div className="p-6 text-sm text-gray-500">
+                        <p>Chưa có bài học nào.</p>
                     </div>
                 ) : (
-                    <div className="pb-6">
-                        {props.sections.map((section, index) => (
-                            <div key={section.id} className="border-b border-gray-100 last:border-b-0">
-                                <div className="learning-section-bar sticky top-0 bg-[#F8FBFF]/90 backdrop-blur z-10">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#3282B8]">Module {index + 1}</p>
-                                    <p className="text-sm font-bold text-[#0F4C75]">{section.title}</p>
-                                </div>
-                                <div className="p-2 space-y-1.5">
-                                    {section.lessons.map((lesson: Lesson) => {
-                                        const lessonGlobalIndex = props.lessonIndexMap.get(lesson.id) ?? -1;
-                                        const isCompleted = props.completedLessonSet.has(lesson.id);
-                                        const isActive = props.activeLessonId === lesson.id;
-                                        const isLocked = lessonGlobalIndex > 0 && !props.completedLessonSet.has(props.allLessons[lessonGlobalIndex - 1].id);
+                    <div>
+                        {props.sections.map((section, sIdx) => {
+                            const sectionLessons = section.lessons || [];
+                            const isFakeSection = props.sections.length === 1 && section.title === 'Course Lessons';
+                            const isExpanded = isFakeSection || expandedModules.has(section.id);
 
-                                        return (
-                                            <button
-                                                key={lesson.id}
-                                                type="button"
-                                                onClick={() => { if (!isLocked) props.onSelectLesson(lesson.id); }}
-                                                disabled={isLocked}
-                                                className={`w-full text-left rounded-xl px-3 py-3 border transition ${
-                                                    isLocked
-                                                        ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
-                                                        : isActive
-                                                        ? 'border-[#0F4C75] bg-[#EAF4FF]'
-                                                        : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
-                                                }`}
-                                            >
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <div className="min-w-0">
-                                                        <p className="text-sm font-semibold text-[#0F4C75] truncate">{lesson.title}</p>
-                                                        <p className="text-xs text-gray-500 inline-flex items-center gap-1 mt-1">
-                                                            <Clock3 className="w-3 h-3" /> {lesson.durationMinutes || 0} phút
-                                                        </p>
-                                                    </div>
-                                                    {isLocked ? (
-                                                        <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                                    ) : (
-                                                        <Badge className={isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
-                                                            {isCompleted ? 'Hoàn thành' : 'Chưa làm'}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                            return (
+                                <div key={section.id} className="border-b border-gray-100 last:border-b-0">
+                                    {/* Module Header */}
+                                    {!isFakeSection && (
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleModule(section.id)}
+                                            className="w-full text-left px-5 py-4 flex items-start justify-between gap-3 hover:bg-gray-50/50 transition-colors"
+                                        >
+                                            <div>
+                                                <p className="text-xs font-semibold text-[#3282B8] mb-0.5">
+                                                    Chương {sIdx + 1}
+                                                </p>
+                                                <p className="text-sm font-bold text-[#0F3B64] leading-snug">
+                                                    {section.title}
+                                                </p>
+                                            </div>
+                                            <ChevronDown className={`w-5 h-5 text-gray-400 shrink-0 mt-1 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </button>
+                                    )}
+
+                                    {/* Lesson Items */}
+                                    {isExpanded && (
+                                        <div className={isFakeSection ? "py-2" : "pb-2"}>
+                                            {sectionLessons.map((lesson: Lesson) => {
+                                                const gIdx = props.lessonIndexMap.get(lesson.id) ?? -1;
+                                                const isCompleted = props.completedLessonSet.has(lesson.id);
+                                                const isActive = props.activeLessonId === lesson.id;
+                                                const isLocked = gIdx > 0 && !props.completedLessonSet.has(props.allLessons[gIdx - 1].id);
+
+                                                return (
+                                                    <button
+                                                        key={lesson.id}
+                                                        type="button"
+                                                        onClick={() => { if (!isLocked) props.onSelectLesson(lesson.id); }}
+                                                        disabled={isLocked}
+                                                        className={`
+                                                            w-full text-left pl-5 pr-4 py-3 flex items-center gap-3 transition-colors relative
+                                                            ${isLocked
+                                                                ? 'text-gray-400 cursor-not-allowed'
+                                                                : isActive
+                                                                ? 'bg-[#F0F9FF]'
+                                                                : 'hover:bg-gray-50'
+                                                            }
+                                                        `}
+                                                    >
+                                                        {isActive && (
+                                                            <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#E8731A]" />
+                                                        )}
+
+                                                        {isLocked ? (
+                                                            <Lock className="w-5 h-5 text-gray-300 shrink-0" />
+                                                        ) : isCompleted ? (
+                                                            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                                                        ) : isActive ? (
+                                                            <PlayCircle className="w-5 h-5 text-[#3282B8] shrink-0" />
+                                                        ) : (
+                                                            <div className="w-5 h-5 rounded-full border-2 border-gray-300 shrink-0" />
+                                                        )}
+
+                                                        <div className="min-w-0">
+                                                            <p className={`text-sm leading-snug truncate ${
+                                                                isActive ? 'font-semibold text-[#0F3B64]' : 'text-gray-700'
+                                                            }`}>
+                                                                {lesson.title}
+                                                            </p>
+                                                            {lesson.durationMinutes ? (
+                                                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                                                    {lesson.durationMinutes} phút
+                                                                </p>
+                                                            ) : null}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -114,26 +156,26 @@ export function LessonSidebar(props: LessonSidebarProps) {
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:block learning-card overflow-hidden h-fit max-h-[calc(100vh-120px)] flex flex-col">
+            <aside className="hidden lg:block rounded-2xl border border-gray-200 bg-white overflow-hidden h-fit max-h-[calc(100vh-100px)] sticky top-[72px] shadow-sm">
                 {listContent}
             </aside>
 
-            {/* Mobile Drawer Button */}
-            <div className="lg:hidden block bg-white rounded-xl shadow-sm border p-4 flex items-center justify-between">
+            {/* Mobile Drawer */}
+            <div className="lg:hidden bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex items-center justify-between">
                 <div>
-                    <h3 className="font-bold text-[#0F4C75]">Chương trình học</h3>
+                    <h3 className="font-bold text-[#0F4C75] text-sm">{props.courseName}</h3>
                     <p className="text-xs text-gray-500 mt-0.5">{props.completedCount}/{props.totalLessons} bài hoàn thành</p>
                 </div>
                 <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
+                        <Button variant="outline" size="sm" className="gap-2 rounded-xl">
                             <Menu className="w-4 h-4" />
-                            Mở danh sách
+                            Mục lục
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-[85vw] max-w-[400px] p-0 flex flex-col">
+                    <SheetContent side="left" className="w-[85vw] max-w-[360px] p-0 flex flex-col">
                         <SheetHeader className="sr-only">
-                            <SheetTitle>Danh sách bài học</SheetTitle>
+                            <SheetTitle>Mục lục khóa học</SheetTitle>
                         </SheetHeader>
                         {listContent}
                     </SheetContent>

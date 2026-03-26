@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Calendar as CalendarIcon, Clock, Video, Building2, ChevronLeft, Send, Check as CheckIcon, Users, Loader2, PlusCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Video, Building2, ChevronLeft, Send, Users, Loader2, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -57,7 +57,6 @@ export function SetupTrainingSchedulePage({
     initialPlans = [],
     headingTitle = 'Tạo khóa học & Lập lịch đào tạo',
     headingDescription = 'Thiết lập thời gian, địa điểm và thông báo cho khóa học.',
-    stepTwoLabel = 'Bước 2: HR lập lịch & thông báo',
     publishRedirectPath = '/enterprise/hr/training/courses'
 }: { 
     initialCourses?: CourseResult; 
@@ -65,7 +64,6 @@ export function SetupTrainingSchedulePage({
     initialPlans?: TrainingPlan[];
     headingTitle?: string;
     headingDescription?: string;
-    stepTwoLabel?: string;
     publishRedirectPath?: string;
 }) {
     const { toast } = useToast();
@@ -199,48 +197,23 @@ export function SetupTrainingSchedulePage({
                     <h1 className="text-2xl font-bold text-[#0F4C75] mb-1">{headingTitle}</h1>
                     <p className="text-gray-500">{headingDescription}</p>
                 </div>
+                <Button
+                    type="button"
+                    onClick={() => setIsCreateCourseOpen(true)}
+                    className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
+                >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Lập lịch kế hoạch mới
+                </Button>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-8 space-y-10 border border-gray-100">
             <Form {...form}>
                 <form className="space-y-10">
 
-                {/* Stepper */}
-                <div className="flex items-center w-full px-4 pt-2">
-                    <div className="flex flex-col flex-1 relative">
-                        <div className="flex items-center justify-between w-full mb-2 z-10">
-                            <div className="flex items-center gap-3 bg-white pr-4">
-                                <div className="w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center border border-green-200 shadow-sm">
-                                    <CheckIcon className="w-4 h-4" />
-                                </div>
-                                <span className="font-semibold text-sm text-gray-500">Bước 1: Tạo khóa học</span>
-                            </div>
-                            <div className="flex items-center gap-3 bg-white pl-4">
-                                <div className="w-7 h-7 rounded-full bg-[#0F4C75] text-white flex items-center justify-center text-sm font-bold border-2 border-[#BBE1FA] shadow-md">
-                                    2
-                                </div>
-                                <span className="font-bold text-sm text-[#0F4C75] tracking-tight">{stepTwoLabel}</span>
-                            </div>
-                        </div>
-                        <div className="absolute top-3.5 left-0 w-full h-[2px] bg-gray-100 rounded-full -z-0">
-                            <div className="h-full bg-gradient-to-r from-green-400 to-[#0F4C75] rounded-full" style={{ width: '100%' }}></div>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Course Selection */}
                 <div className="p-5 bg-blue-50/30 rounded-xl border border-blue-100">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC THEO KẾ HOẠCH</label>
-                        <Button
-                            type="button"
-                            onClick={() => setIsCreateCourseOpen(true)}
-                            className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white"
-                        >
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Lập lịch kế hoạch mới
-                        </Button>
-                    </div>
+                    <label className="text-sm font-semibold text-gray-700 uppercase tracking-wider">CHỌN KHÓA HỌC THEO KẾ HOẠCH</label>
 
                         <div className="mt-3">
                             <SearchableCombobox<Course>

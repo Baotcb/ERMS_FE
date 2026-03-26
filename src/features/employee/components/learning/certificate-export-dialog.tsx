@@ -70,15 +70,12 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
             const newScale = Math.min(containerWidth / certWidthPx, 0.65);
             setScale(newScale);
         };
-        // Delay to ensure dialog is rendered
         const timer = setTimeout(calcScale, 100);
         window.addEventListener('resize', calcScale);
         return () => { clearTimeout(timer); window.removeEventListener('resize', calcScale); };
     }, [open]);
 
     const handlePrint = () => {
-        // Trigger native print dialog. 
-        // The embedded @media print CSS below handles layout and hiding background elements.
         setTimeout(() => {
             window.print();
         }, 100);
@@ -90,21 +87,37 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
 
         setIsDownloading(true);
         try {
-            // Use dom-to-image-more for better modern CSS/SVG support
-            const domtoimage = (await import('dom-to-image-more')).default;
+            const html2canvas = (await import('html2canvas-pro')).default;
 
-            const dataUrl = await domtoimage.toPng(certElement, {
-                quality: 1,
-                bgcolor: '#ffffff',
-                // To get higher resolution (scale 2x)
-                width: certElement.clientWidth * 2,
-                height: certElement.clientHeight * 2,
-                style: {
-                    transform: 'scale(2)',
-                    transformOrigin: 'top left'
-                }
+            // Temporarily remove transform for accurate capture
+            const wrapper = certElement.closest('.print-transform-wrapper') as HTMLElement | null;
+            const originalTransform = wrapper?.style.transform || '';
+            const originalTransformOrigin = wrapper?.style.transformOrigin || '';
+            if (wrapper) {
+                wrapper.style.transform = 'scale(1)';
+                wrapper.style.transformOrigin = 'top left';
+            }
+
+            // Wait for font to fully load
+            await document.fonts.ready;
+
+            const canvas = await html2canvas(certElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                // Ensure the full A4 landscape size is captured
+                width: certElement.scrollWidth,
+                height: certElement.scrollHeight,
             });
 
+            // Restore transform
+            if (wrapper) {
+                wrapper.style.transform = originalTransform;
+                wrapper.style.transformOrigin = originalTransformOrigin;
+            }
+
+            const dataUrl = canvas.toDataURL('image/png', 1.0);
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = `Certificate_${formData.learnerName || 'user'}_${formData.courseCode || 'course'}.png`;
@@ -149,7 +162,6 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
                         .print-transform-wrapper {
                             transform: scale(1) !important;
                         }
-                        /* Hide dialog overlay and close buttons during print */
                         [data-radix-focus-guard], [role="dialog"] button {
                             display: none !important;
                         }
@@ -164,7 +176,7 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
                     <DialogDescription>Xem, in hoặc tải chứng chỉ dưới dạng PDF / ảnh PNG</DialogDescription>
                 </DialogHeader>
 
-                {/* Certificate Preview — scrollable area */}
+                {/* Certificate Preview */}
                 <div ref={containerRef} className="px-4 pb-2 flex-1 overflow-y-auto min-h-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-20">
@@ -190,7 +202,7 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
                     )}
                 </div>
 
-                {/* Actions — sticky footer */}
+                {/* Actions */}
                 <div className="flex items-center justify-between px-5 py-4 border-t border-gray-200 bg-white shrink-0">
                     <Button variant="ghost" onClick={() => handleOpenChange(false)} className="text-gray-500">
                         <X className="w-4 h-4 mr-1" /> Đóng
@@ -214,4 +226,3 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
         </Dialog>
     );
 }
-

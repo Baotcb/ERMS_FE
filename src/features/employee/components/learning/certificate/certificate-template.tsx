@@ -4,7 +4,11 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import type { CertificateData } from './certificate-types';
 
-/** Print-ready A4 landscape certificate with borders, logo, signatures. */
+/**
+ * Print-ready A4 landscape certificate.
+ * Uses inline styles exclusively (no Tailwind) so html2canvas captures everything correctly.
+ * Font: Noto Serif (Google Fonts) — full Vietnamese diacritics support.
+ */
 export function CertificateTemplate({ data }: { data: CertificateData }) {
     const displayDate = (() => {
         try { return format(new Date(data.completionDate), "dd 'tháng' MM 'năm' yyyy", { locale: vi }); }
@@ -12,111 +16,157 @@ export function CertificateTemplate({ data }: { data: CertificateData }) {
     })();
 
     return (
-        <div
-            id="certificate-print-area"
-            className="w-[297mm] min-h-[210mm] p-0 mx-auto bg-white relative font-serif overflow-hidden box-border"
-        >
-            {/* Outer border */}
-            <div className="absolute inset-[8mm] border-[3px] border-[#0F4C75] rounded pointer-events-none" />
-            {/* Inner border */}
-            <div className="absolute inset-[11mm] border border-[#3282B8] rounded-sm pointer-events-none" />
+        <>
+            {/* Load Noto Serif Vietnamese from Google Fonts */}
+            {/* eslint-disable-next-line @next/next/no-css-tagged-template-in-component */}
+            <style dangerouslySetInnerHTML={{ __html: `
+                @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700&display=swap');
+            `}} />
 
-            {/* Corner decorations */}
-            {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => {
-                const isTop = corner.includes('top');
-                const isLeft = corner.includes('left');
-                return (
-                    <div key={corner} style={{
-                        position: 'absolute',
-                        [isTop ? 'top' : 'bottom']: '12mm', [isLeft ? 'left' : 'right']: '12mm',
-                        width: '25mm', height: '25mm',
-                        borderTop: isTop ? '2px solid #BBE1FA' : 'none',
-                        borderBottom: !isTop ? '2px solid #BBE1FA' : 'none',
-                        borderLeft: isLeft ? '2px solid #BBE1FA' : 'none',
-                        borderRight: !isLeft ? '2px solid #BBE1FA' : 'none',
-                        pointerEvents: 'none',
-                    }} />
-                );
-            })}
+            <div
+                id="certificate-print-area"
+                style={{
+                    width: '297mm',
+                    minHeight: '210mm',
+                    padding: 0,
+                    margin: '0 auto',
+                    background: '#ffffff',
+                    position: 'relative',
+                    fontFamily: "'Noto Serif', 'Georgia', serif",
+                    overflow: 'hidden',
+                    boxSizing: 'border-box',
+                }}
+            >
+                {/* Outer border */}
+                <div style={{
+                    position: 'absolute', inset: '8mm',
+                    border: '3px solid #0F4C75', borderRadius: '4px',
+                    pointerEvents: 'none',
+                }} />
+                {/* Inner border */}
+                <div style={{
+                    position: 'absolute', inset: '11mm',
+                    border: '1px solid #3282B8', borderRadius: '2px',
+                    pointerEvents: 'none',
+                }} />
 
-            {/* Content box */}
-            <div className="pt-[20mm] px-[30mm] pb-[18mm] flex flex-col items-center justify-center min-h-[210mm] box-border text-center relative z-10">
-                
-                {/* Logo + Company Name */}
-                <div className="mb-[4mm]">
-                    {data.companyLogoUrl ? (
-                        <img
-                            src={data.companyLogoUrl}
-                            alt={data.companyName || 'Company Logo'}
-                            className="w-[20mm] h-[20mm] object-contain mx-auto mb-[3mm] block"
-                        />
-                    ) : (
-                        <div className="w-[18mm] h-[18mm] mx-auto mb-[3mm] bg-gradient-to-br from-[#0F4C75] to-[#3282B8] rounded-full flex items-center justify-center text-white text-[24px] font-bold">
-                            {(data.companyName || 'E').charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    <p className="text-[12px] tracking-[3px] text-[#0F4C75] uppercase font-bold m-0">
-                        {data.companyName || 'ERMS'}
-                    </p>
-                    <p className="text-[9px] tracking-[2px] text-gray-400 uppercase mt-[1mm] mb-0">
-                        Certificate of Completion
-                    </p>
-                </div>
+                {/* Corner decorations */}
+                {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => {
+                    const isTop = corner.includes('top');
+                    const isLeft = corner.includes('left');
+                    return (
+                        <div key={corner} style={{
+                            position: 'absolute',
+                            [isTop ? 'top' : 'bottom']: '12mm',
+                            [isLeft ? 'left' : 'right']: '12mm',
+                            width: '25mm', height: '25mm',
+                            borderTop: isTop ? '2px solid #BBE1FA' : 'none',
+                            borderBottom: !isTop ? '2px solid #BBE1FA' : 'none',
+                            borderLeft: isLeft ? '2px solid #BBE1FA' : 'none',
+                            borderRight: !isLeft ? '2px solid #BBE1FA' : 'none',
+                            pointerEvents: 'none',
+                        }} />
+                    );
+                })}
 
-                {/* Divider */}
-                <div className="w-[60%] h-[1px] bg-gradient-to-r from-transparent via-[#3282B8] to-transparent my-[5mm]" />
-
-                {/* Title */}
-                <h1 className="text-[32px] font-bold text-[#0F4C75] tracking-[6px] uppercase m-0 mb-[2mm]">
-                    Chứng Nhận
-                </h1>
-                <p className="text-[14px] tracking-[4px] text-gray-500 uppercase m-0 mb-[8mm]">
-                    Hoàn Thành Khóa Đào Tạo
-                </p>
-
-                <p className="text-[13px] text-gray-600 m-0 mb-[4mm] italic">Chứng nhận rằng</p>
-
-                {/* Learner Name */}
-                <h2 className="text-[36px] font-bold text-[#0F4C75] m-0 mb-[2mm] border-b-2 border-[#BBE1FA] pb-[3mm] inline-block min-w-[60%]">
-                    {data.learnerName || 'Họ và Tên'}
-                </h2>
-
-                {data.departmentName && (
-                    <p className="text-[12px] text-gray-400 mt-[2mm] mb-0">Bộ phận: {data.departmentName}</p>
-                )}
-
-                <p className="text-[13px] text-gray-600 mt-[6mm] mb-[3mm] italic">Đã hoàn thành xuất sắc khóa đào tạo</p>
-
-                {/* Course Name */}
-                <h3 className="text-[22px] font-bold text-[#1B262C] m-0 mb-[2mm]">
-                    &ldquo;{data.courseName}&rdquo;
-                </h3>
-                <p className="text-[11px] text-gray-400 m-0 mb-[5mm] tracking-[1px]">Mã khóa: {data.courseCode}</p>
-
-                {/* Score & date */}
-                <div className="flex items-center justify-center gap-[12mm] m-0 mb-[8mm] text-[13px] text-gray-700">
-                    <span>Điểm đạt: <strong className="text-[#0F4C75] text-[16px]">{data.score}%</strong></span>
-                    <span className="text-gray-300">|</span>
-                    <span>Ngày hoàn thành: <strong>{displayDate}</strong></span>
-                </div>
-
-                {/* Divider bottom */}
-                <div className="w-[40%] h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-[8mm] mt-[2mm]" />
-
-                {/* Signatures */}
-                <div className="flex justify-between w-[75%] mx-auto">
-                    <div className="text-center flex-1">
-                        <div className="w-[50mm] h-[1px] bg-gray-400 mx-auto mb-[2mm]" />
-                        <p className="text-[12px] font-bold text-[#0F4C75] m-0 mb-[1mm]">{data.trainerName || 'Giảng viên'}</p>
-                        <p className="text-[10px] text-gray-500 m-0">Giảng viên</p>
+                {/* Content */}
+                <div style={{
+                    paddingTop: '20mm', paddingBottom: '18mm',
+                    paddingLeft: '30mm', paddingRight: '30mm',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    minHeight: '210mm', boxSizing: 'border-box',
+                    textAlign: 'center', position: 'relative', zIndex: 10,
+                }}>
+                    {/* Logo + Company */}
+                    <div style={{ marginBottom: '4mm' }}>
+                        {data.companyLogoUrl ? (
+                            <img
+                                src={data.companyLogoUrl}
+                                alt={data.companyName || 'Company Logo'}
+                                style={{ width: '20mm', height: '20mm', objectFit: 'contain', display: 'block', margin: '0 auto 3mm auto' }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: '18mm', height: '18mm', margin: '0 auto 3mm auto',
+                                background: 'linear-gradient(135deg, #0F4C75, #3282B8)',
+                                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#fff', fontSize: '24px', fontWeight: 'bold',
+                            }}>
+                                {(data.companyName || 'E').charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        <p style={{ fontSize: '12px', letterSpacing: '3px', color: '#0F4C75', textTransform: 'uppercase', fontWeight: 'bold', margin: 0 }}>
+                            {data.companyName || 'ERMS'}
+                        </p>
+                        <p style={{ fontSize: '9px', letterSpacing: '2px', color: '#999', textTransform: 'uppercase', marginTop: '1mm', marginBottom: 0 }}>
+                            Certificate of Completion
+                        </p>
                     </div>
-                    <div className="text-center flex-1">
-                        <div className="w-[50mm] h-[1px] bg-gray-400 mx-auto mb-[2mm]" />
-                        <p className="text-[12px] font-bold text-[#0F4C75] m-0 mb-[1mm]">Phòng Nhân sự</p>
-                        <p className="text-[10px] text-gray-500 m-0">Xác nhận</p>
+
+                    {/* Divider */}
+                    <div style={{ width: '60%', height: '1px', background: 'linear-gradient(to right, transparent, #3282B8, transparent)', margin: '5mm 0' }} />
+
+                    {/* Title */}
+                    <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#0F4C75', letterSpacing: '6px', textTransform: 'uppercase', margin: '0 0 2mm 0' }}>
+                        Chứng Nhận
+                    </h1>
+                    <p style={{ fontSize: '14px', letterSpacing: '4px', color: '#777', textTransform: 'uppercase', margin: '0 0 8mm 0' }}>
+                        Hoàn Thành Khóa Đào Tạo
+                    </p>
+
+                    <p style={{ fontSize: '13px', color: '#666', margin: '0 0 4mm 0', fontStyle: 'italic' }}>Chứng nhận rằng</p>
+
+                    {/* Learner Name */}
+                    <h2 style={{
+                        fontSize: '36px', fontWeight: 'bold', color: '#0F4C75',
+                        margin: '0 0 2mm 0', borderBottom: '2px solid #BBE1FA',
+                        paddingBottom: '3mm', display: 'inline-block', minWidth: '60%',
+                    }}>
+                        {data.learnerName || 'Họ và Tên'}
+                    </h2>
+
+                    {data.departmentName && (
+                        <p style={{ fontSize: '12px', color: '#aaa', marginTop: '2mm', marginBottom: 0 }}>Bộ phận: {data.departmentName}</p>
+                    )}
+
+                    <p style={{ fontSize: '13px', color: '#666', marginTop: '6mm', marginBottom: '3mm', fontStyle: 'italic' }}>
+                        Đã hoàn thành xuất sắc khóa đào tạo
+                    </p>
+
+                    {/* Course Name */}
+                    <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1B262C', margin: '0 0 2mm 0' }}>
+                        &ldquo;{data.courseName}&rdquo;
+                    </h3>
+                    <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 5mm 0', letterSpacing: '1px' }}>
+                        Mã khóa: {data.courseCode}
+                    </p>
+
+                    {/* Score & date */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12mm', margin: '0 0 8mm 0', fontSize: '13px', color: '#555' }}>
+                        <span>Điểm đạt: <strong style={{ color: '#0F4C75', fontSize: '16px' }}>{data.score}%</strong></span>
+                        <span style={{ color: '#ccc' }}>|</span>
+                        <span>Ngày hoàn thành: <strong>{displayDate}</strong></span>
+                    </div>
+
+                    {/* Divider bottom */}
+                    <div style={{ width: '40%', height: '1px', background: 'linear-gradient(to right, transparent, #ccc, transparent)', margin: '2mm 0 8mm 0' }} />
+
+                    {/* Signatures */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '75%', margin: '0 auto' }}>
+                        <div style={{ textAlign: 'center', flex: 1 }}>
+                            <div style={{ width: '50mm', height: '1px', background: '#999', margin: '0 auto 2mm auto' }} />
+                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#0F4C75', margin: '0 0 1mm 0' }}>{data.trainerName || 'Giảng viên'}</p>
+                            <p style={{ fontSize: '10px', color: '#888', margin: 0 }}>Giảng viên</p>
+                        </div>
+                        <div style={{ textAlign: 'center', flex: 1 }}>
+                            <div style={{ width: '50mm', height: '1px', background: '#999', margin: '0 auto 2mm auto' }} />
+                            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#0F4C75', margin: '0 0 1mm 0' }}>Phòng Nhân sự</p>
+                            <p style={{ fontSize: '10px', color: '#888', margin: 0 }}>Xác nhận</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

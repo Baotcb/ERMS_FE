@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Loader2, Paperclip } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import type { Lesson } from '@/features/hr/types/course-content-types';
 
@@ -27,7 +28,7 @@ export function LessonContent({
     const [lastCompletedId, setLastCompletedId] = useState<string | null>(null);
 
     if (!activeLesson) {
-        return <div className="text-sm text-gray-500">Chưa có lesson để hiển thị.</div>;
+        return <div className="text-sm text-gray-500 p-8 text-center">Chọn một bài học từ mục lục bên trái.</div>;
     }
 
     const isYouTube = activeLesson.videoUrl?.includes('youtube.com') || activeLesson.videoUrl?.includes('youtu.be');
@@ -40,91 +41,112 @@ export function LessonContent({
             onComplete();
             toast({
                 title: '🎉 Tuyệt vời!',
-                description: 'Bạn đã xem xong video bài giảng. Đã tự động đánh dấu hoàn thành bài học.',
+                description: 'Bạn đã xem xong video bài giảng. Đã tự động đánh dấu hoàn thành.',
             });
         }
     };
 
     return (
-        <section className="space-y-5">
-            <div className="learning-card p-6 space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto] md:items-center">
-                    <div>
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Bài học đang xem</p>
-                        <h3 className="text-2xl font-black tracking-tight text-[#0F3B64]">{activeLesson.title || 'Chưa có lesson'}</h3>
-                    </div>
-                    {!(isNativeVideo && !isCompleted) && (
-                        <Button
-                            type="button"
-                            variant={isCompleted ? 'outline' : 'default'}
-                            onClick={onComplete}
-                            disabled={isUpdating || isCompleted}
-                            className={isCompleted ? 'border-green-200 text-green-700' : 'bg-[#145DA0] hover:bg-[#0F4C75] text-white'}
-                        >
-                            {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                            {isCompleted ? 'Đã hoàn thành lesson' : 'Đánh dấu hoàn thành lesson'}
-                        </Button>
-                    )}
-                </div>
-
-                {/* Video Player */}
-                {activeLesson.videoUrl && (
-                    <VideoPlayer 
-                        url={activeLesson.videoUrl} 
+        <section className="space-y-5 min-w-0">
+            {/* ── Video Player ── */}
+            {activeLesson.videoUrl && (
+                <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+                    <VideoPlayer
+                        url={activeLesson.videoUrl}
                         title={activeLesson.title}
                         isYouTube={!!isYouTube}
                         isDrive={!!isDrive}
                         isCompleted={isCompleted || lastCompletedId === activeLesson.id}
                         onVideoEnd={handleVideoEnd}
                     />
-                )}
-
-                <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                    <p className="text-sm font-semibold text-[#0F4C75] mb-2">Nội dung bài học</p>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {activeLesson.content || activeLesson.description || 'Bài học này chưa có nội dung chi tiết, vui lòng học qua video và tài liệu đính kèm.'}
-                    </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <Button type="button" variant="outline" className="w-full sm:w-auto flex-1 sm:flex-none justify-start px-5 py-6 rounded-2xl border-gray-200" onClick={() => onNavigate('prev')} disabled={activeLessonIndex <= 0}>
-                        <div className="text-left ml-2">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Bài trước</p>
-                            <p className="text-sm font-semibold text-[#0F4C75] truncate max-w-[200px]">{prevLesson?.title || '—'}</p>
-                        </div>
-                    </Button>
-                    <div className="hidden sm:block flex-1" />
-                    <Button type="button" variant="outline" className="w-full sm:w-auto flex-1 sm:flex-none justify-end px-5 py-6 rounded-2xl border-blue-100 bg-blue-50/50 hover:bg-blue-100" onClick={() => onNavigate('next')} disabled={activeLessonIndex < 0 || activeLessonIndex >= totalLessons - 1}>
-                        <div className="text-right mr-2">
-                            <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-0.5">Bài tiếp theo</p>
-                            <p className="text-sm font-semibold text-[#0F4C75] truncate max-w-[200px]">{nextLesson?.title || '—'}</p>
-                        </div>
-                    </Button>
-                </div>
-
-                <div className="rounded-2xl border border-gray-100 bg-white">
-                    <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 text-[#0F4C75] font-semibold">
-                        <FileText className="w-4 h-4" /> Tài liệu học tập
+                    {/* Lesson Badge overlay */}
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                        <Badge className="bg-[#E8731A] text-white border-0 text-[10px] font-black uppercase px-2.5 py-1 shadow-md">
+                            Bài {activeLessonIndex + 1}
+                        </Badge>
                     </div>
-                    <div className="p-4 space-y-2">
-                        {activeLesson.materials && activeLesson.materials.length > 0 ? activeLesson.materials.map((material) => (
+                </div>
+            )}
+
+            {/* ── Lesson Title + Complete button ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-gradient-to-r from-[#F0F9FF] to-white p-4 border border-blue-100">
+                <h2 className="text-lg lg:text-xl font-black tracking-tight text-[#0F3B64]">
+                    {activeLesson.title}
+                </h2>
+                {!(isNativeVideo && !isCompleted) && (
+                    <Button
+                        type="button"
+                        variant={isCompleted ? 'outline' : 'default'}
+                        onClick={onComplete}
+                        disabled={isUpdating || isCompleted}
+                        className={`shrink-0 rounded-xl font-bold shadow-md ${isCompleted
+                            ? 'border-green-300 text-green-700 bg-green-50 shadow-green-100'
+                            : 'bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:from-[#0F3B64] hover:to-[#145DA0] text-white shadow-blue-200'
+                        }`}
+                    >
+                        {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        {isCompleted ? '✓ Đã hoàn thành' : 'Hoàn thành bài học'}
+                    </Button>
+                )}
+            </div>
+
+    
+
+            {/* ── Tài liệu đính kèm ── */}
+            {activeLesson.materials && activeLesson.materials.length > 0 && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1 h-5 rounded-full bg-[#E8731A]" />
+                        <h3 className="text-sm font-bold text-[#0F4C75]">Tài liệu đính kèm</h3>
+                    </div>
+                    <div className="space-y-2 pl-3">
+                        {activeLesson.materials.map((material) => (
                             <a
                                 key={material.id}
                                 href={material.fileUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 hover:border-blue-200 hover:bg-blue-50/40"
+                                className="flex items-center gap-3 rounded-xl border border-gray-100 px-3 py-2.5 hover:border-blue-200 hover:bg-blue-50/40 transition-colors group"
                             >
-                                <span className="inline-flex items-center gap-2 text-sm text-[#0F4C75]">
-                                    <Paperclip className="w-3.5 h-3.5" /> {material.title || 'Tài liệu đính kèm'}
-                                </span>
-                                <span className="text-xs text-gray-500">{material.fileType || 'FILE'}</span>
+                                <div className="w-8 h-8 rounded-lg bg-[#EAF4FF] flex items-center justify-center shrink-0">
+                                    <Paperclip className="w-4 h-4 text-[#3282B8]" />
+                                </div>
+                                <span className="text-sm font-medium text-[#0F4C75] truncate flex-1">{material.title || 'Tài liệu đính kèm'}</span>
+                                <span className="text-[10px] text-gray-400 uppercase font-medium shrink-0">{material.fileType || 'FILE'}</span>
                             </a>
-                        )) : (
-                            <p className="text-sm text-gray-500">Bài học này chưa có tài liệu đính kèm.</p>
-                        )}
+                        ))}
                     </div>
                 </div>
+            )}
+
+            {/* ── Prev / Next Navigation ── */}
+            <div className="flex items-center gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onNavigate('prev')}
+                    disabled={activeLessonIndex <= 0}
+                    className="flex-1 justify-start px-4 py-5 rounded-xl border-gray-200 hover:border-blue-200 hover:bg-blue-50/40"
+                >
+                    <ChevronLeft className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+                    <div className="text-left min-w-0">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Bài trước</p>
+                        <p className="text-sm font-semibold text-[#0F4C75] truncate">{prevLesson?.title || '—'}</p>
+                    </div>
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onNavigate('next')}
+                    disabled={activeLessonIndex < 0 || activeLessonIndex >= totalLessons - 1}
+                    className="flex-1 justify-end px-4 py-5 rounded-xl border-blue-100 bg-blue-50/30 hover:bg-blue-100/50"
+                >
+                    <div className="text-right min-w-0">
+                        <p className="text-[10px] text-[#3282B8] font-bold uppercase tracking-wider">Bài tiếp</p>
+                        <p className="text-sm font-semibold text-[#0F4C75] truncate">{nextLesson?.title || '—'}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#3282B8] ml-2 shrink-0" />
+                </Button>
             </div>
         </section>
     );
@@ -132,10 +154,10 @@ export function LessonContent({
 
 /* ─── Video Sub-Component ─── */
 
-function VideoPlayer({ 
-    url, title, isYouTube, isDrive, isCompleted, onVideoEnd 
-}: { 
-    url: string; title: string; isYouTube: boolean; isDrive: boolean; isCompleted: boolean; onVideoEnd: () => void; 
+function VideoPlayer({
+    url, title, isYouTube, isDrive, isCompleted, onVideoEnd
+}: {
+    url: string; title: string; isYouTube: boolean; isDrive: boolean; isCompleted: boolean; onVideoEnd: () => void;
 }) {
     let youtubeVideoId: string | null = null;
     let driveFileId: string | null = null;
@@ -149,65 +171,73 @@ function VideoPlayer({
         driveFileId = match ? match[1] : null;
     }
 
+    if (isYouTube && youtubeVideoId) {
+        return (
+            <div>
+                <iframe
+                    src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0&modestbranding=1`}
+                    className="w-full aspect-video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    title={title}
+                />
+                <div className="bg-gray-900/80 backdrop-blur px-4 py-2 flex items-center justify-between">
+                    <span className="text-xs text-gray-300">Video bài giảng</span>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">Xem trên YouTube ↗</a>
+                </div>
+            </div>
+        );
+    }
+
+    if (isDrive && driveFileId) {
+        return (
+            <div>
+                <iframe
+                    src={`https://drive.google.com/file/d/${driveFileId}/preview`}
+                    className="w-full aspect-video"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    title={title}
+                />
+                <div className="bg-gray-900/80 backdrop-blur px-4 py-2 flex items-center justify-between">
+                    <span className="text-xs text-gray-300">Video từ Google Drive</span>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-blue-400 hover:text-blue-300">Mở trên Drive ↗</a>
+                </div>
+            </div>
+        );
+    }
+
+    if (isYouTube || isDrive) {
+        return (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 transition-colors">
+                <div className={`w-14 h-14 rounded-xl ${isYouTube ? 'bg-red-600' : 'bg-blue-600'} flex items-center justify-center shrink-0 shadow-lg`}>
+                    <svg className="w-7 h-7 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div>
+                    <p className="font-bold">Xem Video bài giảng</p>
+                    <p className="text-sm text-gray-400 truncate max-w-md">{url}</p>
+                </div>
+            </a>
+        );
+    }
+
     return (
-        <div className="rounded-2xl border border-gray-100 overflow-hidden">
-            {isYouTube && youtubeVideoId ? (
-                <div className="relative">
-                    <iframe
-                        src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0&modestbranding=1`}
-                        className="w-full aspect-video"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        title={title}
-                    />
-                    <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Video bài giảng</span>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#3282B8] hover:underline">Xem trên YouTube ↗</a>
-                    </div>
-                </div>
-            ) : isDrive && driveFileId ? (
-                <div className="relative">
-                    <iframe
-                        src={`https://drive.google.com/file/d/${driveFileId}/preview`}
-                        className="w-full aspect-video"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                        title={title}
-                    />
-                    <div className="bg-gray-50 px-4 py-2 flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Video từ Google Drive</span>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#3282B8] hover:underline">Mở trên Drive ↗</a>
-                    </div>
-                </div>
-            ) : isYouTube || isDrive ? (
-                <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-white hover:from-blue-100 transition-colors">
-                    <div className={`w-16 h-16 rounded-xl ${isYouTube ? 'bg-red-600' : 'bg-blue-600'} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                        <svg className="w-8 h-8 text-white ml-1" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    </div>
-                    <div>
-                        <p className="font-bold text-gray-900">Xem Video bài giảng</p>
-                        <p className="text-sm text-gray-500 truncate max-w-md">{url}</p>
-                    </div>
-                </a>
-            ) : (
-                <video 
-                    key={url} 
-                    src={url} 
-                    controls 
-                    className="w-full aspect-video bg-black" 
-                    controlsList="nodownload" 
-                    preload="metadata"
-                    onTimeUpdate={(e) => {
-                        if (isCompleted) return;
-                        const video = e.currentTarget;
-                        if (video.duration > 0 && (video.currentTime / video.duration) >= 0.9) {
-                            onVideoEnd();
-                        }
-                    }}
-                >
-                    Trình duyệt không hỗ trợ phát video.
-                </video>
-            )}
-        </div>
+        <video
+            key={url}
+            src={url}
+            controls
+            className="w-full aspect-video bg-black"
+            controlsList="nodownload"
+            preload="metadata"
+            onTimeUpdate={(e) => {
+                if (isCompleted) return;
+                const video = e.currentTarget;
+                if (video.duration > 0 && (video.currentTime / video.duration) >= 0.9) {
+                    onVideoEnd();
+                }
+            }}
+        >
+            Trình duyệt không hỗ trợ phát video.
+        </video>
     );
 }

@@ -94,7 +94,7 @@ export function TrainingResultsTrackingPage({
                 failed: items.filter((i) => i.evaluationStatus === 'Failed').length,
                 pending: items.filter((i) => i.evaluationStatus === 'Pending').length,
                 avgScore: withScores.length > 0 ? Math.round(withScores.reduce((s, i) => s + (i.quizScore ?? 0), 0) / withScores.length) : 0,
-                avgProgress: items.length > 0 ? Math.round(items.reduce((s, i) => s + i.progressPercentage, 0) / items.length) : 0,
+                avgProgress: items.length > 0 ? Math.round(items.reduce((s, i) => s + (i.totalLessons > 0 ? Math.round((i.completedLessons / i.totalLessons) * 100) : 0), 0) / items.length) : 0,
             };
         });
     }, [filteredItems]);
@@ -229,13 +229,18 @@ export function TrainingResultsTrackingPage({
                                                         <div className="text-xs text-gray-400">{item.employeeEmail}</div>
                                                     </TableCell>
                                                     <TableCell className="min-w-[160px]">
-                                                        <div className="space-y-1.5">
-                                                            <div className="flex justify-between text-xs text-gray-500">
-                                                                <span>{item.completedLessons}/{item.totalLessons} bài</span>
-                                                                <span className="font-semibold">{item.progressPercentage}%</span>
-                                                            </div>
-                                                            <Progress value={item.progressPercentage} className="h-2" />
-                                                        </div>
+                                                        {(() => {
+                                                            const lessonProgress = item.totalLessons > 0 ? Math.round((item.completedLessons / item.totalLessons) * 100) : 0;
+                                                            return (
+                                                                <div className="space-y-1.5">
+                                                                    <div className="flex justify-between text-xs text-gray-500">
+                                                                        <span>{item.completedLessons}/{item.totalLessons} bài</span>
+                                                                        <span className="font-semibold">{lessonProgress}%</span>
+                                                                    </div>
+                                                                    <Progress value={lessonProgress} className="h-2" />
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </TableCell>
                                                     <TableCell>
                                                         {item.quizScore !== null ? (

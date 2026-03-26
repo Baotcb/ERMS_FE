@@ -69,8 +69,8 @@ export function TrainingLayoutShell({ children, roleSegment, title, description 
     return (
         <div className="flex flex-col min-h-full">
             {/* Unified Header & Breadcrumbs */}
-            <div className="bg-white border-b border-gray-200 px-6 py-6 pb-0 mb-6">
-                <div className="max-w-7xl mx-auto space-y-4">
+            <div className="max-w-7xl mx-auto w-full px-6 mt-6 mb-6">
+                <div className="bg-white border border-gray-200 rounded-2xl px-6 py-6 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] space-y-4">
                     {/* Breadcrumbs */}
                     <div className="flex items-center text-sm text-gray-500 gap-2 font-medium">
                         <GraduationCap className="w-4 h-4 text-[#0F4C75]" />
