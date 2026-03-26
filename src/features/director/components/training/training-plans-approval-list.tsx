@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Check, RotateCcw, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, RotateCcw, X, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatVND } from '@/lib/utils';
 
@@ -29,6 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { directorTrainingService } from '../../api/director-training-service';
 import { TrainingPlan } from '../../../hr/types/training-plan-types';
 import type { TrainingPlansResult } from '../../../hr/types/training-plan-types';
+import { TrainingPlanDetail } from '../../../hr/components/training/training-plan-detail';
 
 const PAGE_SIZE = 7;
 
@@ -41,6 +42,7 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
     const [resubmitRequestNote, setResubmitRequestNote] = useState('');
     const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, isLoading, mutate } = useSWR<TrainingPlansResult>(
@@ -175,6 +177,9 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                         <TableCell className="text-gray-500">{format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
+                                                <Button variant="outline" size="sm" className="text-[#0F4C75] border-blue-200 hover:bg-blue-50" onClick={() => { setSelectedPlan(plan); setIsDetailOpen(true); }}>
+                                                    <Eye className="w-4 h-4 mr-1" /> Chi tiết
+                                                </Button>
                                                 <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
                                                     <Check className="w-4 h-4 mr-1" /> Phê duyệt
                                                 </Button>
@@ -286,6 +291,12 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            {/* Training Plan Detail Modal */}
+            <TrainingPlanDetail 
+                plan={selectedPlan} 
+                open={isDetailOpen} 
+                onOpenChange={setIsDetailOpen} 
+            />
         </div>
     );
 }

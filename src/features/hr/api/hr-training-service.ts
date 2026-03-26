@@ -107,7 +107,7 @@ export const hrTrainingService = {
     },
 
     async updatePlan(data: import('../types/training-plan-types').UpdateTrainingPlan): Promise<{ ok: boolean }> {
-        const response = await apiClient.put('/api/TrainingPlan/update', data);
+        const response = await apiClient.put(`/api/TrainingPlan/${data.id}`, data);
 
         if (!response.ok) {
             let message = 'Không thể cập nhật kế hoạch đào tạo';

@@ -33,9 +33,12 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
     const router = useRouter();
     const { toast } = useToast();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${new Date().getFullYear() + 1}`);
-    const [startDate, setStartDate] = useState(`${new Date().getFullYear() + 1}-01-01`);
-    const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
+    const currentYear = new Date().getFullYear();
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    
+    const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${currentYear}`);
+    const [startDate, setStartDate] = useState(`${currentYear}-${currentMonth}-01`);
+    const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
     const [plannedBudget, setPlannedBudget] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [search, setSearch] = useState('');
@@ -89,7 +92,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
         setIsSubmitting(true);
         try {
             const res = await hrTrainingService.createPlan({
-                planCode: `TP-${new Date().getFullYear() + 1}-${Math.floor(1000 + Math.random() * 9000)}`,
+                planCode: `TP-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`,
                 planName,
                 description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
                 startDate: startDate,
