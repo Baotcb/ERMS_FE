@@ -98,7 +98,8 @@ export function SetupTrainingSchedulePage({
         if (!date || !time) {
             return null;
         }
-        const value = new Date(`${date}T${time}:00`);
+        const normalizedTime = time.split(':').slice(0, 2).join(':');
+        const value = new Date(`${date}T${normalizedTime}:00`);
         return Number.isNaN(value.getTime()) ? null : value;
     };
 
@@ -190,7 +191,7 @@ export function SetupTrainingSchedulePage({
 
 
     return (
-        <div className="w-full max-w-6xl mx-auto space-y-6 pb-20">
+        <div className="w-full space-y-6 pb-20">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

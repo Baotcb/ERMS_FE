@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Trash2, Video, FileText, Clock, Upload, MoreVertical, RefreshCw, Paperclip } from 'lucide-react';
+import { Loader2, Trash2, Video, Clock, Upload, MoreVertical, RefreshCw, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -44,18 +44,6 @@ export function CurriculumLessonItem({
                     <div>
                         <h5 className="font-bold text-gray-800 group-hover:text-[#3282B8] transition-colors">{lesson.title}</h5>
                         <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            {isLocalId(lesson.id) ? (
-                                <span className="flex items-center gap-1 text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                                    Nháp local
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                                    Đã đồng bộ
-                                </span>
-                            )}
-                            <span className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
-                                <FileText className="w-3 h-3" /> Văn bản
-                            </span>
                             {lesson.videoUrl && (
                                 <a href={lesson.videoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full hover:bg-purple-100 transition-colors">
                                     <Video className="w-3 h-3" /> Video

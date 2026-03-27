@@ -15,6 +15,7 @@ import { useAuth } from '@/features/core/auth/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
 import { encryptData, decryptData } from '@/features/core/utils/encryption';
+import { saveLessonMaterial } from '@/features/hr/utils/lesson-materials-bridge';
 import { CurriculumSectionItem } from './curriculum-section-item';
 
 interface CurriculumManagerProps {
@@ -498,6 +499,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         setUploadingLessonId(lessonId);
         try {
             const material = await courseContentService.uploadMaterial(lessonId, file);
+            saveLessonMaterial(courseId, lessonId, material);
             setSections((prev) => prev.map((section) => ({
                 ...section,
                 lessons: section.lessons.map((lesson) => {
@@ -519,6 +521,17 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             if (message.includes('Backend chưa hỗ trợ endpoint upload tài liệu')) {
                 try {
                     const uploadedUrl = await uploadMaterialViaCloudinary(file);
+
+                    // Persist DocumentUrl to backend DB
+                    try {
+                        const { apiClient } = await import('@/lib/api-client');
+                        await apiClient.put(`/api/Lessons/${lessonId}/document-url`, {
+                            documentUrl: uploadedUrl,
+                        });
+                    } catch {
+                        // Fallback: save to localStorage if PUT fails
+                    }
+
                     const fallbackMaterial = {
                         id: `local-material-${Date.now()}`,
                         lessonId,
@@ -542,9 +555,10 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                         }),
                     })));
 
+                    saveLessonMaterial(courseId, lessonId, fallbackMaterial);
                     toast({
-                        title: 'Đã upload tài liệu (Cloudinary)',
-                        description: 'Backend chưa có endpoint material, hệ thống đã dùng Cloudinary fallback để học viên vẫn xem được tài liệu.',
+                        title: 'Đã upload tài liệu thành công',
+                        description: `Tài liệu "${file.name}" đã được lưu và sẽ hiển thị cho học viên.`,
                     });
                     return;
                 } catch (fallbackError) {

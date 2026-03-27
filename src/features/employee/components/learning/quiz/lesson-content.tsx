@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Loader2, ChevronLeft, ChevronRight, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import type { Lesson } from '@/features/hr/types/course-content-types';
 
@@ -59,12 +58,6 @@ export function LessonContent({
                         isCompleted={isCompleted || lastCompletedId === activeLesson.id}
                         onVideoEnd={handleVideoEnd}
                     />
-                    {/* Lesson Badge overlay */}
-                    <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                        <Badge className="bg-[#E8731A] text-white border-0 text-[10px] font-black uppercase px-2.5 py-1 shadow-md">
-                            Bài {activeLessonIndex + 1}
-                        </Badge>
-                    </div>
                 </div>
             )}
 

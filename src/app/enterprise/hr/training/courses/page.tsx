@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { Suspense } from 'react';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 import { feedbackServerService } from '@/features/employee/api/feedback-server-service';
@@ -33,10 +33,4 @@ export default async function HRCoursesPage(props: { searchParams: Promise<{ tab
             />
         </Suspense>
     );
-=======
-import HRCoursesPage from '@/features/hr/components/training/hr-training-courses-page';
-
-export default function Page() {
-    return <HRCoursesPage />;
->>>>>>> dev
 }

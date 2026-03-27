@@ -35,8 +35,13 @@ export const trainingScheduleSchema = z.object({
     }
 
     if (data.startDate && data.startTime && data.endDate && data.endTime) {
-        const start = new Date(`${data.startDate}T${data.startTime}:00`);
-        const end = new Date(`${data.endDate}T${data.endTime}:00`);
+        // Chuẩn hoá time: chỉ lấy HH:mm, bỏ phần :ss nếu browser trả về
+        const normalizeTime = (t: string) => t.split(':').slice(0, 2).join(':');
+        const sTime = normalizeTime(data.startTime);
+        const eTime = normalizeTime(data.endTime);
+
+        const start = new Date(`${data.startDate}T${sTime}:00`);
+        const end = new Date(`${data.endDate}T${eTime}:00`);
         
         if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end < start) {
             ctx.addIssue({

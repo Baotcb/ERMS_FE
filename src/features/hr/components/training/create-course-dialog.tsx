@@ -68,8 +68,7 @@ export function CreateCourseDialog({
   availablePlans = [],
 }: CreateCourseDialogProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const userEmail = user?.email || "";
+
 
   const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
@@ -171,15 +170,6 @@ export function CreateCourseDialog({
           : "Đã tạo khóa học thành công.",
       });
 
-      if (
-        userEmail &&
-        data.trainerEmail.trim().toLowerCase() !== userEmail.toLowerCase()
-      ) {
-        toast({
-          title: "📋 Bạn là người quản lý nội dung",
-          description: `Trainer "${data.trainerEmail.trim()}" ngoài hệ thống. Bạn có thể tự upload tài liệu tại mục "Giảng dạy".`,
-        });
-      }
 
       onOpenChange(false);
       onCreated(result.courseId, data.trainingPlanId);

@@ -90,11 +90,28 @@ function normalizeLesson(raw: unknown): Lesson {
             'VideoDurationMinutes'
         ),
         orderIndex: readNumber(record, 0, 'orderIndex', 'OrderIndex'),
-        materials: Array.isArray(record.materials)
-            ? record.materials.map((item) => normalizeMaterial(item))
-            : Array.isArray(record.Materials)
-                ? (record.Materials as unknown[]).map((item) => normalizeMaterial(item))
-                : [],
+        materials: (() => {
+            const mats: ReturnType<typeof normalizeMaterial>[] = Array.isArray(record.materials)
+                ? record.materials.map((item) => normalizeMaterial(item))
+                : Array.isArray(record.Materials)
+                    ? (record.Materials as unknown[]).map((item) => normalizeMaterial(item))
+                    : [];
+            // Map DocumentUrl from backend as a material entry
+            const docUrl = readString(record, 'documentUrl', 'DocumentUrl');
+            if (docUrl) {
+                const fileName = docUrl.split('/').pop()?.split('?')[0] || 'Tài liệu đính kèm';
+                const ext = fileName.split('.').pop()?.toUpperCase() || 'FILE';
+                mats.push({
+                    id: `doc-${readString(record, 'id', 'Id')}`,
+                    lessonId: readString(record, 'id', 'Id', 'lessonId', 'LessonId'),
+                    title: decodeURIComponent(fileName),
+                    fileUrl: docUrl,
+                    fileType: ext,
+                    fileSize: 0,
+                });
+            }
+            return mats;
+        })(),
     };
 }
 

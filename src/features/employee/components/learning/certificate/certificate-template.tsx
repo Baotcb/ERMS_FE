@@ -7,7 +7,7 @@ import type { CertificateData } from './certificate-types';
 /**
  * Print-ready A4 landscape certificate.
  * Uses inline styles exclusively (no Tailwind) so html2canvas captures everything correctly.
- * Font: Noto Serif (Google Fonts) — full Vietnamese diacritics support.
+ * Font: Times New Roman — full Vietnamese diacritics support.
  */
 export function CertificateTemplate({ data }: { data: CertificateData }) {
     const displayDate = (() => {
@@ -17,11 +17,7 @@ export function CertificateTemplate({ data }: { data: CertificateData }) {
 
     return (
         <>
-            {/* Load Noto Serif Vietnamese from Google Fonts */}
-            {/* eslint-disable-next-line @next/next/no-css-tagged-template-in-component */}
-            <style dangerouslySetInnerHTML={{ __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700&display=swap');
-            `}} />
+
 
             <div
                 id="certificate-print-area"
@@ -32,7 +28,7 @@ export function CertificateTemplate({ data }: { data: CertificateData }) {
                     margin: '0 auto',
                     background: '#ffffff',
                     position: 'relative',
-                    fontFamily: "'Noto Serif', 'Georgia', serif",
+                    fontFamily: "'Times New Roman', 'Times', serif",
                     overflow: 'hidden',
                     boxSizing: 'border-box',
                 }}

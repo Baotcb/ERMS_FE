@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 import type { Course } from '@/features/hr/types/course-types';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
@@ -149,6 +149,3 @@ export default async function TrainingReportPage() {
         </div>
     );
 }
-=======
-export { default } from '@/features/director/components/training-report-page'
->>>>>>> dev
