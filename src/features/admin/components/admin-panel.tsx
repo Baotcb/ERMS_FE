@@ -2,6 +2,9 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 type AdminPanelVariant = 'default' | 'subtle' | 'ghost'
+type AdminPanelProps = React.ComponentPropsWithoutRef<'div'> & {
+  variant?: AdminPanelVariant
+}
 
 const panelVariantClasses: Record<AdminPanelVariant, string> = {
   default: 'admin-panel',
@@ -13,11 +16,8 @@ export function AdminPanel({
   children,
   variant = 'default',
   className,
-}: {
-  children: React.ReactNode
-  variant?: AdminPanelVariant
-  className?: string
-}) {
+  ...props
+}: AdminPanelProps) {
   return (
     <div
       className={cn(
@@ -25,6 +25,7 @@ export function AdminPanel({
         panelVariantClasses[variant],
         className
       )}
+      {...props}
     >
       {children}
     </div>
