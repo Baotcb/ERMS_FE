@@ -8,6 +8,25 @@ import { ADMIN_NAV_ITEMS } from '@/features/admin/constants'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
 
+const MOBILE_DRAWER_FOCUSABLE_SELECTORS = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ')
+
+function getFocusableElements(container: HTMLElement) {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(MOBILE_DRAWER_FOCUSABLE_SELECTORS)
+  ).filter(
+    (element) =>
+      !element.hasAttribute('disabled') &&
+      element.getAttribute('aria-hidden') !== 'true'
+  )
+}
+
 type SidebarContentProps = {
   collapsed?: boolean
   isMobile?: boolean
@@ -134,6 +153,8 @@ export const AdminSidebar = memo(function AdminSidebar() {
   const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
   const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
   const mobileSidebarRef = useRef<HTMLElement>(null)
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null)
+  const wasMobileSidebarOpenRef = useRef(false)
   const mobileSidebarTitleId = useId()
 
   const closeMobileSidebar = useCallback(() => {
@@ -164,16 +185,86 @@ export const AdminSidebar = memo(function AdminSidebar() {
       return
     }
 
+    previouslyFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null
+
+    const focusableElements = mobileSidebarRef.current
+      ? getFocusableElements(mobileSidebarRef.current)
+      : []
+
+    if (focusableElements[0]) {
+      focusableElements[0].focus()
+      return
+    }
+
     mobileSidebarRef.current?.focus()
   }, [isMobileSidebarOpen])
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen && wasMobileSidebarOpenRef.current) {
+      const menuTrigger = document.getElementById('admin-shell-menu-trigger')
+
+      if (menuTrigger instanceof HTMLElement) {
+        menuTrigger.focus()
+      } else {
+        previouslyFocusedElementRef.current?.focus()
+      }
+    }
+
+    wasMobileSidebarOpenRef.current = isMobileSidebarOpen
+  }, [isMobileSidebarOpen])
+
+  const handleMobileSidebarKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeMobileSidebar()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const focusableElements = getFocusableElements(event.currentTarget)
+
+      if (focusableElements.length === 0) {
+        event.preventDefault()
+        event.currentTarget.focus()
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+      const activeElement =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
+
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+        return
+      }
+
+      if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    },
+    [closeMobileSidebar]
+  )
 
   return (
     <>
       {isMobileSidebarOpen ? (
         <button
           type="button"
+          tabIndex={-1}
           className="fixed inset-x-0 bottom-0 top-16 z-40 bg-slate-950/55 backdrop-blur-[2px] lg:hidden"
-          aria-label="Đóng menu điều hướng quản trị"
+          aria-label="Close admin navigation"
           onClick={closeMobileSidebar}
         />
       ) : null}
@@ -188,19 +279,15 @@ export const AdminSidebar = memo(function AdminSidebar() {
             : '-translate-x-full pointer-events-none'
         )}
         role="dialog"
+        aria-modal="true"
         aria-labelledby={mobileSidebarTitleId}
         aria-hidden={!isMobileSidebarOpen}
         inert={!isMobileSidebarOpen}
         tabIndex={-1}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            closeMobileSidebar()
-          }
-        }}
+        onKeyDown={handleMobileSidebarKeyDown}
       >
         <span id={mobileSidebarTitleId} className="sr-only">
-          Điều hướng quản trị
+          Admin navigation
         </span>
         <SidebarContent
           isMobile
