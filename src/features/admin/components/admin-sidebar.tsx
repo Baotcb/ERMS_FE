@@ -8,6 +8,112 @@ import { ADMIN_NAV_ITEMS } from '@/features/admin/constants'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
 
+type SidebarContentProps = {
+  collapsed?: boolean
+  onNavigate: () => void
+  pathname: string
+}
+
+function SidebarContent({
+  collapsed = false,
+  onNavigate,
+  pathname,
+}: SidebarContentProps) {
+  return (
+    <div className="admin-shell flex h-full flex-col rounded-[28px] border border-white/10 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.2)]">
+      <div
+        className={cn(
+          'rounded-2xl border border-white/10 bg-white/[0.04]',
+          collapsed
+            ? 'flex justify-center px-2 py-3'
+            : 'flex items-center gap-3 px-3 py-3'
+        )}
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/[0.08] text-teal-200 ring-1 ring-white/10">
+          <Shield className="h-5 w-5" aria-hidden="true" />
+        </div>
+
+        {collapsed ? (
+          <span className="sr-only">ERMS Admin</span>
+        ) : (
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold tracking-wide text-white">
+              ERMS Admin
+            </p>
+            <p className="truncate text-[11px] text-slate-400">
+              Quản trị nền tảng
+            </p>
+          </div>
+        )}
+      </div>
+
+      <nav
+        className="mt-4 flex-1 space-y-1 overflow-y-auto"
+        aria-label="Admin navigation"
+      >
+        {ADMIN_NAV_ITEMS.map((item) => {
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onNavigate}
+              title={collapsed ? item.title : undefined}
+              className={cn(
+                'group relative flex rounded-2xl text-sm transition-[background-color,color,transform] duration-200',
+                collapsed
+                  ? 'justify-center px-2 py-3'
+                  : 'items-start gap-3 px-3 py-3.5',
+                isActive
+                  ? 'bg-white/[0.12] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
+                  : 'text-slate-300 hover:bg-white/[0.06] hover:text-white'
+              )}
+            >
+              {isActive ? (
+                <span
+                  className="absolute bottom-3 left-0 top-3 w-1 rounded-r-full bg-teal-300"
+                  aria-hidden="true"
+                />
+              ) : null}
+
+              <item.icon
+                className={cn(
+                  'h-5 w-5 shrink-0',
+                  collapsed ? '' : 'mt-0.5',
+                  isActive
+                    ? 'text-teal-200'
+                    : 'text-slate-500 transition-colors group-hover:text-slate-200'
+                )}
+                aria-hidden="true"
+              />
+
+              {collapsed ? (
+                <span className="sr-only">{item.title}</span>
+              ) : (
+                <div className="min-w-0">
+                  <p className="font-medium">{item.title}</p>
+                  {item.description ? (
+                    <p
+                      className={cn(
+                        'mt-0.5 text-xs leading-5',
+                        isActive ? 'text-slate-200/80' : 'text-slate-400'
+                      )}
+                    >
+                      {item.description}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+    </div>
+  )
+}
+
 export const AdminSidebar = memo(function AdminSidebar() {
   const pathname = usePathname()
   const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
@@ -37,69 +143,11 @@ export const AdminSidebar = memo(function AdminSidebar() {
     }
   }, [setMobileSidebarOpen])
 
-  const sidebarContent = (
-    <div className="flex h-full flex-col border-r border-gray-200 bg-white">
-      <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
-          <Shield className="h-4 w-4" aria-hidden="true" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900">
-            ERMS Admin
-          </p>
-          <p className="truncate text-[11px] text-gray-500">
-            Quản trị nền tảng
-          </p>
-        </div>
-      </div>
-
-      <nav
-        className="flex-1 space-y-1 overflow-y-auto p-3"
-        aria-label="Admin navigation"
-      >
-        {ADMIN_NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`)
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={closeMobileSidebar}
-              className={cn(
-                'flex items-start gap-3 rounded-xl px-3 py-3 text-sm transition-all duration-200',
-                isActive
-                  ? 'bg-indigo-50 text-indigo-700 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-700'
-              )}
-            >
-              <item.icon
-                className={cn(
-                  'mt-0.5 h-4 w-4 shrink-0',
-                  isActive ? 'text-indigo-600' : 'text-gray-400'
-                )}
-                aria-hidden="true"
-              />
-              <div className="min-w-0">
-                <p className="font-medium">{item.title}</p>
-                {item.description ? (
-                  <p className="mt-0.5 text-xs text-gray-500">
-                    {item.description}
-                  </p>
-                ) : null}
-              </div>
-            </Link>
-          )
-        })}
-      </nav>
-    </div>
-  )
-
   return (
     <>
       {isMobileSidebarOpen ? (
         <div
-          className="fixed inset-x-0 bottom-0 top-14 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-x-0 bottom-0 top-16 z-40 bg-slate-950/55 backdrop-blur-[2px] lg:hidden"
           role="button"
           tabIndex={0}
           aria-label="Close sidebar"
@@ -116,7 +164,7 @@ export const AdminSidebar = memo(function AdminSidebar() {
       <aside
         id="admin-sidebar-mobile"
         className={cn(
-          'fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-72 overscroll-y-contain transition-transform duration-300 lg:hidden',
+          'fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-[18rem] overscroll-y-contain px-3 pb-3 transition-transform duration-300 lg:hidden',
           isMobileSidebarOpen
             ? 'translate-x-0'
             : '-translate-x-full pointer-events-none'
@@ -124,19 +172,22 @@ export const AdminSidebar = memo(function AdminSidebar() {
         aria-hidden={!isMobileSidebarOpen}
         inert={!isMobileSidebarOpen}
       >
-        {sidebarContent}
+        <SidebarContent pathname={pathname} onNavigate={closeMobileSidebar} />
       </aside>
 
       <aside
         id="admin-sidebar-desktop"
         className={cn(
-          'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 overflow-hidden transition-all duration-300 lg:block',
-          isSidebarOpen ? 'w-72' : 'w-0 pointer-events-none'
+          'sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 overflow-hidden transition-[width] duration-300 lg:block',
+          isSidebarOpen ? 'w-[18rem]' : 'w-20'
         )}
-        aria-hidden={!isSidebarOpen}
-        inert={!isSidebarOpen}
+        aria-label={isSidebarOpen ? 'Admin sidebar' : 'Admin sidebar collapsed'}
       >
-        <div className="h-full w-72">{sidebarContent}</div>
+        <SidebarContent
+          collapsed={!isSidebarOpen}
+          pathname={pathname}
+          onNavigate={closeMobileSidebar}
+        />
       </aside>
     </>
   )

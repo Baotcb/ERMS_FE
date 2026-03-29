@@ -59,32 +59,37 @@ export const AdminNavbar = memo(function AdminNavbar() {
   }, [isLoggingOut, logout])
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-gray-200 bg-white px-4">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-white/10 bg-[linear-gradient(180deg,rgba(18,25,38,0.96),rgba(26,35,51,0.92))] px-3 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] backdrop-blur xl:px-5">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={handleMenuClick}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/[0.04] text-slate-300 ring-1 ring-white/10 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300/40"
           aria-label="Ẩn/hiện sidebar"
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
 
         <Link href="/admin/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/[0.08] text-teal-200 ring-1 ring-white/10">
             <Shield className="h-4 w-4" aria-hidden="true" />
           </div>
-          <span className="hidden font-bold text-gray-900 sm:inline">ERMS</span>
-          <span className="hidden rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 sm:inline-flex">
+          <span className="hidden font-bold tracking-wide text-white sm:inline">
+            ERMS
+          </span>
+          <span className="hidden rounded-full bg-teal-400/10 px-2.5 py-1 text-[11px] font-semibold tracking-[0.24em] text-teal-100 ring-1 ring-teal-300/20 sm:inline-flex">
             ADMIN
           </span>
         </Link>
       </div>
 
-      <form onSubmit={handleSearchSubmit} className="hidden flex-1 items-center md:flex">
-        <div className="relative w-full max-w-xl">
+      <form
+        onSubmit={handleSearchSubmit}
+        className="hidden flex-1 items-center justify-center px-2 md:flex lg:px-4"
+      >
+        <div className="relative w-full max-w-xl rounded-full bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm transition-[background-color,box-shadow] focus-within:bg-white/[0.08] focus-within:ring-teal-300/30">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
             aria-hidden="true"
           />
           <input
@@ -92,17 +97,17 @@ export const AdminNavbar = memo(function AdminNavbar() {
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="Tìm doanh nghiệp, mã DN..."
-            className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm text-gray-700 outline-none transition-colors placeholder:text-gray-400 focus:border-indigo-300 focus:bg-white"
+            className="h-11 w-full rounded-full bg-transparent pl-11 pr-4 text-sm text-slate-100 outline-none placeholder:text-slate-400"
           />
         </div>
       </form>
 
       <div className="flex shrink-0 items-center gap-3">
         <div className="hidden text-right md:block">
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-sm font-semibold text-slate-100">
             {user?.fullName || 'Admin'}
           </p>
-          <p className="text-[11px] text-gray-500">Platform Administrator</p>
+          <p className="text-[11px] text-slate-400">Platform Administrator</p>
         </div>
 
         <button
@@ -110,8 +115,8 @@ export const AdminNavbar = memo(function AdminNavbar() {
           onClick={handleLogout}
           disabled={isLoggingOut}
           className={cn(
-            'inline-flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors',
-            'hover:border-red-200 hover:bg-red-50 hover:text-red-600',
+            'inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-slate-300 transition-colors',
+            'hover:bg-white/[0.06] hover:text-white',
             'disabled:cursor-not-allowed disabled:opacity-60'
           )}
         >

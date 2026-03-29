@@ -32,11 +32,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="admin-theme admin-canvas flex min-h-screen flex-col">
       <AdminNavbar />
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 gap-3 px-3 pb-3 pt-3 sm:gap-4 sm:px-4 sm:pb-4 sm:pt-4 xl:px-5 xl:pb-5 xl:pt-5">
         <AdminSidebar />
-        <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-5 xl:p-6">
+        <main className="min-w-0 flex-1 overflow-y-auto px-1 pb-2 sm:px-2 sm:pb-3 xl:px-3 xl:pb-4">
           {children}
         </main>
       </div>
