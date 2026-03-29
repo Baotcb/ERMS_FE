@@ -3,9 +3,19 @@
 import { startTransition, useMemo, type FormEvent } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { CreditCard, RotateCcw, Search } from 'lucide-react'
-import { useGlobalPaymentHistory } from '@/features/admin/api/admin-service'
-import { AdminDataTable, type Column } from '@/features/admin/components/admin-data-table'
+import { CreditCard, RefreshCw, RotateCcw, Search, Settings2 } from 'lucide-react'
+import { LoadingSpinner } from '@/components/common'
+import {
+  revalidateGlobalPaymentHistory,
+  useGlobalPaymentHistory,
+} from '@/features/admin/api/admin-service'
+import {
+  AdminDataTable,
+  type Column,
+} from '@/features/admin/components/admin-data-table'
+import { AdminEmptyState } from '@/features/admin/components/admin-empty-state'
+import { AdminPageHeader } from '@/features/admin/components/admin-page-header'
+import { AdminPanel } from '@/features/admin/components/admin-panel'
 import type {
   PaymentActionType,
   PaymentHistoryFilters,
@@ -41,6 +51,13 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('vi-VN', {
   currency: 'VND',
   maximumFractionDigits: 0,
 })
+
+const FIELD_CLASSNAME =
+  'h-11 w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 text-sm text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-300 focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-2'
+const HEADER_ACTION_CLASSNAME =
+  'inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-2'
+const FILTER_BUTTON_CLASSNAME =
+  'inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-2'
 
 function parseFilters(searchParams: URLSearchParams): PaymentHistoryFilters {
   return {
@@ -131,6 +148,10 @@ export function PaymentHistoryPageContent() {
     syncUrl(DEFAULT_FILTERS)
   }
 
+  const handleRetry = () => {
+    void revalidateGlobalPaymentHistory(filters)
+  }
+
   const columns: Column<PaymentHistoryItem>[] = useMemo(
     () => [
       {
@@ -140,11 +161,11 @@ export function PaymentHistoryPageContent() {
           <div className="flex flex-col">
             <Link
               href={`/admin/enterprises/${item.enterpriseId}`}
-              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
+              className="text-sm font-semibold text-[color:var(--admin-shell)] transition hover:text-indigo-700 hover:underline"
             >
               {item.enterpriseName}
             </Link>
-            <span className="mt-0.5 font-mono text-xs text-gray-500">
+            <span className="mt-1 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[11px] font-medium text-slate-600">
               {item.enterpriseCode}
             </span>
           </div>
@@ -154,7 +175,7 @@ export function PaymentHistoryPageContent() {
         key: 'actionType',
         header: 'Loại thao tác',
         render: (item) => (
-          <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-700">
+          <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
             {ACTION_TYPE_LABELS[item.actionType] || item.actionType}
           </span>
         ),
@@ -162,25 +183,25 @@ export function PaymentHistoryPageContent() {
       {
         key: 'plan',
         header: 'Gói',
-        className: 'text-sm font-medium text-gray-900',
+        className: 'text-sm font-medium text-slate-800',
         render: (item) => item.planName || '—',
       },
       {
         key: 'previousPlan',
         header: 'Gói trước',
-        className: 'text-sm text-gray-500',
+        className: 'text-sm text-slate-500',
         render: (item) => item.previousPlanName || '—',
       },
       {
         key: 'amount',
         header: 'Số tiền',
-        className: 'text-right text-sm font-bold text-gray-900',
+        className: 'text-right text-sm font-semibold text-[color:var(--admin-shell)]',
         render: (item) => formatCurrency(item.amount, item.currency),
       },
       {
         key: 'method',
         header: 'Phương thức',
-        className: 'text-sm text-gray-600',
+        className: 'text-sm text-slate-600',
         render: (item) =>
           item.paymentMethod
             ? PAYMENT_METHOD_LABELS[item.paymentMethod] || item.paymentMethod
@@ -189,34 +210,19 @@ export function PaymentHistoryPageContent() {
       {
         key: 'period',
         header: 'Thời hạn',
-        className: 'text-sm text-gray-600',
+        className: 'text-sm text-slate-600',
         render: (item) =>
           `${formatDate(item.periodStartDate)} - ${formatDate(item.periodEndDate)}`,
       },
       {
         key: 'date',
         header: 'Ngày',
-        className: 'text-sm text-gray-600',
+        className: 'text-sm text-slate-600',
         render: (item) => formatDate(item.createdAt),
       },
     ],
     []
   )
-
-  if (error) {
-    return (
-      <div className="rounded-2xl border border-red-100 bg-white p-8 text-center text-red-600">
-        <p>Đã xảy ra lỗi khi tải lịch sử thanh toán.</p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="mt-4 font-medium text-indigo-600 hover:underline"
-        >
-          Thử lại
-        </button>
-      </div>
-    )
-  }
 
   const hasActiveFilters =
     Boolean(filters.enterpriseSearch) ||
@@ -225,109 +231,180 @@ export function PaymentHistoryPageContent() {
     Boolean(filters.dateFrom) ||
     Boolean(filters.dateTo)
 
+  const activeFilterCount = [
+    filters.enterpriseSearch,
+    filters.actionType,
+    filters.paymentMethod,
+    filters.dateFrom,
+    filters.dateTo,
+  ].filter(Boolean).length
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-gray-900">Lịch sử thanh toán</h1>
-        <p className="text-sm text-gray-500">
-          Ledger thanh toán subscription toàn nền tảng
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <form onSubmit={handleSearch} className="relative w-full xl:max-w-sm">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-            aria-hidden="true"
-          />
-          <input
-            key={filters.enterpriseSearch}
-            name="enterpriseSearch"
-            type="search"
-            defaultValue={filters.enterpriseSearch}
-            placeholder="Tìm doanh nghiệp..."
-            className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-700 outline-none transition-colors placeholder:text-gray-400 focus:border-indigo-300"
-          />
-        </form>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={filters.actionType}
-            onChange={(event) =>
-              updateFilters({
-                actionType: event.target.value as PaymentActionType | '',
-                pageNumber: 1,
-              })
-            }
-            className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300"
+      <AdminPageHeader
+        title="Lịch sử thanh toán"
+        description="Ledger vận hành để lần theo giao dịch subscription theo doanh nghiệp, hành động, thời gian và phương thức trong cùng một surface."
+        actions={
+          <button
+            type="button"
+            onClick={handleRetry}
+            className={HEADER_ACTION_CLASSNAME}
           >
-            <option value="">Tất cả thao tác</option>
-            <option value="Subscribe">Đăng ký</option>
-            <option value="Renew">Gia hạn</option>
-            <option value="Upgrade">Nâng cấp</option>
-            <option value="Downgrade">Hạ cấp</option>
-          </select>
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            Làm mới dữ liệu
+          </button>
+        }
+      />
 
-          <select
-            value={filters.paymentMethod}
-            onChange={(event) =>
-              updateFilters({
-                paymentMethod: event.target.value,
-                pageNumber: 1,
-              })
-            }
-            className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300"
-          >
-            <option value="">Mọi phương thức</option>
-            <option value="BankTransfer">Chuyển khoản</option>
-            <option value="Cash">Tiền mặt</option>
-            <option value="Card">Thẻ</option>
-          </select>
+      <AdminPanel className="overflow-hidden p-0">
+        <div className="flex flex-col gap-4 border-b border-slate-200/80 px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                <Settings2 className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                  Workspace bộ lọc
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Tập trung một luồng làm việc: tìm giao dịch, khóa phạm vi thời gian, rồi đối soát trực tiếp trong bảng.
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <input
-            type="date"
-            value={filters.dateFrom}
-            onChange={(event) =>
-              updateFilters({ dateFrom: event.target.value, pageNumber: 1 })
-            }
-            className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300"
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              {data?.totalCount?.toLocaleString('vi-VN') ?? 0} giao dịch
+            </span>
+            {hasActiveFilters ? (
+              <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-100">
+                {activeFilterCount} bộ lọc đang bật
+              </span>
+            ) : null}
+          </div>
+        </div>
 
-          <input
-            type="date"
-            value={filters.dateTo}
-            onChange={(event) =>
-              updateFilters({ dateTo: event.target.value, pageNumber: 1 })
-            }
-            className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-300"
-          />
+        <div className="space-y-5 px-6 py-6">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.8fr)_minmax(190px,0.8fr)_minmax(150px,0.6fr)_minmax(150px,0.6fr)_auto]">
+            <form onSubmit={handleSearch} className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                key={filters.enterpriseSearch}
+                name="enterpriseSearch"
+                type="search"
+                defaultValue={filters.enterpriseSearch}
+                placeholder="Tìm doanh nghiệp..."
+                className={`${FIELD_CLASSNAME} pl-10 pr-4`}
+              />
+            </form>
 
-          {hasActiveFilters ? (
+            <select
+              value={filters.actionType}
+              onChange={(event) =>
+                updateFilters({
+                  actionType: event.target.value as PaymentActionType | '',
+                  pageNumber: 1,
+                })
+              }
+              className={FIELD_CLASSNAME}
+            >
+              <option value="">Tất cả thao tác</option>
+              <option value="Subscribe">Đăng ký</option>
+              <option value="Renew">Gia hạn</option>
+              <option value="Upgrade">Nâng cấp</option>
+              <option value="Downgrade">Hạ cấp</option>
+            </select>
+
+            <select
+              value={filters.paymentMethod}
+              onChange={(event) =>
+                updateFilters({
+                  paymentMethod: event.target.value,
+                  pageNumber: 1,
+                })
+              }
+              className={FIELD_CLASSNAME}
+            >
+              <option value="">Mọi phương thức</option>
+              <option value="BankTransfer">Chuyển khoản</option>
+              <option value="Cash">Tiền mặt</option>
+              <option value="Card">Thẻ</option>
+            </select>
+
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(event) =>
+                updateFilters({ dateFrom: event.target.value, pageNumber: 1 })
+              }
+              className={FIELD_CLASSNAME}
+            />
+
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={(event) =>
+                updateFilters({ dateTo: event.target.value, pageNumber: 1 })
+              }
+              className={FIELD_CLASSNAME}
+            />
+
             <button
               type="button"
               onClick={handleResetFilters}
-              className="inline-flex h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className={
+                hasActiveFilters
+                  ? `${FILTER_BUTTON_CLASSNAME} border-slate-200 bg-white/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50`
+                  : `${FILTER_BUTTON_CLASSNAME} cursor-not-allowed border-slate-200/70 bg-slate-100/70 text-slate-400`
+              }
+              disabled={!hasActiveFilters}
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
               Xóa bộ lọc
             </button>
-          ) : null}
+          </div>
         </div>
-      </div>
+      </AdminPanel>
 
-      <AdminDataTable
-        columns={columns}
-        data={data?.items}
-        isLoading={isLoading}
-        emptyIcon={<CreditCard className="mx-auto h-12 w-12 text-gray-300" />}
-        emptyMessage="Không có giao dịch phù hợp"
-        pageNumber={filters.pageNumber}
-        pageSize={filters.pageSize}
-        totalCount={data?.totalCount}
-        totalPages={data?.totalPages}
-        onPageChange={(page) => updateFilters({ pageNumber: page })}
-        keyExtractor={(item) => item.id}
-      />
+      {isLoading && !data ? (
+        <AdminPanel className="flex min-h-[320px] items-center justify-center">
+          <LoadingSpinner size="lg" className="text-teal-600" />
+        </AdminPanel>
+      ) : error ? (
+        <AdminEmptyState
+          icon={CreditCard}
+          title="Không thể tải lịch sử thanh toán"
+          description="Bảng ledger đang tạm mất kết nối với backend. Thử revalidate lại đúng tập lọc hiện tại để tiếp tục đối soát mà không phải làm lại thao tác."
+          action={
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--admin-shell)] px-4 text-sm font-semibold text-white transition hover:opacity-95"
+            >
+              Thử lại
+            </button>
+          }
+        />
+      ) : (
+        <AdminDataTable
+          columns={columns}
+          data={data?.items}
+          isLoading={isLoading}
+          emptyIcon={<CreditCard className="mx-auto h-12 w-12 text-slate-300" />}
+          emptyMessage="Không có giao dịch phù hợp"
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
+          totalCount={data?.totalCount}
+          totalPages={data?.totalPages}
+          onPageChange={(page) => updateFilters({ pageNumber: page })}
+          keyExtractor={(item) => item.id}
+        />
+      )}
     </div>
   )
 }

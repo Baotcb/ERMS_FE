@@ -405,6 +405,10 @@ export function useEnterpriseList(filters: EnterpriseListFilters) {
   })
 }
 
+export function revalidateEnterpriseList(filters: EnterpriseListFilters) {
+  return revalidateAdminView(adminKeys.enterpriseList(filters).join('/'))
+}
+
 export function useEnterpriseAdminDetail(id: string | null) {
   const key = id ? adminKeys.enterpriseDetail(id) : null
 
@@ -433,6 +437,10 @@ export function useGlobalPaymentHistory(filters: PaymentHistoryFilters) {
   return useData<PaymentHistoryResponse>(key, {
     fetcher: fetchPaymentHistory as unknown as Fetcher<PaymentHistoryResponse>,
   })
+}
+
+export function revalidateGlobalPaymentHistory(filters: PaymentHistoryFilters) {
+  return revalidateAdminView(adminKeys.paymentHistory(filters).join('/'))
 }
 
 export function usePlatformStats() {
