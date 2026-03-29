@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 export interface Column<T> {
   key: string;
   header: ReactNode;
+  headerClassName?: string;
   className?: string;
   render: (item: T) => ReactNode;
 }
@@ -53,9 +54,15 @@ export function AdminDataTable<T>({
   const cellPaddingClassName = "px-5 py-4 first:pl-6 last:pr-6";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border admin-panel">
+    <div
+      className="flex flex-col overflow-hidden rounded-2xl border admin-panel"
+      aria-busy={isLoading || undefined}
+    >
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left">
+        <table
+          className="min-w-full border-collapse text-left"
+          aria-busy={isLoading || undefined}
+        >
           <thead className="border-b border-slate-200/70 bg-white/45">
             <tr>
               {columns.map((col) => (
@@ -64,7 +71,7 @@ export function AdminDataTable<T>({
                   className={cn(
                     headerPaddingClassName,
                     "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500",
-                    col.className,
+                    col.headerClassName,
                   )}
                 >
                   {col.header}
@@ -80,7 +87,12 @@ export function AdminDataTable<T>({
                   colSpan={colSpanCount}
                   className="px-6 py-16 text-center text-slate-500"
                 >
-                  <div className="flex flex-col items-center justify-center gap-3">
+                  <div
+                    className="flex flex-col items-center justify-center gap-3"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
                     <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
                     <span className="text-sm">Đang tải...</span>
                   </div>
@@ -94,9 +106,7 @@ export function AdminDataTable<T>({
                 >
                   <div className="flex flex-col items-center justify-center gap-3">
                     {emptyIcon ? (
-                      <div className="rounded-2xl bg-slate-100 p-3 text-slate-400">
-                        {emptyIcon}
-                      </div>
+                      <div className="text-slate-400/80">{emptyIcon}</div>
                     ) : null}
                     <span className="text-sm">{emptyMessage}</span>
                   </div>
