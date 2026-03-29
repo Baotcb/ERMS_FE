@@ -1,4 +1,4 @@
-import { mutate, type Fetcher, useData } from '@/lib/swr/hooks'
+import { mutate, type Fetcher, type Key, useData } from '@/lib/swr/hooks'
 import { apiClient } from '@/lib/api-client'
 import type {
   AdminDashboardData,
@@ -33,7 +33,7 @@ function revalidateAdminCaches() {
   return mutate(isAdminCacheKey, undefined, { revalidate: true })
 }
 
-function revalidateAdminView(key: string) {
+function revalidateAdminView(key: Key) {
   return mutate(key, undefined, { revalidate: true })
 }
 
@@ -406,7 +406,7 @@ export function useEnterpriseList(filters: EnterpriseListFilters) {
 }
 
 export function revalidateEnterpriseList(filters: EnterpriseListFilters) {
-  return revalidateAdminView(adminKeys.enterpriseList(filters).join('/'))
+  return revalidateAdminView(adminKeys.enterpriseList(filters))
 }
 
 export function useEnterpriseAdminDetail(id: string | null) {
@@ -440,7 +440,7 @@ export function useGlobalPaymentHistory(filters: PaymentHistoryFilters) {
 }
 
 export function revalidateGlobalPaymentHistory(filters: PaymentHistoryFilters) {
-  return revalidateAdminView(adminKeys.paymentHistory(filters).join('/'))
+  return revalidateAdminView(adminKeys.paymentHistory(filters))
 }
 
 export function usePlatformStats() {

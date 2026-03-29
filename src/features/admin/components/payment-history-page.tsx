@@ -373,7 +373,15 @@ export function PaymentHistoryPageContent() {
 
       {isLoading && !data ? (
         <AdminPanel className="flex min-h-[320px] items-center justify-center">
-          <LoadingSpinner size="lg" className="text-teal-600" />
+          <div
+            className="flex flex-col items-center justify-center gap-3 text-slate-600"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <LoadingSpinner size="lg" className="text-teal-600" />
+            <span className="text-sm font-medium">Đang tải...</span>
+          </div>
         </AdminPanel>
       ) : error ? (
         <AdminEmptyState
