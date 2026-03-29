@@ -7,14 +7,17 @@ import {
   Bot,
   Building2,
   CreditCard,
-  Search,
+  RefreshCw,
   Users,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common'
 import { useAdminDashboard } from '@/features/admin/api/admin-service'
-import { ADMIN_QUICK_LINKS } from '@/features/admin/constants'
+import { AdminEmptyState } from '@/features/admin/components/admin-empty-state'
+import { AdminPageHeader } from '@/features/admin/components/admin-page-header'
+import { AdminPanel } from '@/features/admin/components/admin-panel'
 import { AdminStatCard } from '@/features/admin/components/admin-stat-card'
 import { EnterpriseStatusBadge } from '@/features/admin/components/enterprise-status-badge'
+import { ADMIN_QUICK_LINKS } from '@/features/admin/constants'
 
 const EMPTY_DASHBOARD = {
   totalEnterprises: 0,
@@ -30,11 +33,44 @@ const DATETIME_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
   dateStyle: 'short',
   timeStyle: 'short',
 })
+const DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN', {
+  dateStyle: 'medium',
+})
 const CURRENCY_FORMATTER = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
   currency: 'VND',
   maximumFractionDigits: 0,
 })
+
+const HEADER_ACTION_CLASSNAME =
+  'inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200 focus-visible:ring-offset-2'
+
+const QUICK_LINK_STYLES = {
+  indigo: {
+    icon: 'bg-indigo-50 text-indigo-600 ring-indigo-100',
+    hover: 'hover:border-indigo-200 hover:bg-indigo-50/70',
+  },
+  green: {
+    icon: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
+    hover: 'hover:border-emerald-200 hover:bg-emerald-50/70',
+  },
+  amber: {
+    icon: 'bg-amber-50 text-amber-600 ring-amber-100',
+    hover: 'hover:border-amber-200 hover:bg-amber-50/70',
+  },
+  red: {
+    icon: 'bg-rose-50 text-rose-600 ring-rose-100',
+    hover: 'hover:border-rose-200 hover:bg-rose-50/70',
+  },
+  gray: {
+    icon: 'bg-slate-100 text-slate-600 ring-slate-200',
+    hover: 'hover:border-slate-300 hover:bg-slate-50/90',
+  },
+} as const
+
+function formatDate(value: string) {
+  return DATE_FORMATTER.format(new Date(value))
+}
 
 function formatDateTime(value: string) {
   return DATETIME_FORMATTER.format(new Date(value))
@@ -48,270 +84,374 @@ export default function AdminDashboardPageContent() {
   const { data, error, isLoading } = useAdminDashboard()
   const dashboard = data ?? EMPTY_DASHBOARD
 
-  if (isLoading && !data) {
-    return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-gray-200 bg-white">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Trung tâm xử lý công việc hằng ngày của platform admin
-          </p>
-        </div>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <AdminPageHeader
+        title="Admin Dashboard"
+        description="Trung tâm xử lý hằng ngày cho admin, ưu tiên các việc cần xử lý ngay trước khi đi vào chỉ số và hỗ trợ vận hành."
+        actions={
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className={HEADER_ACTION_CLASSNAME}
+          >
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            Làm mới dữ liệu
+          </button>
+        }
+      />
 
-        <Link
-          href="/admin/enterprises"
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700"
-        >
-          <Search className="h-4 w-4" aria-hidden="true" />
-          Tìm doanh nghiệp
-        </Link>
-      </div>
-
-      {error ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Không thể tải đầy đủ dữ liệu dashboard. Trang đang hiển thị dữ liệu
-          gần nhất hoặc rỗng.
-        </div>
-      ) : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminStatCard
-          title="Tổng doanh nghiệp"
-          value={dashboard.totalEnterprises}
-          icon={Building2}
-          color="indigo"
-          href="/admin/enterprises"
-        />
-        <AdminStatCard
-          title="Đang hoạt động"
-          value={dashboard.activeEnterprises}
-          icon={Users}
-          color="green"
-          href="/admin/enterprises?status=Active"
-        />
-        <AdminStatCard
-          title="Đã khóa"
-          value={dashboard.lockedEnterprises}
-          icon={AlertTriangle}
-          color="red"
-          href="/admin/enterprises?status=Locked"
-        />
-        <AdminStatCard
-          title="Sắp hết hạn"
-          value={dashboard.expiringSoonEnterprises}
-          icon={CreditCard}
-          color="amber"
-          href="/admin/enterprises?expiringWithinDays=30"
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-3">
-        <section className="rounded-xl border border-gray-200 bg-white shadow-sm xl:col-span-2">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-            <h2 className="text-lg font-semibold text-gray-900">Cần xử lý</h2>
-            <Link
-              href="/admin/enterprises"
-              className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700"
+      {isLoading && !data ? (
+        <AdminPanel className="flex min-h-[320px] items-center justify-center">
+          <LoadingSpinner size="lg" className="text-teal-600" />
+        </AdminPanel>
+      ) : (
+        <>
+          {error ? (
+            <AdminPanel
+              variant="subtle"
+              className="border-amber-200/80 bg-amber-50/70 text-amber-900"
             >
-              Xem tất cả
-            </Link>
-          </div>
-
-          <div className="divide-y divide-gray-100">
-            {dashboard.attentionItems.length > 0 ? (
-              dashboard.attentionItems.map((item) => (
-                <div
-                  key={`${item.enterpriseId}-${item.attentionReason}`}
-                  className="flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between"
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">
+                    Không thể tải đầy đủ dữ liệu dashboard.
+                  </p>
+                  <p className="text-sm leading-6 text-amber-800/90">
+                    Trang đang hiển thị dữ liệu gần nhất hoặc giá trị rỗng để
+                    bạn vẫn tiếp tục theo dõi vận hành.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-white px-4 text-sm font-medium text-amber-900 transition hover:bg-amber-50"
                 >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-gray-900">
-                      {item.enterpriseName}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {item.enterpriseCode} · {item.attentionReason}
-                    </p>
+                  Thử lại
+                </button>
+              </div>
+            </AdminPanel>
+          ) : null}
+
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px] xl:items-start">
+            <div className="space-y-6">
+              <AdminPanel className="overflow-hidden p-0">
+                <div className="flex flex-col gap-3 border-b border-slate-200/80 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                        <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                          Cần xử lý
+                        </h2>
+                        <p className="text-sm text-slate-600">
+                          Danh sách tenant đang cần admin kiểm tra hoặc can thiệp.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
-                    <EnterpriseStatusBadge status={item.status} />
-                    <span className="text-xs font-medium text-gray-500">
-                      {new Date(item.subscriptionEndDate).toLocaleDateString(
-                        'vi-VN'
-                      )}
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-100">
+                      {dashboard.attentionItems.length.toLocaleString('vi-VN')} mục
                     </span>
                     <Link
-                      href={`/admin/enterprises/${item.enterpriseId}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                      href="/admin/enterprises"
+                      className="text-sm font-medium text-indigo-600 transition hover:text-indigo-700"
                     >
-                      Chi tiết
-                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      Xem tất cả
                     </Link>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="px-5 py-10 text-center text-sm text-gray-500">
-                Không có doanh nghiệp nào cần xử lý ngay.
+
+                <div className="divide-y divide-slate-200/80">
+                  {dashboard.attentionItems.length > 0 ? (
+                    dashboard.attentionItems.map((item) => (
+                      <div
+                        key={`${item.enterpriseId}-${item.attentionReason}`}
+                        className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
+                      >
+                        <div className="min-w-0 space-y-2">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-base font-semibold text-[color:var(--admin-shell)]">
+                              {item.enterpriseName}
+                            </p>
+                            <EnterpriseStatusBadge status={item.status} />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-600">
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[11px] font-medium text-slate-600">
+                              {item.enterpriseCode}
+                            </span>
+                            <span>{item.attentionReason}</span>
+                            <span className="text-slate-400">•</span>
+                            <span>Hết hạn {formatDate(item.subscriptionEndDate)}</span>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/admin/enterprises/${item.enterpriseId}`}
+                          className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 transition hover:text-indigo-700"
+                        >
+                          Chi tiết
+                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </Link>
+                      </div>
+                    ))
+                  ) : (
+                    <AdminEmptyState
+                      icon={AlertTriangle}
+                      title="Không có mục cần xử lý ngay"
+                      description="Các tenant hiện chưa phát sinh cảnh báo cần admin can thiệp."
+                      className="min-h-[220px] rounded-none border-0 shadow-none"
+                    />
+                  )}
+                </div>
+              </AdminPanel>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <AdminStatCard
+                  title="Tổng doanh nghiệp"
+                  value={dashboard.totalEnterprises.toLocaleString('vi-VN')}
+                  icon={Building2}
+                  color="indigo"
+                  href="/admin/enterprises"
+                />
+                <AdminStatCard
+                  title="Đang hoạt động"
+                  value={dashboard.activeEnterprises.toLocaleString('vi-VN')}
+                  icon={Users}
+                  color="green"
+                  href="/admin/enterprises?status=Active"
+                />
+                <AdminStatCard
+                  title="Đã khóa"
+                  value={dashboard.lockedEnterprises.toLocaleString('vi-VN')}
+                  icon={AlertTriangle}
+                  color="red"
+                  href="/admin/enterprises?status=Locked"
+                />
+                <AdminStatCard
+                  title="Sắp hết hạn"
+                  value={dashboard.expiringSoonEnterprises.toLocaleString('vi-VN')}
+                  icon={CreditCard}
+                  color="amber"
+                  href="/admin/enterprises?expiringWithinDays=30"
+                />
               </div>
-            )}
-          </div>
-        </section>
 
-        <div className="space-y-6">
-          <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-5 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Thao tác nhanh
-              </h2>
-            </div>
-            <div className="p-3">
-              {ADMIN_QUICK_LINKS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center justify-between rounded-lg px-3 py-3 text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-indigo-700"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{item.title}</p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {item.description}
-                    </p>
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+                <AdminPanel className="overflow-hidden p-0">
+                  <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                        <CreditCard className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                          Thanh toán gần đây
+                        </h2>
+                        <p className="text-sm text-slate-600">
+                          Dòng thanh toán mới nhất để đối soát nhanh.
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/admin/payments"
+                      className="text-sm font-medium text-indigo-600 transition hover:text-indigo-700"
+                    >
+                      Xem tất cả
+                    </Link>
                   </div>
-                  <item.icon
-                    className="h-4 w-4 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </Link>
-              ))}
-            </div>
-          </section>
 
-          <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-5 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Hoạt động gần đây
-              </h2>
-            </div>
-            <div className="space-y-4 p-5">
-              {dashboard.recentActivities.length > 0 ? (
-                dashboard.recentActivities.map((item) => (
-                  <div
-                    key={item.approvalHistoryId}
-                    className="rounded-lg border border-gray-100 p-3"
-                  >
-                    <p className="text-sm font-medium text-gray-900">
-                      {item.enterpriseName}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-600">
-                      {item.action} · {item.previousStatus || 'N/A'} →{' '}
-                      {item.newStatus}
-                    </p>
-                    <p className="mt-2 text-xs text-gray-500">
-                      {item.changedByName} · {formatDateTime(item.changedAt)}
-                    </p>
+                  <div className="divide-y divide-slate-200/80">
+                    {dashboard.recentPayments.length > 0 ? (
+                      dashboard.recentPayments.map((item) => (
+                        <div
+                          key={`${item.enterpriseId}-${item.createdAt}-${item.actionType}`}
+                          className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="space-y-1.5">
+                            <p className="font-semibold text-[color:var(--admin-shell)]">
+                              {item.enterpriseName}
+                            </p>
+                            <p className="text-sm text-slate-600">
+                              {item.actionType} • {formatCurrency(item.amount)}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {formatDateTime(item.createdAt)}
+                            </p>
+                          </div>
+
+                          <Link
+                            href={`/admin/enterprises/${item.enterpriseId}`}
+                            className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 transition hover:text-indigo-700"
+                          >
+                            Xem doanh nghiệp
+                            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          </Link>
+                        </div>
+                      ))
+                    ) : (
+                      <AdminEmptyState
+                        icon={CreditCard}
+                        title="Chưa có giao dịch gần đây"
+                        description="Dữ liệu thanh toán mới sẽ xuất hiện tại đây để admin đối soát nhanh."
+                        className="min-h-[220px] rounded-none border-0 shadow-none"
+                      />
+                    )}
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500">
-                  Chưa có thao tác gần đây.
-                </p>
-              )}
-            </div>
-          </section>
-        </div>
-      </div>
+                </AdminPanel>
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
-        <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-gray-400" aria-hidden="true" />
-              <h2 className="text-lg font-semibold text-gray-900">
-                Thanh toán gần đây
-              </h2>
-            </div>
-            <Link
-              href="/admin/payments"
-              className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700"
-            >
-              Xem tất cả
-            </Link>
-          </div>
+                <AdminPanel className="overflow-hidden p-0">
+                  <div className="border-b border-slate-200/80 px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                        <Bot className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                          AI support
+                        </h2>
+                        <p className="text-sm text-slate-600">
+                          Một điểm vào để theo dõi cấu hình Gemini và usage CV
+                          scoring toàn hệ thống.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-          <div className="space-y-3 p-5">
-            {dashboard.recentPayments.length > 0 ? (
-              dashboard.recentPayments.map((item) => (
-                <div
-                  key={`${item.enterpriseId}-${item.createdAt}-${item.actionType}`}
-                  className="rounded-lg border border-gray-100 bg-gray-50/70 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {item.enterpriseName}
+                  <div className="space-y-5 px-6 py-6">
+                    <div className="rounded-2xl bg-indigo-50/80 p-4 ring-1 ring-inset ring-indigo-100">
+                      <p className="text-sm font-semibold text-indigo-900">
+                        Admin area chỉ giữ phần AI có dữ liệu thật từ backend.
                       </p>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {item.actionType} · {formatCurrency(item.amount)}
-                      </p>
-                      <p className="mt-2 text-xs text-gray-500">
-                        {formatDateTime(item.createdAt)}
+                      <p className="mt-1 text-sm leading-6 text-indigo-700">
+                        Theo dõi Gemini config, tần suất scoring và các tín hiệu
+                        usage mà không cần quay lại page tích hợp giả lập.
                       </p>
                     </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Mục cần xử lý
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight text-[color:var(--admin-shell)]">
+                          {dashboard.attentionItems.length.toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Cần nhắc gia hạn
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight text-[color:var(--admin-shell)]">
+                          {dashboard.expiringSoonEnterprises.toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    </div>
+
                     <Link
-                      href={`/admin/enterprises/${item.enterpriseId}`}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                      href="/admin/ai-services"
+                      className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--admin-shell)] px-4 text-sm font-semibold text-white transition hover:opacity-95"
                     >
-                      Xem
+                      Mở AI Services
                     </Link>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">
-                Chưa có giao dịch gần đây.
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4">
-            <Bot className="h-5 w-5 text-gray-400" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-gray-900">AI Services</h2>
-          </div>
-
-          <div className="space-y-4 p-5">
-            <p className="text-sm text-gray-600">
-              Theo dõi Gemini, usage CV scoring và cấu hình AI toàn hệ thống từ
-              một nơi duy nhất.
-            </p>
-            <div className="rounded-xl border border-gray-100 bg-indigo-50 p-4">
-              <p className="text-sm font-semibold text-indigo-900">
-                Admin area chỉ giữ phần AI có dữ liệu thật
-              </p>
-              <p className="mt-1 text-sm text-indigo-700">
-                Không còn page System Integrations giả lập; dữ liệu hiển thị lấy
-                trực tiếp từ backend.
-              </p>
+                </AdminPanel>
+              </div>
             </div>
-            <Link
-              href="/admin/ai-services"
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-            >
-              Mở AI Services
-            </Link>
+
+            <div className="space-y-6">
+              <AdminPanel className="overflow-hidden p-0">
+                <div className="border-b border-slate-200/80 px-6 py-5">
+                  <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                    Thao tác nhanh
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Điều hướng trực tiếp tới các khu vực vận hành chính.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 p-4">
+                  {ADMIN_QUICK_LINKS.map((item) => {
+                    const styles = QUICK_LINK_STYLES[item.tone]
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`group flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 transition ${styles.hover}`}
+                      >
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset ${styles.icon}`}
+                        >
+                          <item.icon className="h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-[color:var(--admin-shell)]">
+                            {item.title}
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-slate-600">
+                            {item.description}
+                          </p>
+                        </div>
+                        <ArrowRight
+                          className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-slate-600"
+                          aria-hidden="true"
+                        />
+                      </Link>
+                    )
+                  })}
+                </div>
+              </AdminPanel>
+
+              <AdminPanel className="overflow-hidden p-0">
+                <div className="border-b border-slate-200/80 px-6 py-5">
+                  <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                    Hoạt động gần đây
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Theo dõi các thay đổi trạng thái mới nhất trên nền tảng.
+                  </p>
+                </div>
+
+                <div className="divide-y divide-slate-200/80">
+                  {dashboard.recentActivities.length > 0 ? (
+                    dashboard.recentActivities.map((item) => (
+                      <div key={item.approvalHistoryId} className="px-6 py-5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-[color:var(--admin-shell)]">
+                            {item.enterpriseName}
+                          </p>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                            {item.action}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {item.previousStatus || 'N/A'} → {item.newStatus}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {item.changedByName} • {formatDateTime(item.changedAt)}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <AdminEmptyState
+                      icon={Bot}
+                      title="Chưa có hoạt động gần đây"
+                      description="Lịch sử thay đổi trạng thái sẽ xuất hiện tại đây khi admin thao tác."
+                      className="min-h-[220px] rounded-none border-0 shadow-none"
+                    />
+                  )}
+                </div>
+              </AdminPanel>
+            </div>
           </div>
-        </section>
-      </div>
+        </>
+      )}
     </div>
   )
 }
