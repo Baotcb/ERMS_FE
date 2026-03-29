@@ -45,7 +45,10 @@ export function AiServicesPageContent() {
       : 1
   const totalScores =
     data && data.scoreDistribution.length > 0
-      ? Math.max(...data.scoreDistribution.map((item) => item.count), 1)
+      ? Math.max(
+          data.scoreDistribution.reduce((sum, item) => sum + item.count, 0),
+          1
+        )
       : 1
 
   return (

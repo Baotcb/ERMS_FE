@@ -26,7 +26,11 @@ function stableSerializeParams(params: object): string {
 }
 
 function isAdminCacheKey(key: unknown): boolean {
-  return Array.isArray(key) && key[0] === 'admin'
+  if (Array.isArray(key)) {
+    return key[0] === 'admin'
+  }
+
+  return typeof key === 'string' && (key === 'admin' || key.startsWith('admin/'))
 }
 
 function revalidateAdminCaches() {

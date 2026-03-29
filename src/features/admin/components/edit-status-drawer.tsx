@@ -122,7 +122,7 @@ export function EditStatusDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex h-full w-full flex-col border-l border-slate-200 bg-slate-50/80 p-0 sm:max-w-[28rem]">
+      <SheetContent className="admin-theme flex h-full w-full flex-col border-l border-slate-200 bg-slate-50/80 p-0 sm:max-w-[28rem]">
         <SheetHeader className="gap-2 border-b border-slate-200 bg-white px-5 pb-4 pt-5 sm:px-6">
           <SheetTitle className="pr-10 text-lg font-semibold text-[color:var(--admin-shell)]">
             Đổi trạng thái

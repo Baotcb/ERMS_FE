@@ -298,6 +298,7 @@ export function PaymentHistoryPageContent() {
                 name="enterpriseSearch"
                 type="search"
                 defaultValue={filters.enterpriseSearch}
+                aria-label="Tìm giao dịch theo doanh nghiệp"
                 placeholder="Tìm doanh nghiệp..."
                 className={`${FIELD_CLASSNAME} pl-10 pr-4`}
               />
@@ -305,6 +306,7 @@ export function PaymentHistoryPageContent() {
 
             <select
               value={filters.actionType}
+              aria-label="Lọc theo loại thao tác thanh toán"
               onChange={(event) =>
                 updateFilters({
                   actionType: event.target.value as PaymentActionType | '',
@@ -322,6 +324,7 @@ export function PaymentHistoryPageContent() {
 
             <select
               value={filters.paymentMethod}
+              aria-label="Lọc theo phương thức thanh toán"
               onChange={(event) =>
                 updateFilters({
                   paymentMethod: event.target.value,
@@ -339,6 +342,7 @@ export function PaymentHistoryPageContent() {
             <input
               type="date"
               value={filters.dateFrom}
+              aria-label="Từ ngày"
               onChange={(event) =>
                 updateFilters({ dateFrom: event.target.value, pageNumber: 1 })
               }
@@ -348,6 +352,7 @@ export function PaymentHistoryPageContent() {
             <input
               type="date"
               value={filters.dateTo}
+              aria-label="Đến ngày"
               onChange={(event) =>
                 updateFilters({ dateTo: event.target.value, pageNumber: 1 })
               }

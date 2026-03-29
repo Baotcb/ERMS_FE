@@ -412,6 +412,7 @@ export function EnterpriseListPageContent() {
                 name="search"
                 type="search"
                 defaultValue={filters.search}
+                aria-label="Tìm doanh nghiệp"
                 placeholder="Tìm theo tên, mã hoặc email doanh nghiệp..."
                 className={`${FIELD_CLASSNAME} pl-10 pr-4`}
               />
@@ -419,6 +420,7 @@ export function EnterpriseListPageContent() {
 
             <select
               value={filters.status}
+              aria-label="Lọc theo trạng thái doanh nghiệp"
               onChange={(event) =>
                 handleQuickFilter({
                   status: event.target.value as EnterpriseStatus | '',
@@ -436,6 +438,7 @@ export function EnterpriseListPageContent() {
 
             <select
               value={filters.planTier}
+              aria-label="Lọc theo gói doanh nghiệp"
               onChange={(event) =>
                 handleQuickFilter({
                   planTier: event.target.value as EnterprisePlanTier | '',

@@ -45,9 +45,12 @@ export function PlatformDashboardPageContent() {
   }
 
   const statusTotal = stats?.totalEnterprises || 1
-  const maxTierCount =
+  const subscriptionTotal =
     stats && stats.subscriptionMix.length > 0
-      ? Math.max(...stats.subscriptionMix.map((item) => item.count), 1)
+      ? Math.max(
+          stats.subscriptionMix.reduce((sum, item) => sum + item.count, 0),
+          1
+        )
       : 1
 
   return (
@@ -235,7 +238,7 @@ export function PlatformDashboardPageContent() {
                   <div className="space-y-5 px-6 py-6">
                     {stats.subscriptionMix.map((item) => {
                       const width = Math.round(
-                        (item.count / maxTierCount) * 100
+                        (item.count / subscriptionTotal) * 100
                       )
 
                       return (
