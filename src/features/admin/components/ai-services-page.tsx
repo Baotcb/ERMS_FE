@@ -9,7 +9,10 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common'
-import { useAiServiceOverview } from '@/features/admin/api/admin-service'
+import {
+  revalidateAiServiceOverview,
+  useAiServiceOverview,
+} from '@/features/admin/api/admin-service'
 import { AdminEmptyState } from '@/features/admin/components/admin-empty-state'
 import { AdminPageHeader } from '@/features/admin/components/admin-page-header'
 import { AdminPanel } from '@/features/admin/components/admin-panel'
@@ -32,6 +35,10 @@ function formatDateTime(value: string | null) {
 export function AiServicesPageContent() {
   const { data, isLoading, error } = useAiServiceOverview()
 
+  const handleRefresh = () => {
+    void revalidateAiServiceOverview()
+  }
+
   const maxDailyVolume =
     data && data.dailyVolumes.length > 0
       ? Math.max(...data.dailyVolumes.map((item) => item.count), 1)
@@ -49,7 +56,7 @@ export function AiServicesPageContent() {
         actions={
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={handleRefresh}
             className={HEADER_ACTION_CLASSNAME}
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
@@ -70,7 +77,7 @@ export function AiServicesPageContent() {
           action={
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={handleRefresh}
               className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--admin-shell)] px-4 text-sm font-semibold text-white transition hover:opacity-95"
             >
               Thử lại

@@ -11,7 +11,10 @@ import {
   Users,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common'
-import { useAdminDashboard } from '@/features/admin/api/admin-service'
+import {
+  revalidateAdminDashboard,
+  useAdminDashboard,
+} from '@/features/admin/api/admin-service'
 import { AdminEmptyState } from '@/features/admin/components/admin-empty-state'
 import { AdminPageHeader } from '@/features/admin/components/admin-page-header'
 import { AdminPanel } from '@/features/admin/components/admin-panel'
@@ -84,6 +87,10 @@ export default function AdminDashboardPageContent() {
   const { data, error, isLoading } = useAdminDashboard()
   const dashboard = data ?? EMPTY_DASHBOARD
 
+  const handleRefresh = () => {
+    void revalidateAdminDashboard()
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <AdminPageHeader
@@ -92,7 +99,7 @@ export default function AdminDashboardPageContent() {
         actions={
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={handleRefresh}
             className={HEADER_ACTION_CLASSNAME}
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
@@ -124,7 +131,7 @@ export default function AdminDashboardPageContent() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => window.location.reload()}
+                  onClick={handleRefresh}
                   className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-200 bg-white px-4 text-sm font-medium text-amber-900 transition hover:bg-amber-50"
                 >
                   Thử lại

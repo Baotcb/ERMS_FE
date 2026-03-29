@@ -33,6 +33,10 @@ function revalidateAdminCaches() {
   return mutate(isAdminCacheKey, undefined, { revalidate: true })
 }
 
+function revalidateAdminView(key: string) {
+  return mutate(key, undefined, { revalidate: true })
+}
+
 async function readJsonResponse<T>(response: Response, fallbackErrorMessage: string): Promise<T> {
   if (!response.ok) {
     let message = fallbackErrorMessage
@@ -389,6 +393,10 @@ export function useAdminDashboard() {
   })
 }
 
+export function revalidateAdminDashboard() {
+  return revalidateAdminView(adminKeys.dashboard().join('/'))
+}
+
 export function useEnterpriseList(filters: EnterpriseListFilters) {
   const key = adminKeys.enterpriseList(filters)
 
@@ -433,8 +441,16 @@ export function usePlatformStats() {
   })
 }
 
+export function revalidatePlatformStats() {
+  return revalidateAdminView(adminKeys.platformStats().join('/'))
+}
+
 export function useAiServiceOverview() {
   return useData<AIServiceOverview>(adminKeys.aiServices().join('/'), {
     fetcher: fetchAiServices as unknown as Fetcher<AIServiceOverview>,
   })
+}
+
+export function revalidateAiServiceOverview() {
+  return revalidateAdminView(adminKeys.aiServices().join('/'))
 }

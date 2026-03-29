@@ -9,7 +9,10 @@ import {
   Users,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common'
-import { usePlatformStats } from '@/features/admin/api/admin-service'
+import {
+  revalidatePlatformStats,
+  usePlatformStats,
+} from '@/features/admin/api/admin-service'
 import { AdminEmptyState } from '@/features/admin/components/admin-empty-state'
 import { AdminPageHeader } from '@/features/admin/components/admin-page-header'
 import { AdminPanel } from '@/features/admin/components/admin-panel'
@@ -37,6 +40,10 @@ function formatDate(value: string) {
 export function PlatformDashboardPageContent() {
   const { data: stats, isLoading, error } = usePlatformStats()
 
+  const handleRefresh = () => {
+    void revalidatePlatformStats()
+  }
+
   const statusTotal = stats?.totalEnterprises || 1
   const maxTierCount =
     stats && stats.subscriptionMix.length > 0
@@ -51,7 +58,7 @@ export function PlatformDashboardPageContent() {
         actions={
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={handleRefresh}
             className={HEADER_ACTION_CLASSNAME}
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
@@ -72,7 +79,7 @@ export function PlatformDashboardPageContent() {
           action={
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={handleRefresh}
               className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--admin-shell)] px-4 text-sm font-semibold text-white transition hover:opacity-95"
             >
               Thử lại
