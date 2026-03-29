@@ -38,14 +38,18 @@ export const AdminNavbar = memo(function AdminNavbar() {
     }
   }, [])
 
+  const isDesktopViewportNow = useCallback(() => {
+    return window.matchMedia('(min-width: 1024px)').matches
+  }, [])
+
   const handleMenuClick = useCallback(() => {
-    if (isDesktopViewport) {
+    if (isDesktopViewportNow()) {
       toggleSidebar()
       return
     }
 
     toggleMobileSidebar()
-  }, [isDesktopViewport, toggleMobileSidebar, toggleSidebar])
+  }, [isDesktopViewportNow, toggleMobileSidebar, toggleSidebar])
 
   const handleSearchSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
