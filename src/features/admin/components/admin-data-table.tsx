@@ -1,25 +1,26 @@
-import React, { type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import React, { type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface Column<T> {
-  key: string
-  header: ReactNode
-  className?: string
-  render: (item: T) => ReactNode
+  key: string;
+  header: ReactNode;
+  className?: string;
+  render: (item: T) => ReactNode;
 }
 
 interface AdminDataTableProps<T> {
-  columns: Column<T>[]
-  data: T[] | undefined
-  isLoading?: boolean
-  emptyIcon?: ReactNode
-  emptyMessage?: string
-  pageNumber?: number
-  pageSize?: number
-  totalCount?: number
-  totalPages?: number
-  onPageChange?: (page: number) => void
-  keyExtractor: (item: T) => string
+  columns: Column<T>[];
+  data: T[] | undefined;
+  isLoading?: boolean;
+  emptyIcon?: ReactNode;
+  emptyMessage?: string;
+  pageNumber?: number;
+  pageSize?: number;
+  totalCount?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  keyExtractor: (item: T) => string;
 }
 
 export function AdminDataTable<T>({
@@ -27,7 +28,7 @@ export function AdminDataTable<T>({
   data,
   isLoading,
   emptyIcon,
-  emptyMessage = 'Không có dữ liệu',
+  emptyMessage = "Không có dữ liệu",
   pageNumber,
   pageSize,
   totalCount,
@@ -35,29 +36,36 @@ export function AdminDataTable<T>({
   onPageChange,
   keyExtractor,
 }: AdminDataTableProps<T>) {
-  const colSpanCount = columns.length
+  const colSpanCount = columns.length;
 
-  let showingStart = 0
-  let showingEnd = 0
+  let showingStart = 0;
+  let showingEnd = 0;
 
   if (totalCount && pageNumber && pageSize) {
-    showingStart = (pageNumber - 1) * pageSize + 1
-    showingEnd = Math.min(pageNumber * pageSize, totalCount)
+    showingStart = (pageNumber - 1) * pageSize + 1;
+    showingEnd = Math.min(pageNumber * pageSize, totalCount);
   }
 
-  const showPagination =
-    typeof totalPages === 'number' && totalPages > 1 && onPageChange
+  const showPagination = Boolean(
+    typeof totalPages === "number" && totalPages > 1 && onPageChange,
+  );
+  const headerPaddingClassName = "px-5 py-3 first:pl-6 last:pr-6";
+  const cellPaddingClassName = "px-5 py-4 first:pl-6 last:pr-6";
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="flex flex-col overflow-hidden rounded-2xl border admin-panel">
       <div className="overflow-x-auto">
-        <table className="min-w-max w-full border-collapse text-left">
-          <thead className="border-b border-gray-100 bg-gray-50/50">
+        <table className="min-w-full border-collapse text-left">
+          <thead className="border-b border-slate-200/70 bg-white/45">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 ${col.className || ''}`}
+                  className={cn(
+                    headerPaddingClassName,
+                    "whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500",
+                    col.className,
+                  )}
                 >
                   {col.header}
                 </th>
@@ -65,14 +73,14 @@ export function AdminDataTable<T>({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-slate-100/80 text-sm text-slate-700">
             {isLoading ? (
               <tr>
                 <td
                   colSpan={colSpanCount}
-                  className="px-6 py-12 text-center text-gray-500"
+                  className="px-6 py-16 text-center text-slate-500"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
+                  <div className="flex flex-col items-center justify-center gap-3">
                     <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
                     <span className="text-sm">Đang tải...</span>
                   </div>
@@ -82,11 +90,13 @@ export function AdminDataTable<T>({
               <tr>
                 <td
                   colSpan={colSpanCount}
-                  className="px-6 py-12 text-center text-gray-500"
+                  className="px-6 py-16 text-center text-slate-500"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2">
+                  <div className="flex flex-col items-center justify-center gap-3">
                     {emptyIcon ? (
-                      <div className="text-gray-400">{emptyIcon}</div>
+                      <div className="rounded-2xl bg-slate-100 p-3 text-slate-400">
+                        {emptyIcon}
+                      </div>
                     ) : null}
                     <span className="text-sm">{emptyMessage}</span>
                   </div>
@@ -96,12 +106,16 @@ export function AdminDataTable<T>({
               data.map((item) => (
                 <tr
                   key={keyExtractor(item)}
-                  className="group transition-colors hover:bg-gray-50/50"
+                  className="transition-colors duration-150 hover:bg-slate-50/80"
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={`whitespace-nowrap px-6 py-4 ${col.className || ''}`}
+                      className={cn(
+                        cellPaddingClassName,
+                        "align-middle whitespace-nowrap",
+                        col.className,
+                      )}
                     >
                       {col.render(item)}
                     </td>
@@ -114,28 +128,30 @@ export function AdminDataTable<T>({
       </div>
 
       {showPagination ? (
-        <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50/50 px-6 py-4">
-          <span className="text-xs font-medium text-gray-500">
-            Hiển thị{' '}
-            <span className="font-bold text-gray-900">
+        <div className="flex flex-col gap-3 border-t border-slate-200/70 bg-white/45 px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <span className="text-xs font-medium text-slate-500">
+            Hiển thị{" "}
+            <span className="font-semibold text-[color:var(--admin-shell)]">
               {showingStart}-{showingEnd}
-            </span>{' '}
-            trên{' '}
-            <span className="font-bold text-gray-900">{totalCount}</span>
+            </span>{" "}
+            trên{" "}
+            <span className="font-semibold text-[color:var(--admin-shell)]">
+              {totalCount}
+            </span>
           </span>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => onPageChange?.((pageNumber || 1) - 1)}
               disabled={!pageNumber || pageNumber <= 1}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
               Trước
             </button>
 
-            <span className="hidden px-2 text-xs font-medium text-gray-600 sm:inline-block">
+            <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 sm:inline-block">
               Trang {pageNumber} / {totalPages}
             </span>
 
@@ -143,7 +159,7 @@ export function AdminDataTable<T>({
               type="button"
               onClick={() => onPageChange?.((pageNumber || 1) + 1)}
               disabled={!pageNumber || !totalPages || pageNumber >= totalPages}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-8 items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Tiếp
               <ChevronRight className="h-4 w-4" />
@@ -152,5 +168,5 @@ export function AdminDataTable<T>({
         </div>
       ) : null}
     </div>
-  )
+  );
 }
