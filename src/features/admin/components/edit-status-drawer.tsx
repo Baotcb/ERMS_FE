@@ -176,15 +176,15 @@ export function EditStatusDrawer({
               </p>
             </section>
 
-            <section className="space-y-3">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-[color:var(--admin-shell)]">
+            <fieldset className="space-y-3">
+              <legend className="space-y-1">
+                <span className="block text-sm font-semibold text-[color:var(--admin-shell)]">
                   Chọn trạng thái mới
-                </p>
-                <p className="text-sm text-slate-500">
+                </span>
+                <span className="block text-sm font-normal text-slate-500">
                   Các lựa chọn bên dưới tác động trực tiếp đến khả năng truy cập của tenant.
-                </p>
-              </div>
+                </span>
+              </legend>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {AVAILABLE_STATUSES.map((status) => {
@@ -193,20 +193,32 @@ export function EditStatusDrawer({
                   const Icon = meta.icon
 
                   return (
-                    <button
+                    <label
                       key={status}
-                      type="button"
-                      onClick={() => setSelectedStatus(status)}
-                      aria-pressed={isSelected}
-                      disabled={isSubmitting}
                       className={cn(
-                        'group rounded-[22px] border px-4 py-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/30 disabled:cursor-not-allowed disabled:opacity-60',
-                        isSelected
-                          ? meta.selectedClassName
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]'
+                        'group block cursor-pointer',
+                        isSubmitting ? 'cursor-not-allowed opacity-60' : ''
                       )}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <input
+                        type="radio"
+                        name="enterprise-status"
+                        value={status}
+                        checked={isSelected}
+                        onChange={() => setSelectedStatus(status)}
+                        disabled={isSubmitting}
+                        className="peer sr-only"
+                      />
+
+                      <div
+                        className={cn(
+                          'rounded-[22px] border px-4 py-4 text-left transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500/30',
+                          isSelected
+                            ? meta.selectedClassName
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]'
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
                         <div className="space-y-3">
                           <div
                             className={cn(
@@ -249,11 +261,12 @@ export function EditStatusDrawer({
                           <Check className="h-3.5 w-3.5" aria-hidden="true" />
                         </span>
                       </div>
-                    </button>
+                      </div>
+                    </label>
                   )
                 })}
               </div>
-            </section>
+            </fieldset>
 
             <section className="space-y-2">
               <div className="space-y-1">

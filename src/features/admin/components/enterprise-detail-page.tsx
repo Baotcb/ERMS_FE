@@ -607,6 +607,11 @@ export function EnterpriseDetailPageContent({ id }: { id: string }) {
                   <p className="mt-1 text-sm text-slate-500">
                     {formatDate(enterprise.lastPayment.paidAt)}
                   </p>
+                  {enterprise.lastPayment.paymentReference ? (
+                    <p className="mt-2 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      Ref: {enterprise.lastPayment.paymentReference}
+                    </p>
+                  ) : null}
                 </>
               ) : (
                 <>
