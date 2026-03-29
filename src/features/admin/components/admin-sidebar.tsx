@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { memo, useCallback, useEffect } from 'react'
+import { memo, useCallback, useEffect, useId, useRef } from 'react'
 import { Shield } from 'lucide-react'
 import { ADMIN_NAV_ITEMS } from '@/features/admin/constants'
 import { cn } from '@/lib/utils'
@@ -10,12 +10,14 @@ import { useAppStore } from '@/stores/use-app-store'
 
 type SidebarContentProps = {
   collapsed?: boolean
+  isMobile?: boolean
   onNavigate: () => void
   pathname: string
 }
 
 function SidebarContent({
   collapsed = false,
+  isMobile = false,
   onNavigate,
   pathname,
 }: SidebarContentProps) {
@@ -60,9 +62,9 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              title={collapsed ? item.title : undefined}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'group relative flex rounded-2xl text-sm transition-[background-color,color,transform] duration-200',
+                'group relative flex rounded-2xl text-sm transition-[background-color,color,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--admin-shell)]',
                 collapsed
                   ? 'justify-center px-2 py-3'
                   : 'items-start gap-3 px-3 py-3.5',
@@ -90,7 +92,19 @@ function SidebarContent({
               />
 
               {collapsed ? (
-                <span className="sr-only">{item.title}</span>
+                <>
+                  <span className="sr-only">{item.title}</span>
+                  <span
+                    className={cn(
+                      'pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-20 hidden -translate-y-1/2 whitespace-nowrap rounded-full bg-slate-950 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-[0_18px_32px_rgba(15,23,42,0.35)] ring-1 ring-white/10 transition-all duration-150',
+                      !isMobile &&
+                        'lg:block lg:-translate-x-2 lg:group-hover:translate-x-0 lg:group-hover:opacity-100 lg:group-focus-visible:translate-x-0 lg:group-focus-visible:opacity-100'
+                    )}
+                    aria-hidden="true"
+                  >
+                    {item.title}
+                  </span>
+                </>
               ) : (
                 <div className="min-w-0">
                   <p className="font-medium">{item.title}</p>
@@ -119,6 +133,8 @@ export const AdminSidebar = memo(function AdminSidebar() {
   const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
   const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
   const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
+  const mobileSidebarRef = useRef<HTMLElement>(null)
+  const mobileSidebarTitleId = useId()
 
   const closeMobileSidebar = useCallback(() => {
     setMobileSidebarOpen(false)
@@ -143,25 +159,27 @@ export const AdminSidebar = memo(function AdminSidebar() {
     }
   }, [setMobileSidebarOpen])
 
+  useEffect(() => {
+    if (!isMobileSidebarOpen) {
+      return
+    }
+
+    mobileSidebarRef.current?.focus()
+  }, [isMobileSidebarOpen])
+
   return (
     <>
       {isMobileSidebarOpen ? (
-        <div
+        <button
+          type="button"
           className="fixed inset-x-0 bottom-0 top-16 z-40 bg-slate-950/55 backdrop-blur-[2px] lg:hidden"
-          role="button"
-          tabIndex={0}
-          aria-label="Close sidebar"
+          aria-label="Đóng menu điều hướng quản trị"
           onClick={closeMobileSidebar}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              closeMobileSidebar()
-            }
-          }}
         />
       ) : null}
 
       <aside
+        ref={mobileSidebarRef}
         id="admin-sidebar-mobile"
         className={cn(
           'fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-[18rem] overscroll-y-contain px-3 pb-3 transition-transform duration-300 lg:hidden',
@@ -169,16 +187,32 @@ export const AdminSidebar = memo(function AdminSidebar() {
             ? 'translate-x-0'
             : '-translate-x-full pointer-events-none'
         )}
+        role="dialog"
+        aria-labelledby={mobileSidebarTitleId}
         aria-hidden={!isMobileSidebarOpen}
         inert={!isMobileSidebarOpen}
+        tabIndex={-1}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            closeMobileSidebar()
+          }
+        }}
       >
-        <SidebarContent pathname={pathname} onNavigate={closeMobileSidebar} />
+        <span id={mobileSidebarTitleId} className="sr-only">
+          Điều hướng quản trị
+        </span>
+        <SidebarContent
+          isMobile
+          pathname={pathname}
+          onNavigate={closeMobileSidebar}
+        />
       </aside>
 
       <aside
         id="admin-sidebar-desktop"
         className={cn(
-          'sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 overflow-hidden transition-[width] duration-300 lg:block',
+          'sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 overflow-visible transition-[width] duration-300 lg:block',
           isSidebarOpen ? 'w-[18rem]' : 'w-20'
         )}
         aria-label={isSidebarOpen ? 'Admin sidebar' : 'Admin sidebar collapsed'}
