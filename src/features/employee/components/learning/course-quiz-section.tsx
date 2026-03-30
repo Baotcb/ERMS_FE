@@ -11,6 +11,7 @@ import type { Course } from '@/features/hr/types/course-types';
 import type { CourseProgressDto, LearnerQuizQuestionDto, LearnerQuizResultDto } from '@/features/employee/types/learning-quiz-types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { learningQuizService } from '@/features/employee/api/learning-quiz-service';
+import { workshopService } from '@/features/hr/api/workshop-service';
 import { quizService } from '@/features/hr/api/quiz-service';
 import { parseOptions } from './quiz/quiz-helpers';
 
@@ -49,6 +50,8 @@ export function CourseQuizSection({
 
     const [examMode, setExamMode] = useState(false);
     const examContainerRef = useRef<HTMLDivElement>(null);
+
+    const [isWorkshopConfirmed, setIsWorkshopConfirmed] = useState<boolean | null>(null);
 
     // Quiz timer
     const [quizRemainingSeconds, setQuizRemainingSeconds] = useState<number | null>(null);
@@ -179,10 +182,22 @@ export function CourseQuizSection({
                     setQuizTotalQuestions(config.totalQuestions ?? null);
                 }
             } catch { /* ignore */ }
+            
+            // Workshop confirmation check
+            if (initialCourse.isOnline === false) {
+                try {
+                    const confirmation = await workshopService.getWorkshopConfirmation(initialCourse.id);
+                    if (!cancelled) setIsWorkshopConfirmed(!!confirmation);
+                } catch {
+                    if (!cancelled) setIsWorkshopConfirmed(false);
+                }
+            } else {
+                if (!cancelled) setIsWorkshopConfirmed(true);
+            }
         };
         void load();
         return () => { cancelled = true; };
-    }, [initialCourse.id, user?.id, startTimer]);
+    }, [initialCourse.id, initialCourse.isOnline, user?.id, startTimer]);
 
     // Persist answers to sessionStorage on every change
     useEffect(() => {
@@ -280,6 +295,9 @@ export function CourseQuizSection({
         }
     }, [result, examMode, initialCourse.id, router]);
 
+    const isWorkshop = initialCourse.isOnline === false;
+    const isReadyToStart = !isWorkshop || isWorkshopConfirmed === true;
+
     // ─── Confirmation Panel (before starting) ───
     if (!examMode && !attemptId) {
         return (
@@ -324,15 +342,26 @@ export function CourseQuizSection({
                         <ul className="text-xs text-amber-700 space-y-1 list-disc pl-4">
                             <li>Không copy/paste trong lúc thi</li>
                             <li>Rời tab sẽ bị hệ thống ghi nhận</li>
-                            {quizTimeLimitMinutes && <li>Hết giờ sẽ tự động nộp bài</li>}
+                            {quizTimeLimitMinutes ? (<li>Hết giờ sẽ tự động nộp bài</li>) : null}
                         </ul>
                     </div>
+
+                    {isWorkshop && isWorkshopConfirmed === false && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center">
+                            <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-2" />
+                            <p className="text-sm font-bold text-red-800">Bài kiểm tra chưa mở</p>
+                            <p className="text-xs text-red-600 mt-1">
+                                Đây là khóa học Workshop offline. Bạn cần đợi bộ phận Đào tạo (HR) 
+                                xác nhận Workshop đã diễn ra thành công mới có thể bắt đầu làm bài kiểm tra.
+                            </p>
+                        </div>
+                    )}
 
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button
-                                disabled={isStarting || (quizMaxAttempts !== null && quizAttemptCount >= quizMaxAttempts)}
-                                className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98]"
+                                disabled={isStarting || !isReadyToStart || (quizMaxAttempts !== null && quizAttemptCount >= quizMaxAttempts)}
+                                className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {isStarting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ShieldCheck className="w-5 h-5 mr-2" />}
                                 Bắt đầu làm bài
