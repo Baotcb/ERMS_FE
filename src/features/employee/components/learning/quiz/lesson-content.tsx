@@ -131,14 +131,14 @@ export function LessonContent({
                     type="button"
                     variant="outline"
                     onClick={() => onNavigate('next')}
-                    disabled={activeLessonIndex < 0 || activeLessonIndex >= totalLessons - 1}
+                    disabled={activeLessonIndex < 0 || activeLessonIndex >= totalLessons - 1 || !isCompleted}
                     className="flex-1 justify-end px-4 py-5 rounded-xl border-blue-100 bg-blue-50/30 hover:bg-blue-100/50"
                 >
                     <div className="text-right min-w-0">
-                        <p className="text-[10px] text-[#3282B8] font-bold uppercase tracking-wider">Bài tiếp</p>
-                        <p className="text-sm font-semibold text-[#0F4C75] truncate">{nextLesson?.title || '—'}</p>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${(!isCompleted) ? 'text-gray-400' : 'text-[#3282B8]'}`}>Bài tiếp</p>
+                        <p className={`text-sm font-semibold truncate ${(!isCompleted) ? 'text-gray-400' : 'text-[#0F4C75]'}`}>{nextLesson?.title || '—'}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#3282B8] ml-2 shrink-0" />
+                    <ChevronRight className={`w-4 h-4 ml-2 shrink-0 ${(!isCompleted) ? 'text-gray-400' : 'text-[#3282B8]'}`} />
                 </Button>
             </div>
         </section>
