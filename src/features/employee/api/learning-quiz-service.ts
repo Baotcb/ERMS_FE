@@ -226,19 +226,32 @@ export const learningQuizService = {
         }
     },
 
-    async startQuiz(courseId: string): Promise<{ attemptId: string }> {
+    async startQuiz(courseId: string): Promise<{ attemptId: string; timeLimitMinutes?: number; maxAttempts?: number; passingScore?: number; totalQuestions?: number }> {
         const response = await apiClient.post(`/api/Course/${courseId}/quizzes/start`, {}, { retries: 0 });
         if (!response.ok) {
             const rawMessage = await readErrorMessage(response, 'Không thể bắt đầu bài thi.');
             throw new Error(mapStartQuizErrorMessage(rawMessage, response.status));
         }
 
-        const result = await response.json() as string | { attemptId?: string; id?: string };
+        const result = await response.json() as string | {
+            attemptId?: string;
+            id?: string;
+            timeLimitMinutes?: number;
+            maxAttempts?: number;
+            passingScore?: number;
+            totalQuestions?: number;
+        };
         if (typeof result === 'string') {
             return { attemptId: result };
         }
 
-        return { attemptId: result.attemptId ?? result.id ?? '' };
+        return {
+            attemptId: result.attemptId ?? result.id ?? '',
+            timeLimitMinutes: result.timeLimitMinutes ?? undefined,
+            maxAttempts: result.maxAttempts ?? undefined,
+            passingScore: result.passingScore ?? undefined,
+            totalQuestions: result.totalQuestions ?? undefined,
+        };
     },
 
     async getQuizQuestions(attemptId: string): Promise<LearnerQuizQuestionDto[]> {
