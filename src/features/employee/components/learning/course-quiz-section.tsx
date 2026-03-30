@@ -195,19 +195,17 @@ export function CourseQuizSection({
         if (!initialCourse.hasFinalQuiz) { toast({ title: 'Khóa học không có bài thi', variant: 'destructive' }); return; }
         setIsStarting(true);
         try {
-            const startResult = await learningQuizService.startQuiz(initialCourse.id);
-            setAttemptId(startResult.attemptId);
-            const qs = await learningQuizService.getQuizQuestions(startResult.attemptId);
+            const { attemptId: newId } = await learningQuizService.startQuiz(initialCourse.id);
+            setAttemptId(newId);
+            const qs = await learningQuizService.getQuizQuestions(newId);
             setQuestions(qs);
             setAnswers({});
             setResult(null);
             setCurrentQuestionIndex(0);
-            const timeLimitMinutes = startResult.timeLimitMinutes ?? 0;
-            sessionStorage.setItem(`quiz_attempt_${user?.id || 'anon'}_${initialCourse.id}`, JSON.stringify({ attemptId: startResult.attemptId, timeLimitMinutes }));
+            const quizConfig = await quizService.getCourseQuiz(initialCourse.id);
+            const timeLimitMinutes = quizConfig.timeLimitMinutes ?? 0;
+            sessionStorage.setItem(`quiz_attempt_${user?.id || 'anon'}_${initialCourse.id}`, JSON.stringify({ attemptId: newId, timeLimitMinutes }));
             if (timeLimitMinutes > 0) startTimer(timeLimitMinutes);
-            if (startResult.maxAttempts) setQuizMaxAttempts(startResult.maxAttempts);
-            if (startResult.passingScore) setQuizPassScore(startResult.passingScore);
-            if (startResult.totalQuestions) setQuizTotalQuestions(startResult.totalQuestions);
             setQuizAttemptCount((p) => p + 1);
             setExamMode(true);
         } catch (error) {

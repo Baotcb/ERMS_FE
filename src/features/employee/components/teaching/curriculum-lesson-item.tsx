@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, Trash2, Video, Clock, Upload, MoreVertical, Paperclip } from 'lucide-react';
+import { Loader2, Trash2, Video, Clock, Upload, MoreVertical, RefreshCw, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -11,16 +11,26 @@ import type { Lesson } from '@/features/hr/types/course-content-types';
 
 interface CurriculumLessonItemProps {
     lesson: Lesson;
+    sectionId: string;
     index: number;
+    syncingLessonId: string | null;
     uploadingLessonId: string | null;
+    isLocalId: (id: string) => boolean;
+    isUnsyncedLessonId: (id: string) => boolean;
+    onSyncLocalLesson: (sectionId: string, lessonId: string) => void;
     onUploadMaterial: (lessonId: string, file: File | null) => void;
-    onDeleteLesson: (lessonId: string) => void;
+    onDeleteLesson: (sectionId: string, lessonId: string) => void;
 }
 
 export function CurriculumLessonItem({
     lesson,
+    sectionId,
     index,
+    syncingLessonId,
     uploadingLessonId,
+    isLocalId,
+    isUnsyncedLessonId,
+    onSyncLocalLesson,
     onUploadMaterial,
     onDeleteLesson,
 }: CurriculumLessonItemProps) {
@@ -46,6 +56,22 @@ export function CurriculumLessonItem({
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {isLocalId(lesson.id) ? (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl border-amber-300 text-amber-700 hover:bg-amber-50"
+                            onClick={() => void onSyncLocalLesson(sectionId, lesson.id)}
+                            disabled={syncingLessonId === lesson.id || uploadingLessonId === lesson.id}
+                        >
+                            {syncingLessonId === lesson.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                            ) : (
+                                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                            )}
+                            Đồng bộ server
+                        </Button>
+                    ) : null}
                     <Button asChild variant="outline" size="sm" className="rounded-xl border-gray-200">
                         <label htmlFor={`upload-material-${lesson.id}`} className="cursor-pointer inline-flex items-center gap-1.5">
                             {uploadingLessonId === lesson.id ? (
@@ -53,7 +79,7 @@ export function CurriculumLessonItem({
                             ) : (
                                 <Upload className="w-3.5 h-3.5" />
                             )}
-                            Tải lên tài liệu
+                            {isUnsyncedLessonId(lesson.id) ? 'Chưa đồng bộ' : 'Tải lên tài liệu'}
                         </label>
                     </Button>
                     <input
@@ -64,7 +90,7 @@ export function CurriculumLessonItem({
                             void onUploadMaterial(lesson.id, event.target.files?.[0] || null);
                             event.target.value = '';
                         }}
-                        disabled={uploadingLessonId === lesson.id}
+                        disabled={uploadingLessonId === lesson.id || isUnsyncedLessonId(lesson.id)}
                     />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -75,7 +101,7 @@ export function CurriculumLessonItem({
                         <DropdownMenuContent align="end" className="rounded-xl min-w-[160px]">
                             <DropdownMenuItem
                                 className="gap-2 font-medium text-red-600 focus:text-red-600 focus:bg-red-50"
-                                onClick={() => onDeleteLesson(lesson.id)}
+                                onClick={() => onDeleteLesson(sectionId, lesson.id)}
                             >
                                 <Trash2 className="w-4 h-4" /> Xóa bài giảng
                             </DropdownMenuItem>
