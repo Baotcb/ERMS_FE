@@ -42,7 +42,17 @@ type CourseFormValues = z.infer<typeof courseSchema>;
 
 const cleanDescription = (desc: string) => {
     if (!desc) return '';
-    return desc.replace(/(?:isonline|IsOnline)=\w+/gi, '').replace(/^,\s*/, '').trim();
+    // Strip the schedule metadata line (e.g. "Lịch trình: 2026-03-30 10:07 đến ...")
+    // Strip the notification config line (e.g. "Thông báo: giangvien_khi_phancong=on")
+    // Strip isOnline/IsOnline flags and [DRAFT] prefix
+    return desc
+        .replace(/\n?\[?DRAFT\]?\s*/gi, '')
+        .replace(/\n?Lịch trình:.*$/gim, '')
+        .replace(/\n?Thông báo:\s*giangvien_khi_phancong=\w+/gi, '')
+        .replace(/(?:isonline|IsOnline)=\w+/gi, '')
+        .replace(/^,\s*/, '')
+        .replace(/\n{2,}/g, '\n')
+        .trim();
 };
 
 /* ── Step configuration ── */

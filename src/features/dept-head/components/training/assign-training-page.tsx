@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search, ChevronLeft, Loader2 } from 'lucide-react';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { USER_ROLES } from '@/utils/constants';
 import { courseService } from '@/features/hr/api/course-service';
 import { Course, CourseResult } from '@/features/hr/types/course-types';
 import { Button } from '@/components/ui/button';
@@ -13,8 +14,21 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, usePathname, useSearchParams as useBaseSearchParams } from 'next/navigation';
 
 import { getEmployees, Employee, PaginatedResult } from '@/features/hr/api/employee-service';
-import { getDepartments, type Department } from '@/features/hr/api/department-service';
 import { normalizeEmail } from '@/features/hr/utils/course-workflow';
+
+/** Roles that should be excluded from the trainee list */
+const EXCLUDED_ROLES: Set<string> = new Set([
+    USER_ROLES.DEPARTMENT_HEAD,
+    USER_ROLES.DIRECTOR,
+    USER_ROLES.HR_MANAGER,
+    USER_ROLES.HR,
+    USER_ROLES.ADMIN,
+]);
+
+function hasExcludedRole(employee: Employee): boolean {
+    if (!employee.roles || employee.roles.length === 0) return false;
+    return employee.roles.some(role => EXCLUDED_ROLES.has(role));
+}
 
 import { AssignTrainerInfo } from './assign-trainer-info';
 import { AssignTraineeTable } from './assign-trainee-table';
@@ -37,6 +51,7 @@ export function AssignTrainingPage({
     initialCurrentCourse?: Course | null;
     initialInvitedTrainer?: Employee | null;
     initialEnrolledEmployeeIds?: string[];
+    deptHeadDepartmentId?: number;
     searchParams: {
         page: number;
         search: string;
@@ -73,13 +88,15 @@ export function AssignTrainingPage({
         [currentCourse?.trainerEmail]
     );
 
-    // Filter valid potential trainees (excluding trainer)
+    // Filter valid potential trainees (excluding trainer and special roles)
     const potentialTrainees = useMemo(() => {
-        const trainerId = invitedTrainer?.id;
-        if (!trainerId) {
-            return traineesData.items;
-        }
-        return traineesData.items.filter((employee) => employee.id !== trainerId);
+        return traineesData.items.filter((employee) => {
+            // Exclude the trainer
+            if (invitedTrainer?.id && employee.id === invitedTrainer.id) return false;
+            // Exclude special roles (DeptHead, Director, HR, Admin)
+            if (hasExcludedRole(employee)) return false;
+            return true;
+        });
     }, [invitedTrainer?.id, traineesData.items]);
 
     // Handle "Select All" checking only valid potential trainees
@@ -128,9 +145,7 @@ export function AssignTrainingPage({
         updateUrl({ courseId, page: 1 });
     };
 
-    const handleDepartmentChange = (deptId: string) => {
-        updateUrl({ department: deptId, page: 1 });
-    };
+
 
     const handleSelectAllAcrossPages = async () => {
         setIsSelectingAll(true);
@@ -142,9 +157,13 @@ export function AssignTrainingPage({
                 departmentId: searchParams.departmentId !== 'all' ? Number(searchParams.departmentId) : undefined,
             });
 
-            // Filter out trainer and already enrolled
+            // Filter out trainer, already enrolled, and special roles
             const validIds = result.items
-                .filter((emp: Employee) => emp.id !== invitedTrainer?.id && !enrolledEmployeeIds.includes(emp.id))
+                .filter((emp: Employee) => 
+                    emp.id !== invitedTrainer?.id && 
+                    !enrolledEmployeeIds.includes(emp.id) &&
+                    !hasExcludedRole(emp)
+                )
                 .map((emp: Employee) => emp.id);
 
             setSelectedTraineeIds(validIds);
@@ -310,23 +329,9 @@ export function AssignTrainingPage({
                                         placeholder="Tìm theo tên..." 
                                         value={localTraineeSearch}
                                         onChange={(e) => setLocalTraineeSearch(e.target.value)}
-                                        className="pl-9 w-[220px] bg-white border-gray-200" 
+                                        className="pl-9 w-[280px] bg-white border-gray-200" 
                                     />
                                 </div>
-                                <SearchableCombobox<Department>
-                                    value={searchParams.departmentId === 'all' ? undefined : searchParams.departmentId}
-                                    onValueChange={handleDepartmentChange}
-                                    fetcher={async (search, page) => {
-                                        const res = await getDepartments({ search, page, pageSize: 20 });
-                                        const total = res.totalPages || 1;
-                                        return { items: res.items, hasNextPage: page < total };
-                                    }}
-                                    renderItem={(d) => d.departmentName}
-                                    extractValue={(d) => String(d.id)}
-                                    placeholder="Tất cả phòng ban"
-                                    searchPlaceholder="Tìm phòng ban..."
-                                    className="w-[200px]"
-                                />
                             </div>
                         </div>
 

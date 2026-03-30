@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { AssignTrainingPage } from '@/features/dept-head/components/training/assign-training-page';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 import { normalizeEmail } from '@/features/hr/utils/course-workflow';
+import { getProfileServer } from '@/lib/server/profile-service';
 
 export const metadata = {
     title: 'Phân công khóa học - Hệ thống Đào tạo nội bộ',
@@ -20,19 +21,26 @@ export default async function Page({
     // pagination & search mapped to List Page params
     const page = parseInt(typeof resolvedParams.page === 'string' ? resolvedParams.page : '1', 10);
     const search = typeof resolvedParams.search === 'string' ? resolvedParams.search : '';
-    const departmentIdStr = typeof resolvedParams.department === 'string' ? resolvedParams.department : 'all';
-    const departmentId = departmentIdStr !== 'all' ? Number(departmentIdStr) : undefined;
+
+    // Fetch dept head's profile to get their departmentId
+    let deptHeadDepartmentId: number | undefined;
+    try {
+        const profile = await getProfileServer();
+        deptHeadDepartmentId = profile.departmentId;
+    } catch {
+        // If profile fetch fails, we can't filter by department - continue with all employees
+    }
 
     // We fetch Base Dependencies parallelly
     // 1. All Published Courses (for combo box) - We only assign to ready courses
-    // 2. Trainees (paginated via URL params)
+    // 2. Trainees (paginated via URL params) - filtered by dept head's department
     const [allReadyCourses, initialTrainees] = await Promise.all([
         trainingServerService.getAllCourses({ status: 'Published', pageSize: 100 }),
         trainingServerService.getEmployees({
             page: page,
             pageSize: 10,
             search: search,
-            departmentId: departmentId,
+            departmentId: deptHeadDepartmentId,
         }),
     ]);
 
@@ -113,13 +121,15 @@ export default async function Page({
                 initialCurrentCourse={currentCourse}
                 initialInvitedTrainer={invitedTrainer}
                 initialEnrolledEmployeeIds={enrolledEmployeeIds}
+                deptHeadDepartmentId={deptHeadDepartmentId}
                 searchParams={{
                     page,
                     search,
-                    departmentId: departmentIdStr,
+                    departmentId: deptHeadDepartmentId ? String(deptHeadDepartmentId) : 'all',
                     courseId: courseId || (initialCourses.items.length > 0 ? initialCourses.items[0].id : '')
                 }}
             />
         </Suspense>
     );
 }
+

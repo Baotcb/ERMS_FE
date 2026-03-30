@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import {
     Briefcase,
     ChevronDown,
@@ -11,12 +11,8 @@ import {
     GraduationCap,
     LayoutDashboard,
 } from 'lucide-react'
-import { useAuth } from '@/features/core/auth/hooks/use-auth'
-import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
-import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
-import { USER_ROLES } from '@/utils/constants'
 
 interface NavItem {
     label: string
@@ -122,8 +118,17 @@ const NavMenuItem = memo(function NavMenuItem({
             >
                 <div className="ml-8 mt-1 space-y-1">
                     {item.children?.map((child) => {
-                        const isChildActive =
-                            pathname === child.href || pathname.startsWith(`${child.href}/`)
+                        // Check exact match first
+                        const isExactMatch = pathname === child.href
+                        // For startsWith match, ensure no sibling has a more specific match
+                        // e.g. '/training' should not match when at '/training/plans'
+                        const isStartsWithMatch = pathname.startsWith(`${child.href}/`)
+                        const hasSiblingBetterMatch = isStartsWithMatch && item.children?.some(
+                            (sibling) => sibling.href !== child.href && 
+                                         sibling.href.startsWith(`${child.href}/`) &&
+                                         (pathname === sibling.href || pathname.startsWith(`${sibling.href}/`))
+                        )
+                        const isChildActive = isExactMatch || (isStartsWithMatch && !hasSiblingBetterMatch)
 
                         return (
                             <Link
@@ -149,7 +154,6 @@ const NavMenuItem = memo(function NavMenuItem({
 
 export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
     const pathname = usePathname()
-    const { user } = useAuth()
     const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
     const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
     const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
@@ -201,40 +205,7 @@ export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
         [pathname]
     )
 
-    const navItems = useMemo<NavItem[]>(() => {
-        return NAV_ITEMS.map((item) => {
-            if (item.label !== 'Đào tạo' || !item.children) {
-                return item
-            }
 
-            const children = [...item.children]
-
-            if (
-                canAccessTeachingWorkspace(user, USER_ROLES.DEPARTMENT_HEAD) &&
-                !children.some((child) => child.href === '/enterprise/dept-head/teaching')
-            ) {
-                children.push({
-                    label: 'Khóa học giảng dạy',
-                    href: '/enterprise/dept-head/teaching',
-                })
-            }
-
-            if (
-                canAccessLearningWorkspace(user, USER_ROLES.DEPARTMENT_HEAD) &&
-                !children.some((child) => child.href === '/enterprise/dept-head/learning')
-            ) {
-                children.push({
-                    label: 'Khóa học của tôi',
-                    href: '/enterprise/dept-head/learning',
-                })
-            }
-
-            return {
-                ...item,
-                children,
-            }
-        })
-    }, [user])
 
     const sidebarContent = (
         <div className="flex h-full flex-col border-r border-gray-200 bg-white">
@@ -242,7 +213,7 @@ export const DeptHeadSidebar = memo(function DeptHeadSidebar() {
                 className="flex-1 space-y-2 overflow-y-auto p-4"
                 aria-label="Department head navigation"
             >
-                {navItems.map((item) => (
+                {NAV_ITEMS.map((item) => (
                     <NavMenuItem
                         key={item.label}
                         item={item}
