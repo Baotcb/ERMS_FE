@@ -18,13 +18,9 @@ import { CurriculumLessonItem } from './curriculum-lesson-item';
 export interface CurriculumSectionItemProps {
     section: CourseSection;
     index: number;
-    syncingLessonId: string | null;
     uploadingLessonId: string | null;
-    isLocalId: (id: string) => boolean;
-    isUnsyncedLessonId: (id: string) => boolean;
     onDeleteSection: (sectionId: string) => void;
     onAddLesson: (sectionId: string, payload: { title: string; videoUrl?: string; durationMinutes: number }) => Promise<void>;
-    onSyncLocalLesson: (sectionId: string, lessonId: string) => void;
     onUploadMaterial: (lessonId: string, file: File | null) => void;
     onDeleteLesson: (sectionId: string, lessonId: string) => void;
 }
@@ -32,13 +28,9 @@ export interface CurriculumSectionItemProps {
 export function CurriculumSectionItem({
     section,
     index,
-    syncingLessonId,
     uploadingLessonId,
-    isLocalId,
-    isUnsyncedLessonId,
     onDeleteSection,
     onAddLesson,
-    onSyncLocalLesson,
     onUploadMaterial,
     onDeleteLesson,
 }: CurriculumSectionItemProps) {
@@ -95,15 +87,10 @@ export function CurriculumSectionItem({
                     <CurriculumLessonItem
                         key={lesson.id}
                         lesson={lesson}
-                        sectionId={section.id}
                         index={lIdx}
-                        syncingLessonId={syncingLessonId}
                         uploadingLessonId={uploadingLessonId}
-                        isLocalId={isLocalId}
-                        isUnsyncedLessonId={isUnsyncedLessonId}
-                        onSyncLocalLesson={onSyncLocalLesson}
                         onUploadMaterial={onUploadMaterial}
-                        onDeleteLesson={onDeleteLesson}
+                        onDeleteLesson={(lessonId) => onDeleteLesson(section.id, lessonId)}
                     />
                 ))}
 
