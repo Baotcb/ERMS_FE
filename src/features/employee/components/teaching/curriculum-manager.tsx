@@ -114,41 +114,39 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         }
     }, [materialMirrorStorageKey]);
 
-    // ── Merge server + draft ──
+    // ── Merge server + draft materials ──
 
-    const mergeServerWithDraft = useCallback((serverLessons: Lesson[], draftLessons: Lesson[]): Lesson[] => {
+    const mergeServerWithDraft = useCallback((serverLessons: Lesson[]): Lesson[] => {
         const materialMirror = loadMaterialMirror();
 
         const applyMirror = (lesson: Lesson): Lesson => {
             const localMaterials = materialMirror[lesson.id] || [];
-            const serverMaterialIds = new Set(lesson.materials?.map(m => m.id) || []);
-            const uniqueLocalMaterials = localMaterials.filter(m => !serverMaterialIds.has(m.id));
+            // Deduplicate: avoid pushing fallback material if backend already returns the DocumentUrl equivalent
+            const serverMaterialUrls = new Set(lesson.materials?.map(m => m.fileUrl) || []);
+            const uniqueLocalMaterials = localMaterials.filter(m => !serverMaterialUrls.has(m.fileUrl));
             return {
                 ...lesson,
                 materials: [...(lesson.materials || []), ...uniqueLocalMaterials]
             };
         };
 
-        if (!draftLessons.length && serverLessons.length > 0) {
+        // Strict behavior: Only use server lessons for structure.
+        // We only fallback to draftLessons if serverLessons is completely empty AND 
+        // we heavily suspect the curriculum endpoint 404'd (indicated by isCurriculumUnavailable).
+        const hasServerData = serverLessons.length > 0;
+        
+        if (hasServerData) {
             return serverLessons.map(applyMirror);
         }
 
-        const serverLessonMap = new Map(serverLessons.map(l => [l.id, l]));
-        const usedServerIds = new Set<string>();
-
-        // Process draft lessons — replace with server data if available
-        const processedDraft = draftLessons.map(draftLesson => {
-            const serverLesson = serverLessonMap.get(draftLesson.id);
-            if (serverLesson) usedServerIds.add(serverLesson.id);
-            return applyMirror(serverLesson || draftLesson);
-        });
-
-        // Append any server lessons not in draft
-        const leftover = serverLessons
-            .filter(l => !usedServerIds.has(l.id))
-            .map(applyMirror);
-
-        return [...processedDraft, ...leftover];
+        // If backend returned [] but we had local drafts, we ONLY resurrect Local Drafts
+        // if they are truly 'local-' prefixed (which shouldn't happen anymore) 
+        // OR if the endpoint is actually missing. Since GET endpoint is now available on backend,
+        // returning [] means the course is truly empty.
+        // Thus, we DO NOT resurrect old DB drafts just because server returned [].
+        // This fixes the "zombie lessons/materials" bug.
+        
+        return [];
     }, [loadMaterialMirror]);
 
     // ── Load curriculum ──
@@ -159,17 +157,9 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             const sections = await courseContentService.getCourseCurriculum(courseId);
             // Flatten sections into lessons (backend returns flat lessons wrapped in a single section)
             const serverLessons = sections.flatMap(s => s.lessons || []);
-            const draftLessons = loadDraftLessons();
-            const merged = mergeServerWithDraft(serverLessons, draftLessons);
+            const merged = mergeServerWithDraft(serverLessons);
             setLessons(merged);
             setIsCurriculumUnavailable(false);
-
-            if (draftLessons.length > 0) {
-                toast({
-                    title: 'Đã khôi phục bản nháp nội dung học',
-                    description: 'Nội dung đã lưu tạm được khôi phục thành công.',
-                });
-            }
         } catch (error) {
             const status = typeof error === 'object' && error && 'status' in error
                 ? Number((error as { status?: unknown }).status)
