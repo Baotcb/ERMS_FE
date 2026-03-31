@@ -288,12 +288,8 @@ export function CourseQuizSection({
     const timerSeconds = quizRemainingSeconds !== null ? quizRemainingSeconds % 60 : 0;
     const timerClass = quizRemainingSeconds !== null && quizRemainingSeconds <= 60 ? 'text-red-400' : quizRemainingSeconds !== null && quizRemainingSeconds <= 300 ? 'text-amber-400' : 'text-white';
 
-    // ─── If already has result, redirect ───
-    useEffect(() => {
-        if (result && !examMode) {
-            router.push(`/enterprise/employee/learning/course/${initialCourse.id}/result`);
-        }
-    }, [result, examMode, initialCourse.id, router]);
+    // ─── Removed automatic redirect to allow retries ───
+    // Students can now choose to either see their old result or start a new attempt (if attempts are left).
 
     const isWorkshop = initialCourse.isOnline === false;
     const isReadyToStart = !isWorkshop || isWorkshopConfirmed === true;
@@ -354,6 +350,27 @@ export function CourseQuizSection({
                                 Đây là khóa học Workshop offline. Bạn cần đợi bộ phận Đào tạo (HR) 
                                 xác nhận Workshop đã diễn ra thành công mới có thể bắt đầu làm bài kiểm tra.
                             </p>
+                        </div>
+                    )}
+
+                    {result && !examMode && (
+                        <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4 flex flex-col items-center justify-center space-y-3">
+                            <div>
+                                <p className="text-sm font-bold text-blue-900 text-center">
+                                    Lần thi trước: {result.score ?? 0} điểm ({result.correctAnswers ?? 0}/{result.totalQuestions ?? 0} câu đúng)
+                                </p>
+                                <p className="text-[11px] text-blue-700 font-medium text-center mt-0.5">
+                                    {result.isPassed ? '🎉 Đạt yêu cầu' : '❌ Chưa đạt yêu cầu'}
+                                </p>
+                            </div>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => router.push(`/enterprise/employee/learning/course/${initialCourse.id}/result`)}
+                                className="w-full bg-white text-blue-700 hover:bg-blue-100 border-blue-200 rounded-xl text-xs font-semibold h-9"
+                            >
+                                Xem chi tiết bài làm trước
+                            </Button>
                         </div>
                     )}
 
