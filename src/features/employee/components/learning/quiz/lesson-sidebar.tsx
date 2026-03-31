@@ -24,12 +24,12 @@ interface LessonSidebarProps {
 
 export function LessonSidebar(props: LessonSidebarProps) {
     const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
-    const [initializedSections, setInitializedSections] = useState(false);
+    const [prevSectionsLength, setPrevSectionsLength] = useState(props.sections.length);
 
-    // Expand all modules after sections load (only once)
-    if (props.sections.length > 0 && !initializedSections) {
+    // Mở tất cả module accordion lần đầu tiên khi API vừa tải xong
+    if (props.sections.length > 0 && props.sections.length !== prevSectionsLength) {
+        setPrevSectionsLength(props.sections.length);
         setExpandedModules(new Set(props.sections.map(s => s.id)));
-        setInitializedSections(true);
     }
 
     const toggleModule = (id: string) => {
