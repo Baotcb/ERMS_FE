@@ -8,14 +8,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Lesson, Material } from '@/features/hr/types/course-content-types';
+import type { Lesson } from '@/features/hr/types/course-content-types';
 import { courseContentService } from '@/features/hr/api/course-content-service';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/core/auth/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
 import { encryptData, decryptData } from '@/features/core/utils/encryption';
-import { saveLessonMaterial } from '@/features/hr/utils/lesson-materials-bridge';
 import { CurriculumLessonItem } from './curriculum-lesson-item';
 
 interface CurriculumManagerProps {
@@ -40,7 +39,6 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const [isAddingLesson, setIsAddingLesson] = useState(false);
 
     const draftStorageKey = `teaching-lessons-draft:${user?.id || 'anon'}:${courseId}`;
-    const materialMirrorStorageKey = `teaching-materials-draft:${user?.id || 'anon'}:${courseId}`;
 
     // ── Draft persistence ──
 
@@ -69,85 +67,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         }
     }, [draftStorageKey]);
 
-    const persistMaterialMirror = useCallback((nextLessons: Lesson[]) => {
-        if (typeof window === 'undefined') return;
-        try {
-            const mirror = nextLessons
-                .filter(lesson => lesson.materials && lesson.materials.length > 0)
-                .map(lesson => ({
-                    lessonId: lesson.id,
-                    orderIndex: lesson.orderIndex,
-                    lessonTitle: lesson.title,
-                    materials: (lesson.materials || []).map(material => ({
-                        id: material.id,
-                        lessonId: material.lessonId,
-                        title: material.title,
-                        fileUrl: material.fileUrl,
-                        fileType: material.fileType,
-                        fileSize: material.fileSize,
-                    })),
-                }));
-            const encryptedData = encryptData(JSON.stringify(mirror));
-            window.localStorage.setItem(materialMirrorStorageKey, encryptedData);
-        } catch {
-            // Ignore storage write errors
-        }
-    }, [materialMirrorStorageKey]);
 
-    const loadMaterialMirror = useCallback((): Record<string, Material[]> => {
-        if (typeof window === 'undefined') return {};
-        try {
-            const raw = window.localStorage.getItem(materialMirrorStorageKey);
-            if (!raw) return {};
-            let decrypted = decryptData(raw);
-            if (!decrypted) decrypted = raw;
-            const parsed = JSON.parse(decrypted) as Array<{ lessonId: string; materials: Material[] }>;
-            const result: Record<string, Material[]> = {};
-            for (const item of parsed) {
-                if (item.materials && item.materials.length > 0) {
-                    result[item.lessonId] = item.materials;
-                }
-            }
-            return result;
-        } catch {
-            return {};
-        }
-    }, [materialMirrorStorageKey]);
-
-    // ── Merge server + draft materials ──
-
-    const mergeServerWithDraft = useCallback((serverLessons: Lesson[]): Lesson[] => {
-        const materialMirror = loadMaterialMirror();
-
-        const applyMirror = (lesson: Lesson): Lesson => {
-            const localMaterials = materialMirror[lesson.id] || [];
-            // Deduplicate: avoid pushing fallback material if backend already returns the DocumentUrl equivalent
-            const serverMaterialUrls = new Set(lesson.materials?.map(m => m.fileUrl) || []);
-            const uniqueLocalMaterials = localMaterials.filter(m => !serverMaterialUrls.has(m.fileUrl));
-            return {
-                ...lesson,
-                materials: [...(lesson.materials || []), ...uniqueLocalMaterials]
-            };
-        };
-
-        // Strict behavior: Only use server lessons for structure.
-        // We only fallback to draftLessons if serverLessons is completely empty AND 
-        // we heavily suspect the curriculum endpoint 404'd (indicated by isCurriculumUnavailable).
-        const hasServerData = serverLessons.length > 0;
-        
-        if (hasServerData) {
-            return serverLessons.map(applyMirror);
-        }
-
-        // If backend returned [] but we had local drafts, we ONLY resurrect Local Drafts
-        // if they are truly 'local-' prefixed (which shouldn't happen anymore) 
-        // OR if the endpoint is actually missing. Since GET endpoint is now available on backend,
-        // returning [] means the course is truly empty.
-        // Thus, we DO NOT resurrect old DB drafts just because server returned [].
-        // This fixes the "zombie lessons/materials" bug.
-        
-        return [];
-    }, [loadMaterialMirror]);
 
     // ── Load curriculum ──
 
@@ -157,8 +77,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             const sections = await courseContentService.getCourseCurriculum(courseId);
             // Flatten sections into lessons (backend returns flat lessons wrapped in a single section)
             const serverLessons = sections.flatMap(s => s.lessons || []);
-            const merged = mergeServerWithDraft(serverLessons);
-            setLessons(merged);
+            setLessons(serverLessons);
             setIsCurriculumUnavailable(false);
         } catch (error) {
             const status = typeof error === 'object' && error && 'status' in error
@@ -183,7 +102,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             hasLoadedCurriculumRef.current = true;
             setIsLoading(false);
         }
-    }, [courseId, loadDraftLessons, mergeServerWithDraft, toast]);
+    }, [courseId, loadDraftLessons, toast]);
 
     useEffect(() => {
         void loadCurriculum();
@@ -192,8 +111,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     useEffect(() => {
         if (!hasLoadedCurriculumRef.current) return;
         persistDraftLessons(lessons);
-        persistMaterialMirror(lessons);
-    }, [persistDraftLessons, persistMaterialMirror, lessons]);
+    }, [persistDraftLessons, lessons]);
 
     // ── Handlers ──
 
@@ -283,7 +201,6 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
         setUploadingLessonId(lessonId);
         try {
             const material = await courseContentService.uploadMaterial(lessonId, file);
-            saveLessonMaterial(courseId, lessonId, material);
             setLessons(prev => prev.map(lesson => {
                 if (lesson.id !== lessonId) return lesson;
                 return { ...lesson, materials: [...(lesson.materials || []), material] };
@@ -315,7 +232,6 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
                         if (lesson.id !== lessonId) return lesson;
                         return { ...lesson, materials: [...(lesson.materials || []), fallbackMaterial] };
                     }));
-                    saveLessonMaterial(courseId, lessonId, fallbackMaterial);
                     toast({
                         title: 'Đã upload tài liệu thành công',
                         description: `Tài liệu "${file.name}" đã được lưu và sẽ hiển thị cho học viên.`,

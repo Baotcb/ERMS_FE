@@ -7,7 +7,6 @@ import type { CourseProgressDto } from '@/features/employee/types/learning-quiz-
 import type { CourseSection, Lesson } from '@/features/hr/types/course-content-types';
 import { learningQuizService } from '@/features/employee/api/learning-quiz-service';
 import { courseContentService } from '@/features/hr/api/course-content-service';
-import { getLessonMaterials } from '@/features/hr/utils/lesson-materials-bridge';
 import { isServerLessonId } from '../components/learning/quiz/quiz-helpers';
 
 // ─── Return type ───
@@ -58,20 +57,8 @@ export function useCourseLearning(
 
     // ─── Derived ───
     const allLessons = useMemo(() => {
-        const raw = sections.flatMap((s) => s.lessons || []);
-        // ⚠️ TECH DEBT: Merge localStorage materials (Cloudinary workaround)
-        if (typeof window !== 'undefined') {
-            const storedMaterials = getLessonMaterials(initialCourse.id);
-            return raw.map((lesson) => {
-                const extra = storedMaterials[lesson.id];
-                if (!extra || extra.length === 0) return lesson;
-                const existingIds = new Set((lesson.materials || []).map(m => m.id));
-                const merged = [...(lesson.materials || []), ...extra.filter(m => !existingIds.has(m.id))];
-                return { ...lesson, materials: merged };
-            });
-        }
-        return raw;
-    }, [sections, initialCourse.id]);
+        return sections.flatMap((s) => s.lessons || []);
+    }, [sections]);
     const completedLessonSet = useMemo(() => new Set(completedLessonIds), [completedLessonIds]);
     const lessonIndexMap = useMemo(() => {
         const m = new Map<string, number>();
