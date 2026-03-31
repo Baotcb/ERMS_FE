@@ -19,7 +19,7 @@ export default async function Page() {
     }
 
     const coursesResult = await trainingServerService
-        .getAllCourses({ status: 'Published', pageSize: 100 })
+        .getAllCourses({ status: 'Public', pageSize: 100 })
         .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
 
     // TODO: N+1 query — gọi getCourseProgress() cho từng course. Khi BE có endpoint

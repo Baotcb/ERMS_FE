@@ -41,7 +41,7 @@ function getDeploymentLabel(course: Course): string {
     const hasTrainees = (course.enrollmentCount || 0) > 0;
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
-    if (course.status === 'Published') {
+    if (course.status === 'Public') {
         return 'Đã mở khóa';
     }
 
@@ -69,8 +69,8 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: Co
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const { data, isLoading } = useSWR<CourseResult>(
-        ['/api/Course', 'dept-head-available-courses', debouncedSearch, page, 'Published'],
-        () => courseService.getAllCourses({ search: debouncedSearch, page, pageSize: PAGE_SIZE, status: 'Published' }),
+        ['/api/Course', 'dept-head-available-courses', debouncedSearch, page, 'Public'],
+        () => courseService.getAllCourses({ search: debouncedSearch, page, pageSize: PAGE_SIZE, status: 'Public' }),
         { fallbackData: initialData }
     );
 

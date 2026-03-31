@@ -35,7 +35,7 @@ export default async function Page({
     // 1. All Published Courses (for combo box) - We only assign to ready courses
     // 2. Trainees (paginated via URL params) - filtered by dept head's department
     const [allReadyCourses, initialTrainees] = await Promise.all([
-        trainingServerService.getAllCourses({ status: 'Published', pageSize: 100 }),
+        trainingServerService.getAllCourses({ status: 'Public', pageSize: 100 }),
         trainingServerService.getEmployees({
             page: page,
             pageSize: 10,
@@ -66,7 +66,7 @@ export default async function Page({
         currentCourse = await trainingServerService.getCourseDetails(courseId);
         
         // Prevent assigning to non-published courses via URL bypass
-        if (currentCourse && currentCourse.status !== 'Published') {
+        if (currentCourse && currentCourse.status !== 'Public') {
             currentCourse = null;
         } else if (currentCourse) {
             const parallelFetches = [];

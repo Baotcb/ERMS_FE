@@ -20,7 +20,7 @@ const STEPS = [
 ] as const;
 
 function getStatusStep(course: Course): number {
-    if (course.status === 'Published') return 3;
+    if (course.status === 'Public') return 3;
     if (course.description && course.durationMinutes) return 2;
     return 1;
 }
@@ -54,7 +54,7 @@ export function TeachingTasksPage({
 }) {
     const { user } = useAuth();
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'public'>('all');
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 6;
 
@@ -83,8 +83,8 @@ export function TeachingTasksPage({
             );
         }).filter(course => {
             if (statusFilter === 'all') return true;
-            if (statusFilter === 'published') return course.status === 'Published';
-            return course.status !== 'Published';
+            if (statusFilter === 'public') return course.status === 'Public';
+            return course.status !== 'Public';
         });
     }, [initialCourses, search, user, statusFilter]);
 
@@ -96,14 +96,14 @@ export function TeachingTasksPage({
         setPage(1);
     };
 
-    const handleStatusFilter = (key: 'all' | 'draft' | 'published') => {
+    const handleStatusFilter = (key: 'all' | 'draft' | 'public') => {
         setStatusFilter(key);
         setPage(1);
     };
 
     const stats = useMemo(() => {
         const all = initialCourses.filter(c => user ? isCourseOwnedByUser(c, user, user.role) : false);
-        const published = all.filter(c => c.status === 'Published').length;
+        const published = all.filter(c => c.status === 'Public').length;
         const draft = all.length - published;
         const totalEnroll = all.reduce((sum, c) => sum + (c.enrollmentCount || 0), 0);
         return { total: all.length, published, draft, totalEnroll };
@@ -157,7 +157,7 @@ export function TeachingTasksPage({
                     {[
                         { key: 'all' as const, label: 'Tất cả' },
                         { key: 'draft' as const, label: 'Đang thiết lập' },
-                        { key: 'published' as const, label: 'Hoàn thành' },
+                        { key: 'public' as const, label: 'Hoàn thành' },
                     ].map(({ key, label }) => (
                         <button
                             key={key}
@@ -190,7 +190,7 @@ export function TeachingTasksPage({
                     paginatedCourses.map((course) => {
                         const currentStep = getStatusStep(course);
                         const stepConfig = STEPS[currentStep - 1];
-                        const isPublished = course.status === 'Published';
+                        const isPublished = course.status === 'Public';
 
                         return (
                             <div key={course.id} className="group rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:border-[#BBE1FA] transition-all duration-300 flex flex-col overflow-hidden">

@@ -28,7 +28,7 @@ function getDeploymentLabel(course: Course): string {
     const hasTrainees = (course.enrollmentCount || 0) > 0;
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
-    if (course.status === 'Published') return 'Đã xuất bản';
+    if (course.status === 'Public') return 'Đã xuất bản';
     if (hasTrainer && hasTrainees && hasSchedule) return 'Sẵn sàng triển khai';
     if (hasTrainer && hasSchedule) return 'Đã có lịch';
     if (hasTrainer) return 'Đã phân công';
@@ -151,7 +151,7 @@ function CourseDetailContent({
                 </div>
             )}
 
-            {onViewFeedback && course.status === 'Published' && (
+            {onViewFeedback && course.status === 'Public' && (
                 <Button
                     variant="outline"
                     className="w-full border-[#0F4C75] text-[#0F4C75] hover:bg-blue-50"

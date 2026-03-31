@@ -224,11 +224,11 @@ export function LearningCoursesPage({
                                             {course.courseCode}
                                         </Badge>
                                         <Badge className={`border-0 backdrop-blur-sm font-semibold text-xs ${
-                                            course.status === 'Published'
+                                            course.status === 'Public'
                                                 ? 'bg-green-500/20 text-green-100'
                                                 : 'bg-yellow-500/20 text-yellow-100'
                                         }`}>
-                                            {course.status === 'Published' ? 'Đang mở' : course.status}
+                                            {course.status === 'Public' ? 'Đang mở' : course.status}
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-3 text-white/70 text-xs font-medium">

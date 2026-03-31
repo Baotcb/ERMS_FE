@@ -39,7 +39,7 @@ export function WorkshopManagementList() {
     // Fetch published courses — filter offline ones on client
     const { data: coursesData, mutate } = useSWR(
         'hr-workshop-courses',
-        () => courseService.getAllCourses({ status: 'Published', pageSize: 100 })
+        () => courseService.getAllCourses({ status: 'Public', pageSize: 100 })
     );
 
     const offlineCourses = (coursesData?.items || []).filter(c => c.isOnline === false);
