@@ -84,7 +84,7 @@ function CourseDetailContent({
     onViewFeedback,
 }: {
     course: Course;
-    onViewFeedback?: (courseName: string) => void;
+    onViewFeedback?: (courseCode: string) => void;
 }) {
     const { description, schedule, location } = parseCourseDescription(course.description);
     const isOnline = course.isOnline !== false;
@@ -155,7 +155,7 @@ function CourseDetailContent({
                 <Button
                     variant="outline"
                     className="w-full border-[#0F4C75] text-[#0F4C75] hover:bg-blue-50"
-                    onClick={() => onViewFeedback(course.courseName)}
+                    onClick={() => onViewFeedback(course.courseCode)}
                 >
                     <MessageSquare className="mr-2 h-4 w-4" /> Xem phản hồi của khóa học này
                 </Button>
@@ -167,7 +167,7 @@ function CourseDetailContent({
 function CoursesTab({
     onSwitchToFeedback,
 }: {
-    onSwitchToFeedback?: (courseName: string) => void;
+    onSwitchToFeedback?: (courseCode: string) => void;
 }) {
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebouncedValue(search, 300);
@@ -273,9 +273,9 @@ function CoursesTab({
                     {selectedCourse && (
                         <CourseDetailContent
                             course={selectedCourse}
-                            onViewFeedback={(courseName) => {
+                            onViewFeedback={(courseCode) => {
                                 setIsDetailOpen(false);
-                                onSwitchToFeedback?.(courseName);
+                                onSwitchToFeedback?.(courseCode);
                             }}
                         />
                     )}
@@ -313,13 +313,19 @@ function FeedbackTab({
             .finally(() => setLoading(false));
     }, []);
 
-    const courseOptions = useMemo(() => Array.from(new Set(feedbacks.map((feedback) => feedback.courseName))), [feedbacks]);
+    const courseOptions = useMemo(() => {
+        const map = new Map<string, string>();
+        feedbacks.forEach(f => {
+            if (!map.has(f.courseCode)) map.set(f.courseCode, f.courseName);
+        });
+        return Array.from(map.entries()).map(([code, name]) => ({ code, name }));
+    }, [feedbacks]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         return feedbacks.filter((feedback) => {
             const matchSearch = !q || [feedback.employeeName, feedback.employeeEmail, feedback.courseName, feedback.trainerEmail, feedback.comment].some((value) => value?.toLowerCase().includes(q));
-            const matchCourse = courseFilter === 'all' || feedback.courseName === courseFilter;
+            const matchCourse = courseFilter === 'all' || feedback.courseCode === courseFilter;
             return matchSearch && matchCourse;
         });
     }, [feedbacks, search, courseFilter]);
@@ -364,7 +370,7 @@ function FeedbackTab({
                         <SelectTrigger><SelectValue placeholder="Lọc theo khóa học" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Tất cả khóa học</SelectItem>
-                            {courseOptions.map((courseName) => <SelectItem key={courseName} value={courseName}>{courseName}</SelectItem>)}
+                            {courseOptions.map((opt) => <SelectItem key={opt.code} value={opt.code}>{opt.name} ({opt.code})</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
@@ -441,8 +447,8 @@ export default function HRTrainingCoursesPage() {
             </div>
 
             {activeTab === 'courses' ? (
-                <CoursesTab onSwitchToFeedback={(courseName) => {
-                    setFeedbackCourseFilter(courseName);
+                <CoursesTab onSwitchToFeedback={(courseCode) => {
+                    setFeedbackCourseFilter(courseCode);
                     setActiveTab('feedback');
                 }} />
             ) : (

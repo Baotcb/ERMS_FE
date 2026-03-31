@@ -38,7 +38,13 @@ export default function HRTrainingFeedbackPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const courseOptions = useMemo(() => Array.from(new Set(feedbacks.map((feedback) => feedback.courseName))), [feedbacks]);
+    const courseOptions = useMemo(() => {
+        const map = new Map<string, string>();
+        feedbacks.forEach(f => {
+            if (!map.has(f.courseCode)) map.set(f.courseCode, f.courseName);
+        });
+        return Array.from(map.entries()).map(([code, name]) => ({ code, name }));
+    }, [feedbacks]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -48,7 +54,7 @@ export default function HRTrainingFeedbackPage() {
                 [feedback.employeeName, feedback.employeeEmail, feedback.courseName, feedback.trainerEmail, feedback.comment].some((value) =>
                     value?.toLowerCase().includes(q),
                 );
-            const matchCourse = courseFilter === 'all' || feedback.courseName === courseFilter;
+            const matchCourse = courseFilter === 'all' || feedback.courseCode === courseFilter;
             return matchSearch && matchCourse;
         });
     }, [feedbacks, search, courseFilter]);
@@ -112,9 +118,9 @@ export default function HRTrainingFeedbackPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Tất cả khóa học</SelectItem>
-                            {courseOptions.map((courseName) => (
-                                <SelectItem key={courseName} value={courseName}>
-                                    {courseName}
+                            {courseOptions.map((opt) => (
+                                <SelectItem key={opt.code} value={opt.code}>
+                                    {opt.name} ({opt.code})
                                 </SelectItem>
                             ))}
                         </SelectContent>
