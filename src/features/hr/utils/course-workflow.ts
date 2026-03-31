@@ -14,7 +14,15 @@ function normalizeName(value?: string | null): string {
     return value?.trim().toLowerCase() || '';
 }
 
-export function isCourseOwnedByUser(course: Course, user: CourseUserIdentity | null | undefined): boolean {
+export function isCourseOwnedByUser(
+    course: Course, 
+    user: CourseUserIdentity | null | undefined,
+    role?: string | string[] | null
+): boolean {
+    if (role && (Array.isArray(role) ? role.includes('HR') : role === 'HR')) {
+        return true;
+    }
+
     if (!user) {
         return false;
     }
@@ -24,12 +32,6 @@ export function isCourseOwnedByUser(course: Course, user: CourseUserIdentity | n
     // Match by trainerEmail
     const normalizedTrainerEmail = normalizeEmail(course.trainerEmail);
     if (normalizedTrainerEmail && normalizedUserEmail && normalizedTrainerEmail === normalizedUserEmail) {
-        return true;
-    }
-
-    // Match by contentManagerEmail (HR fallback for external trainers)
-    const normalizedContentManagerEmail = normalizeEmail(course.contentManagerEmail);
-    if (normalizedContentManagerEmail && normalizedUserEmail && normalizedContentManagerEmail === normalizedUserEmail) {
         return true;
     }
 

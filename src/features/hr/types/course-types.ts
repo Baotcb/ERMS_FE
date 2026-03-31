@@ -6,7 +6,6 @@ export interface Course {
     description?: string;
     thumbnailUrl?: string;
     trainerEmail?: string;
-    contentManagerEmail?: string;
     location?: string;
     startTime?: string;
     isOnline?: boolean;

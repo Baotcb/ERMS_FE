@@ -21,7 +21,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         notFound();
     }
 
-    const ownsCourse = isCourseOwnedByUser(course, session.user);
+    const ownsCourse = isCourseOwnedByUser(course, session.user, session.role);
 
     if (!ownsCourse) {
         notFound();

@@ -66,7 +66,7 @@ export function TeachingTasksPage({
         const normalizedSearch = search.trim().toLowerCase();
 
         return initialCourses.filter((course) => {
-            const matchesOwnership = isCourseOwnedByUser(course, user);
+            const matchesOwnership = isCourseOwnedByUser(course, user, user.role);
 
             if (!matchesOwnership) {
                 return false;
@@ -102,7 +102,7 @@ export function TeachingTasksPage({
     };
 
     const stats = useMemo(() => {
-        const all = initialCourses.filter(c => user ? isCourseOwnedByUser(c, user) : false);
+        const all = initialCourses.filter(c => user ? isCourseOwnedByUser(c, user, user.role) : false);
         const published = all.filter(c => c.status === 'Published').length;
         const draft = all.length - published;
         const totalEnroll = all.reduce((sum, c) => sum + (c.enrollmentCount || 0), 0);

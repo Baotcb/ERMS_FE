@@ -15,7 +15,7 @@ export default async function Page() {
     }
 
     const allCourses = await trainingServerService.getAllCourses({ pageSize: 100 }).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
-    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user));
+    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user, session.role));
 
     return (
         <Suspense fallback={
