@@ -65,28 +65,33 @@ export default async function Page({
     if (courseId) {
         currentCourse = await trainingServerService.getCourseDetails(courseId);
         
-        const parallelFetches = [];
-        
-        // Fetch enrolled employees
-        parallelFetches.push(
-            trainingServerService.getCourseEnrolledEmployees(courseId)
-                .then(ids => { enrolledEmployeeIds = ids; })
-                .catch(() => {})
-        );
-
-        // Fetch Trainer info if available
-        if (currentCourse.trainerEmail) {
-            const normalizedTrainerEmail = normalizeEmail(currentCourse.trainerEmail);
+        // Prevent assigning to non-published courses via URL bypass
+        if (currentCourse && currentCourse.status !== 'Published') {
+            currentCourse = null;
+        } else if (currentCourse) {
+            const parallelFetches = [];
+            
+            // Fetch enrolled employees
             parallelFetches.push(
-                trainingServerService.getEmployees({ search: normalizedTrainerEmail, pageSize: 20 })
-                    .then(trainerResult => {
-                        invitedTrainer = trainerResult.items.find(e => normalizeEmail(e.email) === normalizedTrainerEmail) || null;
-                    })
+                trainingServerService.getCourseEnrolledEmployees(courseId)
+                    .then(ids => { enrolledEmployeeIds = ids; })
                     .catch(() => {})
             );
-        }
 
-        await Promise.all(parallelFetches);
+            // Fetch Trainer info if available
+            if (currentCourse.trainerEmail) {
+                const normalizedTrainerEmail = normalizeEmail(currentCourse.trainerEmail);
+                parallelFetches.push(
+                    trainingServerService.getEmployees({ search: normalizedTrainerEmail, pageSize: 20 })
+                        .then(trainerResult => {
+                            invitedTrainer = trainerResult.items.find(e => normalizeEmail(e.email) === normalizedTrainerEmail) || null;
+                        })
+                        .catch(() => {})
+                );
+            }
+
+            await Promise.all(parallelFetches);
+        }
     } else if (initialCourses.items.length > 0) {
         // If courseId is not in URL, but we have courses, prepopulate with the first one 
         // to avoid empty view state, similar to the original Hook logic.

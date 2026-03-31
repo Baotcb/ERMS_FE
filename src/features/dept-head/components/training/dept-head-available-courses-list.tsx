@@ -69,8 +69,8 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: Co
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const { data, isLoading } = useSWR<CourseResult>(
-        ['/api/Course', 'dept-head-available-courses', debouncedSearch, page],
-        () => courseService.getAllCourses({ search: debouncedSearch, page, pageSize: PAGE_SIZE }),
+        ['/api/Course', 'dept-head-available-courses', debouncedSearch, page, 'Published'],
+        () => courseService.getAllCourses({ search: debouncedSearch, page, pageSize: PAGE_SIZE, status: 'Published' }),
         { fallbackData: initialData }
     );
 
