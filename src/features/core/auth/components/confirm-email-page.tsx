@@ -26,7 +26,7 @@ function ConfirmEmailContent() {
 
     const isInvalidParams = !userId || !token
     const [status, setStatus] = useState<ConfirmStatus>(isInvalidParams ? 'invalid' : 'loading')
-    const [message, setMessage] = useState(isInvalidParams ? 'Link xĂ¡c thá»±c khĂ´ng há»£p lá»‡.' : '')
+    const [message, setMessage] = useState(isInvalidParams ? 'Link xác thực không hợp lệ.' : '')
 
     useEffect(() => {
         if (isInvalidParams) return
@@ -38,11 +38,11 @@ function ConfirmEmailContent() {
                 const result = await confirmEmail(userId!, token!)
                 if (cancelled) return
                 setStatus('success')
-                setMessage(result.message || 'XĂ¡c thá»±c email thĂ nh cĂ´ng!')
+                setMessage(result.message || 'Xác thực email thành công!')
             } catch (err) {
                 if (cancelled) return
                 setStatus('error')
-                setMessage(err instanceof Error ? err.message : 'XĂ¡c thá»±c email tháº¥t báº¡i')
+                setMessage(err instanceof Error ? err.message : 'Xác thực email thất bại')
             }
         }
 
@@ -54,7 +54,7 @@ function ConfirmEmailContent() {
     }, [userId, token, isInvalidParams])
 
     if (status === 'loading') {
-        return <ConfirmEmailLoadingState label="Äang xĂ¡c thá»±c email..." />
+        return <ConfirmEmailLoadingState label="Đang xác thực email..." />
     }
 
     return (
@@ -68,7 +68,7 @@ function ConfirmEmailContent() {
 
 export function ConfirmEmailPage() {
     return (
-        <Suspense fallback={<ConfirmEmailLoadingState label="Äang táº£i..." />}>
+        <Suspense fallback={<ConfirmEmailLoadingState label="Đang tải..." />}>
             <ConfirmEmailContent />
         </Suspense>
     )

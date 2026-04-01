@@ -28,7 +28,7 @@ export function DepartmentEditPage() {
     }
 
     if (!department) {
-        return <DepartmentEditEmptyState message="KhĂ´ng tĂ¬m tháº¥y phĂ²ng ban" />
+        return <DepartmentEditEmptyState message="Không tìm thấy phòng ban" />
     }
 
     return <DepartmentForm initialData={department} isEdit />
