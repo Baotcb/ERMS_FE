@@ -16,7 +16,6 @@ import { apiClient } from '@/lib/api-client'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { useAssignInterviewer } from '../../hooks/use-interview'
 
-
 export interface AssignedInterviewer {
     id: string
     fullName: string
@@ -35,9 +34,42 @@ interface AssignInterviewerDialogProps {
 interface EmployeeOption {
     id: string
     fullName: string
+    email?: string
     position: string | null
-    departmentName: string
-    departmentId: number
+    departmentName: string | null
+    departmentId: number | null
+}
+
+interface UserProfileLookup {
+    email?: string
+    departmentId?: number
+}
+
+function resolveDepartmentId({
+    userDepartmentId,
+    profileDepartmentId,
+    profileEmail,
+    employees = [],
+}: {
+    userDepartmentId?: number
+    profileDepartmentId?: number
+    profileEmail?: string
+    employees?: Array<Pick<EmployeeOption, 'email' | 'departmentId'>>
+}): number | undefined {
+    if (userDepartmentId) {
+        return userDepartmentId
+    }
+
+    if (profileDepartmentId) {
+        return profileDepartmentId
+    }
+
+    const normalizedEmail = profileEmail?.trim().toLowerCase()
+    if (!normalizedEmail) {
+        return undefined
+    }
+
+    return employees.find(employee => employee.email?.trim().toLowerCase() === normalizedEmail)?.departmentId ?? undefined
 }
 
 export function AssignInterviewerDialog({
@@ -51,7 +83,6 @@ export function AssignInterviewerDialog({
     const [note, setNote] = useState('')
     const [employeeSearch, setEmployeeSearch] = useState('')
 
-    // Reset state when dialog opens (React docs: adjusting state when prop changes)
     const [prevOpen, setPrevOpen] = useState(open)
     if (open && !prevOpen) {
         setSelectedIds([])
@@ -62,10 +93,61 @@ export function AssignInterviewerDialog({
         setPrevOpen(open)
     }
 
-    // Lấy nhân viên cùng phòng ban với DeptHead
-    const { data: employeesData } = useSWR<{ items: EmployeeOption[] }>(
-        open && user?.departmentId ? ['/api/Employees', user.departmentId, employeeSearch] : null,
-        () => apiClient.get(`/api/Employees?pageSize=100&departmentId=${user!.departmentId}&search=${employeeSearch}`).then(r => r.json())
+    const { data: profileData } = useSWR<UserProfileLookup>(
+        open && !user?.departmentId ? '/api/User/profile' : null,
+        async () => {
+            const response = await apiClient.get('/api/User/profile')
+            if (!response.ok) {
+                return {}
+            }
+
+            return response.json()
+        }
+    )
+
+    const { data: matchedEmployeesData } = useSWR<{ items: EmployeeOption[] }>(
+        open && !user?.departmentId && profileData?.email
+            ? ['/api/Employees', 'dept-lookup', profileData.email]
+            : null,
+        async () => {
+            const response = await apiClient.get(`/api/Employees?PageSize=5&Search=${encodeURIComponent(profileData!.email!)}`)
+            if (!response.ok) {
+                return { items: [] }
+            }
+
+            return response.json()
+        }
+    )
+
+    const departmentId = resolveDepartmentId({
+        userDepartmentId: user?.departmentId,
+        profileDepartmentId: profileData?.departmentId,
+        profileEmail: profileData?.email,
+        employees: matchedEmployeesData?.items,
+    })
+
+    const { data: employeesData, error: employeesError, isLoading: isEmployeesLoading } = useSWR<{ items: EmployeeOption[] }>(
+        open ? ['/api/Employees', departmentId ?? 'all', employeeSearch] : null,
+        async () => {
+            const searchParams = new URLSearchParams({
+                pageSize: '100',
+            })
+
+            if (departmentId) {
+                searchParams.set('departmentId', String(departmentId))
+            }
+            if (employeeSearch.trim()) {
+                searchParams.set('search', employeeSearch.trim())
+            }
+
+            const response = await apiClient.get(`/api/Employees?${searchParams}`)
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({ message: '' }))
+                throw new Error((error as { message?: string }).message || 'Không thể tải danh sách nhân viên')
+            }
+
+            return response.json()
+        }
     )
 
     const employees = employeesData?.items ?? []
@@ -91,19 +173,21 @@ export function AssignInterviewerDialog({
                 description: `Đã phân công ${selectedIds.length} người phỏng vấn.`,
             })
 
-            // Build assigned interviewer list for the schedule dialog
-            const assignedInterviewers: AssignedInterviewer[] = selectedIds
+            const assignedInterviewers = selectedIds
                 .map(id => {
                     const emp = employees.find(e => e.id === id)
                     if (!emp) return null
                     const interviewer: AssignedInterviewer = { id: emp.id, fullName: emp.fullName }
+                    if (emp.email) {
+                        interviewer.email = emp.email
+                    }
+
                     return interviewer
                 })
                 .filter((x): x is AssignedInterviewer => x !== null)
 
             onOpenChange(false)
 
-            // Pass interviewers to parent so it can open ConfirmScheduleDialog
             if (onAssignSuccess) {
                 onAssignSuccess(assignedInterviewers)
             } else {
@@ -129,8 +213,6 @@ export function AssignInterviewerDialog({
                 </DialogHeader>
 
                 <div className="space-y-5 py-2 max-h-[60vh] overflow-y-auto">
-
-                    {/* Employee Search & Selection */}
                     <div className="space-y-2">
                         <Label className="text-sm font-medium">Chọn người phỏng vấn</Label>
                         <div className="relative">
@@ -144,7 +226,11 @@ export function AssignInterviewerDialog({
                         </div>
 
                         <div className="border rounded-lg max-h-[200px] overflow-y-auto divide-y">
-                            {employees.length === 0 ? (
+                            {isEmployeesLoading ? (
+                                <div className="p-4 text-center text-sm text-slate-400">Đang tải nhân viên</div>
+                            ) : employeesError ? (
+                                <div className="p-4 text-center text-sm text-red-500">{employeesError.message}</div>
+                            ) : employees.length === 0 ? (
                                 <div className="p-4 text-center text-sm text-slate-400">Không tìm thấy nhân viên</div>
                             ) : (
                                 employees.map(emp => {
@@ -162,7 +248,7 @@ export function AssignInterviewerDialog({
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-slate-800 truncate">{emp.fullName}</p>
-                                                <p className="text-xs text-slate-400 truncate">{emp.position || emp.departmentName}</p>
+                                                <p className="text-xs text-slate-400 truncate">{emp.position || emp.departmentName || 'Nhân viên'}</p>
                                             </div>
                                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selected
                                                 ? 'bg-[#0F4C75] border-[#0F4C75]'
@@ -177,7 +263,6 @@ export function AssignInterviewerDialog({
                         </div>
                     </div>
 
-                    {/* Note */}
                     <div className="space-y-2">
                         <div className="flex justify-between">
                             <Label className="text-sm font-medium">Ghi chú</Label>
@@ -192,7 +277,6 @@ export function AssignInterviewerDialog({
                         />
                     </div>
 
-                    {/* Selection summary */}
                     {selectedIds.length > 0 && (
                         <div className="flex items-center gap-2 p-3 bg-[#BBE1FA]/10 rounded-lg border border-[#BBE1FA]/30">
                             <div className="flex -space-x-2">
