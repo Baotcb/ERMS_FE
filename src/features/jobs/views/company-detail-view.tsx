@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { useState } from 'react'
-import { useEnterpriseByName } from '../hooks/use-public-enterprises'
+import { useCompanyDetail } from '../hooks/use-public-enterprises'
 import { JobCard } from '../components/job-card'
 
 interface CompanyDetailViewProps {
@@ -25,8 +25,7 @@ interface CompanyDetailViewProps {
 export function CompanyDetailView({ id }: CompanyDetailViewProps) {
     const router = useRouter()
     const { toast } = useToast()
-    const companyName = decodeURIComponent(id)
-    const { data, isLoading, error } = useEnterpriseByName(companyName)
+    const { data, isLoading, error } = useCompanyDetail(id)
     const company = data?.company
     const jobs = data?.jobs || []
     const [isFollowing, setIsFollowing] = useState(false)
