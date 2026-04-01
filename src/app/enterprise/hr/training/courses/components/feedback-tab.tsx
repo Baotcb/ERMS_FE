@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { Search, Star, MessageSquare, TrendingUp } from 'lucide-react';
 import type { CourseFeedbackDto } from '@/features/employee/api/feedback-service';
+import { FeedbackReplySection } from './feedback-reply-section';
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -133,6 +134,7 @@ export function FeedbackTab({
                                     <p className="text-sm text-gray-700 italic">&ldquo;{f.comment}&rdquo;</p>
                                 </div>
                             )}
+                            <FeedbackReplySection feedbackId={f.id} />
                         </div>
                     ))}
                 </div>

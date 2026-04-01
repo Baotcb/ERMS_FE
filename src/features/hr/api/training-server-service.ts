@@ -322,5 +322,16 @@ export const trainingServerService = {
             requireAuth: true,
             cache: 'no-store',
         });
-    }
+    },
+
+    async getQuizResult(courseId: string): Promise<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null; completedAt: string | null; attemptId?: string } | null> {
+        try {
+            return await serverFetch<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null; completedAt: string | null; attemptId?: string }>(`/api/Course/${courseId}/quiz-result`, {
+                requireAuth: true,
+                cache: 'no-store',
+            });
+        } catch {
+            return null;
+        }
+    },
 };

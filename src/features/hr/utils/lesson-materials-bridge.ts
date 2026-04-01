@@ -12,7 +12,7 @@ export function saveLessonMaterial(): void {
     console.warn('saveLessonMaterial is deprecated. Backend already saves materials.');
 }
 
-export function getLessonMaterials(): Record<string, any[]> {
+export function getLessonMaterials(): Record<string, unknown[]> {
     console.warn('getLessonMaterials is deprecated. Backend returns materials via curriculum API.');
     return {};
 }

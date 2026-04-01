@@ -73,7 +73,7 @@ export const HR_NAV_ITEMS: HRNavItem[] = [
             { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
             { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' },
             { label: 'Quản lý Workshop', href: '/enterprise/hr/training/workshop' },
-            { label: 'Giảng dạy (Content)', href: '/enterprise/hr/teaching' },
+            { label: 'Quản lý bài giảng', href: '/enterprise/hr/teaching' },
         ],
     },
 ]
