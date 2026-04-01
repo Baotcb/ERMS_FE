@@ -9,9 +9,9 @@ import { DeptHeadCampaignList } from './campaign-list'
 function RecruitmentPageHeader() {
     return (
         <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Chiáº¿n dá»‹ch tuyá»ƒn dá»¥ng</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Chiến dịch tuyển dụng</h1>
             <p className="text-muted-foreground">
-                Danh sĂ¡ch cĂ¡c chiáº¿n dá»‹ch tuyá»ƒn dá»¥ng Ä‘ang má»Ÿ. Chá»n má»™t chiáº¿n dá»‹ch Ä‘á»ƒ láº­p káº¿ hoáº¡ch.
+                Danh sách các chiến dịch tuyển dụng đang mở. Chọn một chiến dịch để lập kế hoạch.
             </p>
         </div>
     )
@@ -23,9 +23,9 @@ function RecruitmentErrorState({ error }: { error: string }) {
             <RecruitmentPageHeader />
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Lá»—i</AlertTitle>
+                <AlertTitle>Lỗi</AlertTitle>
                 <AlertDescription>
-                    {error}. Vui lĂ²ng kiá»ƒm tra log server Ä‘á»ƒ biáº¿t chi tiáº¿t.
+                    {error}. Vui lòng kiểm tra log server để biết chi tiết.
                 </AlertDescription>
             </Alert>
         </div>
@@ -50,7 +50,7 @@ export async function RecruitmentPage() {
         )
         campaigns = result.items
     } catch (e) {
-        error = e instanceof Error ? e.message : 'CĂ³ lá»—i khi táº£i dá»¯ liá»‡u'
+        error = e instanceof Error ? e.message : 'Có lỗi khi tải dữ liệu'
     }
 
     if (error) {

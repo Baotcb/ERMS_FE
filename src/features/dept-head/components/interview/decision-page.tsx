@@ -15,7 +15,7 @@ function DecisionLoadingState() {
         <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-3">
                 <Loader2 className="w-8 h-8 text-[#0F4C75] animate-spin mx-auto" />
-                <p className="text-sm text-slate-500">Äang táº£i dá»¯ liá»‡u Ä‘Ă¡nh giĂ¡...</p>
+                <p className="text-sm text-slate-500">Đang tải dữ liệu đánh giá...</p>
             </div>
         </div>
     )
@@ -26,7 +26,7 @@ function DecisionErrorState({ message }: { message: string }) {
         <div className="flex items-center justify-center min-h-[400px]">
             <div className="bg-white rounded-xl border border-red-200 p-8 text-center max-w-md">
                 <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-                <p className="text-sm text-red-600 font-medium">KhĂ´ng thá»ƒ táº£i Ä‘Ă¡nh giĂ¡</p>
+                <p className="text-sm text-red-600 font-medium">Không thể tải đánh giá</p>
                 <p className="text-xs text-red-400 mt-1">{message}</p>
             </div>
         </div>
@@ -52,7 +52,7 @@ export function DecisionPage({ params, searchParams }: PageProps) {
         participantName: pf.employeeName,
         position: pf.role,
         rating: pf.rating ?? 0,
-        feedback: pf.feedback ?? 'KhĂ´ng cĂ³ nháº­n xĂ©t',
+        feedback: pf.feedback ?? 'Không có nhận xét',
         recommendation: (pf.recommendation ?? 'Consider') as 'Hire' | 'Consider' | 'Reject',
     }))
 
@@ -60,12 +60,12 @@ export function DecisionPage({ params, searchParams }: PageProps) {
         <FinalDecisionPage
             applicationId={applicationId}
             interviewId={interviewId}
-            candidateName={data?.candidateName ?? query.candidateName ?? 'á»¨ng viĂªn'}
+            candidateName={data?.candidateName ?? query.candidateName ?? 'Ứng viên'}
             jobTitle={data?.jobTitle ?? query.jobTitle ?? ''}
             candidateStage={query.stage}
             roundLabel={
                 data
-                    ? `VĂ²ng ${data.roundNumber} â€” ${data.interviewType}`
+                    ? `Vòng ${data.roundNumber} — ${data.interviewType}`
                     : query.roundLabel
             }
             interviewDate={
