@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a complete Platform Admin portal with login integration, two dashboards (action center + KPI), enterprise management (list/detail/status), payment history ledger, and system integrations console.
+**Goal:** Build a complete Platform Admin portal with login integration, two dashboards (action center + KPI), enterprise management (list/detail/status), payment history ledger, and AI integration overview.
 
 **Architecture:** Reuse existing `/login` flow, redirect Admin role to `/admin/dashboard`. New `src/features/admin/` feature module with dedicated sidebar, navbar, layout. New `src/app/admin/` route group. Backend needs new Admin-specific API endpoints via a new `AdminController`.
 
@@ -31,7 +31,7 @@ This plan covers **8 subsystems** organized into **6 phases**:
 | 2 - Shared Components | Shared components, Admin Guard Hook, API Service | 9–9b, 10 | Phase 1 |
 | 3 - Core Pages | Admin Dashboard, Manage Enterprise | 11–12 | Phase 2 |
 | 4 - Enterprise Ops | Enterprise Detail, Edit Status | 13–14 | Phase 3 |
-| 5 - Platform Features | Payment History, System Integrations, Platform Dashboard | 15–17 | Phase 2 |
+| 5 - Platform Features | Payment History, AI Services, Platform Dashboard | 15–17 | Phase 2 |
 | BE - Backend | DTOs, Controller, ApprovalHistory, MediatR Handlers | 18–21 | — |
 
 ---
@@ -55,8 +55,7 @@ src/
 │   │   ├── enterprise-status-badge.tsx       # Status badge component (Active/Locked/etc.)
 │   │   ├── health-flag-badge.tsx             # Health flag badge (Normal/Expiring/etc.)
 │   │   ├── edit-status-drawer.tsx            # Drawer for changing enterprise status
-│   │   ├── connector-card.tsx                # Integration connector card
-│   │   └── connector-detail-panel.tsx        # Integration detail side panel
+│   │   └── ai-services-page.tsx              # AI integration overview page
 │   ├── hooks/
 │   │   └── use-admin-guard.ts               # Client-side admin role guard
 │   └── constants/
@@ -74,8 +73,10 @@ src/
 │   ├── payments/
 │   │   ├── page.tsx                          # Suspense wrapper (server component)
 │   │   └── payment-history-content.tsx       # Payment history client component
+│   ├── ai-services/
+│   │   └── page.tsx                          # AI Services overview
 │   ├── integrations/
-│   │   └── page.tsx                          # System Integrations console
+│   │   └── page.tsx                          # Redirect → /admin/ai-services
 │   └── platform/
 │       └── page.tsx                          # Platform Dashboard (KPI)
 ```
@@ -112,13 +113,14 @@ ERMS.Application/Features/Admin/
 │   └── GetSystemIntegrations/
 │       ├── GetSystemIntegrationsQuery.cs
 │       └── GetSystemIntegrationsQueryHandler.cs
+│   └── GetAiServiceOverview/
+│       ├── GetAiServiceOverviewQuery.cs
+│       ├── GetAiServiceOverviewHandler.cs
+│       └── GetAiServiceOverviewResponse.cs
 ├── Commands/
 │   ├── ChangeEnterpriseStatus/
 │   │   ├── ChangeEnterpriseStatusCommand.cs
 │   │   └── ChangeEnterpriseStatusCommandHandler.cs
-│   └── TestIntegrationConnection/
-│       ├── TestConnectionCommand.cs
-│       └── TestConnectionCommandHandler.cs
 └── DTOs/
     └── AdminDTOs.cs                          # All admin-related DTOs
 ```
@@ -518,35 +520,22 @@ export interface ChartDataPoint {
   value: number
 }
 
-// ─── System Integrations ───
+// ─── AI Service Overview ───
 
-export type ConnectorCategory = 'Authentication' | 'Communication' | 'Storage' | 'Meetings' | 'AI' | 'Location'
-export type ConnectorStatus = 'Healthy' | 'Warning' | 'Error' | 'Disabled'
-
-export interface SystemConnector {
-  id: string
-  name: string
-  category: ConnectorCategory
-  status: ConnectorStatus
-  lastTested: string | null
-  lastFailure: string | null
-  usedByFeatures: string[]
-  environmentScope: string
-  configSummary: Record<string, string> // key-value, secrets masked
-  dependencyMap: string[]
-  recentLogs: ConnectorLogEntry[]
-}
-
-export interface ConnectorLogEntry {
-  timestamp: string
-  level: 'Info' | 'Warning' | 'Error'
-  message: string
-}
-
-export interface FeatureImpactMap {
-  connectorName: string
-  affectedFeatures: string[]
-  impactDescription: string
+export interface AIServiceOverview {
+  providerName: string
+  modelName: string
+  apiKeyConfigured: boolean
+  configurationStatus: string
+  serviceMode: string
+  scoredToday: number
+  scoredLast7Days: number
+  scoredLast30Days: number
+  distinctEnterprisesLast30Days: number
+  averageScoreLast30Days: number
+  lastProcessedAt: string | null
+  dailyVolumes: { date: string; count: number }[]
+  scoreDistribution: { bucket: string; count: number }[]
 }
 ```
 
@@ -599,10 +588,10 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     description: 'Ledger thanh toán subscription',
   },
   {
-    title: 'Tích hợp Hệ thống',
-    href: '/admin/integrations',
+    title: 'AI Services',
+    href: '/admin/ai-services',
     icon: Settings,
-    description: 'Quản lý connector nền tảng',
+    description: 'Giám sát AI screening & cấu hình',
   },
   {
     title: 'Platform Dashboard',
@@ -636,14 +625,9 @@ export const HEALTH_FLAG_COLORS: Record<string, { bg: string; text: string }> = 
   PendingReview: { bg: 'bg-blue-50', text: 'text-blue-700' },
 }
 
-export const CONNECTOR_CATEGORIES = [
-  { key: 'Authentication', label: 'Xác thực', connectors: ['Google OAuth'] },
-  { key: 'Communication', label: 'Giao tiếp', connectors: ['SMTP/Email'] },
-  { key: 'Storage', label: 'Lưu trữ', connectors: ['Cloudinary'] },
-  { key: 'Meetings', label: 'Cuộc họp', connectors: ['Zoom'] },
-  { key: 'AI', label: 'AI Services', connectors: ['Gemini'] },
-  { key: 'Location', label: 'Vị trí', connectors: ['Geolocation'] },
-] as const
+// Note: CONNECTOR_CATEGORIES removed — System Integrations đã thu gọn thành AI Services only.
+// Backend endpoint GET /api/Admin/system-integrations vẫn trả metadata 6 connectors (hardcoded),
+// nhưng FE chỉ hiển thị trang AI Services với Gemini config + CV screening metrics.
 ```
 
 
@@ -848,7 +832,7 @@ import type {
   PaymentHistoryResponse,
   PaymentHistoryFilters,
   PlatformStatsData,
-  SystemConnector,
+  AIServiceOverview,
   ChangeStatusRequest,
 } from '../types'
 
@@ -976,27 +960,19 @@ export function usePlatformStats() {
   })
 }
 
-// ─── System Integrations ───
+// ─── AI Services ───
 
-async function fetchIntegrations(): Promise<SystemConnector[]> {
-  const response = await apiClient.get('/api/Admin/integrations')
-  if (!response.ok) throw new Error('Không thể tải danh sách integrations')
+async function fetchAiServices(): Promise<AIServiceOverview> {
+  const response = await apiClient.get('/api/Admin/ai-services')
+  if (!response.ok) throw new Error('Không thể tải AI service overview')
   return response.json()
 }
 
-export function useSystemIntegrations() {
-  return useData<SystemConnector[]>(adminKeys.integrations().join('/'), {
-    fetcher: fetchIntegrations as unknown as Fetcher<SystemConnector[]>,
+export function useAiServiceOverview() {
+  return useData<AIServiceOverview>(adminKeys.aiServices().join('/'), {
+    fetcher: fetchAiServices as unknown as Fetcher<AIServiceOverview>,
+    refreshInterval: 300000,
   })
-}
-
-export async function testIntegrationConnection(connectorId: string): Promise<{ success: boolean; message: string }> {
-  const response = await apiClient.post(`/api/Admin/integrations/${encodeURIComponent(connectorId)}/test`, {})
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ message: 'Test failed' }))
-    throw new Error(err.message)
-  }
-  return response.json()
 }
 ```
 
@@ -1208,70 +1184,47 @@ Data: `useGlobalPaymentHistory(filters)`.
 
 ---
 
-### Task 16: Build System Integrations Page
+### Task 16: Build AI Services Page
+
+> **Scope change:** System Integrations page đã được thu gọn thành AI Services page. Thay vì hiển thị tất cả 6 connectors (Google OAuth, SMTP, Cloudinary, Zoom, Gemini, Geolocation), chỉ tập trung vào AI integration (Gemini) — hiển thị cấu hình, metrics CV screening, và thống kê sử dụng. Route `/admin/integrations` redirect sang `/admin/ai-services`.
 
 **Files:**
-- Create: `src/features/admin/components/connector-card.tsx`
-- Create: `src/features/admin/components/connector-detail-panel.tsx`
-- Create: `src/app/admin/integrations/page.tsx`
+- Create: `src/features/admin/components/ai-services-page.tsx`
+- Create: `src/app/admin/ai-services/page.tsx`
+- Create: `src/app/admin/integrations/page.tsx` (redirect → `/admin/ai-services`)
 
-- [ ] **Step 1: Implement ConnectorCard theo mô tả UI sau**
+- [ ] **Step 1: Implement AI Services Page theo mô tả UI sau**
 
-**Mô tả giao diện ConnectorCard:**
+**Mô tả giao diện AiServicesPageContent:**
 
-Props: `name`, `category`, `status` (ConnectorStatus), `lastTested`, `usedByFeatures`, `onClick`.
-
-Dùng `STATUS_CONFIG` map (Healthy/Warning/Error/Disabled) → icon (Wifi/AlertTriangle/WifiOff/Power), color, bg, label.
-
-Card button: rounded-xl, border, shadow-sm, hover:border-indigo-200 + shadow-md.
-- **Top row:** Bên trái = category (uppercase xs) + name (semibold). Bên phải = icon trong bg tương ứng.
-- **Middle row:** Label badge (rounded-full, bg+color theo status). Bên phải = "Test: {date vi-VN}" hoặc "Chưa test".
-- **Bottom:** "Dùng bởi: {first 3 features}" + `+N` nếu > 3.
-
-- [ ] **Step 2: Implement ConnectorDetailPanel theo mô tả UI sau**
-
-**Mô tả giao diện ConnectorDetailPanel:**
-
-Client component, dùng Shadcn `<Sheet>`. Props: `connector: SystemConnector | null`, `onClose`.
-Sheet open khi `!!connector`. SheetContent sm:max-w-lg, overflow-y-auto.
-
-State: `testing`, `testResult`.
-
-1. **SheetHeader:** Description = category, Title = name.
-
-2. **Cấu hình:** H3 "Cấu hình". DL list từ `connector.configSummary` entries. Mỗi entry: row bg-gray-50 với dt (gray-500) + dd (font-mono gray-700). Secrets đã masked từ server.
-
-3. **Tính năng phụ thuộc:** H3 "Tính năng phụ thuộc". Flex wrap badges từ `connector.dependencyMap`, bg-indigo-50 text-indigo-700.
-
-4. **Kiểm tra kết nối:** H3 "Kiểm tra kết nối". Button outline "Test Connection" (icon Play). Khi test → "Đang test...", disabled. Hiện "Lần cuối: {date}" nếu có lastTested. TestResult → box green-50/red-50 tùy success.
-
-5. **Log gần đây:** H3 "Log gần đây". Max-h-48 overflow-y-auto. Mỗi log entry: dot indicator (Error=red, Warning=amber, else=green) + timestamp (vi-VN) + message. Empty → "Không có log".
-
-- [ ] **Step 3: Implement IntegrationsPage theo mô tả UI sau**
-
-**Mô tả giao diện IntegrationsPage:**
-
-Client component. Data: `useSystemIntegrations()`. State: `selectedConnector`.
-
-Tính `healthSummary` bằng `useMemo`: đếm Healthy/Warning/Error.
+Client component. Data: `useAiServiceOverview()`.
 
 Loading: spinner indigo.
 
-1. **Header:** H1 "Tích hợp Hệ thống", subtitle "Quản lý connector nền tảng".
+1. **Header:** H1 "AI Services", subtitle "Giám sát AI screening & cấu hình".
 
-2. **Health Summary:** Grid 3 cột `AdminStatCard`: Hoạt động (green, Wifi), Cảnh báo (amber, AlertTriangle), Lỗi (red, WifiOff).
+2. **Stat Cards (grid 4 cột trên lg):**
+   - Provider (icon Brain, indigo) → `providerName`
+   - "Scored hôm nay" (icon Zap, blue) → `scoredToday`
+   - "Scored 7 ngày" (icon TrendingUp, green) → `scoredLast7Days`
+   - "DN sử dụng (30 ngày)" (icon Building2, amber) → `distinctEnterprisesLast30Days`
 
-3. **Connector Grid by Category:** Loop `CONNECTOR_CATEGORIES`. Mỗi category: H2 label + grid sm:2 lg:3 ConnectorCard. Skip category nếu không có connector.
+3. **AI Configuration Panel:** Card rounded-xl.
+   - H3 "Cấu hình AI". Definition list:
+     - Model: `modelName`
+     - Trạng thái: `configurationStatus` (badge green/red tùy `apiKeyConfigured`)
+     - API Key: "Đã cấu hình" / "Chưa cấu hình"
+     - Service Mode: `serviceMode`
+     - Lần cuối xử lý: `lastProcessedAt` (vi-VN date) hoặc "Chưa có"
+     - Điểm TB (30 ngày): `averageScoreLast30Days`
 
-4. **Feature Impact Map:** Card rounded-xl. Header = icon AlertTriangle amber + "Feature Impact Map". Grid sm:2 lg:3. Mỗi entry: connector name (bold), description, tags affected features (bg-gray-100, text 10px). Dữ liệu `FEATURE_IMPACT` hardcoded:
-   - Google OAuth → Đăng nhập Google, Liên kết tài khoản
-   - SMTP/Email → Xác minh email, Thông báo offer, Mời phỏng vấn
-   - Cloudinary → Upload CV, Upload ảnh đại diện, Tài liệu đào tạo
-   - Zoom → Lịch phỏng vấn, Meeting links
-   - Gemini → AI screening, JD suggestions, Quiz generation
-   - Geolocation → Bản đồ việc làm, Lọc theo vị trí
+4. **Daily Volumes (7 ngày):** Card rounded-xl. Bar chart đơn giản (CSS bars). Loop `dailyVolumes`: mỗi ngày hiện cột bar cao theo count, label ngày bên dưới.
 
-5. **Detail Panel:** `<ConnectorDetailPanel connector={selectedConnector} onClose={...} />`
+5. **Score Distribution:** Card rounded-xl. Hiện 3 buckets (0–40, 41–70, 71–100) dạng progress bar + count.
+
+- [ ] **Step 2: Create redirect page**
+
+`src/app/admin/integrations/page.tsx`: Server component, dùng `redirect('/admin/ai-services')` từ `next/navigation`.
 
 
 ---
@@ -1601,8 +1554,8 @@ using ERMS.Application.Features.Admin.Queries.GetEnterpriseAdminDetail;
 using ERMS.Application.Features.Admin.Queries.GetGlobalPaymentHistory;
 using ERMS.Application.Features.Admin.Queries.GetPlatformStats;
 using ERMS.Application.Features.Admin.Queries.GetSystemIntegrations;
+using ERMS.Application.Features.Admin.Queries.GetAiServiceOverview;
 using ERMS.Application.Features.Admin.Commands.ChangeEnterpriseStatus;
-using ERMS.Application.Features.Admin.Commands.TestIntegrationConnection;
 
 namespace ERMS.API.UnitTests.Controllers;
 
@@ -1727,16 +1680,17 @@ public class AdminControllerTests
     }
 
     [Test]
-    public async Task TestConnection_ShouldSendCommandWithConnectorId()
+    public async Task GetAiServices_ShouldSendQuery_AndReturnOk()
     {
         _senderMock
-            .Setup(s => s.Send(It.IsAny<TestConnectionCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new { success = true, message = "OK" });
+            .Setup(s => s.Send(It.IsAny<GetAiServiceOverviewQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetAiServiceOverviewResponse());
 
-        await _controller.TestConnection("google-oauth");
+        var result = await _controller.GetAiServices();
 
+        result.Should().BeOfType<OkObjectResult>();
         _senderMock.Verify(s => s.Send(
-            It.Is<TestConnectionCommand>(c => c.ConnectorId == "google-oauth"),
+            It.IsAny<GetAiServiceOverviewQuery>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 }
@@ -1766,8 +1720,8 @@ using ERMS.Application.Features.Admin.Queries.GetEnterpriseAdminDetail;
 using ERMS.Application.Features.Admin.Queries.GetGlobalPaymentHistory;
 using ERMS.Application.Features.Admin.Queries.GetPlatformStats;
 using ERMS.Application.Features.Admin.Queries.GetSystemIntegrations;
+using ERMS.Application.Features.Admin.Queries.GetAiServiceOverview;
 using ERMS.Application.Features.Admin.Commands.ChangeEnterpriseStatus;
-using ERMS.Application.Features.Admin.Commands.TestIntegrationConnection;
 
 namespace ERMS.API.Controllers
 {
@@ -1878,10 +1832,10 @@ namespace ERMS.API.Controllers
             return Ok(result);
         }
 
-        [HttpPost("integrations/{connectorId}/test")]
-        public async Task<IActionResult> TestConnection(string connectorId)
+        [HttpGet("ai-services")]
+        public async Task<IActionResult> GetAiServices()
         {
-            var result = await _sender.Send(new TestConnectionCommand { ConnectorId = connectorId });
+            var result = await _sender.Send(new GetAiServiceOverviewQuery());
             return Ok(result);
         }
     }
@@ -1968,8 +1922,9 @@ var statusHistory = await _context.ApprovalHistories
 - Create: `ERMS.Application/Features/Admin/Queries/GetPlatformStats/GetPlatformStatsQueryHandler.cs`
 - Create: `ERMS.Application/Features/Admin/Queries/GetSystemIntegrations/GetSystemIntegrationsQuery.cs`
 - Create: `ERMS.Application/Features/Admin/Queries/GetSystemIntegrations/GetSystemIntegrationsQueryHandler.cs`
-- Create: `ERMS.Application/Features/Admin/Commands/TestIntegrationConnection/TestConnectionCommand.cs`
-- Create: `ERMS.Application/Features/Admin/Commands/TestIntegrationConnection/TestConnectionCommandHandler.cs`
+- Create: `ERMS.Application/Features/Admin/Queries/GetAiServiceOverview/GetAiServiceOverviewQuery.cs`
+- Create: `ERMS.Application/Features/Admin/Queries/GetAiServiceOverview/GetAiServiceOverviewQueryHandler.cs`
+- Create: `ERMS.Application/Features/Admin/Queries/GetAiServiceOverview/GetAiServiceOverviewResponse.cs`
 
 ---
 
@@ -2485,12 +2440,13 @@ ExpiringSoonCount = await _context.Enterprises.CountAsync(e => !e.IsDeleted && e
 // - ChurnWatchlist: Active enterprises with SubscriptionEndDate < 15 days and no recent SubscriptionHistory
 ```
 
-**GetSystemIntegrationsQuery + TestConnectionCommand:**
+**GetSystemIntegrationsQuery + GetAiServiceOverviewQuery:**
 ```csharp
-// These return hardcoded connector config since integrations (Google OAuth, SMTP, Cloudinary, Zoom, Gemini, Geolocation)
-// are configured via appsettings.json, not stored in DB.
-// Handler reads IConfiguration to build SystemConnector[] with masked secrets.
-// TestConnectionCommand: performs actual health check (e.g., SMTP ping, Cloudinary API call) and returns result.
+// GetSystemIntegrations: returns hardcoded connector metadata (6 services: Google OAuth, SMTP, Cloudinary, Zoom, Gemini, Geolocation).
+// Handler returns safe metadata only (name, category, status, environment scope). No secrets exposed.
+
+// GetAiServiceOverview: queries IAIServiceConfiguration for Gemini config + CVScreeningResults for usage metrics.
+// Returns: providerName, modelName, apiKeyConfigured, scoredToday/7d/30d, avgScore, dailyVolumes, scoreDistribution.
 ```
 
 - [ ] **Step 4: Xác nhận tests PASS (GREEN)**
@@ -2512,7 +2468,7 @@ dotnet test ERMS.UnitTests --filter "GetEnterpriseListQueryHandlerTests|ChangeEn
 | 2 | Tasks 9–9b, 10 | Shared components (stat card, badges, data table, guard hook), API service |
 | 3 | Tasks 11–12 | Admin Dashboard + Manage Enterprise list — daily workbench operational |
 | 4 | Tasks 13–14 | Enterprise Detail + Status Change — 360° tenant view with controlled actions |
-| 5 | Tasks 15–17 | Payment History + Integrations + Platform KPI — full platform admin capability |
+| 5 | Tasks 15–17 | Payment History + AI Services + Platform KPI — full platform admin capability |
 | BE | Tasks 18–21 | Backend APIs — DTOs, Controller, ApprovalHistory reuse, MediatR handlers — **có TDD tests** |
 
 **TDD approach:**

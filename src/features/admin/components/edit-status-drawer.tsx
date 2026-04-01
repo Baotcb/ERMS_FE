@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  ArrowRight,
   Check,
   CircleOff,
   Lock,
@@ -21,13 +20,13 @@ import type {
   ChangeEnterpriseStatusRequest,
   EnterpriseStatus,
 } from '@/features/admin/types'
-import { EnterpriseStatusBadge } from './enterprise-status-badge'
 
 interface EditStatusDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   enterpriseId: string
   enterpriseName: string
+  logoUrl?: string | null
   currentStatus: EnterpriseStatus
   onConfirm?: (data: ChangeEnterpriseStatusRequest) => Promise<void>
 }
@@ -83,6 +82,7 @@ export function EditStatusDrawer({
   onOpenChange,
   enterpriseId,
   enterpriseName,
+  logoUrl,
   currentStatus,
   onConfirm,
 }: EditStatusDrawerProps) {
@@ -118,64 +118,45 @@ export function EditStatusDrawer({
   }
 
   const selectionChanged = selectedStatus !== currentStatus
-  const selectedMeta = STATUS_OPTION_META[selectedStatus]
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="admin-theme flex h-full w-full flex-col border-l border-slate-200 bg-slate-50/80 p-0 sm:max-w-[28rem]">
-        <SheetHeader className="gap-2 border-b border-slate-200 bg-white px-5 pb-4 pt-5 sm:px-6">
+      <SheetContent
+        side="center"
+        className="admin-theme flex h-full w-full flex-col bg-slate-50/80 p-0 sm:w-[min(calc(100vw-3rem),42rem)]"
+      >
+        <SheetHeader className="gap-2 border-b border-slate-200 bg-white px-5 pb-5 pt-5 sm:px-7 sm:pb-6 sm:pt-6">
           <SheetTitle className="pr-10 text-lg font-semibold text-[color:var(--admin-shell)]">
             Đổi trạng thái
           </SheetTitle>
-          <SheetDescription className="pr-10 text-sm text-slate-500">
-            {enterpriseName}
-          </SheetDescription>
+
+          <div className="flex items-center gap-3 pr-10">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={`${enterpriseName} logo`}
+                className="h-11 w-11 rounded-2xl border border-slate-200/80 object-cover shadow-sm"
+              />
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white shadow-sm">
+                {enterpriseName.charAt(0).toUpperCase() || '?'}
+              </div>
+            )}
+
+            <div className="min-w-0 space-y-1">
+              <SheetDescription className="truncate text-sm font-medium text-slate-600">
+                {enterpriseName}
+              </SheetDescription>
+              <p className="text-xs text-slate-500">
+                Kiểm tra đúng tenant trước khi áp dụng thay đổi trạng thái.
+              </p>
+            </div>
+          </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-          <div className="space-y-5">
-            <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Trạng thái hiện tại
-                  </p>
-                  <EnterpriseStatusBadge status={currentStatus} size="md" />
-                </div>
-
-                {selectionChanged ? (
-                  <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                    Sắp cập nhật
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                <span className="text-sm font-medium text-slate-600">
-                  {ENTERPRISE_STATUS_LABELS[currentStatus]}
-                </span>
-                <ArrowRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                <span
-                  className={cn(
-                    'text-sm font-semibold',
-                    selectionChanged
-                      ? 'text-[color:var(--admin-shell)]'
-                      : 'text-slate-500'
-                  )}
-                >
-                  {selectionChanged
-                    ? ENTERPRISE_STATUS_LABELS[selectedStatus]
-                    : 'Giữ nguyên trạng thái hiện tại'}
-                </span>
-              </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {selectionChanged
-                  ? selectedMeta.description
-                  : 'Chọn một trạng thái khác để áp dụng thay đổi cho tenant này.'}
-              </p>
-            </section>
-
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+          <div className="space-y-6">
             <fieldset className="space-y-3">
               <legend className="space-y-1">
                 <span className="block text-sm font-semibold text-[color:var(--admin-shell)]">
@@ -186,7 +167,7 @@ export function EditStatusDrawer({
                 </span>
               </legend>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                 {AVAILABLE_STATUSES.map((status) => {
                   const isSelected = selectedStatus === status
                   const meta = STATUS_OPTION_META[status]
@@ -212,55 +193,55 @@ export function EditStatusDrawer({
 
                       <div
                         className={cn(
-                          'rounded-[22px] border px-4 py-4 text-left transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500/30',
+                          'rounded-[22px] border px-4 py-4 text-left transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-teal-500/30 sm:px-5 sm:py-5',
                           isSelected
                             ? meta.selectedClassName
                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_10px_24px_rgba(15,23,42,0.05)]'
                         )}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-3">
-                          <div
-                            className={cn(
-                              'flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 transition-colors',
-                              isSelected ? 'bg-white/70' : 'group-hover:bg-slate-200/80'
-                            )}
-                          >
-                            <Icon
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-3">
+                            <div
                               className={cn(
-                                'h-5 w-5',
-                                isSelected ? 'text-current' : meta.iconClassName
-                              )}
-                              aria-hidden="true"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold">
-                              {ENTERPRISE_STATUS_LABELS[status]}
-                            </p>
-                            <p
-                              className={cn(
-                                'text-xs leading-5',
-                                isSelected ? 'text-current opacity-80' : 'text-slate-500'
+                                'flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 transition-colors',
+                                isSelected ? 'bg-white/70' : 'group-hover:bg-slate-200/80'
                               )}
                             >
-                              {meta.description}
-                            </p>
-                          </div>
-                        </div>
+                              <Icon
+                                className={cn(
+                                  'h-5 w-5',
+                                  isSelected ? 'text-current' : meta.iconClassName
+                                )}
+                                aria-hidden="true"
+                              />
+                            </div>
 
-                        <span
-                          className={cn(
-                            'flex h-6 w-6 items-center justify-center rounded-full border text-xs transition-colors',
-                            isSelected
-                              ? 'border-current bg-white/80 text-current'
-                              : 'border-slate-200 bg-white text-transparent'
-                          )}
-                        >
-                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                        </span>
-                      </div>
+                            <div className="space-y-1.5">
+                              <p className="text-sm font-semibold">
+                                {ENTERPRISE_STATUS_LABELS[status]}
+                              </p>
+                              <p
+                                className={cn(
+                                  'text-xs leading-5',
+                                  isSelected ? 'text-current opacity-80' : 'text-slate-500'
+                                )}
+                              >
+                                {meta.description}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                            className={cn(
+                              'mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition-colors',
+                              isSelected
+                                ? 'border-current bg-white/80 text-current'
+                                : 'border-slate-200 bg-white text-transparent'
+                            )}
+                          >
+                            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                          </span>
+                        </div>
                       </div>
                     </label>
                   )
@@ -268,8 +249,8 @@ export function EditStatusDrawer({
               </div>
             </fieldset>
 
-            <section className="space-y-2">
-              <div className="space-y-1">
+            <section className="space-y-3">
+              <div className="space-y-1.5">
                 <label
                   htmlFor="admin-note"
                   className="text-sm font-semibold text-[color:var(--admin-shell)]"
@@ -287,17 +268,18 @@ export function EditStatusDrawer({
                 onChange={(event) => setAdminNote(event.target.value)}
                 rows={5}
                 placeholder="Ví dụ: chờ đối soát thanh toán tháng này trước khi mở lại tenant."
-                className="min-h-[132px] w-full resize-none rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm text-[color:var(--admin-shell)] outline-none transition-colors placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-500/10"
+                className="min-h-[148px] w-full resize-none rounded-[22px] border border-slate-200 bg-white px-4 py-3.5 text-sm text-[color:var(--admin-shell)] outline-none transition-colors placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-500/10"
               />
 
               <p className="text-xs text-slate-500">
-                Ghi chú không bắt buộc nhưng nên có khi trạng thái thay đổi do billing, khóa tạm hoặc yêu cầu hỗ trợ.
+                Ghi chú không bắt buộc nhưng nên có khi trạng thái thay đổi do
+                billing, khóa tạm hoặc yêu cầu hỗ trợ.
               </p>
             </section>
           </div>
         </div>
 
-        <SheetFooter className="border-t border-slate-200 bg-white/95 px-5 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:flex-row sm:items-center sm:justify-end sm:px-6">
+        <SheetFooter className="border-t border-slate-200 bg-white/95 px-5 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:flex-row sm:items-center sm:justify-end sm:px-7 sm:py-5">
           <button
             type="button"
             onClick={() => onOpenChange(false)}

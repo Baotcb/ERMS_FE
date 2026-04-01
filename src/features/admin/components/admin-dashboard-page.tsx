@@ -331,16 +331,6 @@ export default function AdminDashboardPageContent() {
                   </div>
 
                   <div className="space-y-5 px-6 py-6">
-                    <div className="rounded-2xl bg-indigo-50/80 p-4 ring-1 ring-inset ring-indigo-100">
-                      <p className="text-sm font-semibold text-indigo-900">
-                        Admin area chỉ giữ phần AI có dữ liệu thật từ backend.
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-indigo-700">
-                        Theo dõi Gemini config, tần suất scoring và các tín hiệu
-                        usage mà không cần quay lại page tích hợp giả lập.
-                      </p>
-                    </div>
-
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">

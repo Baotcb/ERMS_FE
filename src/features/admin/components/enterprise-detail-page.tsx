@@ -818,6 +818,7 @@ export function EnterpriseDetailPageContent({ id }: { id: string }) {
         onOpenChange={setStatusDrawerOpen}
         enterpriseId={enterprise.id}
         enterpriseName={enterprise.enterpriseName}
+        logoUrl={enterprise.logoUrl}
         currentStatus={enterprise.status}
         onConfirm={handleStatusChange}
       />

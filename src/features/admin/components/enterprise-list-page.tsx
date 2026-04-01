@@ -8,7 +8,6 @@ import {
   ChevronRight,
   RefreshCw,
   Search,
-  Settings2,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common'
 import {
@@ -101,34 +100,13 @@ function parseFilters(searchParams: URLSearchParams): EnterpriseListFilters {
   }
 }
 
-function getQuickChipClassName(
-  active: boolean,
-  tone: 'amber' | 'rose' | 'slate'
-) {
-  if (tone === 'rose') {
-    return active
-      ? 'inline-flex h-9 items-center rounded-full border border-rose-200 bg-rose-100 px-3.5 text-xs font-semibold text-rose-900'
-      : 'inline-flex h-9 items-center rounded-full border border-rose-100 bg-rose-50/90 px-3.5 text-xs font-semibold text-rose-700 transition hover:border-rose-200 hover:bg-rose-100/80'
-  }
-
-  if (tone === 'slate') {
-    return active
-      ? 'inline-flex h-9 items-center rounded-full border border-slate-300 bg-slate-200 px-3.5 text-xs font-semibold text-slate-800'
-      : 'inline-flex h-9 items-center rounded-full border border-slate-200 bg-slate-100/80 px-3.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-200/80'
-  }
-
-  return active
-    ? 'inline-flex h-9 items-center rounded-full border border-amber-200 bg-amber-100 px-3.5 text-xs font-semibold text-amber-900'
-    : 'inline-flex h-9 items-center rounded-full border border-amber-100 bg-amber-50/90 px-3.5 text-xs font-semibold text-amber-700 transition hover:border-amber-200 hover:bg-amber-100/80'
-}
-
 export function EnterpriseListPageContent() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const filters = useMemo(() => parseFilters(searchParams), [searchParams])
   const [selectedEnterprise, setSelectedEnterprise] = useState<
-    Pick<EnterpriseListItem, 'id' | 'enterpriseName' | 'status'> | null
+    Pick<EnterpriseListItem, 'id' | 'enterpriseName' | 'logoUrl' | 'status'> | null
   >(null)
 
   const { data, isLoading, error } = useEnterpriseList(filters)
@@ -288,13 +266,6 @@ export function EnterpriseListPageContent() {
     Boolean(filters.planTier) ||
     Boolean(filters.expiringWithinDays)
 
-  const activeFilterCount = [
-    filters.search,
-    filters.status,
-    filters.planTier,
-    filters.expiringWithinDays,
-  ].filter(Boolean).length
-
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <AdminPageHeader
@@ -313,94 +284,7 @@ export function EnterpriseListPageContent() {
       />
 
       <AdminPanel className="overflow-hidden p-0">
-        <div className="flex flex-col gap-4 border-b border-slate-200/80 px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                <Settings2 className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
-                  Workspace bộ lọc
-                </h2>
-                <p className="text-sm text-slate-600">
-                  Chọn một flow rõ ràng: định hướng, lọc danh sách, rồi kiểm tra từng tenant trong bảng.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-              {data?.totalCount?.toLocaleString('vi-VN') ?? 0} doanh nghiệp
-            </span>
-            {hasFilters ? (
-              <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-100">
-                {activeFilterCount} bộ lọc đang bật
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="space-y-5 px-6 py-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickFilter({
-                  expiringWithinDays: 30,
-                  status: '',
-                  planTier: '',
-                })
-              }
-              className={getQuickChipClassName(
-                filters.expiringWithinDays === 30,
-                'amber'
-              )}
-            >
-              Sắp hết hạn
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickFilter({ status: 'Locked', expiringWithinDays: '' })
-              }
-              className={getQuickChipClassName(filters.status === 'Locked', 'rose')}
-            >
-              Đã khóa
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickFilter({
-                  status: 'Suspended',
-                  expiringWithinDays: '',
-                })
-              }
-              className={getQuickChipClassName(
-                filters.status === 'Suspended',
-                'amber'
-              )}
-            >
-              Tạm dừng
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                handleQuickFilter({
-                  status: 'Inactive',
-                  expiringWithinDays: '',
-                })
-              }
-              className={getQuickChipClassName(
-                filters.status === 'Inactive',
-                'slate'
-              )}
-            >
-              Không hoạt động
-            </button>
-          </div>
-
+        <div className="px-6 py-6">
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(180px,0.8fr)_minmax(160px,0.7fr)_auto]">
             <form onSubmit={handleSearch} className="relative">
               <Search
@@ -520,6 +404,7 @@ export function EnterpriseListPageContent() {
         }}
         enterpriseId={selectedEnterprise?.id || ''}
         enterpriseName={selectedEnterprise?.enterpriseName || ''}
+        logoUrl={selectedEnterprise?.logoUrl}
         currentStatus={selectedEnterprise?.status || 'Active'}
         onConfirm={async (payload) => {
           await changeEnterpriseStatus(payload)
