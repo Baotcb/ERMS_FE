@@ -65,7 +65,7 @@ export function DecisionPage({ params, searchParams }: PageProps) {
             candidateStage={query.stage}
             roundLabel={
                 data
-                    ? `Vòng ${data.roundNumber} — ${data.interviewType}`
+                    ? `Vòng ${data.roundNumber} – ${data.interviewType}`
                     : query.roundLabel
             }
             interviewDate={

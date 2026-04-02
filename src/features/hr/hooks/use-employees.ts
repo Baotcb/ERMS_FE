@@ -6,8 +6,6 @@ import type {
     CreateEmployeeData,
     UpdateEmployeeData,
     PaginatedResult,
-    EmployeeImportItem,
-    BulkCreateResult,
 } from '../api/employee-service'
 import type { ImportEmployeesResult } from '../types/import-types'
 
@@ -147,31 +145,6 @@ export function useDeleteEmployee() {
             }
 
             return void 0
-        },
-        {
-            onSuccess: () => {
-                mutate(
-                    (key) => Array.isArray(key) && key[0] === 'employees' && key[1] === 'list',
-                    undefined,
-                    { revalidate: true }
-                )
-            },
-        }
-    )
-}
-
-export function useBulkCreateEmployees() {
-    return useMutation<BulkCreateResult, EmployeeImportItem[]>(
-        employeesKeys.lists().join('/'),
-        async (items) => {
-            const response = await apiClient.post('/api/Employees/bulk', { items })
-
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.message || 'Không thể import nhân viên')
-            }
-
-            return response.json()
         },
         {
             onSuccess: () => {
