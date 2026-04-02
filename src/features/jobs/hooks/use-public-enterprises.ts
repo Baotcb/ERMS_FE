@@ -1,6 +1,7 @@
 import { useData } from '@/lib/swr/hooks'
 import * as service from '../api/public-enterprise-service'
 import type { PublicEnterprise, EnterpriseDetailsResponse, PublicJobPostingDto } from '../types'
+import type { CompanyDetailResult } from '../utils/company-detail'
 
 export function usePublicEnterprises() {
     return useData<PublicEnterprise[]>('/api/public/enterprises', {
@@ -46,6 +47,15 @@ export function useEnterpriseByName(name: string | null) {
         name ? `/api/public/enterprises/by-name/${name}` : null,
         {
             fetcher: () => service.getEnterpriseByName(name!),
+        }
+    )
+}
+
+export function useCompanyDetail(identifier: string | null) {
+    return useData<CompanyDetailResult>(
+        identifier ? ['/api/public/enterprises/detail', identifier] : null,
+        {
+            fetcher: () => service.getCompanyDetail(identifier!),
         }
     )
 }

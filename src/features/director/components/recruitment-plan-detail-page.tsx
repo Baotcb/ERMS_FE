@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { PlanDetail } from '@/features/dept-head/components/recruitment/plan-detail'
 import type { RecruitmentPlan } from '@/features/dept-head/types/recruitment-plan-types'
+import { handleApiResponse } from '@/utils/error-handler'
 
 interface RecruitmentPlanDetailPageProps {
     planId: string
@@ -32,7 +33,10 @@ export default function RecruitmentPlanDetailPage({ planId }: RecruitmentPlanDet
 
     const { data: plan, mutate } = useSWR<RecruitmentPlan>(
         `/api/RecruitmentPlans/${planId}`,
-        () => apiClient.get(`/api/RecruitmentPlans/${planId}`).then(res => res.json())
+        async () => {
+            const response = await apiClient.get(`/api/RecruitmentPlans/${planId}`)
+            return handleApiResponse<RecruitmentPlan>(response, 'Không thể tải chi tiết kế hoạch tuyển dụng')
+        }
     )
 
     const confirmAction = async () => {

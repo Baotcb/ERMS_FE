@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api-client'
 import { getPublicJobs } from './public-job-service'
 import type { PublicEnterprise, EnterpriseDetailsResponse, PublicJobPostingDto } from '../types'
+import { getCompanyDetailByIdentifier, type CompanyDetailResult } from '../utils/company-detail'
 
 /**
  * Trích xuất danh sách công ty từ public jobs API
@@ -98,4 +99,12 @@ export async function getEnterpriseByName(
     }
 
     return { company, jobs: matchedJobs }
+}
+
+export async function getCompanyDetail(identifier: string): Promise<CompanyDetailResult> {
+    return getCompanyDetailByIdentifier(identifier, {
+        getEnterpriseById,
+        getJobsByEnterpriseId: (enterpriseId) => getJobsByEnterpriseId(enterpriseId, { pageSize: 50 }),
+        getEnterpriseByName,
+    })
 }

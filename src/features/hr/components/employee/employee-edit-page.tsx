@@ -31,7 +31,7 @@ export function EmployeeEditPage() {
     }
 
     if (!employee) {
-        return <EmployeeEditEmptyState message="KhĂ´ng tĂ¬m tháº¥y nhĂ¢n viĂªn" />
+        return <EmployeeEditEmptyState message="Không tìm thấy nhân viên" />
     }
 
     return <EmployeeForm key={employee.id} initialData={employee} isEdit />
