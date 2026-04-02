@@ -2,6 +2,21 @@ export type EnterpriseStatus = 'Active' | 'Suspended' | 'Locked' | 'Inactive'
 export type EnterprisePlanTier = 'Free' | 'Pro'
 
 export type PaymentActionType = 'Subscribe' | 'Renew' | 'Upgrade' | 'Downgrade'
+export type StatusReasonCategory =
+  | 'Violation'
+  | 'PaymentIssue'
+  | 'InformationPending'
+  | 'AdminDecision'
+  | 'EnterpriseRequest'
+  | 'Other'
+
+export interface StatusImpact {
+  canLogin: boolean
+  publicJobsVisible: boolean
+  canRenewSubscription: boolean
+  canPostJobs: boolean
+  description: string
+}
 
 export interface EnterpriseListItem {
   id: string
@@ -58,7 +73,9 @@ export interface AdminStatusHistoryEntry {
   action: string
   previousStatus: EnterpriseStatus | null
   newStatus: EnterpriseStatus
+  reasonCategory: StatusReasonCategory
   adminNote: string | null
+  notificationSent: boolean | null
   changedByName: string
   changedAt: string
 }
@@ -93,7 +110,9 @@ export interface EnterpriseAdminDetail {
 export interface ChangeEnterpriseStatusRequest {
   enterpriseId: string
   newStatus: EnterpriseStatus
+  reasonCategory: StatusReasonCategory
   adminNote: string
+  sendNotification: boolean
 }
 
 export interface PaymentHistoryItem {
@@ -187,11 +206,19 @@ export interface PlatformStatsData {
     tierName: 'Free' | 'Pro' | string
     count: number
   }[]
+  integrationHealth: {
+    healthy: number
+    warning: number
+    error: number
+  }
   topEnterprises: {
     enterpriseId: string
     enterpriseName: string
+    logoUrl: string | null
     metric: string
     value: number
+    courseCount: number
+    jobPostingCount: number
   }[]
   churnWatchlist: {
     enterpriseId: string

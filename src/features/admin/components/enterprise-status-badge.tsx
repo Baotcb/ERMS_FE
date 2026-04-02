@@ -19,16 +19,15 @@ export function EnterpriseStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]",
+        "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border text-center font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]",
         colors.bg,
         colors.border,
         colors.text,
         size === "md"
-          ? "px-3.5 py-1.5 text-sm leading-none"
-          : "px-2.5 py-1 text-[11px] leading-none",
+          ? "w-40 px-3.5 py-1.5 text-sm leading-none"
+          : "w-32 px-2.5 py-1 text-[11px] leading-none",
       )}
     >
-      <span className={cn("h-2 w-2 rounded-full", colors.dot)} />
       {ENTERPRISE_STATUS_LABELS[status]}
     </span>
   );

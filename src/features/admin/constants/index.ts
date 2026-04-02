@@ -7,7 +7,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { EnterpriseStatus } from "../types";
+import type {
+  EnterpriseStatus,
+  StatusImpact,
+  StatusReasonCategory,
+} from "../types";
 
 export interface AdminNavItem {
   title: string;
@@ -92,7 +96,7 @@ export const ENTERPRISE_STATUS_LABELS: Record<EnterpriseStatus, string> = {
   Active: "Hoạt động",
   Suspended: "Tạm dừng",
   Locked: "Đã khóa",
-  Inactive: "Ngừng HĐ",
+  Inactive: "Ngừng hoạt động",
 };
 
 export const ENTERPRISE_STATUS_COLORS: Record<
@@ -122,6 +126,65 @@ export const ENTERPRISE_STATUS_COLORS: Record<
     border: "border-slate-200/80",
     text: "text-slate-700",
     dot: "bg-slate-400",
+  },
+};
+
+export const STATUS_REASON_CATEGORIES: ReadonlyArray<{
+  value: StatusReasonCategory;
+  label: string;
+}> = [
+  { value: "Violation", label: "Vi phạm chính sách" },
+  { value: "PaymentIssue", label: "Vấn đề thanh toán" },
+  { value: "InformationPending", label: "Chờ bổ sung thông tin" },
+  { value: "AdminDecision", label: "Quyết định quản trị" },
+  { value: "EnterpriseRequest", label: "Yêu cầu từ doanh nghiệp" },
+  { value: "Other", label: "Khác" },
+];
+
+export const STATUS_REASON_CATEGORY_LABELS: Record<
+  StatusReasonCategory,
+  string
+> = {
+  Violation: "Vi phạm chính sách",
+  PaymentIssue: "Vấn đề thanh toán",
+  InformationPending: "Chờ bổ sung thông tin",
+  AdminDecision: "Quyết định quản trị",
+  EnterpriseRequest: "Yêu cầu từ doanh nghiệp",
+  Other: "Khác",
+};
+
+export const STATUS_IMPACTS: Record<EnterpriseStatus, StatusImpact> = {
+  Active: {
+    canLogin: true,
+    publicJobsVisible: true,
+    canRenewSubscription: true,
+    canPostJobs: true,
+    description:
+      "Doanh nghiệp hoạt động bình thường, mọi tính năng đều khả dụng.",
+  },
+  Suspended: {
+    canLogin: true,
+    publicJobsVisible: false,
+    canRenewSubscription: true,
+    canPostJobs: false,
+    description:
+      "Tạm dừng để chờ xử lý hoặc bổ sung thông tin. Tenant vẫn đăng nhập được nhưng không đăng tuyển mới.",
+  },
+  Locked: {
+    canLogin: false,
+    publicJobsVisible: false,
+    canRenewSubscription: false,
+    canPostJobs: false,
+    description:
+      "Tenant bị khóa hoàn toàn để chặn truy cập và hạn chế mọi thao tác vận hành.",
+  },
+  Inactive: {
+    canLogin: false,
+    publicJobsVisible: false,
+    canRenewSubscription: false,
+    canPostJobs: false,
+    description:
+      "Tenant đã ngừng hoạt động, dữ liệu được lưu nhưng không còn quyền truy cập hay tương tác.",
   },
 };
 

@@ -128,16 +128,6 @@ export function AiServicesPageContent() {
               </div>
 
               <div className="space-y-5 px-6 py-6">
-                <div className="rounded-2xl bg-indigo-50/80 p-4 ring-1 ring-inset ring-indigo-100">
-                  <p className="text-sm font-semibold text-indigo-900">
-                    Dữ liệu AI Services được lấy trực tiếp từ backend admin.
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-indigo-700">
-                    Cấu hình Gemini và thống kê scoring đang được gom về cùng
-                    một surface để admin kiểm tra nhanh hơn.
-                  </p>
-                </div>
-
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -165,15 +155,6 @@ export function AiServicesPageContent() {
                       <KeyRound className="h-4 w-4" aria-hidden="true" />
                       {data.apiKeyConfigured ? 'Đã cấu hình' : 'Thiếu cấu hình'}
                     </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Phạm vi áp dụng
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-[color:var(--admin-shell)]">
-                      {data.serviceMode}
-                    </p>
                   </div>
 
                   <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">

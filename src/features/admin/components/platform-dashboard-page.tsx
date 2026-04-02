@@ -7,6 +7,8 @@ import {
   Building2,
   RefreshCw,
   Users,
+  Wifi,
+  WifiOff,
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/common'
 import {
@@ -52,6 +54,35 @@ export function PlatformDashboardPageContent() {
           1
         )
       : 1
+  const integrationHealthItems = stats
+    ? [
+        {
+          label: 'Healthy',
+          value: stats.integrationHealth.healthy,
+          icon: Wifi,
+          cardClassName:
+            'border-emerald-200/80 bg-emerald-50/80 text-emerald-950',
+          iconClassName: 'bg-white text-emerald-600',
+          valueClassName: 'text-emerald-950',
+        },
+        {
+          label: 'Warning',
+          value: stats.integrationHealth.warning,
+          icon: AlertTriangle,
+          cardClassName: 'border-amber-200/80 bg-amber-50/80 text-amber-950',
+          iconClassName: 'bg-white text-amber-600',
+          valueClassName: 'text-amber-950',
+        },
+        {
+          label: 'Error',
+          value: stats.integrationHealth.error,
+          icon: WifiOff,
+          cardClassName: 'border-rose-200/80 bg-rose-50/80 text-rose-950',
+          iconClassName: 'bg-white text-rose-600',
+          valueClassName: 'text-rose-950',
+        },
+      ]
+    : []
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -190,6 +221,19 @@ export function PlatformDashboardPageContent() {
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-sm font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-100">
                           {index + 1}
                         </div>
+                        {item.logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.logoUrl}
+                            alt={`${item.enterpriseName} logo`}
+                            className="h-10 w-10 shrink-0 rounded-xl border border-slate-200/80 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-semibold text-white">
+                            {item.enterpriseName.trim().charAt(0).toUpperCase() ||
+                              '?'}
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/admin/enterprises/${item.enterpriseId}`}
@@ -198,11 +242,12 @@ export function PlatformDashboardPageContent() {
                             {item.enterpriseName}
                           </Link>
                           <p className="mt-1 text-sm text-slate-600">
-                            {item.metric}
+                            {`${item.courseCount.toLocaleString(
+                              'vi-VN'
+                            )} khóa học / ${item.jobPostingCount.toLocaleString(
+                              'vi-VN'
+                            )} bài tuyển dụng`}
                           </p>
-                        </div>
-                        <div className="text-sm font-semibold text-[color:var(--admin-shell)]">
-                          {item.value.toLocaleString('vi-VN')}
                         </div>
                       </div>
                     ))
@@ -219,6 +264,55 @@ export function PlatformDashboardPageContent() {
             </div>
 
             <div className="space-y-6">
+              <AdminPanel className="overflow-hidden p-0">
+                <div className="flex flex-col gap-3 border-b border-slate-200/80 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
+                      Integration Health
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Giám sát nhanh trạng thái các kết nối nền tảng và kênh đồng
+                      bộ cần admin theo dõi.
+                    </p>
+                  </div>
+                  <Link
+                    href="/admin/integrations"
+                    className="inline-flex items-center text-sm font-semibold text-[color:var(--admin-accent)] transition hover:underline"
+                  >
+                    Chi tiết →
+                  </Link>
+                </div>
+
+                <div className="grid gap-3 px-6 py-6 sm:grid-cols-3">
+                  {integrationHealthItems.map((item) => {
+                    const Icon = item.icon
+
+                    return (
+                      <div
+                        key={item.label}
+                        className={`rounded-[22px] border px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)] ${item.cardClassName}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div
+                            className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm ${item.iconClassName}`}
+                          >
+                            <Icon className="h-5 w-5" aria-hidden="true" />
+                          </div>
+                          <span
+                            className={`text-3xl font-semibold tracking-tight ${item.valueClassName}`}
+                          >
+                            {item.value.toLocaleString('vi-VN')}
+                          </span>
+                        </div>
+                        <p className="mt-4 text-sm font-semibold">
+                          {item.label}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </AdminPanel>
+
               <AdminPanel className="overflow-hidden p-0">
                 <div className="flex flex-col gap-3 border-b border-slate-200/80 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -302,7 +396,7 @@ export function PlatformDashboardPageContent() {
                         className="flex flex-col gap-4 px-6 py-5"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0 space-y-2">
+                          <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-3">
                               <Link
                                 href={`/admin/enterprises/${item.enterpriseId}`}
@@ -312,9 +406,6 @@ export function PlatformDashboardPageContent() {
                               </Link>
                               <EnterpriseStatusBadge status={item.status} />
                             </div>
-                            <p className="text-sm leading-6 text-slate-700">
-                              {item.riskReason}
-                            </p>
                           </div>
 
                           <div className="rounded-2xl border border-amber-200 bg-white/90 px-4 py-3 text-sm text-slate-600">

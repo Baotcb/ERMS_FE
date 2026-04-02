@@ -177,7 +177,7 @@ export default function AdminDashboardPageContent() {
                   {dashboard.attentionItems.length > 0 ? (
                     dashboard.attentionItems.map((item) => (
                       <div
-                        key={`${item.enterpriseId}-${item.attentionReason}`}
+                        key={item.enterpriseId}
                         className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
                       >
                         <div className="min-w-0 space-y-2">
@@ -191,8 +191,6 @@ export default function AdminDashboardPageContent() {
                             <span className="rounded-full bg-slate-100 px-2.5 py-1 font-mono text-[11px] font-medium text-slate-600">
                               {item.enterpriseCode}
                             </span>
-                            <span>{item.attentionReason}</span>
-                            <span className="text-slate-400">•</span>
                             <span>Hết hạn {formatDate(item.subscriptionEndDate)}</span>
                           </div>
                         </div>
@@ -248,7 +246,7 @@ export default function AdminDashboardPageContent() {
                 />
               </div>
 
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+              <div>
                 <AdminPanel className="overflow-hidden p-0">
                   <div className="flex items-center justify-between border-b border-slate-200/80 px-6 py-5">
                     <div className="flex items-center gap-3">
@@ -312,52 +310,6 @@ export default function AdminDashboardPageContent() {
                   </div>
                 </AdminPanel>
 
-                <AdminPanel className="overflow-hidden p-0">
-                  <div className="border-b border-slate-200/80 px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                        <Bot className="h-5 w-5" aria-hidden="true" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-[color:var(--admin-shell)]">
-                          AI support
-                        </h2>
-                        <p className="text-sm text-slate-600">
-                          Một điểm vào để theo dõi cấu hình Gemini và usage CV
-                          scoring toàn hệ thống.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-5 px-6 py-6">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Mục cần xử lý
-                        </p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight text-[color:var(--admin-shell)]">
-                          {dashboard.attentionItems.length.toLocaleString('vi-VN')}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Cần nhắc gia hạn
-                        </p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight text-[color:var(--admin-shell)]">
-                          {dashboard.expiringSoonEnterprises.toLocaleString('vi-VN')}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Link
-                      href="/admin/ai-services"
-                      className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--admin-shell)] px-4 text-sm font-semibold text-white transition hover:opacity-95"
-                    >
-                      Mở AI Services
-                    </Link>
-                  </div>
-                </AdminPanel>
               </div>
             </div>
 

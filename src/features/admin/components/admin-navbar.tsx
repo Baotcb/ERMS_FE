@@ -1,21 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { memo, startTransition, useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { LogOut, Menu, Search, Shield } from 'lucide-react'
+import { memo, useCallback, useEffect, useState } from 'react'
+import { LogOut, Menu, Shield } from 'lucide-react'
 import { useAuth } from '@/features/core/auth/hooks/use-auth'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
 
 export const AdminNavbar = memo(function AdminNavbar() {
-  const router = useRouter()
   const { user, logout } = useAuth()
   const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
   const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
   const toggleSidebar = useAppStore((state) => state.toggleSidebar)
   const toggleMobileSidebar = useAppStore((state) => state.toggleMobileSidebar)
-  const [keyword, setKeyword] = useState('')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isDesktopViewport, setIsDesktopViewport] = useState(false)
 
@@ -50,22 +47,6 @@ export const AdminNavbar = memo(function AdminNavbar() {
 
     toggleMobileSidebar()
   }, [isDesktopViewportNow, toggleMobileSidebar, toggleSidebar])
-
-  const handleSearchSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault()
-
-      const normalizedKeyword = keyword.trim()
-      const destination = normalizedKeyword
-        ? `/admin/enterprises?search=${encodeURIComponent(normalizedKeyword)}`
-        : '/admin/enterprises'
-
-      startTransition(() => {
-        router.push(destination)
-      })
-    },
-    [keyword, router]
-  )
 
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) {
@@ -117,30 +98,6 @@ export const AdminNavbar = memo(function AdminNavbar() {
           </span>
         </Link>
       </div>
-
-      <form
-        onSubmit={handleSearchSubmit}
-        className="hidden flex-1 items-center justify-center px-2 md:flex lg:px-4"
-      >
-        <div className="relative w-full max-w-xl rounded-full bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-sm transition-[background-color,box-shadow] focus-within:bg-white/[0.08] focus-within:ring-teal-300/30">
-          <label htmlFor="admin-shell-search" className="sr-only">
-            Search enterprises in admin
-          </label>
-          <Search
-            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-            aria-hidden="true"
-          />
-          <input
-            id="admin-shell-search"
-            type="search"
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Tìm doanh nghiệp, mã DN..."
-            aria-label="Search enterprises"
-            className="h-11 w-full rounded-full bg-transparent pl-11 pr-4 text-sm text-slate-100 outline-none placeholder:text-slate-400"
-          />
-        </div>
-      </form>
 
       <div className="flex shrink-0 items-center gap-3">
         <div className="hidden text-right md:block">

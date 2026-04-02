@@ -21,7 +21,5 @@ export type {
     CreateEmployeeData,
     UpdateEmployeeData,
     GetEmployeesParams,
-    EmployeeImportItem,
-    BulkCreateResult
 } from './api/employee-service'
 

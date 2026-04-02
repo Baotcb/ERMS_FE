@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  AlertTriangle,
   ArrowLeft,
   BookOpen,
   Briefcase,
@@ -15,7 +14,6 @@ import {
   Loader2,
   Mail,
   Phone,
-  ShieldCheck,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,10 +26,13 @@ import { AdminPageHeader } from '@/features/admin/components/admin-page-header'
 import { AdminPanel } from '@/features/admin/components/admin-panel'
 import { EditStatusDrawer } from '@/features/admin/components/edit-status-drawer'
 import { EnterpriseStatusBadge } from '@/features/admin/components/enterprise-status-badge'
-import { ENTERPRISE_STATUS_LABELS } from '@/features/admin/constants'
+import {
+  ENTERPRISE_STATUS_LABELS,
+  STATUS_REASON_CATEGORY_LABELS,
+} from '@/features/admin/constants'
 import type {
+  AdminStatusHistoryEntry,
   ChangeEnterpriseStatusRequest,
-  EnterpriseStatus,
 } from '@/features/admin/types'
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('vi-VN')
@@ -219,15 +220,7 @@ function HistoryEmptyState() {
 function HistoryTimeline({
   items,
 }: {
-  items: Array<{
-    id: string
-    action: string
-    previousStatus: EnterpriseStatus | null
-    newStatus: EnterpriseStatus
-    adminNote: string | null
-    changedByName: string
-    changedAt: string
-  }>
+  items: AdminStatusHistoryEntry[]
 }) {
   return (
     <AdminPanel className="space-y-6">
@@ -267,9 +260,32 @@ function HistoryTimeline({
                 </span>
               </div>
 
-              <p className="mt-3 text-sm font-semibold text-[color:var(--admin-shell)]">
-                {history.action}
-              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  {STATUS_REASON_CATEGORY_LABELS[history.reasonCategory]}
+                </span>
+                {history.notificationSent !== null ? (
+                  <span
+                    className={cn(
+                      'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+                      history.notificationSent
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                        : 'bg-slate-100 text-slate-600 ring-slate-200'
+                    )}
+                  >
+                    {history.notificationSent
+                      ? 'Đã gửi thông báo'
+                      : 'Không gửi thông báo'}
+                  </span>
+                ) : null}
+              </div>
+
+              {history.action &&
+              history.action !== `StatusChange:${history.reasonCategory}` ? (
+                <p className="mt-3 text-sm font-medium text-[color:var(--admin-shell)]">
+                  {history.action}
+                </p>
+              ) : null}
 
               {history.adminNote ? (
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -683,69 +699,6 @@ export function EnterpriseDetailPageContent({ id }: { id: string }) {
             </div>
           </div>
 
-          <div
-            className={cn(
-              'rounded-[24px] border p-5',
-              enterprise.riskFlags.length > 0
-                ? 'border-amber-200 bg-amber-50'
-                : 'border-emerald-200 bg-emerald-50'
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={cn(
-                  'mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl',
-                  enterprise.riskFlags.length > 0
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-emerald-100 text-emerald-700'
-                )}
-              >
-                {enterprise.riskFlags.length > 0 ? (
-                  <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-                ) : (
-                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1 space-y-2">
-                <p
-                  className={cn(
-                    'text-sm font-semibold',
-                    enterprise.riskFlags.length > 0
-                      ? 'text-amber-900'
-                      : 'text-emerald-900'
-                  )}
-                >
-                  {enterprise.riskFlags.length > 0
-                    ? 'Điểm cần theo dõi'
-                    : 'Chưa ghi nhận cảnh báo'}
-                </p>
-                <p
-                  className={cn(
-                    'text-sm leading-6',
-                    enterprise.riskFlags.length > 0
-                      ? 'text-amber-900/80'
-                      : 'text-emerald-900/80'
-                  )}
-                >
-                  {enterprise.riskFlags.length > 0
-                    ? 'Những điểm này nên được rà soát trước khi mở rộng hạn mức hoặc thay đổi trạng thái tenant.'
-                    : 'Hồ sơ hiện tại chưa có cờ rủi ro từ backend. Tiếp tục theo dõi chu kỳ gói và mức sử dụng định kỳ.'}
-                </p>
-
-                {enterprise.riskFlags.length > 0 ? (
-                  <ul className="space-y-2 pt-1 text-sm text-amber-950">
-                    {enterprise.riskFlags.map((item) => (
-                      <li key={item} className="flex gap-2">
-                        <span aria-hidden="true">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            </div>
-          </div>
         </AdminPanel>
 
         <AdminPanel variant="subtle" className="space-y-6">

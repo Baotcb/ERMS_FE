@@ -11,7 +11,17 @@ import type {
   PaymentHistoryFilters,
   PaymentHistoryResponse,
   PlatformStatsData,
+  StatusReasonCategory,
 } from '../types'
+
+const STATUS_REASON_CATEGORIES: StatusReasonCategory[] = [
+  'Violation',
+  'PaymentIssue',
+  'InformationPending',
+  'AdminDecision',
+  'EnterpriseRequest',
+  'Other',
+]
 
 function stableSerializeParams(params: object): string {
   const entries = Object.entries(params as Record<string, unknown>).sort(([left], [right]) => left.localeCompare(right))
@@ -83,6 +93,24 @@ function normalizeApiPayload<T>(payload: unknown): T {
 
 function buildQueryString(params: object): string {
   return stableSerializeParams(params)
+}
+
+function isStatusReasonCategory(value: string): value is StatusReasonCategory {
+  return STATUS_REASON_CATEGORIES.includes(value as StatusReasonCategory)
+}
+
+function normalizeStatusReasonCategory(value: unknown): StatusReasonCategory {
+  if (typeof value === 'string') {
+    const normalizedValue = value.includes(':')
+      ? value.split(':').at(-1) ?? value
+      : value
+
+    if (isStatusReasonCategory(normalizedValue)) {
+      return normalizedValue
+    }
+  }
+
+  return 'Other'
 }
 
 function mapEnterpriseListItem(item: Record<string, unknown>): EnterpriseListItem {
@@ -159,12 +187,20 @@ function mapEnterpriseDetail(payload: Record<string, unknown>): EnterpriseAdminD
     statusHistory: Array.isArray(payload.statusHistory)
       ? payload.statusHistory.map((item) => {
           const history = item as Record<string, unknown>
+          const action = String(history.action ?? '')
           return {
             id: String(history.approvalHistoryId ?? ''),
-            action: String(history.action ?? ''),
+            action,
             previousStatus: (history.previousStatus as EnterpriseAdminDetail['status'] | null) ?? null,
             newStatus: String(history.newStatus ?? 'Active') as EnterpriseAdminDetail['status'],
+            reasonCategory: normalizeStatusReasonCategory(history.reasonCategory ?? action),
             adminNote: (history.adminNote as string | null) ?? null,
+            notificationSent:
+              typeof history.notificationSent === 'boolean'
+                ? history.notificationSent
+                : typeof history.sendNotification === 'boolean'
+                  ? history.sendNotification
+                  : null,
             changedByName: String(history.changedByName ?? ''),
             changedAt: String(history.changedAt ?? ''),
           }
@@ -257,6 +293,9 @@ function mapAdminDashboard(payload: Record<string, unknown>): AdminDashboardData
 }
 
 function mapPlatformStats(payload: Record<string, unknown>): PlatformStatsData {
+  const integrationHealth =
+    (payload.integrationHealth as Record<string, unknown> | undefined) ?? {}
+
   return {
     totalEnterprises: Number(payload.totalEnterprises ?? 0),
     activeEnterprises: Number(payload.activeEnterprises ?? 0),
@@ -283,14 +322,30 @@ function mapPlatformStats(payload: Record<string, unknown>): PlatformStatsData {
           }
         })
       : [],
+    integrationHealth: {
+      healthy: Number(integrationHealth.healthy ?? 0),
+      warning: Number(integrationHealth.warning ?? 0),
+      error: Number(integrationHealth.error ?? 0),
+    },
     topEnterprises: Array.isArray(payload.topEnterprises)
       ? payload.topEnterprises.map((entry) => {
           const item = entry as Record<string, unknown>
           return {
             enterpriseId: String(item.enterpriseId ?? ''),
             enterpriseName: String(item.enterpriseName ?? ''),
+            logoUrl:
+              (item.logoUrl as string | null) ??
+              (item.enterpriseLogoUrl as string | null) ??
+              null,
             metric: String(item.metric ?? ''),
             value: Number(item.value ?? 0),
+            courseCount: Number(item.courseCount ?? item.totalCourses ?? 0),
+            jobPostingCount: Number(
+              item.jobPostingCount ??
+                item.recruitmentPostCount ??
+                item.totalJobPostings ??
+                0
+            ),
           }
         })
       : [],
@@ -307,6 +362,91 @@ function mapPlatformStats(payload: Record<string, unknown>): PlatformStatsData {
         })
       : [],
   }
+}
+
+type TopEnterpriseSupplement = {
+  logoUrl: string | null
+  courseCount: number
+  jobPostingCount: number
+}
+
+async function fetchTopEnterpriseSupplement(
+  enterpriseId: string
+): Promise<TopEnterpriseSupplement | null> {
+  if (!enterpriseId) {
+    return null
+  }
+
+  try {
+    const response = await apiClient.get(
+      `/api/Admin/enterprise/${encodeURIComponent(enterpriseId)}`
+    )
+    const payload = await readJsonResponse<Record<string, unknown>>(
+      response,
+      'Unable to load enterprise detail'
+    )
+
+    return {
+      logoUrl:
+        (payload.logoUrl as string | null) ??
+        (payload.enterpriseLogoUrl as string | null) ??
+        null,
+      courseCount: Number(payload.courseCount ?? payload.totalCourses ?? 0),
+      jobPostingCount: Number(
+        payload.jobPostingCount ??
+          payload.recruitmentPostCount ??
+          payload.totalJobPostings ??
+          0
+      ),
+    }
+  } catch {
+    return null
+  }
+}
+
+async function enrichTopEnterprises(
+  topEnterprises: PlatformStatsData['topEnterprises']
+): Promise<PlatformStatsData['topEnterprises']> {
+  if (topEnterprises.length === 0) {
+    return topEnterprises
+  }
+
+  const results = await Promise.all(
+    topEnterprises.map(async (item) => {
+      const supplement = await fetchTopEnterpriseSupplement(item.enterpriseId)
+      return {
+        enterpriseId: item.enterpriseId,
+        supplement,
+      }
+    })
+  )
+
+  const supplementByEnterpriseId = new Map(
+    results
+      .filter(
+        (
+          entry
+        ): entry is {
+          enterpriseId: string
+          supplement: TopEnterpriseSupplement
+        } => entry.supplement !== null
+      )
+      .map((entry) => [entry.enterpriseId, entry.supplement])
+  )
+
+  return topEnterprises.map((item) => {
+    const supplement = supplementByEnterpriseId.get(item.enterpriseId)
+    if (!supplement) {
+      return item
+    }
+
+    return {
+      ...item,
+      logoUrl: item.logoUrl ?? supplement.logoUrl,
+      courseCount: supplement.courseCount,
+      jobPostingCount: supplement.jobPostingCount,
+    }
+  })
 }
 
 function mapAiServiceOverview(payload: Record<string, unknown>): AIServiceOverview {
@@ -382,7 +522,13 @@ async function fetchPaymentHistory([, , queryString]: readonly [string, string, 
 async function fetchPlatformStats(): Promise<PlatformStatsData> {
   const response = await apiClient.get('/api/Admin/platform-stats')
   const payload = await readJsonResponse<Record<string, unknown>>(response, 'Không thể tải số liệu nền tảng')
-  return mapPlatformStats(payload)
+  const platformStats = mapPlatformStats(payload)
+  const topEnterprises = await enrichTopEnterprises(platformStats.topEnterprises)
+
+  return {
+    ...platformStats,
+    topEnterprises,
+  }
 }
 
 async function fetchAiServices(): Promise<AIServiceOverview> {
@@ -427,7 +573,9 @@ export async function changeEnterpriseStatus(data: ChangeEnterpriseStatusRequest
     `/api/Admin/enterprise/${encodeURIComponent(data.enterpriseId)}/status`,
     {
       newStatus: data.newStatus,
+      reasonCategory: data.reasonCategory,
       adminNote: data.adminNote,
+      sendNotification: data.sendNotification,
     }
   )
 

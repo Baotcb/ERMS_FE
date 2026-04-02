@@ -317,7 +317,7 @@ export function EnterpriseListPageContent() {
               <option value="Active">Hoạt động</option>
               <option value="Suspended">Tạm dừng</option>
               <option value="Locked">Đã khóa</option>
-              <option value="Inactive">Ngừng HĐ</option>
+              <option value="Inactive">Ngừng hoạt động</option>
             </select>
 
             <select
