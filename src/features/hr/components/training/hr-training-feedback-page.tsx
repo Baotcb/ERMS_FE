@@ -1,5 +1,7 @@
 'use client';
 
+import { MetricCard } from '@/components/ui/metric-card';
+
 import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { MessageSquare, Search, Star, TrendingUp } from 'lucide-react';
@@ -77,30 +79,26 @@ export default function HRTrainingFeedbackPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <div className="mb-3 flex items-center gap-3 text-[#0F4C75]">
-                        <MessageSquare className="h-5 w-5" /> Tổng đánh giá
-                    </div>
-                    <p className="text-3xl font-bold text-[#0F4C75]">{stats.total}</p>
-                </div>
-                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5 shadow-sm">
-                    <div className="mb-3 flex items-center gap-3 text-amber-700">
-                        <Star className="h-5 w-5 fill-amber-400" /> Điểm TB khóa học
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <p className="text-3xl font-bold text-amber-700">{stats.avgCourse}</p>
-                        <span className="text-sm text-amber-600">/5</span>
-                    </div>
-                </div>
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
-                    <div className="mb-3 flex items-center gap-3 text-blue-700">
-                        <TrendingUp className="h-5 w-5" /> Điểm TB giảng viên
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <p className="text-3xl font-bold text-blue-700">{stats.avgTrainer}</p>
-                        <span className="text-sm text-blue-600">/5</span>
-                    </div>
-                </div>
+                <MetricCard
+                    theme="default"
+                    title="Tổng đánh giá"
+                    value={stats.total}
+                    icon={MessageSquare}
+                />
+                <MetricCard
+                    theme="amber"
+                    title="Điểm TB khóa học"
+                    value={stats.avgCourse}
+                    icon={Star}
+                    valueSuffix="/5"
+                />
+                <MetricCard
+                    theme="blue"
+                    title="Điểm TB giảng viên"
+                    value={stats.avgTrainer}
+                    icon={TrendingUp}
+                    valueSuffix="/5"
+                />
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">

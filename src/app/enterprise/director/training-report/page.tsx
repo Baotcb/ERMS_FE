@@ -2,45 +2,22 @@ import { trainingServerService } from '@/features/hr/api/training-server-service
 import type { Course } from '@/features/hr/types/course-types';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 import { TrainingReportDashboard } from '@/features/director/components/training/training-report-dashboard';
+import { fetchAllPages } from '@/features/hr/utils/fetch-all-pages';
 
 async function getAllPlans(status?: string): Promise<TrainingPlan[]> {
-    const pageSize = 50;
-    const allItems: TrainingPlan[] = [];
-    let page = 1;
-
-    while (true) {
+    return fetchAllPages(async (page, pageSize) => {
         const response = await trainingServerService.getPlans({ page, pageSize, status }).catch(() => ({ items: [], totalCount: 0 }));
-        allItems.push(...(response.items || []));
-
-        if (!response.items || response.items.length < pageSize || allItems.length >= (response.totalCount || 0)) {
-            break;
-        }
-
-        page += 1;
-    }
-
-    return allItems;
+        return { items: response.items || [], totalCount: response.totalCount || 0 };
+    });
 }
 
 async function getAllCourses(status?: string): Promise<Course[]> {
-    const pageSize = 50;
-    const allItems: Course[] = [];
-    let page = 1;
-
-    while (true) {
+    return fetchAllPages(async (page, pageSize) => {
         const response = await trainingServerService
             .getAllCourses({ page, pageSize, status })
-            .catch(() => ({ items: [], totalCount: 0, page: 1, pageSize, totalPages: 0 }));
-        allItems.push(...(response.items || []));
-
-        if (!response.items || response.items.length < pageSize || allItems.length >= (response.totalCount || 0)) {
-            break;
-        }
-
-        page += 1;
-    }
-
-    return allItems;
+            .catch(() => ({ items: [], totalCount: 0 }));
+        return { items: response.items || [], totalCount: response.totalCount || 0 };
+    });
 }
 
 export default async function TrainingReportPage() {
