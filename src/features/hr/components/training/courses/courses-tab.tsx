@@ -9,13 +9,8 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { getDeploymentLabel } from './course-detail-content';
+import { STATUS_COLORS } from '@/features/hr/utils/training-status-utils';
 import Link from 'next/link';
-
-const STATUS_COLORS: Record<string, string> = {
-    Published: 'bg-green-100 text-green-800',
-    Draft: 'bg-gray-100 text-gray-800',
-    Archived: 'bg-slate-100 text-slate-700',
-};
 
 export function CoursesTab({ 
     courses, 

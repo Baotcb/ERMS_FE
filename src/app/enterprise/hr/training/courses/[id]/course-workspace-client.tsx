@@ -6,8 +6,8 @@ import { ArrowLeft, BookOpen, MessageSquare, Layout, Pencil } from 'lucide-react
 import type { Course } from '@/features/hr/types/course-types';
 import type { CourseFeedbackDto } from '@/features/employee/api/feedback-service';
 import { Button } from '@/components/ui/button';
-import { CourseDetailContent } from '../components/course-detail-content';
-import { FeedbackTab } from '../components/feedback-tab';
+import { CourseDetailContent } from '@/features/hr/components/training/courses/course-detail-content';
+import { FeedbackTab } from '@/features/hr/components/training/courses/feedback-tab';
 import { UpdateCourseDialog } from '@/features/hr/components/training/update-course-dialog';
 
 export function CourseWorkspaceClient({

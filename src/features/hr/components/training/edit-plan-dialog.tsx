@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Loader2, Calendar as CalendarIcon, Save } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -20,19 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan } from '../../types/training-plan-types';
-
-const editPlanSchema = z.object({
-    planName: z.string().min(5, 'Tên kế hoạch phải có ít nhất 5 ký tự'),
-    startDate: z.string().min(1, 'Ngày bắt đầu là bắt buộc'),
-    endDate: z.string().min(1, 'Ngày kết thúc là bắt buộc'),
-    totalBudget: z.number().min(0, 'Ngân sách không hợp lệ').optional(),
-    description: z.string().optional(),
-}).refine(data => new Date(data.startDate) <= new Date(data.endDate), {
-    message: 'Ngày kết thúc phải sau ngày bắt đầu',
-    path: ['endDate']
-});
-
-type EditPlanValues = z.infer<typeof editPlanSchema>;
+import { editPlanSchema, type EditPlanValues } from '../../schema/training-plan-schema';
 
 interface EditPlanDialogProps {
     plan: TrainingPlan | null;

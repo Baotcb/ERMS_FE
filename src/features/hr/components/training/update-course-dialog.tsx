@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Loader2, Settings, Save } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -24,24 +23,7 @@ import {
 
 import { courseService } from '../../api/course-service';
 import type { Course } from '../../types/course-types';
-
-const updateCourseSchema = z.object({
-    courseName: z.string().min(3, 'Tên khóa học phải có ít nhất 3 ký tự'),
-    courseCode: z.string().min(2, 'Mã khóa học bắt buộc'),
-    trainerEmail: z.string().email('Email không hợp lệ').min(1, 'Email giảng viên là bắt buộc'),
-    description: z.string().optional(),
-    location: z.string().optional(),
-    startTime: z.string().min(1, 'Thời gian bắt đầu là bắt buộc'),
-    isOnline: z.boolean(),
-    durationMinutes: z.number().min(30, 'Thời lượng tối thiểu 30 phút').optional(),
-    level: z.string().optional(),
-    isMandatory: z.boolean(),
-    maxEnrollments: z.number().min(1, 'Số lượng học viên phải lớn hơn 0').optional(),
-    enrollmentDeadline: z.string().optional(),
-    completionCriteria: z.string().min(5, 'Tiêu chí hoàn thành là bắt buộc (ví dụ: Hoàn tất 100% video và bài kiểm tra trên 80 điểm)'),
-});
-
-type UpdateCourseValues = z.infer<typeof updateCourseSchema>;
+import { updateCourseSchema, type UpdateCourseValues } from '../../schema/course-schema';
 
 interface UpdateCourseDialogProps {
     course: Course;
