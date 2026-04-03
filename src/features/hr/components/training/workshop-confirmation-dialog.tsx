@@ -78,7 +78,7 @@ export function WorkshopConfirmationDialog({
         if (photos.length === 0) {
             toast({
                 title: 'Thiếu ảnh minh chứng',
-                description: 'Vui lòng upload ít nhất 1 ảnh workshop trước khi xác nhận.',
+                description: 'Vui lòng cung cấp ít nhất 1 hình ảnh minh chứng sự kiện trước khi tiến hành xác nhận.',
                 variant: 'destructive',
             });
             return;
@@ -113,7 +113,7 @@ export function WorkshopConfirmationDialog({
                     </DialogTitle>
                     <DialogDescription className="text-gray-500">
                         Xác nhận rằng workshop <strong className="text-gray-700">{courseName}</strong> đã diễn ra thành công.
-                        Upload ảnh minh chứng để học viên có thể làm bài kiểm tra.
+                        Vui lòng tải lên hình ảnh minh chứng để hệ thống tiếp tục mở khóa bài kiểm tra đánh giá.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -151,9 +151,9 @@ export function WorkshopConfirmationDialog({
                             )}
                             <div className="text-center">
                                 <p className="font-bold text-[#0F4C75]">
-                                    {isUploading ? 'Đang upload...' : 'Kéo thả hoặc nhấn để chọn ảnh'}
+                                    {isUploading ? 'Đang tải lên...' : 'Kéo thả hoặc nhấn để chọn ảnh'}
                                 </p>
-                                <p className="text-xs text-gray-400 mt-1">PNG, JPG tối đa 10MB mỗi ảnh</p>
+                                <p className="text-xs text-gray-400 mt-1">Hỗ trợ định dạng PNG, JPG (tối đa 10MB/ảnh)</p>
                             </div>
                         </label>
                         <input

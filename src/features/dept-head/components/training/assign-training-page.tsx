@@ -190,12 +190,12 @@ export function AssignTrainingPage({
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedTrainerEmail || '')) {
-            toast({ title: 'Lỗi', description: 'Khóa học chưa có email người đào tạo hợp lệ. HR cần mời trainer trước.', variant: 'destructive' });
+            toast({ title: 'Lỗi', description: 'Khóa học hiện chưa được gắn Giảng viên. Vui lòng liên hệ bộ phận HR để thực hiện bổ nhiệm.', variant: 'destructive' });
             return;
         }
 
         if (!currentCourse.startTime) {
-            toast({ title: 'Lỗi', description: 'Khóa học chưa có thời gian bắt đầu. Vui lòng để HR thiết lập lịch trước.', variant: 'destructive' });
+            toast({ title: 'Lỗi', description: 'Khóa học chưa được định thời gian. Vui lòng liên hệ bộ phận HR để thiết lập lịch đào tạo chuẩn.', variant: 'destructive' });
             return;
         }
 
@@ -340,8 +340,8 @@ export function AssignTrainingPage({
 
                         <div className="rounded-lg border border-blue-100 bg-blue-50/40 px-4 py-3 flex items-center justify-between gap-4">
                             <div>
-                                <p className="text-sm font-semibold text-[#0F4C75]">Thông báo trainer cùng lúc gửi học viên</p>
-                                <p className="text-xs text-gray-600 mt-1">Khi bật, hệ thống gửi email trainer đồng thời với email phân công học viên.</p>
+                                <p className="text-sm font-semibold text-[#0F4C75]">Gửi thông báo đồng thời cho Giảng viên</p>
+                                <p className="text-xs text-gray-600 mt-1">Tính năng này cho phép hệ thống tự động phát hành email thông báo bổ nhiệm đến Giảng viên.</p>
                             </div>
                             <Switch
                                 checked={notifyTrainer}

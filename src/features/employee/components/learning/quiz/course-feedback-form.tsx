@@ -13,11 +13,11 @@ interface CourseFeedbackFormProps {
 
 const RATING_LABELS = [
   "",
+  "Rất không hài lòng",
   "Không hài lòng",
-  "Trung bình",
   "Bình thường",
-  "Tốt",
-  "Xuất sắc",
+  "Hài lòng",
+  "Rất hài lòng",
 ];
 
 export function CourseFeedbackForm({
