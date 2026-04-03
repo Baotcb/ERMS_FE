@@ -25,7 +25,6 @@ import { ApplicationDetailModal } from './application-detail-modal'
 import { ForwardApplicationDialog } from './forward-application-dialog'
 import { ConfirmScheduleDialog } from '../interview/confirm-schedule-dialog'
 import { RejectApplicationDialog } from './reject-application-dialog'
-import { useToast } from '@/hooks/use-toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface ApplicationTableProps {
@@ -35,7 +34,6 @@ interface ApplicationTableProps {
 }
 
 export function ApplicationTable({ applications, isLoading, onRefresh }: ApplicationTableProps) {
-    const { toast } = useToast()
     const [selectedApp, setSelectedApp] = useState<ApplicationDto | null>(null)
     const [detailOpen, setDetailOpen] = useState(false)
     const [forwardOpen, setForwardOpen] = useState(false)

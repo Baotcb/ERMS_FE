@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useSWR from 'swr';
-import { feedbackService, ReplyFeedbackPayload } from '@/features/employee/api/feedback-service';
+import { feedbackService } from '@/features/employee/api/feedback-service';
 import { FeedbackReplyItem } from './feedback-reply-item';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

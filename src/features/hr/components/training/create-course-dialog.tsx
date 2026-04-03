@@ -30,7 +30,6 @@ import { handleApiError } from "@/features/employee/utils/api-error-handler";
 import { SearchableCombobox } from "@/components/ui/searchable-combobox";
 import { hrTrainingService } from "@/features/hr/api/hr-training-service";
 import { courseService } from "@/features/hr/api/course-service";
-import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import type { TrainingPlan } from "@/features/hr/types/training-plan-types";
 import { createCourseSchema } from "@/features/hr/schema/course-schema";
 import type { CreateCourseCommand } from "@/features/hr/types/course-types";

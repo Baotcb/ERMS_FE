@@ -30,7 +30,7 @@ export function ApplicationList() {
     const { isAuthenticated, isCandidate, isLoading: authLoading } = useCandidateAccess()
     const { preview, showPreview, hidePreview } = useJobPreview()
 
-    const { data, isLoading, error, mutate } = useMyApplications(
+    const { data, isLoading, error } = useMyApplications(
         stageFilter !== 'all' ? { stageFilter } : undefined,
         isCandidate
     )

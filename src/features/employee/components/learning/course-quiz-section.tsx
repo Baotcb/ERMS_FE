@@ -14,7 +14,6 @@ import { QuizQuestionArea } from "./quiz/quiz-question-area";
 
 export function CourseQuizSection({
   initialCourse,
-  initialProgress: _initialProgress = null,
   basePath,
 }: {
   initialCourse: Course;
@@ -51,6 +50,7 @@ export function CourseQuizSection({
 
   return (
     <div
+      // eslint-disable-next-line react-hooks/refs
       ref={refs.examContainerRef}
       className="exam-overlay !p-0 flex flex-col"
       onCopy={(e) => e.preventDefault()}
@@ -128,11 +128,11 @@ export function CourseQuizSection({
           />
 
           <QuizQuestionArea
-            currentQuestion={derived.currentQuestion as any}
+            currentQuestion={derived.currentQuestion}
             currentQuestionIndex={state.currentQuestionIndex}
             totalQuestions={derived.quizQuestions.length}
             selectedAnswer={derived.currentQuestion ? state.answers[derived.currentQuestion.id] : undefined}
-            onAnswerSelect={(qId, value) => state.setAnswers((prev: any) => ({ ...prev, [qId]: value }))}
+            onAnswerSelect={(qId, value) => state.setAnswers((prev: Record<string, string>) => ({ ...prev, [qId]: value }))}
             onPrevious={() => state.setCurrentQuestionIndex((p: number) => Math.max(0, p - 1))}
             onNext={() => state.setCurrentQuestionIndex((p: number) => Math.min(derived.quizQuestions.length - 1, p + 1))}
           />
