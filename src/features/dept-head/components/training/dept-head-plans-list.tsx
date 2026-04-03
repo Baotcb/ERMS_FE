@@ -28,20 +28,10 @@ import { useRouter } from 'next/navigation';
 import { hrTrainingService } from '@/features/hr/api/hr-training-service';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
 import { TrainingPlanDetail } from '@/features/hr/components/training/training-plan-detail';
+import { STATUS_COLORS, STATUS_LABELS } from '@/features/hr/utils/training-status-utils';
+import { formatVND } from '@/lib/utils';
 
-const STATUS_COLORS: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-800',
-    Pending: 'bg-yellow-100 text-yellow-800',
-    Approved: 'bg-green-100 text-green-800',
-    Rejected: 'bg-red-100 text-red-800',
-};
 
-const STATUS_LABELS: Record<string, string> = {
-    Draft: 'Bản nháp',
-    Pending: 'Chờ duyệt',
-    Approved: 'Đã duyệt',
-    Rejected: 'Từ chối',
-};
 
 export function DeptHeadPlansList({ initialData }: { initialData?: { items: TrainingPlan[] } }) {
     const router = useRouter();
@@ -148,7 +138,7 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                                         {plan.totalCourses} khóa học
                                     </TableCell>
                                     <TableCell className="text-gray-900 font-semibold">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
+                                        {formatVND(plan.totalBudget)}
                                     </TableCell>
                                     <TableCell className="text-gray-500 text-sm">
                                         {format(new Date(plan.createdAt), 'dd/MM/yyyy')}

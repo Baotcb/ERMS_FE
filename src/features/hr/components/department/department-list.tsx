@@ -28,6 +28,7 @@ export const DepartmentList = memo(function DepartmentList() {
     })
 
     // Modal state
+
     const [isOpen, setIsOpen] = useState(false)
     const [selectedDepartment, setSelectedDepartment] = useState<Department | undefined>(undefined)
 
@@ -41,7 +42,7 @@ export const DepartmentList = memo(function DepartmentList() {
         setIsOpen(true)
     }, [])
 
-    const handleDelete = useCallback((_dept: Department) => {
+    const handleDelete = useCallback(() => {
         // TODO: Implement department deletion with confirmation dialog
     }, [])
 

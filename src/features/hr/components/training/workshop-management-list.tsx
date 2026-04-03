@@ -25,6 +25,7 @@ import {
 import { courseService } from '@/features/hr/api/course-service';
 import { workshopService, type WorkshopConfirmation } from '@/features/hr/api/workshop-service';
 import { WorkshopConfirmationDialog } from './workshop-confirmation-dialog';
+import { DROPDOWN_PAGE_SIZE } from '@/lib/pagination';
 
 export function WorkshopManagementList() {
     const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; courseId: string; courseName: string }>({
@@ -39,7 +40,7 @@ export function WorkshopManagementList() {
     // Fetch published courses — filter offline ones on client
     const { data: coursesData, mutate } = useSWR(
         'hr-workshop-courses',
-        () => courseService.getAllCourses({ status: 'Published', pageSize: 100 })
+        () => courseService.getAllCourses({ status: 'Published', pageSize: DROPDOWN_PAGE_SIZE })
     );
 
     const offlineCourses = (coursesData?.items || []).filter(c => c.isOnline === false);
@@ -89,7 +90,7 @@ export function WorkshopManagementList() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Quản lý Workshop</h1>
-                    <p className="text-sm text-gray-500 mt-1">Xác nhận hoàn thành workshop (khóa đào tạo offline) để mở khóa bài kiểm tra cho trainee.</p>
+                    <p className="text-sm text-gray-500 mt-1">Xác nhận hoàn thành buổi đào tạo trực tiếp (offline) để mở khóa bài kiểm tra cho học viên.</p>
                 </div>
             </div>
 
@@ -164,7 +165,7 @@ export function WorkshopManagementList() {
                                                 {offlineCourses.length === 0 ? 'Chưa có khóa workshop nào' : 'Không tìm thấy kết quả'}
                                             </p>
                                             <p className="text-sm text-gray-400 mt-1">
-                                                {offlineCourses.length === 0 ? 'Các khóa đào tạo offline đã xuất bản sẽ xuất hiện tại đây.' : 'Thử thay đổi từ khóa hoặc bộ lọc.'}
+                                                {offlineCourses.length === 0 ? 'Các khóa đào tạo offline đã mở sẽ xuất hiện tại đây.' : 'Thử thay đổi từ khóa hoặc bộ lọc.'}
                                             </p>
                                         </div>
                                     </div>

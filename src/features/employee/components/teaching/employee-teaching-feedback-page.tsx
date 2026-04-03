@@ -8,6 +8,7 @@ import { feedbackService, type TrainerFeedbackDto } from '@/features/employee/ap
 
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FeedbackReplyThread } from '../learning/quiz/feedback-reply-thread';
 
 function StarDisplay({ rating }: { rating: number }) {
     return (
@@ -42,6 +43,7 @@ export default function EmployeeTeachingFeedbackPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [courseFilter, setCourseFilter] = useState('all');
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     useEffect(() => {
         feedbackService
@@ -177,6 +179,21 @@ export default function EmployeeTeachingFeedbackPage() {
                                             <p className="text-sm italic text-gray-700">&ldquo;{feedback.comment}&rdquo;</p>
                                         </div>
                                     )}
+                                    <div className="mt-4 border-t border-gray-100 pt-3">
+                                        <button 
+                                            onClick={() => setExpandedId(expandedId === feedback.id ? null : feedback.id)}
+                                            className="text-xs font-semibold text-[#3282B8] hover:text-[#0F4C75] flex items-center"
+                                        >
+                                            <MessageSquare className="w-3.5 h-3.5 mr-1" />
+                                            {expandedId === feedback.id ? 'Thu gọn thảo luận' : 'Thảo luận'}
+                                        </button>
+                                        
+                                        {expandedId === feedback.id && (
+                                            <div className="mt-4">
+                                                <FeedbackReplyThread feedbackId={feedback.id} currentUserRole="trainer" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

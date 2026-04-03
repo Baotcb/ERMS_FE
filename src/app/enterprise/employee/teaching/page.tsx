@@ -1,21 +1,15 @@
 import { Suspense } from 'react';
 import { TeachingTasksPage } from '@/features/employee/components/teaching/teaching-tasks-page';
 import { Loader2 } from 'lucide-react';
-import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/server-fetch';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 import { isCourseOwnedByUser } from '@/features/hr/utils/course-workflow';
 
 export default async function Page() {
     const session = await getServerSession();
-    const canAccess = Boolean(session.user?.isTrainer || session.role === 'Trainer');
-
-    if (!canAccess) {
-        redirect('/enterprise/employee/dashboard');
-    }
 
     const allCourses = await trainingServerService.getAllCourses({ pageSize: 100 }).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
-    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user));
+    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user, session.role));
 
     return (
         <Suspense fallback={

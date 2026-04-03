@@ -7,6 +7,8 @@ export const STORAGE_KEYS = {
     AUTH_TOKEN: 'auth_token',
     USER_ROLE: 'user_role',
     USER_NAME: 'user_name',
+    USER_EMAIL: 'user_email',
+    USER_ID: 'user_id',
     USER_AVATAR: 'user_avatar',
     SAVED_JOBS: 'erms-saved-jobs',
 } as const
@@ -28,6 +30,13 @@ export const USER_ROLES = {
     EMPLOYEE: 'Employee',
     CANDIDATE: 'Candidate',
 } as const
+
+/** Roles that have access to HR teaching workspace */
+export const HR_ROLES = [
+    USER_ROLES.HR_MANAGER,
+    USER_ROLES.HR,
+    USER_ROLES.TRAINER,
+] as const
 
 // Role → dashboard redirect mapping
 export const ROLE_DASHBOARD_MAP: Record<string, string> = {

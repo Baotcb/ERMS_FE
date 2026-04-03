@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { BookOpenCheck, Search, Clock, Users, GraduationCap, ArrowRight, BookOpen } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Course } from '@/features/hr/types/course-types';
 
@@ -98,6 +99,15 @@ export function LearningCoursesPage({
         return { total, completed, inProgress };
     }, [initialCourses]);
 
+    const resumeCourse = useMemo(() => {
+        const inProgress = initialCourses.filter(c => c.progressPercentage > 0 && c.progressPercentage < 100);
+        if (inProgress.length > 0) {
+            inProgress.sort((a, b) => b.progressPercentage - a.progressPercentage);
+            return inProgress[0];
+        }
+        return null;
+    }, [initialCourses]);
+
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
 
@@ -108,7 +118,7 @@ export function LearningCoursesPage({
 
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-2">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">My Learning</p>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#BBE1FA]/70">Học tập</p>
                         <h1 className="text-3xl md:text-4xl font-black tracking-tight">Khóa học của tôi</h1>
                         <p className="text-[#BBE1FA]/80 text-sm max-w-md">Theo dõi tiến độ học tập và hoàn thành các khóa đào tạo được phân công.</p>
                     </div>
@@ -128,6 +138,31 @@ export function LearningCoursesPage({
                     </div>
                 </div>
             </div>
+
+            {/* ── Continue Learning Highlight ── */}
+            {resumeCourse && !search && progressFilter === 'all' && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/40 blur-3xl -translate-y-1/2 translate-x-1/3 rounded-full pointer-events-none" />
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+                        <div className="flex items-center gap-4">
+                            <ProgressRing percent={resumeCourse.progressPercentage} size={56} stroke={4} />
+                            <div>
+                                <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-1">Tiến độ gần nhất</h3>
+                                <p className="text-xl font-black text-[#0F4C75] leading-tight mb-1">{resumeCourse.course.courseName}</p>
+                                <p className="text-sm text-gray-500">Mã: {resumeCourse.course.courseCode} • {resumeCourse.course.lessonCount} bài học</p>
+                            </div>
+                        </div>
+                        <Button
+                            asChild
+                            className="bg-gradient-to-r from-[#0F4C75] to-[#3282B8] text-white hover:opacity-90 rounded-xl px-8 shadow-md"
+                        >
+                            <Link href={`${learningBasePath}/course/${resumeCourse.course.id}`}>
+                                Tiếp tục học tập <ArrowRight className="w-4 h-4 ml-2" />
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* ── Search + Filter ── */}
             <div className="flex flex-col md:flex-row items-center gap-3">
@@ -189,11 +224,11 @@ export function LearningCoursesPage({
                                             {course.courseCode}
                                         </Badge>
                                         <Badge className={`border-0 backdrop-blur-sm font-semibold text-xs ${
-                                            course.status === 'Published'
+                                            (course.status === 'Public' || course.status === 'Published')
                                                 ? 'bg-green-500/20 text-green-100'
                                                 : 'bg-yellow-500/20 text-yellow-100'
                                         }`}>
-                                            {course.status === 'Published' ? 'Đang mở' : course.status}
+                                            {(course.status === 'Public' || course.status === 'Published') ? 'Đang mở' : course.status}
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-3 text-white/70 text-xs font-medium">
@@ -228,14 +263,14 @@ export function LearningCoursesPage({
                                                 ? 'bg-green-50 text-green-700'
                                                 : 'bg-amber-50 text-amber-700'
                                         }`}>
-                                            {quizUnlocked ? '✓ Quiz mở' : '🔒 Quiz khóa'}
+                                            {quizUnlocked ? '✓ Đã mở khóa' : '🔒 Chưa mở khóa'}
                                         </Badge>
                                     </div>
 
                                     {/* CTA */}
                                     <div className="mt-4 pt-4 border-t border-gray-50">
                                         <div className="flex items-center justify-between text-sm font-bold text-[#3282B8] group-hover:text-[#0F4C75] transition-colors">
-                                            <span>{progressPercentage >= 100 ? 'Xem lại & Làm quiz' : 'Tiếp tục học'}</span>
+                                            <span>{progressPercentage >= 100 ? 'Xem lại & Xem chứng chỉ' : progressPercentage > 0 ? 'Tiếp tục học' : 'Bắt đầu học'}</span>
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
                                         </div>
                                     </div>

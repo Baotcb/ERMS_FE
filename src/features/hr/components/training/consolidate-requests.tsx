@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { ChevronLeft, Save, AlertTriangle, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,22 +28,26 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '../../api/hr-training-service';
 import type { TrainingRequest } from '../../../dept-head/types/training-types';
+import { formatVND } from '@/lib/utils';
 
 export function ConsolidateRequests({ initialData }: { initialData?: { items: TrainingRequest[] } }) {
     const router = useRouter();
     const { toast } = useToast();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${new Date().getFullYear() + 1}`);
-    const [startDate, setStartDate] = useState(`${new Date().getFullYear() + 1}-01-01`);
-    const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
+    const currentYear = new Date().getFullYear();
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    
+    const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${currentYear}`);
+    const [startDate, setStartDate] = useState(`${currentYear}-${currentMonth}-01`);
+    const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
     const [plannedBudget, setPlannedBudget] = useState<string>('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { execute, isSubmitting } = useAsyncAction();
     const [search, setSearch] = useState('');
     const [deptFilter, setDeptFilter] = useState('all');
 
     const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
         '/api/TrainingRequest?status=Pending',
-        () => hrTrainingService.getAllRequests({ status: 'Pending' }),
+        () => hrTrainingService.getAllPendingRequests(),
         { fallbackData: initialData }
     );
 
@@ -85,36 +90,29 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            const res = await hrTrainingService.createPlan({
-                planCode: `TP-${new Date().getFullYear() + 1}-${Math.floor(1000 + Math.random() * 9000)}`,
-                planName,
-                description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
-                startDate: startDate,
-                endDate: endDate,
-                totalBudget: budgetValue,
-                status: 'Pending',
-                trainingRequestIds: selectedIds,
-            });
-
-            if (res.ok) {
-                toast({
-                    title: 'Thành công',
-                    description: 'Đã tạo kế hoạch đào tạo năm và cập nhật trạng thái các yêu cầu.',
+        await execute(
+            async () => {
+                const res = await hrTrainingService.createPlan({
+                    planCode: `TP-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    planName,
+                    description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
+                    startDate: startDate,
+                    endDate: endDate,
+                    totalBudget: budgetValue,
+                    status: 'Pending',
+                    trainingRequestIds: selectedIds,
                 });
-                router.push('/enterprise/hr/training/plans');
+                if (!res.ok) throw new Error('Không thể tạo kế hoạch.');
+                return res;
+            },
+            {
+                successMessage: { title: 'Thành công', description: 'Đã tạo kế hoạch đào tạo năm và cập nhật trạng thái các yêu cầu.' },
+                errorFallback: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
+                onSuccess: () => {
+                    router.push('/enterprise/hr/training/plans');
+                }
             }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Không thể tạo kế hoạch. Vui lòng thử lại.';
-            toast({
-                title: 'Lỗi',
-                description: msg,
-                variant: 'destructive',
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        );
     };
 
     return (
@@ -204,7 +202,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                             </TableCell>
                                             <TableCell>{request.estimatedParticipants} học viên</TableCell>
                                             <TableCell className="text-right font-medium">
-                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget || 0)}
+                                                {formatVND(request.estimatedBudget || 0)}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -271,7 +269,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500">Ngân sách đã nhập:</span>
                                     <span className="font-bold text-[#0F4C75]">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(plannedBudget) || 0)}
+                                        {formatVND(Number(plannedBudget) || 0)}
                                     </span>
                                 </div>
                             </div>

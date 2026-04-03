@@ -2,25 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { 
-    PlusCircle, Trash2, 
-    CheckCircle2, Clock, Award, Save, Loader2, AlertCircle, FileSpreadsheet, UploadCloud
+    Clock, Award, Save, Loader2, AlertCircle, FileSpreadsheet, UploadCloud, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { quizService } from '@/features/hr/api/quiz-service';
-
-interface Question {
-    id: string;
-    text: string;
-    options: string[];
-    correctAnswer: number;
-}
+import { parseQuestionsFromCsv } from '@/features/employee/utils/csv-parser';
 
 interface ExamBuilderProps {
     courseId: string;
@@ -28,49 +20,14 @@ interface ExamBuilderProps {
     onQuizLinked?: (quizId: string) => void;
 }
 
-const ANSWER_LABELS = ['A', 'B', 'C', 'D'] as const;
-
-function parseCsvLine(line: string): string[] {
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-
-        if (ch === '"') {
-            const next = line[i + 1];
-            if (inQuotes && next === '"') {
-                current += '"';
-                i++;
-                continue;
-            }
-            inQuotes = !inQuotes;
-            continue;
-        }
-
-        if (ch === ',' && !inQuotes) {
-            values.push(current.trim());
-            current = '';
-            continue;
-        }
-
-        current += ch;
-    }
-
-    values.push(current.trim());
-    return values;
-}
-
 export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: ExamBuilderProps) {
     const { toast } = useToast();
     const courseLabel = courseId.slice(0, 8).toUpperCase();
-    const [questions, setQuestions] = useState<Question[]>([]);
     const [quizTitle, setQuizTitle] = useState(`Bài thi cuối khóa ${courseLabel}`);
     const [description, setDescription] = useState('Đánh giá cuối khóa để xác định học viên đạt hay không đạt.');
-    const [passingScore, setPassingScore] = useState(80);
-    const [timeLimit, setTimeLimit] = useState(30);
-    const [maxAttempts, setMaxAttempts] = useState(1);
+    const [passingScore, setPassingScore] = useState<number | string>(80);
+    const [timeLimit, setTimeLimit] = useState<number | string>(30);
+    const [maxAttempts, setMaxAttempts] = useState<number | string>(1);
     const [shuffleQuestions, setShuffleQuestions] = useState(true);
     const [shuffleAnswers, setShuffleAnswers] = useState(true);
     const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
@@ -79,93 +36,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
     const [csvPreviewFirst, setCsvPreviewFirst] = useState<string>('');
     const [savedQuizId, setSavedQuizId] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-
-    const parseQuestionsFromCsv = async (file: File): Promise<Array<{
-        questionText: string;
-        options: string;
-        correctAnswer: string;
-        points: number;
-        orderIndex: number;
-    }>> => {
-        const csvText = (await file.text()).replace(/^\uFEFF/, '');
-        const lines = csvText
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean);
-
-        if (lines.length < 2) {
-            throw new Error('File CSV không có dữ liệu câu hỏi.');
-        }
-
-        const header = parseCsvLine(lines[0]);
-        const headerIndex = (name: string) => header.findIndex((h) => h.toLowerCase() === name.toLowerCase());
-
-        const questionTextIdx = headerIndex('QuestionText');
-        const optionAIdx = headerIndex('OptionA');
-        const optionBIdx = headerIndex('OptionB');
-        const optionCIdx = headerIndex('OptionC');
-        const optionDIdx = headerIndex('OptionD');
-        const correctAnswerIdx = headerIndex('CorrectAnswer');
-        const pointsIdx = headerIndex('Points');
-        const orderIndexIdx = headerIndex('OrderIndex');
-
-        if ([questionTextIdx, optionAIdx, optionBIdx, optionCIdx, optionDIdx, correctAnswerIdx].some((idx) => idx < 0)) {
-            throw new Error('Template CSV không đúng định dạng cột yêu cầu. Vui lòng tải lại template mới nhất.');
-        }
-
-        const preparedQuestions: Array<{
-            questionText: string;
-            options: string;
-            correctAnswer: string;
-            points: number;
-            orderIndex: number;
-        }> = [];
-
-        for (let row = 1; row < lines.length; row++) {
-            const values = parseCsvLine(lines[row]);
-
-            const questionText = (values[questionTextIdx] || '').trim();
-            const optionA = (values[optionAIdx] || '').trim();
-            const optionB = (values[optionBIdx] || '').trim();
-            const optionC = (values[optionCIdx] || '').trim();
-            const optionD = (values[optionDIdx] || '').trim();
-            const correctAnswer = (values[correctAnswerIdx] || '').trim().toUpperCase();
-
-            if (!questionText && !optionA && !optionB && !optionC && !optionD) {
-                continue;
-            }
-
-            if (!questionText || !optionA || !optionB || !optionC || !optionD) {
-                throw new Error(`Dòng ${row + 1}: thiếu dữ liệu câu hỏi hoặc lựa chọn đáp án.`);
-            }
-
-            if (!ANSWER_LABELS.includes(correctAnswer as (typeof ANSWER_LABELS)[number])) {
-                throw new Error(`Dòng ${row + 1}: CorrectAnswer phải là A/B/C/D.`);
-            }
-
-            const pointsRaw = values[pointsIdx] || '';
-            const parsedPoints = Number(pointsRaw);
-            const points = Number.isFinite(parsedPoints) && parsedPoints > 0 ? parsedPoints : 1;
-
-            const orderRaw = values[orderIndexIdx] || '';
-            const parsedOrder = Number(orderRaw);
-            const orderIndex = Number.isFinite(parsedOrder) && parsedOrder > 0 ? parsedOrder : preparedQuestions.length + 1;
-
-            preparedQuestions.push({
-                questionText,
-                options: JSON.stringify([optionA, optionB, optionC, optionD]),
-                correctAnswer,
-                points,
-                orderIndex,
-            });
-        }
-
-        if (preparedQuestions.length === 0) {
-            throw new Error('File CSV không có câu hỏi hợp lệ để import.');
-        }
-
-        return preparedQuestions;
-    };
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (initialQuizId) {
@@ -190,35 +61,6 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
             isMounted = false;
         };
     }, [courseId, initialQuizId]);
-
-    const addQuestion = () => {
-        const newQuestion: Question = {
-            id: Math.random().toString(36).substr(2, 9),
-            text: '',
-            options: ['', '', '', ''],
-            correctAnswer: 0
-        };
-        setQuestions([...questions, newQuestion]);
-    };
-
-    const removeQuestion = (id: string) => {
-        setQuestions(questions.filter(q => q.id !== id));
-    };
-
-    const updateQuestion = (id: string, updates: Partial<Question>) => {
-        setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
-    };
-
-    const updateOption = (qId: string, oIdx: number, value: string) => {
-        setQuestions(questions.map(q => {
-            if (q.id === qId) {
-                const newOptions = [...q.options];
-                newOptions[oIdx] = value;
-                return { ...q, options: newOptions };
-            }
-            return q;
-        }));
-    };
 
     const handleDownloadTemplate = () => {
         const rows = [
@@ -267,9 +109,40 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
         });
     };
 
+    const handleDeleteQuiz = async () => {
+        if (!savedQuizId) return;
+        
+        if (!window.confirm('Bạn có chắc chắn muốn xóa bài thi này và tạo lại không? Toàn bộ câu hỏi cũ sẽ bị xóa.')) {
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            await quizService.deleteQuiz(savedQuizId);
+            setSavedQuizId('');
+            setQuizFile(null);
+            setCsvPreviewCount(null);
+            setCsvPreviewFirst('');
+            onQuizLinked?.('');
+            toast({
+                title: 'Đã xóa bài thi',
+                description: 'Bạn có thể upload lại file CSV để tạo bài thi mới.',
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Lỗi không xác định khi xóa.';
+            toast({
+                title: 'Lỗi xóa bài thi',
+                description: message,
+                variant: 'destructive',
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const handleSave = async () => {
         if (savedQuizId) {
-            toast({ title: 'Quiz đã được tạo', description: 'Khóa học này đã có quiz trong phiên làm việc hiện tại. Tránh bấm lưu lặp để không tạo quiz trùng.', variant: 'destructive' });
+            toast({ title: 'Quiz đã tồn tại', description: 'Khóa học này đã có bài thi cuối khóa, không cần tạo lại.', variant: 'destructive' });
             return;
         }
 
@@ -278,32 +151,25 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
             return;
         }
 
-        if (!quizFile && questions.length === 0) {
-            toast({ title: 'Chưa có dữ liệu quiz', description: 'Vui lòng upload file CSV hoặc thêm ít nhất một câu hỏi.', variant: 'destructive' });
+        if (!quizFile) {
+            toast({ title: 'Chưa chọn file CSV', description: 'Vui lòng upload file CSV chứa bộ câu hỏi.', variant: 'destructive' });
             return;
         }
 
-        if (!quizFile) {
-            const invalid = questions.find(q =>
-                !q.text.trim() || q.options.some(o => !o.trim())
-            );
-            if (invalid) {
-                toast({ title: 'Dữ liệu chưa đầy đủ', description: 'Vui lòng điền nội dung cho tất cả câu hỏi và các lựa chọn.', variant: 'destructive' });
-                return;
-            }
-        }
-
-        if (Number.isNaN(passingScore) || passingScore < 0 || passingScore > 100) {
+        const parsedPassingScore = Number(passingScore);
+        if (Number.isNaN(parsedPassingScore) || parsedPassingScore < 0 || parsedPassingScore > 100) {
             toast({ title: 'Điểm đạt không hợp lệ', description: 'Điểm đạt phải từ 0 đến 100.', variant: 'destructive' });
             return;
         }
 
-        if (Number.isNaN(timeLimit) || timeLimit <= 0) {
+        const parsedTimeLimit = Number(timeLimit);
+        if (Number.isNaN(parsedTimeLimit) || parsedTimeLimit <= 0) {
             toast({ title: 'Thời lượng không hợp lệ', description: 'Thời gian làm bài phải lớn hơn 0 phút.', variant: 'destructive' });
             return;
         }
 
-        if (Number.isNaN(maxAttempts) || maxAttempts <= 0) {
+        const parsedMaxAttempts = Number(maxAttempts);
+        if (Number.isNaN(parsedMaxAttempts) || parsedMaxAttempts <= 0) {
             toast({ title: 'Số lượt làm không hợp lệ', description: 'Số lượt làm tối đa phải lớn hơn 0.', variant: 'destructive' });
             return;
         }
@@ -316,81 +182,60 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
             orderIndex: number;
         }> | null = null;
 
-        if (quizFile) {
-            const extension = quizFile.name.split('.').pop()?.toLowerCase();
-            if (extension !== 'csv') {
-                toast({
-                    title: 'Định dạng chưa hỗ trợ',
-                    description: 'Để tránh tạo ghost quiz, hiện chỉ cho phép import CSV (có thể mở/sửa bằng Excel rồi lưu lại .csv).',
-                    variant: 'destructive'
-                });
-                return;
-            }
+        const extension = quizFile.name.split('.').pop()?.toLowerCase();
+        if (extension !== 'csv') {
+            toast({
+                title: 'Định dạng chưa hỗ trợ',
+                description: 'Để tránh tạo ghost quiz, hiện chỉ cho phép import CSV.',
+                variant: 'destructive'
+            });
+            return;
+        }
 
-            try {
-                preparedCsvQuestions = await parseQuestionsFromCsv(quizFile);
-            } catch (error) {
-                const message = error instanceof Error ? error.message : 'Không thể đọc file CSV.';
-                toast({ title: 'CSV không hợp lệ', description: message, variant: 'destructive' });
-                return;
-            }
+        try {
+            preparedCsvQuestions = await parseQuestionsFromCsv(quizFile);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Không thể đọc file CSV.';
+            toast({ title: 'CSV không hợp lệ', description: message, variant: 'destructive' });
+            return;
         }
 
         setIsSaving(true);
-        let createdQuizId = '';
         try {
             const { quizId } = await quizService.createQuiz(courseId, {
                 quizTitle: quizTitle.trim(),
                 description: description.trim() || undefined,
-                timeLimitMinutes: timeLimit,
-                passingScore,
-                maxAttempts,
+                timeLimitMinutes: parsedTimeLimit,
+                passingScore: parsedPassingScore,
+                maxAttempts: parsedMaxAttempts,
                 shuffleQuestions,
                 shuffleAnswers,
                 showCorrectAnswers,
             });
-            createdQuizId = quizId;
             setSavedQuizId(quizId);
             onQuizLinked?.(quizId);
 
-            if (preparedCsvQuestions) {
+            if (preparedCsvQuestions && preparedCsvQuestions.length > 0) {
                 for (const question of preparedCsvQuestions) {
                     await quizService.createQuestion(quizId, question);
                 }
 
                 toast({
                     title: 'Đã tạo quiz cuối khóa',
-                    description: `Đã import ${preparedCsvQuestions.length} câu hỏi cho khóa ${courseLabel}. Học viên sẽ được đánh giá đạt/không đạt dựa trên quiz này.`,
+                    description: `Đã import ${preparedCsvQuestions.length} câu hỏi cho khóa ${courseLabel}.`,
                 });
             } else {
-                for (const [index, question] of questions.entries()) {
-                    await quizService.createQuestion(quizId, {
-                        questionText: question.text.trim(),
-                        options: JSON.stringify(question.options.map((option) => option.trim())),
-                        correctAnswer: ANSWER_LABELS[question.correctAnswer],
-                        orderIndex: index + 1,
-                        points: 1,
-                    });
-                }
-
                 toast({
-                    title: 'Đã tạo quiz cuối khóa',
-                    description: `Đã lưu ${questions.length} câu hỏi cho khóa ${courseLabel}. Học viên sẽ được đánh giá đạt/không đạt dựa trên quiz này.`,
+                    title: 'Đã tạo quiz',
+                    description: `Vui lòng cập nhật câu hỏi sau.`,
                 });
             }
 
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Không thể tạo bài thi cuối khóa.';
-            const duplicateHint = message.toLowerCase().includes('mỗi khóa chỉ có 1 quiz') || message.toLowerCase().includes('đã có quiz');
-            const partialCreationHint = createdQuizId
-                ? ' Quiz đã được tạo trên hệ thống. Hãy mở lại tab Bài thi cuối khóa để kiểm tra danh sách câu hỏi.'
-                : '';
-
             toast({
                 title: 'Không thể tạo quiz',
-                description: duplicateHint
-                    ? 'Khóa học có thể đã có quiz trên hệ thống (mỗi khóa chỉ 1 quiz). Vui lòng dùng quiz đã gắn với khóa học này.'
-                    : `${message}${partialCreationHint}`,
+                description: message,
                 variant: 'destructive'
             });
         } finally {
@@ -402,7 +247,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
         <div className="space-y-8">
             <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-[#0F4C75]">
                 <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Quiz cuối khóa đã nối BE. Để tránh tạo ghost quiz, hệ thống chỉ nhận import CSV đã kiểm tra hợp lệ trước khi tạo quiz.</span>
+                <span>Hệ thống kiểm tra nội dung file trước khi tạo bài thi để đảm bảo dữ liệu hợp lệ. Chỉ hỗ trợ định dạng CSV.</span>
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
                 <div className="space-y-1">
@@ -418,8 +263,9 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={passingScore} 
-                            onChange={(e) => setPassingScore(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => setPassingScore(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
+                            disabled={Boolean(savedQuizId)}
                         />
                     </div>
                     <div className="space-y-1">
@@ -429,8 +275,9 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={timeLimit} 
-                            onChange={(e) => setTimeLimit(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => setTimeLimit(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
+                            disabled={Boolean(savedQuizId)}
                         />
                     </div>
                     <div className="space-y-1">
@@ -438,8 +285,9 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={maxAttempts} 
-                            onChange={(e) => setMaxAttempts(parseInt(e.target.value, 10))}
+                            onChange={(e) => setMaxAttempts(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
+                            disabled={Boolean(savedQuizId)}
                         />
                     </div>
                 </div>
@@ -454,6 +302,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                             onChange={(e) => setQuizTitle(e.target.value)}
                             placeholder="Nhập tiêu đề bài thi cuối khóa"
                             className="rounded-2xl border-gray-200"
+                            disabled={Boolean(savedQuizId)}
                         />
                     </div>
                     <div className="space-y-2">
@@ -464,20 +313,21 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                             placeholder="Mô tả mục tiêu đánh giá cuối khóa"
                             rows={4}
                             className="rounded-2xl border-gray-200"
+                            disabled={Boolean(savedQuizId)}
                         />
                     </div>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="flex items-center justify-between rounded-2xl border border-gray-100 px-4 py-3">
                             <Label className="text-sm font-semibold text-gray-700">Trộn câu hỏi</Label>
-                            <Switch checked={shuffleQuestions} onCheckedChange={setShuffleQuestions} />
+                            <Switch checked={shuffleQuestions} onCheckedChange={setShuffleQuestions} disabled={Boolean(savedQuizId)} />
                         </div>
                         <div className="flex items-center justify-between rounded-2xl border border-gray-100 px-4 py-3">
                             <Label className="text-sm font-semibold text-gray-700">Trộn đáp án</Label>
-                            <Switch checked={shuffleAnswers} onCheckedChange={setShuffleAnswers} />
+                            <Switch checked={shuffleAnswers} onCheckedChange={setShuffleAnswers} disabled={Boolean(savedQuizId)} />
                         </div>
                         <div className="flex items-center justify-between rounded-2xl border border-gray-100 px-4 py-3">
                             <Label className="text-sm font-semibold text-gray-700">Hiện đáp án đúng</Label>
-                            <Switch checked={showCorrectAnswers} onCheckedChange={setShowCorrectAnswers} />
+                            <Switch checked={showCorrectAnswers} onCheckedChange={setShowCorrectAnswers} disabled={Boolean(savedQuizId)} />
                         </div>
                     </div>
                 </Card>
@@ -488,13 +338,14 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         Upload bộ câu hỏi
                     </div>
                     <p className="text-sm text-gray-500">Chỉ hỗ trợ `.csv` để kiểm tra dữ liệu trước khi tạo quiz (tránh tạo ghost quiz).</p>
-                    <Button type="button" variant="outline" onClick={handleDownloadTemplate} className="justify-start border-[#3282B8]/30 text-[#0F4C75] hover:bg-white">
+                    <Button type="button" variant="outline" onClick={handleDownloadTemplate} className="justify-start border-[#3282B8]/30 text-[#0F4C75] hover:bg-white" disabled={Boolean(savedQuizId)}>
                         <FileSpreadsheet className="w-4 h-4 mr-2" />
                         Tải template import quiz
                     </Button>
                     <Input
                         type="file"
                         accept=".csv"
+                        disabled={Boolean(savedQuizId)}
                         onChange={async (e) => {
                             const file = e.target.files?.[0] ?? null;
                             setQuizFile(file);
@@ -525,98 +376,36 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                                 )}
                             </div>
                         ) : (
-                            <span>Chưa chọn file. Bạn vẫn có thể nhập câu hỏi thủ công ở phần bên dưới.</span>
+                            <span>Chưa chọn file CSV (hỗ trợ tối đa 100 câu).</span>
                         )}
                     </div>
                     <div className="flex items-start gap-2 text-xs text-gray-500">
                         <UploadCloud className="w-4 h-4 mt-0.5 shrink-0" />
-                        <span>BE đang parse các cột theo thứ tự: QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, Explanation, Points, OrderIndex. Với nhập tay, đáp án đúng cũng sẽ được lưu theo mã A/B/C/D để khớp với file import.</span>
+                        <span>Các cột theo thứ tự: QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, Explanation, Points, OrderIndex. Đáp án đúng lưu mã A/B/C/D.</span>
                     </div>
                 </Card>
             </div>
 
-            <div className="space-y-6">
-                {questions.map((question, qIdx) => (
-                    <Card key={question.id} className="p-6 rounded-3xl border-gray-100 shadow-sm relative group overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#3282B8]" />
-                        <div className="flex justify-between items-start mb-6">
-                            <Badge variant="secondary" className="bg-blue-50 text-[#3282B8] border-0 font-bold px-3 py-1">
-                                Câu hỏi {qIdx + 1}
-                            </Badge>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => removeQuestion(question.id)}
-                                className="text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Xóa
-                            </Button>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Label className="font-bold text-gray-700">Nội dung câu hỏi</Label>
-                                <Input 
-                                    placeholder="Nhập câu hỏi của bạn..." 
-                                    value={question.text}
-                                    onChange={(e) => updateQuestion(question.id, { text: e.target.value })}
-                                    className="rounded-2xl border-gray-100 h-12 text-lg font-medium shadow-sm focus:ring-[#3282B8]"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {question.options.map((option, oIdx) => (
-                                    <div 
-                                        key={oIdx} 
-                                        className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${
-                                            question.correctAnswer === oIdx 
-                                            ? 'border-green-200 bg-green-50/30 ring-1 ring-green-100' 
-                                            : 'border-gray-50 bg-gray-50/30'
-                                        }`}
-                                    >
-                                        <button 
-                                            type="button"
-                                            onClick={() => updateQuestion(question.id, { correctAnswer: oIdx })}
-                                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                                question.correctAnswer === oIdx 
-                                                ? 'bg-green-500 border-green-500 text-white' 
-                                                : 'border-gray-200 bg-white'
-                                            }`}
-                                        >
-                                            {ANSWER_LABELS[oIdx]}
-                                        </button>
-                                        <Input 
-                                            value={option}
-                                            onChange={(e) => updateOption(question.id, oIdx, e.target.value)}
-                                            placeholder={`Lựa chọn ${ANSWER_LABELS[oIdx]}...`}
-                                            className="border-0 bg-transparent h-auto p-0 focus:ring-0 font-medium placeholder:text-gray-300"
-                                        />
-                                        {question.correctAnswer === oIdx && (
-                                            <CheckCircle2 className="w-5 h-5 text-green-500 ml-auto shrink-0" />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </Card>
-                ))}
-
-                <Button 
-                    variant="outline" 
-                    onClick={addQuestion}
-                    className="w-full border-dashed border-2 py-12 rounded-3xl hover:bg-blue-50/50 hover:border-[#3282B8]/30 transition-all text-gray-400 font-bold group"
-                >
-                    <PlusCircle className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform text-[#3282B8]" />
-                    THÊM CÂU HỎI MỚI
-                </Button>
-            </div>
-
             {savedQuizId && (
-                <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 space-y-3">
-                    <p>
-                        Quiz cuối khóa đã được gắn với khóa học này trên hệ thống. Học viên sẽ tự vào quiz theo khóa học mà không cần nhập mã.
-                    </p>
+                <div className="flex items-center justify-between rounded-2xl border border-green-200 bg-green-50 px-5 py-4">
+                    <div className="space-y-1 text-sm text-green-800">
+                        <p className="font-bold flex items-center gap-2">
+                            <Award className="w-5 h-5" />
+                            Quiz cuối khóa đã được ghi nhận trên hệ thống
+                        </p>
+                        <p className="opacity-90">
+                            Học viên sẽ tự động tham gia bài kiểm tra này theo chương trình học. Không cần cung cấp mã thủ công.
+                        </p>
+                    </div>
+                    <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteQuiz}
+                        disabled={isDeleting}
+                        className="rounded-xl px-5 gap-2"
+                    >
+                        {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Xác nhận xóa bài làm lại
+                    </Button>
                 </div>
             )}
 

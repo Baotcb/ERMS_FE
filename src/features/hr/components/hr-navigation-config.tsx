@@ -69,8 +69,11 @@ export const HR_NAV_ITEMS: HRNavItem[] = [
         roles: [USER_ROLES.HR_MANAGER, USER_ROLES.HR, USER_ROLES.DIRECTOR],
         children: [
             { label: 'Kế hoạch đào tạo', href: '/enterprise/hr/training/plans' },
+            { label: 'Danh sách khóa học', href: '/enterprise/hr/training/courses' },
             { label: 'Yêu cầu đào tạo', href: '/enterprise/hr/training/requests' },
             { label: 'Thông báo & Mở lịch', href: '/enterprise/hr/training/schedule' },
+            { label: 'Quản lý Workshop', href: '/enterprise/hr/training/workshop' },
+            { label: 'Quản lý bài giảng', href: '/enterprise/hr/teaching' },
         ],
     },
 ]

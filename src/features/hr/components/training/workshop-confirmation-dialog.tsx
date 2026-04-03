@@ -12,6 +12,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { workshopService } from '@/features/hr/api/workshop-service';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 interface WorkshopConfirmationDialogProps {
     open: boolean;
@@ -27,8 +28,8 @@ export function WorkshopConfirmationDialog({
     const { toast } = useToast();
     const [photos, setPhotos] = useState<string[]>([]);
     const [notes, setNotes] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { execute: upload, isSubmitting: isUploading } = useAsyncAction();
+    const { execute: submit, isSubmitting } = useAsyncAction();
 
     const uploadToCloudinary = async (file: File): Promise<string> => {
         if (!CLOUDINARY_CONFIG.cloudName || !CLOUDINARY_CONFIG.uploadPreset) {
@@ -54,18 +55,19 @@ export function WorkshopConfirmationDialog({
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
 
-        setIsUploading(true);
-        try {
-            const uploaded = await Promise.all(files.map(uploadToCloudinary));
-            setPhotos(prev => [...prev, ...uploaded]);
-            toast({ description: `Đã upload ${uploaded.length} ảnh.` });
-        } catch (error) {
-            const msg = error instanceof Error ? error.message : 'Không thể upload ảnh.';
-            toast({ title: 'Lỗi upload', description: msg, variant: 'destructive' });
-        } finally {
-            setIsUploading(false);
-            e.target.value = '';
-        }
+        await upload(
+            async () => {
+                const uploaded = await Promise.all(files.map(uploadToCloudinary));
+                setPhotos(prev => [...prev, ...uploaded]);
+                toast({ description: `Đã upload ${uploaded.length} ảnh.` });
+            },
+            {
+                errorFallback: 'Không thể upload ảnh.',
+                onSuccess: () => {
+                    e.target.value = '';
+                }
+            }
+        );
     };
 
     const handleRemovePhoto = (index: number) => {
@@ -76,30 +78,29 @@ export function WorkshopConfirmationDialog({
         if (photos.length === 0) {
             toast({
                 title: 'Thiếu ảnh minh chứng',
-                description: 'Vui lòng upload ít nhất 1 ảnh workshop trước khi xác nhận.',
+                description: 'Vui lòng cung cấp ít nhất 1 hình ảnh minh chứng sự kiện trước khi tiến hành xác nhận.',
                 variant: 'destructive',
             });
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            await workshopService.confirmWorkshopCompletion(courseId, {
+        await submit(
+            async () => await workshopService.confirmWorkshopCompletion(courseId, {
                 evidencePhotoUrls: photos,
                 notes: notes || undefined,
-            });
-            toast({
-                title: 'Xác nhận thành công!',
-                description: 'Workshop đã được xác nhận hoàn thành. Các trainee giờ có thể làm bài kiểm tra.',
-            });
-            onOpenChange(false);
-            onConfirmed?.();
-        } catch (error) {
-            const msg = error instanceof Error ? error.message : 'Không thể xác nhận workshop.';
-            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
+            }),
+            {
+                successMessage: {
+                    title: 'Xác nhận thành công!',
+                    description: 'Buổi đào tạo đã được xác nhận hoàn thành. Các học viên giờ có thể làm bài kiểm tra.',
+                },
+                errorFallback: 'Không thể xác nhận workshop.',
+                onSuccess: () => {
+                    onOpenChange(false);
+                    onConfirmed?.();
+                }
+            }
+        );
     };
 
     return (
@@ -112,7 +113,7 @@ export function WorkshopConfirmationDialog({
                     </DialogTitle>
                     <DialogDescription className="text-gray-500">
                         Xác nhận rằng workshop <strong className="text-gray-700">{courseName}</strong> đã diễn ra thành công.
-                        Upload ảnh minh chứng để trainee có thể làm bài kiểm tra.
+                        Vui lòng tải lên hình ảnh minh chứng để hệ thống tiếp tục mở khóa bài kiểm tra đánh giá.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -150,9 +151,9 @@ export function WorkshopConfirmationDialog({
                             )}
                             <div className="text-center">
                                 <p className="font-bold text-[#0F4C75]">
-                                    {isUploading ? 'Đang upload...' : 'Kéo thả hoặc nhấn để chọn ảnh'}
+                                    {isUploading ? 'Đang tải lên...' : 'Kéo thả hoặc nhấn để chọn ảnh'}
                                 </p>
-                                <p className="text-xs text-gray-400 mt-1">PNG, JPG tối đa 10MB mỗi ảnh</p>
+                                <p className="text-xs text-gray-400 mt-1">Hỗ trợ định dạng PNG, JPG (tối đa 10MB/ảnh)</p>
                             </div>
                         </label>
                         <input
@@ -170,7 +171,7 @@ export function WorkshopConfirmationDialog({
                     <div className="space-y-2">
                         <Label className="text-sm font-bold text-gray-700">Ghi chú (tùy chọn)</Label>
                         <Textarea
-                            placeholder="VD: Workshop diễn ra tốt đẹp, 25/30 trainee tham dự..."
+                            placeholder="VD: Buổi đào tạo diễn ra tốt đẹp, 25/30 học viên tham dự..."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             className="min-h-[80px] rounded-xl border-gray-200"

@@ -11,12 +11,8 @@ import {
     GraduationCap,
     LayoutDashboard,
 } from 'lucide-react'
-import { useAuth } from '@/features/core/auth/hooks/use-auth'
-import { canAccessLearningWorkspace } from '@/features/hr/utils/learning-access'
-import { canAccessTeachingWorkspace } from '@/features/hr/utils/teaching-access'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/stores/use-app-store'
-import { USER_ROLES } from '@/utils/constants'
 
 interface SidebarItem {
     title: string
@@ -62,7 +58,6 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
 
 export const DirectorSidebar = memo(function DirectorSidebar() {
     const pathname = usePathname()
-    const { user } = useAuth()
     const isSidebarOpen = useAppStore((state) => state.isSidebarOpen)
     const isMobileSidebarOpen = useAppStore((state) => state.isMobileSidebarOpen)
     const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
@@ -98,32 +93,12 @@ export const DirectorSidebar = memo(function DirectorSidebar() {
 
             const children = [...item.children]
 
-            if (
-                canAccessTeachingWorkspace(user, USER_ROLES.DIRECTOR) &&
-                !children.some((child) => child.href === '/enterprise/director/teaching')
-            ) {
-                children.push({
-                    label: 'Khóa học giảng dạy',
-                    href: '/enterprise/director/teaching',
-                })
-            }
-
-            if (
-                canAccessLearningWorkspace(user, USER_ROLES.DIRECTOR) &&
-                !children.some((child) => child.href === '/enterprise/director/learning')
-            ) {
-                children.push({
-                    label: 'Khóa học của tôi',
-                    href: '/enterprise/director/learning',
-                })
-            }
-
             return {
                 ...item,
                 children,
             }
         })
-    }, [user])
+    }, [])
 
     const sidebarContent = (
         <div className="flex h-full flex-col border-r border-gray-200 bg-white">

@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { readApiErrorMessage } from '@/lib/api-error';
 import { logger } from '@/lib/logger';
 import type {
     CourseProgressDto,
@@ -8,23 +9,8 @@ import type {
     UpdateLessonProgressCommand,
 } from '@/features/employee/types/learning-quiz-types';
 
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-    try {
-        const body = await response.text();
-        if (!body) {
-            return fallback;
-        }
-
-        try {
-            const json = JSON.parse(body);
-            return json.message ?? json.Message ?? json.title ?? json.detail ?? fallback;
-        } catch {
-            return body;
-        }
-    } catch {
-        return fallback;
-    }
-}
+// Re-export for backward compatibility — callers using readErrorMessage
+const readErrorMessage = readApiErrorMessage;
 
 interface ParsedErrorDetail {
     message: string;
@@ -175,6 +161,16 @@ export const learningQuizService = {
         return response.json();
     },
 
+    async getLessonProgressByCourse(courseId: string): Promise<{ lessonId: string; status: string; watchPercentage: number; completedAt: string | null }[]> {
+        try {
+            const response = await apiClient.get(`/api/Lessons/lesson-progress/course/${courseId}`);
+            if (!response.ok) return [];
+            return response.json();
+        } catch {
+            return [];
+        }
+    },
+
     async updateLessonProgress(data: UpdateLessonProgressCommand): Promise<void> {
         const response = await apiClient.post('/api/Lessons/lesson-progress', data, { retries: 0 });
         if (!response.ok) {
@@ -216,19 +212,32 @@ export const learningQuizService = {
         }
     },
 
-    async startQuiz(courseId: string): Promise<{ attemptId: string }> {
+    async startQuiz(courseId: string): Promise<{ attemptId: string; timeLimitMinutes?: number; maxAttempts?: number; passingScore?: number; totalQuestions?: number }> {
         const response = await apiClient.post(`/api/Course/${courseId}/quizzes/start`, {}, { retries: 0 });
         if (!response.ok) {
             const rawMessage = await readErrorMessage(response, 'Không thể bắt đầu bài thi.');
             throw new Error(mapStartQuizErrorMessage(rawMessage, response.status));
         }
 
-        const result = await response.json() as string | { attemptId?: string; id?: string };
+        const result = await response.json() as string | {
+            attemptId?: string;
+            id?: string;
+            timeLimitMinutes?: number;
+            maxAttempts?: number;
+            passingScore?: number;
+            totalQuestions?: number;
+        };
         if (typeof result === 'string') {
             return { attemptId: result };
         }
 
-        return { attemptId: result.attemptId ?? result.id ?? '' };
+        return {
+            attemptId: result.attemptId ?? result.id ?? '',
+            timeLimitMinutes: result.timeLimitMinutes ?? undefined,
+            maxAttempts: result.maxAttempts ?? undefined,
+            passingScore: result.passingScore ?? undefined,
+            totalQuestions: result.totalQuestions ?? undefined,
+        };
     },
 
     async getQuizQuestions(attemptId: string): Promise<LearnerQuizQuestionDto[]> {
@@ -250,6 +259,24 @@ export const learningQuizService = {
         const response = await apiClient.post(`/api/quizzes/attempts/${attemptId}/submit`, {});
         if (!response.ok) {
             throw new Error(await readErrorMessage(response, 'Không thể nộp bài thi.'));
+        }
+        return response.json();
+    },
+
+    async getQuizResult(courseId: string): Promise<{ score: number; isPassed: boolean; correctAnswers: number; totalQuestions: number; attemptCount: number; maxAttempts: number | null; completedAt: string | null; attemptId?: string } | null> {
+        try {
+            const response = await apiClient.get(`/api/Course/${courseId}/quiz-result`);
+            if (response.status === 204 || !response.ok) return null;
+            return response.json();
+        } catch {
+            return null;
+        }
+    },
+
+    async getQuizReview(attemptId: string): Promise<import('@/features/employee/types/learning-quiz-types').QuizReviewDto> {
+        const response = await apiClient.get(`/api/quizzes/attempts/${attemptId}/review`);
+        if (!response.ok) {
+            throw new Error(await readErrorMessage(response, 'Không thể tải chi tiết đáp án.'));
         }
         return response.json();
     },
