@@ -124,8 +124,8 @@ export function CertificateExportDialog({ open, onOpenChange, data: initialData 
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        } catch (err) {
-            console.error('[Cert] PNG download failed:', err);
+        } catch {
+            // PNG export failed — UI will reset loading state
         } finally {
             setIsDownloading(false);
         }

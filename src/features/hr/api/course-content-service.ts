@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api-client';
 import { readApiErrorMessage } from '@/lib/api-error';
+import { asRecord, pickString, pickNumber, findArrayInPayload } from '@/lib/api-normalizer';
 import { CourseSection, Lesson, CreateLessonCommand, Material } from '../types/course-content-types';
 
 const CURRICULUM_UNAVAILABLE_KEY_PREFIX = 'course-curriculum-endpoint-unavailable';
@@ -15,46 +16,18 @@ function cacheCurriculumUnavailable(courseId: string): void {
     );
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-    if (value && typeof value === 'object') {
-        return value as Record<string, unknown>;
-    }
 
-    return {};
-}
-
-function readString(record: Record<string, unknown>, ...keys: string[]): string {
-    for (const key of keys) {
-        const value = record[key];
-        if (typeof value === 'string' && value.trim()) {
-            return value;
-        }
-    }
-
-    return '';
-}
-
-function readNumber(record: Record<string, unknown>, fallback: number, ...keys: string[]): number {
-    for (const key of keys) {
-        const value = record[key];
-        if (typeof value === 'number' && Number.isFinite(value)) {
-            return value;
-        }
-    }
-
-    return fallback;
-}
 
 function normalizeMaterial(raw: unknown): Material {
     const record = asRecord(raw);
 
     return {
-        id: readString(record, 'id', 'Id'),
-        lessonId: readString(record, 'lessonId', 'LessonId'),
-        title: readString(record, 'title', 'Title', 'fileName', 'FileName'),
-        fileUrl: readString(record, 'fileUrl', 'FileUrl', 'url', 'Url'),
-        fileType: readString(record, 'fileType', 'FileType'),
-        fileSize: readNumber(record, 0, 'fileSize', 'FileSize'),
+        id: pickString(record, 'id', 'Id'),
+        lessonId: pickString(record, 'lessonId', 'LessonId'),
+        title: pickString(record, 'title', 'Title', 'fileName', 'FileName'),
+        fileUrl: pickString(record, 'fileUrl', 'FileUrl', 'url', 'Url'),
+        fileType: pickString(record, 'fileType', 'FileType'),
+        fileSize: pickNumber(record, 0, 'fileSize', 'FileSize'),
     };
 }
 
@@ -73,14 +46,14 @@ function normalizeLesson(raw: unknown): Lesson {
     const record = asRecord(raw);
 
     return {
-        id: readString(record, 'id', 'Id', 'lessonId', 'LessonId', 'lessonID', 'LessonID'),
-        courseId: readString(record, 'courseId', 'CourseId'),
-        sectionId: readString(record, 'sectionId', 'SectionId') || undefined,
-        title: readString(record, 'title', 'Title', 'lessonTitle', 'LessonTitle'),
-        description: readString(record, 'description', 'Description') || undefined,
-        content: readString(record, 'content', 'Content') || undefined,
-        videoUrl: readString(record, 'videoUrl', 'VideoUrl') || undefined,
-        durationMinutes: readNumber(
+        id: pickString(record, 'id', 'Id', 'lessonId', 'LessonId', 'lessonID', 'LessonID'),
+        courseId: pickString(record, 'courseId', 'CourseId'),
+        sectionId: pickString(record, 'sectionId', 'SectionId') || undefined,
+        title: pickString(record, 'title', 'Title', 'lessonTitle', 'LessonTitle'),
+        description: pickString(record, 'description', 'Description') || undefined,
+        content: pickString(record, 'content', 'Content') || undefined,
+        videoUrl: pickString(record, 'videoUrl', 'VideoUrl') || undefined,
+        durationMinutes: pickNumber(
             record,
             0,
             'durationMinutes',
@@ -90,7 +63,7 @@ function normalizeLesson(raw: unknown): Lesson {
             'videoDurationMinutes',
             'VideoDurationMinutes'
         ),
-        orderIndex: readNumber(record, 0, 'orderIndex', 'OrderIndex'),
+        orderIndex: pickNumber(record, 0, 'orderIndex', 'OrderIndex'),
         materials: (() => {
             const mats: ReturnType<typeof normalizeMaterial>[] = Array.isArray(record.materials)
                 ? record.materials.map((item) => normalizeMaterial(item))
@@ -98,13 +71,13 @@ function normalizeLesson(raw: unknown): Lesson {
                     ? (record.Materials as unknown[]).map((item) => normalizeMaterial(item))
                     : [];
             // Map DocumentUrl from backend as a material entry
-            const docUrl = readString(record, 'documentUrl', 'DocumentUrl');
+            const docUrl = pickString(record, 'documentUrl', 'DocumentUrl');
             if (docUrl) {
                 const fileName = docUrl.split('/').pop()?.split('?')[0] || 'Tài liệu đính kèm';
                 const ext = fileName.split('.').pop()?.toUpperCase() || 'FILE';
                 mats.push({
-                    id: `doc-${readString(record, 'id', 'Id')}`,
-                    lessonId: readString(record, 'id', 'Id', 'lessonId', 'LessonId'),
+                    id: `doc-${pickString(record, 'id', 'Id')}`,
+                    lessonId: pickString(record, 'id', 'Id', 'lessonId', 'LessonId'),
                     title: decodeURIComponent(fileName),
                     fileUrl: docUrl,
                     fileType: ext,
@@ -116,55 +89,10 @@ function normalizeLesson(raw: unknown): Lesson {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function normalizeSection(raw: unknown): CourseSection {
-    const record = asRecord(raw);
-    const lessons = Array.isArray(record.lessons)
-        ? (record.lessons as unknown[]).map((item) => normalizeLesson(item))
-        : Array.isArray(record.Lessons)
-            ? (record.Lessons as unknown[]).map((item) => normalizeLesson(item))
-            : [];
 
-    return {
-        id: readString(record, 'id', 'Id'),
-        courseId: readString(record, 'courseId', 'CourseId'),
-        title: readString(record, 'title', 'Title', 'sectionTitle', 'SectionTitle'),
-        orderIndex: readNumber(record, 0, 'orderIndex', 'OrderIndex'),
-        lessons,
-    };
-}
-
-function findCollectionByKeys(payload: unknown, keys: string[]): unknown[] {
-    if (Array.isArray(payload)) {
-        return payload;
-    }
-
-    if (!payload || typeof payload !== 'object') {
-        return [];
-    }
-
-    const record = payload as Record<string, unknown>;
-
-    for (const key of keys) {
-        const value = record[key];
-        if (Array.isArray(value)) {
-            return value;
-        }
-    }
-
-    for (const key of keys) {
-        const value = record[key];
-        const nested = findCollectionByKeys(value, keys);
-        if (nested.length > 0) {
-            return nested;
-        }
-    }
-
-    return [];
-}
 
 function extractLessonsPayload(payload: unknown): unknown[] {
-    return findCollectionByKeys(payload, [
+    return findArrayInPayload(payload, [
         'lessons',
         'Lessons',
         'data',

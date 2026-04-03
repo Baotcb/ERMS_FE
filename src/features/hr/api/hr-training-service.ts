@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api-client';
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { TrainingRequestsResult } from '../../dept-head/types/training-types';
 import { CreateTrainingPlan, CloseTrainingPlanRequest, TrainingPlansResult } from '../types/training-plan-types';
+import { fetchAllPages } from '../utils/fetch-all-pages';
 
 export const hrTrainingService = {
     async getRequests(params?: {
@@ -29,29 +30,23 @@ export const hrTrainingService = {
 
     /** Fetch ALL pending requests (no paging). Only used by consolidate-requests page. */
     async getAllPendingRequests(): Promise<TrainingRequestsResult> {
-        const allItems: TrainingRequestsResult['items'] = [];
-        let page = 1;
-        const pageSize = DEFAULT_PAGE_SIZE;
+        const allItems = await fetchAllPages<TrainingRequestsResult['items'][number]>(
+            async (page, pageSize) => {
+                const searchParams = new URLSearchParams({
+                    page: String(page),
+                    pageSize: String(pageSize),
+                    status: 'Pending',
+                });
 
-        while (true) {
-            const searchParams = new URLSearchParams({
-                page: String(page),
-                pageSize: String(pageSize),
-                status: 'Pending',
-            });
+                const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
 
-            const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
+                if (!response.ok) {
+                    throw new Error('Không thể tải danh sách yêu cầu');
+                }
 
-            if (!response.ok) {
-                throw new Error('Không thể tải danh sách yêu cầu');
+                return response.json();
             }
-
-            const result: TrainingRequestsResult = await response.json();
-            allItems.push(...result.items);
-
-            if (page >= result.totalPages || result.items.length === 0) break;
-            page++;
-        }
+        );
 
         return {
             items: allItems,

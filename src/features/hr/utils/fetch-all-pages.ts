@@ -25,8 +25,7 @@ export async function fetchAllPages<T>(
             }
 
             page += 1;
-        } catch (error) {
-            console.error('Error in fetchAllPages for page', page, error);
+        } catch {
             break; // Break on error to avoid infinite loops
         }
     }

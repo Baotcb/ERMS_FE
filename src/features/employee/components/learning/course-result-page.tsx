@@ -119,8 +119,8 @@ export function CourseResultPage({
             if (reviewData && reviewData.items) {
               setReviewItems(reviewData.items);
             }
-          } catch (err) {
-            console.error("Failed to load quiz review:", err);
+          } catch {
+            // Quiz review is optional — silently ignore
           }
         }
       } catch (error) {

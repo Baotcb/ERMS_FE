@@ -31,6 +31,13 @@ export const USER_ROLES = {
     CANDIDATE: 'Candidate',
 } as const
 
+/** Roles that have access to HR teaching workspace */
+export const HR_ROLES = [
+    USER_ROLES.HR_MANAGER,
+    USER_ROLES.HR,
+    USER_ROLES.TRAINER,
+] as const
+
 // Role → dashboard redirect mapping
 export const ROLE_DASHBOARD_MAP: Record<string, string> = {
     [USER_ROLES.HR_MANAGER]: '/enterprise/hr/dashboard',

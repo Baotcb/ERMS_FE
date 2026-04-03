@@ -89,12 +89,6 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
             }
 
             setLessons(draftLessons);
-            if (draftLessons.length > 0) {
-                toast({
-                    title: 'Đã nạp dữ liệu nháp local',
-                    description: 'Backend chưa trả curriculum, đang hiển thị bản nháp local đã lưu.',
-                });
-            }
         } finally {
             hasLoadedCurriculumRef.current = true;
             setIsLoading(false);

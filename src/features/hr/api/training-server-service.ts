@@ -1,5 +1,6 @@
 import { serverFetch } from '@/lib/server-fetch';
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
+import { pickString, pickNumber, findArrayInPayload } from '@/lib/api-normalizer';
 import { TrainingRequestsResult } from '../../dept-head/types/training-types';
 import { TrainingPlansResult } from '../types/training-plan-types';
 import { Course, CourseResult } from '../types/course-types';
@@ -36,34 +37,7 @@ export interface DepartmentTrainingResultsResponse {
     sourceEndpoint: string | null;
 }
 
-function pickString(source: Record<string, unknown>, ...keys: string[]): string {
-    for (const key of keys) {
-        const value = source[key];
-        if (typeof value === 'string' && value.trim()) {
-            return value.trim();
-        }
-    }
 
-    return '';
-}
-
-function pickNumber(source: Record<string, unknown>, ...keys: string[]): number | null {
-    for (const key of keys) {
-        const value = source[key];
-        if (typeof value === 'number' && Number.isFinite(value)) {
-            return value;
-        }
-
-        if (typeof value === 'string' && value.trim()) {
-            const parsed = Number(value);
-            if (Number.isFinite(parsed)) {
-                return parsed;
-            }
-        }
-    }
-
-    return null;
-}
 
 function normalizeLearningStatus(value: string): DepartmentTrainingResultRecord['learningStatus'] {
     const normalized = value.trim().toLowerCase();
@@ -115,49 +89,19 @@ function normalizeDepartmentTrainingResult(item: unknown, index: number): Depart
         courseCode: pickString(record, 'courseCode', 'CourseCode'),
         assignedAt: pickString(record, 'assignedAt', 'AssignedAt', 'enrolledAt', 'EnrolledAt', 'createdAt', 'CreatedAt') || new Date(0).toISOString(),
         completedAt: pickString(record, 'completedAt', 'CompletedAt') || null,
-        progressPercentage: Math.max(0, Math.min(100, pickNumber(record, 'progressPercentage', 'ProgressPercentage', 'progress', 'Progress', 'completionRate', 'CompletionRate') ?? 0)),
-        totalLessons: pickNumber(record, 'totalLessons', 'TotalLessons') ?? 0,
-        completedLessons: pickNumber(record, 'completedLessons', 'CompletedLessons') ?? 0,
-        quizScore: pickNumber(record, 'quizScore', 'QuizScore', 'score', 'Score', 'quizResult', 'QuizResult'),
-        attemptCount: pickNumber(record, 'attemptCount', 'AttemptCount') ?? 0,
+        progressPercentage: Math.max(0, Math.min(100, pickNumber(record, 0, 'progressPercentage', 'ProgressPercentage', 'progress', 'Progress', 'completionRate', 'CompletionRate'))),
+        totalLessons: pickNumber(record, 0, 'totalLessons', 'TotalLessons'),
+        completedLessons: pickNumber(record, 0, 'completedLessons', 'CompletedLessons'),
+        quizScore: pickNumber(record, 0, 'quizScore', 'QuizScore', 'score', 'Score', 'quizResult', 'QuizResult') || null,
+        attemptCount: pickNumber(record, 0, 'attemptCount', 'AttemptCount'),
         learningStatus: normalizeLearningStatus(pickString(record, 'learningStatus', 'LearningStatus', 'status', 'Status') || 'NotStarted'),
         evaluationStatus: normalizeEvaluationStatus(pickString(record, 'evaluationStatus', 'EvaluationStatus', 'result', 'Result') || 'Pending'),
         note: pickString(record, 'note', 'Note', 'remarks', 'Remarks', 'comment', 'Comment') || undefined,
     };
 }
 
-function findArrayPayload(payload: unknown): unknown[] {
-    if (Array.isArray(payload)) {
-        return payload;
-    }
-
-    if (!payload || typeof payload !== 'object') {
-        return [];
-    }
-
-    const record = payload as Record<string, unknown>;
-    const candidateKeys = ['items', 'data', 'results', 'records', 'value', 'payload'];
-
-    for (const key of candidateKeys) {
-        const value = record[key];
-        if (Array.isArray(value)) {
-            return value;
-        }
-    }
-
-    for (const key of candidateKeys) {
-        const value = record[key];
-        const nested = findArrayPayload(value);
-        if (nested.length > 0) {
-            return nested;
-        }
-    }
-
-    return [];
-}
-
 function extractDepartmentTrainingResults(payload: unknown): DepartmentTrainingResultRecord[] {
-    const collection = findArrayPayload(payload);
+    const collection = findArrayInPayload(payload, ['items', 'data', 'results', 'records', 'value', 'payload']);
 
     return collection
         .map((item, index) => normalizeDepartmentTrainingResult(item, index))

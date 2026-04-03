@@ -27,8 +27,8 @@ export function FeedbackReplyThread({ feedbackId }: FeedbackReplyThreadProps) {
             setLoading(true);
             const data = await feedbackService.getFeedbackReplies(feedbackId);
             setReplies(data || []);
-        } catch (err) {
-            console.error('Lỗi khi tải phản hồi:', err);
+        } catch {
+            // Replies are non-critical — silently ignore
         } finally {
             setLoading(false);
         }
