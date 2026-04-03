@@ -31,6 +31,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import type { RecruitmentPlan, PlanDetail as PlanDetailData } from '@/features/dept-head/types/recruitment-plan-types'
+import { handleApiResponse } from '@/utils/error-handler'
 
 interface PlanDetailProps {
     planId: string
@@ -69,13 +70,19 @@ export function PlanDetail({ planId, headerActions }: PlanDetailProps) {
     // Fetch Plan data
     const { data: plan, error, isLoading, mutate: mutatePlan } = useSWR<RecruitmentPlan>(
         `/api/RecruitmentPlans/${planId}`,
-        () => apiClient.get(`/api/RecruitmentPlans/${planId}`).then(res => res.json())
+        async () => {
+            const response = await apiClient.get(`/api/RecruitmentPlans/${planId}`)
+            return handleApiResponse<RecruitmentPlan>(response, 'Không thể tải chi tiết kế hoạch tuyển dụng')
+        }
     )
 
     // Fetch Plan Details separately since backend doesn't include them in GetRecruitmentPlanById
     const { data: planDetailsResponse, mutate: mutateDetails } = useSWR<PlanDetailData[]>(
         plan ? `/api/plan-details?recruitmentPlanId=${planId}` : null,
-        () => apiClient.get(`/api/plan-details?recruitmentPlanId=${planId}`).then(res => res.json())
+        async () => {
+            const response = await apiClient.get(`/api/plan-details?recruitmentPlanId=${planId}`)
+            return handleApiResponse<PlanDetailData[]>(response, 'Không thể tải danh sách đề xuất tuyển dụng')
+        }
     )
 
     const planDetails = Array.isArray(planDetailsResponse) ? planDetailsResponse : []

@@ -18,27 +18,10 @@ import { Alert, LoadingSpinner } from '@/components/common'
 import { loginSchema } from '../schemas/auth-schemas'
 import { login } from '../api/auth-service'
 import { DEFAULT_ENTERPRISE_DASHBOARD, ROLE_DASHBOARD_MAP, USER_ROLES } from '@/utils/constants'
+import { resolvePostLoginDestination } from '../utils/post-login-destination'
 
 import type { LoginFormData } from '../schemas/auth-schemas'
 import { useAuth } from '../hooks/use-auth'
-
-function resolvePostLoginDestination(role: string | undefined, redirectTarget: string | null) {
-    const dashboard = ROLE_DASHBOARD_MAP[role || ''] || DEFAULT_ENTERPRISE_DASHBOARD
-
-    if (!redirectTarget || !redirectTarget.startsWith('/') || redirectTarget.startsWith('//')) {
-        return role === USER_ROLES.CANDIDATE ? '/' : dashboard
-    }
-
-    if (redirectTarget.startsWith('/api')) {
-        return role === USER_ROLES.CANDIDATE ? '/' : dashboard
-    }
-
-    if (role === USER_ROLES.CANDIDATE) {
-        return redirectTarget.startsWith('/enterprise') ? '/' : redirectTarget
-    }
-
-    return redirectTarget.startsWith('/enterprise') ? redirectTarget : dashboard
-}
 
 export function LoginForm() {
     const searchParams = useSearchParams()
@@ -90,7 +73,14 @@ export function LoginForm() {
                 setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
 
                 const redirectTarget = searchParams.get('redirect')
-                const destination = resolvePostLoginDestination(user.role, redirectTarget)
+                const destination = resolvePostLoginDestination({
+                    role: user.role,
+                    redirectTarget,
+                    candidateRole: USER_ROLES.CANDIDATE,
+                    adminRole: USER_ROLES.ADMIN,
+                    defaultEnterpriseDashboard: DEFAULT_ENTERPRISE_DASHBOARD,
+                    roleDashboardMap: ROLE_DASHBOARD_MAP,
+                })
 
                 setTimeout(() => {
                     window.location.assign(destination)

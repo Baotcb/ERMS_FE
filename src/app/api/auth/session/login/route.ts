@@ -61,7 +61,7 @@ export async function POST(request: Request) {
             const message =
                 data.message ||
                 (backendRes.status === 429
-                    ? 'Too many login attempts. Please wait a minute and try again.'
+                    ? 'Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 1 phút.'
                     : `Login failed with status ${backendRes.status}`)
 
             return NextResponse.json(

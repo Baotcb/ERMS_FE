@@ -7,7 +7,7 @@ export function CandidateApplicationsPage() {
         <div className="topcv-page">
             <div className="topcv-page__container">
                 <div className="topcv-page__main">
-                    <h1 className="topcv-page__title">Viá»‡c lĂ m Ä‘Ă£ á»©ng tuyá»ƒn</h1>
+                    <h1 className="topcv-page__title">Việc làm đã ứng tuyển</h1>
                     <ApplicationList />
                 </div>
 
