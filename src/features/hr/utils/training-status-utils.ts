@@ -10,6 +10,10 @@ export const STATUS_COLORS: Record<string, string> = {
     Rejected: 'bg-amber-100 text-amber-800 border-amber-200',
     Active: 'bg-blue-100 text-blue-800 border-blue-200',
     Completed: 'bg-purple-100 text-purple-800 border-purple-200',
+    Closed: 'bg-slate-100 text-slate-800 border-slate-200',
+    AddedToPlan: 'bg-blue-100 text-blue-800 border-blue-200',
+    Published: 'bg-green-100 text-green-800 border-green-200',
+    Archived: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
 // ─── Status labels ───
@@ -20,6 +24,10 @@ export const STATUS_LABELS: Record<string, string> = {
     Rejected: 'Yêu cầu gửi lại',
     Active: 'Đang triển khai',
     Completed: 'Đã hoàn thành',
+    Closed: 'Đã đóng',
+    AddedToPlan: 'Đã thêm vào KH',
+    Published: 'Đã xuất bản',
+    Archived: 'Đã lưu trữ',
 };
 
 // ─── Review note prefixes ───

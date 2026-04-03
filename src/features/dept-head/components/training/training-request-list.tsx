@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import useSWR from 'swr';
-import { LucideIcon, Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info, ArrowRight, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Clock, AlertTriangle, AlertCircle, Info, ArrowRight, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +27,13 @@ import { TrainingRequestForm } from './training-request-form';
 import { trainingService } from '../../api/training-service';
 import type { TrainingRequestsResult } from '../../types/training-types';
 import { formatVND } from '@/lib/utils';
+import { STATUS_COLORS, STATUS_LABELS } from '@/features/hr/utils/training-status-utils';
+import { TrainingRequestDetail } from './training-request-detail';
+import { TrainingRequest } from '../../types/training-types';
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { TablePagination } from '@/components/common/table-pagination';
 
-const PAGE_SIZE = 7;
+import type { LucideIcon } from 'lucide-react';
 
 const URGENCY_ICONS: Record<string, LucideIcon> = {
     Normal: Info,
@@ -44,46 +47,21 @@ const URGENCY_COLORS: Record<string, string> = {
     Urgent: 'text-red-600',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-    Pending: 'bg-yellow-100 text-yellow-800',
-    Approved: 'bg-green-100 text-green-800',
-    Rejected: 'bg-red-100 text-red-800',
-    AddedToPlan: 'bg-blue-100 text-blue-800',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    Pending: 'Chờ duyệt',
-    Approved: 'Đã duyệt',
-    Rejected: 'Từ chối',
-    AddedToPlan: 'Đã thêm vào KH',
-};
-
-import { TrainingRequestDetail } from './training-request-detail';
-import { TrainingRequest } from '../../types/training-types';
 
 export function TrainingRequestList({ initialData }: { initialData?: TrainingRequestsResult }) {
     const router = useRouter();
-    const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<TrainingRequest | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const debouncedSearch = useDebouncedValue(search, 300);
 
-    const { data, isLoading, mutate } = useSWR<TrainingRequestsResult>(
-        ['/api/TrainingRequest', debouncedSearch, page],
-        () => trainingService.getRequests({ search: debouncedSearch, page, pageSize: PAGE_SIZE }),
-        { fallbackData: initialData }
-    );
-
-    const requests = data?.items || [];
-    const totalPages = data?.totalPages ?? 1;
-    const totalCount = data?.totalCount ?? requests.length;
-
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
+    const {
+        items: requests, totalCount, totalPages, page, setPage,
+        search, handleSearch, isLoading, mutate,
+    } = usePaginatedList({
+        key: ['/api/TrainingRequest'],
+        fetcher: (params) => trainingService.getRequests(params),
+        initialData,
+    });
 
     const renderUrgency = (urgency: string) => {
         const Icon = URGENCY_ICONS[urgency] || Info;
@@ -130,7 +108,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                 </div>
             </div>
 
-            {data?.items?.some((r) => r.status === 'AddedToPlan') && (
+            {requests.some((r: TrainingRequest) => r.status === 'AddedToPlan') && (
                 <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-[#0F4C75]">
                     <ArrowRight className="h-5 w-5 shrink-0 text-blue-500" />
                     <span className="flex-1">
@@ -257,31 +235,7 @@ export function TrainingRequestList({ initialData }: { initialData?: TrainingReq
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Trước
-                    </Button>
-                    <span className="text-sm font-medium text-slate-600">
-                        Trang {page} / {totalPages}
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        Tiếp
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
+                <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             <TrainingRequestForm

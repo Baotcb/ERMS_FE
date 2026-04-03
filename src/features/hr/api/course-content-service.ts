@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { readApiErrorMessage } from '@/lib/api-error';
 import { CourseSection, Lesson, CreateLessonCommand, Material } from '../types/course-content-types';
 
 const CURRICULUM_UNAVAILABLE_KEY_PREFIX = 'course-curriculum-endpoint-unavailable';
@@ -209,51 +210,7 @@ function mapFlatLessonsToSingleSection(courseId: string, lessonsPayload: unknown
     ];
 }
 
-async function readApiErrorMessage(response: Response, fallback: string): Promise<string> {
-    try {
-        const body = await response.text();
-        if (!body) {
-            return fallback;
-        }
 
-        try {
-            const json = JSON.parse(body) as {
-                message?: string;
-                Message?: string;
-                title?: string;
-                detail?: string;
-                errors?: Record<string, string[] | string>;
-            };
-
-            const primary = json.message ?? json.Message ?? json.title ?? json.detail;
-            if (json.errors && typeof json.errors === 'object') {
-                const entries = Object.entries(json.errors)
-                    .map(([field, value]) => {
-                        if (Array.isArray(value)) {
-                            return `${field}: ${value.join(', ')}`;
-                        }
-
-                        return `${field}: ${String(value)}`;
-                    })
-                    .filter(Boolean);
-
-                if (entries.length > 0) {
-                    return primary ? `${primary} | ${entries.join(' | ')}` : entries.join(' | ');
-                }
-            }
-
-            if (primary) {
-                return primary;
-            }
-
-            return body;
-        } catch {
-            return body;
-        }
-    } catch {
-        return fallback;
-    }
-}
 
 async function postWithFallback(urls: string[], body: unknown): Promise<Response> {
     let lastResponse: Response | null = null;

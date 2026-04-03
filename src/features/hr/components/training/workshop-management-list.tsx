@@ -25,6 +25,7 @@ import {
 import { courseService } from '@/features/hr/api/course-service';
 import { workshopService, type WorkshopConfirmation } from '@/features/hr/api/workshop-service';
 import { WorkshopConfirmationDialog } from './workshop-confirmation-dialog';
+import { DROPDOWN_PAGE_SIZE } from '@/lib/pagination';
 
 export function WorkshopManagementList() {
     const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; courseId: string; courseName: string }>({
@@ -39,7 +40,7 @@ export function WorkshopManagementList() {
     // Fetch published courses — filter offline ones on client
     const { data: coursesData, mutate } = useSWR(
         'hr-workshop-courses',
-        () => courseService.getAllCourses({ status: 'Public', pageSize: 100 })
+        () => courseService.getAllCourses({ status: 'Published', pageSize: DROPDOWN_PAGE_SIZE })
     );
 
     const offlineCourses = (coursesData?.items || []).filter(c => c.isOnline === false);

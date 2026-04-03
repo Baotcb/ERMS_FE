@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/core/auth/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CLOUDINARY_CONFIG } from '@/lib/cloudinary/cloudinary-config';
-import { encryptData, decryptData } from '@/features/core/utils/encryption';
+
 import { CurriculumLessonItem } from './curriculum-lesson-item';
 
 interface CurriculumManagerProps {
@@ -40,16 +40,14 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
 
     const draftStorageKey = `teaching-lessons-draft:${user?.id || 'anon'}:${courseId}`;
 
-    // ── Draft persistence ──
+    // ── Draft persistence (sessionStorage, plain JSON — no encryption needed for local cache) ──
 
     const loadDraftLessons = useCallback((): Lesson[] => {
         if (typeof window === 'undefined') return [];
         try {
-            const raw = window.localStorage.getItem(draftStorageKey);
+            const raw = window.sessionStorage.getItem(draftStorageKey);
             if (!raw) return [];
-            let decrypted = decryptData(raw);
-            if (!decrypted) decrypted = raw;
-            const parsed = JSON.parse(decrypted) as Lesson[];
+            const parsed = JSON.parse(raw) as Lesson[];
             return Array.isArray(parsed) ? parsed : [];
         } catch {
             return [];
@@ -59,8 +57,7 @@ export function CurriculumManager({ courseId }: CurriculumManagerProps) {
     const persistDraftLessons = useCallback((nextLessons: Lesson[]) => {
         if (typeof window === 'undefined') return;
         try {
-            const encryptedData = encryptData(JSON.stringify(nextLessons));
-            window.localStorage.setItem(draftStorageKey, encryptedData);
+            window.sessionStorage.setItem(draftStorageKey, JSON.stringify(nextLessons));
             setLastSavedAt(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         } catch {
             // Ignore storage write errors

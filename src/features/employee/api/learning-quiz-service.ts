@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { readApiErrorMessage } from '@/lib/api-error';
 import { logger } from '@/lib/logger';
 import type {
     CourseProgressDto,
@@ -8,23 +9,8 @@ import type {
     UpdateLessonProgressCommand,
 } from '@/features/employee/types/learning-quiz-types';
 
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-    try {
-        const body = await response.text();
-        if (!body) {
-            return fallback;
-        }
-
-        try {
-            const json = JSON.parse(body);
-            return json.message ?? json.Message ?? json.title ?? json.detail ?? fallback;
-        } catch {
-            return body;
-        }
-    } catch {
-        return fallback;
-    }
-}
+// Re-export for backward compatibility — callers using readErrorMessage
+const readErrorMessage = readApiErrorMessage;
 
 interface ParsedErrorDetail {
     message: string;

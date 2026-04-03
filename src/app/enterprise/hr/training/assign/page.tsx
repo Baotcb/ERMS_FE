@@ -27,7 +27,7 @@ export default async function Page({
     // 1. All Published Courses (for combo box)
     // 2. Trainees (paginated via URL params)
     const [allReadyCourses, initialTrainees] = await Promise.all([
-        trainingServerService.getAllCourses({ status: 'Public', pageSize: 100 }),
+        trainingServerService.getAllCourses({ status: 'Published', pageSize: 100 }),
         trainingServerService.getEmployees({
             page: page,
             pageSize: 10,

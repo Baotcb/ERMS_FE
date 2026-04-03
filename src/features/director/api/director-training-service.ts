@@ -117,5 +117,23 @@ export const directorTrainingService = {
             throw new Error(message);
         }
         return { ok: true };
+    },
+
+    async closePlan(planId: string, closingNote?: string): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/close', {
+            trainingPlanId: planId,
+            closingNote,
+        });
+        if (!response.ok) {
+            let message = 'Không thể đóng kế hoạch đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch {
+                // Keep fallback message when response is not JSON
+            }
+            throw new Error(message);
+        }
+        return { ok: true };
     }
 };

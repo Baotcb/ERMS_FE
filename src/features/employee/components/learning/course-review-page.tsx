@@ -16,6 +16,9 @@ import { learningQuizService } from "@/features/employee/api/learning-quiz-servi
 import { CourseFeedbackForm } from "./quiz/course-feedback-form";
 import { CourseNavBar } from "./course-nav-bar";
 import type { CourseProgressDto } from "@/features/employee/types/learning-quiz-types";
+import { FeedbackReplyThread } from "./quiz/feedback-reply-thread";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 const STEPS_WITH_QUIZ = [
   { label: "Bài học", icon: BookOpen },
@@ -39,6 +42,7 @@ export function CourseReviewPage({
   const currentBasePath = basePath || "/enterprise/employee/learning/course";
   const router = useRouter();
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<{ feedbackId: number; courseRating: number; trainerRating: number; comment: string | null; isAnonymous: boolean; createdAt: string; } | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [progress, setProgress] = useState<CourseProgressDto | null>(null);
   const [isQuizNotPassed, setIsQuizNotPassed] = useState(false);
@@ -55,7 +59,10 @@ export function CourseReviewPage({
             ? learningQuizService.getQuizResult(initialCourse.id).catch(() => null)
             : Promise.resolve(null),
         ]);
-        setHasSubmitted(feedbackCheck);
+        setHasSubmitted(feedbackCheck.hasSubmitted);
+        if (feedbackCheck.feedbackData) {
+            setFeedbackData(feedbackCheck.feedbackData);
+        }
         if (progressData) setProgress(progressData);
         if (initialCourse.hasFinalQuiz && !quizResult?.isPassed) {
           setIsQuizNotPassed(true);
@@ -231,31 +238,80 @@ export function CourseReviewPage({
                   ← Đi đến bài kiểm tra
                 </button>
               </div>
-            ) : hasSubmitted ? (
-              /* Already Submitted State */
-              <div className="text-center py-12 space-y-4">
-                <div className="w-20 h-20 rounded-full bg-green-100 mx-auto flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+            ) : hasSubmitted && feedbackData ? (
+              /* Already Submitted State with Feedback Details */
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                  <div>
+                    <h3 className="text-xl font-black text-[#0F4C75]">
+                      Đánh giá của bạn
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Cảm ơn bạn đã chia sẻ trải nghiệm!
+                    </p>
+                  </div>
+                  {feedbackData.isAnonymous && <Badge variant="outline" className="bg-gray-100">Đã gửi ẩn danh</Badge>}
                 </div>
-                <h3 className="text-xl font-black text-[#0F4C75]">
-                  Bạn đã đánh giá khóa học này
-                </h3>
-                <p className="text-sm text-gray-500 max-w-md mx-auto">
-                  Cảm ơn bạn đã chia sẻ trải nghiệm! Đánh giá của bạn giúp cải
-                  thiện chất lượng đào tạo.
-                </p>
-                <button
-                  onClick={() =>
-                    router.push(
-                      initialCourse.hasFinalQuiz
-                        ? `${currentBasePath}/${initialCourse.id}/result`
-                        : `${currentBasePath}/${initialCourse.id}`,
-                    )
-                  }
-                  className="text-sm text-[#3282B8] hover:text-[#0F4C75] font-medium mt-4 inline-block transition"
-                >
-                  ← {initialCourse.hasFinalQuiz ? "Quay lại kết quả" : "Quay lại bài học"}
-                </button>
+                
+                <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 space-y-4">
+                  <div className="flex gap-6">
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Khóa học</p>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-4 h-4 ${star <= feedbackData.courseRating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Giảng viên</p>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-4 h-4 ${star <= feedbackData.trainerRating ? "fill-blue-500 text-blue-500" : "text-gray-200"}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {feedbackData.comment && (
+                    <div className="pt-3 border-t border-gray-100">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap italic">
+                        &ldquo;{feedbackData.comment}&rdquo;
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 pt-2">
+                    Gửi lúc: {format(new Date(feedbackData.createdAt), 'dd/MM/yyyy HH:mm')}
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        Thảo luận phản hồi
+                    </h4>
+                    <FeedbackReplyThread feedbackId={feedbackData.feedbackId} currentUserRole="trainee" />
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 text-center">
+                  <button
+                    onClick={() =>
+                      router.push(
+                        initialCourse.hasFinalQuiz
+                          ? `${currentBasePath}/${initialCourse.id}/result`
+                          : `${currentBasePath}/${initialCourse.id}`,
+                      )
+                    }
+                    className="text-sm text-[#3282B8] hover:text-[#0F4C75] font-medium inline-block transition"
+                  >
+                    ← {initialCourse.hasFinalQuiz ? "Quay lại kết quả" : "Quay lại bài học"}
+                  </button>
+                </div>
               </div>
             ) : (
               /* Feedback Form */
@@ -270,7 +326,13 @@ export function CourseReviewPage({
                 </div>
                 <CourseFeedbackForm
                   courseId={initialCourse.id}
-                  onSubmitted={() => setHasSubmitted(true)}
+                  onSubmitted={async () => {
+                      const res = await feedbackService.checkFeedback(initialCourse.id);
+                      if (res.hasSubmitted && res.feedbackData) {
+                          setFeedbackData(res.feedbackData);
+                      }
+                      setHasSubmitted(true);
+                  }}
                 />
               </div>
             )}

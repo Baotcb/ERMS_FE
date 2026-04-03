@@ -1,29 +1,9 @@
 import { apiClient } from '@/lib/api-client';
+import { readApiErrorMessage } from '@/lib/api-error';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { CreateTrainingRequest, TrainingRequestsResult } from '../types/training-types';
 
-async function readApiErrorMessage(response: Response, fallback: string): Promise<string> {
-    try {
-        const body = await response.text();
-        if (!body) {
-            return fallback;
-        }
 
-        try {
-            const json = JSON.parse(body) as {
-                message?: string;
-                Message?: string;
-                title?: string;
-                detail?: string;
-            };
-
-            return json.message ?? json.Message ?? json.title ?? json.detail ?? body;
-        } catch {
-            return body;
-        }
-    } catch {
-        return fallback;
-    }
-}
 
 function mapCreateTrainingRequestError(status: number, rawMessage: string): string {
     const normalized = rawMessage.toLowerCase();
@@ -54,7 +34,7 @@ export const trainingService = {
     }): Promise<TrainingRequestsResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page ?? 1),
-            pageSize: String(params?.pageSize ?? 20),
+            pageSize: String(params?.pageSize ?? DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);

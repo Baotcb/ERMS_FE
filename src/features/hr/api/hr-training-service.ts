@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { TrainingRequestsResult } from '../../dept-head/types/training-types';
-import { CreateTrainingPlan, TrainingPlansResult } from '../types/training-plan-types';
+import { CreateTrainingPlan, CloseTrainingPlanRequest, TrainingPlansResult } from '../types/training-plan-types';
 
 export const hrTrainingService = {
     async getRequests(params?: {
@@ -11,7 +12,7 @@ export const hrTrainingService = {
     }): Promise<TrainingRequestsResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page ?? 1),
-            pageSize: String(params?.pageSize ?? 7),
+            pageSize: String(params?.pageSize ?? DEFAULT_PAGE_SIZE),
             status: params?.status || 'Pending',
         });
 
@@ -30,7 +31,7 @@ export const hrTrainingService = {
     async getAllPendingRequests(): Promise<TrainingRequestsResult> {
         const allItems: TrainingRequestsResult['items'] = [];
         let page = 1;
-        const pageSize = 20;
+        const pageSize = DEFAULT_PAGE_SIZE;
 
         while (true) {
             const searchParams = new URLSearchParams({
@@ -69,7 +70,7 @@ export const hrTrainingService = {
     }): Promise<TrainingPlansResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page ?? 1),
-            pageSize: String(params?.pageSize ?? 20),
+            pageSize: String(params?.pageSize ?? DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);
@@ -111,6 +112,21 @@ export const hrTrainingService = {
 
         if (!response.ok) {
             let message = 'Không thể cập nhật kế hoạch đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch { /* response body is not JSON */ }
+            throw new Error(message);
+        }
+
+        return { ok: true };
+    },
+
+    async closePlan(data: CloseTrainingPlanRequest): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/close', data);
+
+        if (!response.ok) {
+            let message = 'Không thể đóng kế hoạch đào tạo';
             try {
                 const error = await response.json();
                 message = error.message || message;

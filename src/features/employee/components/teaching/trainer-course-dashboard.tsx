@@ -207,7 +207,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
         setIsSaving(true);
         try {
             await courseService.publishCourse(buildPublishCourseCommand(course));
-            setCourse(prev => ({ ...prev, status: 'Public' }));
+            setCourse(prev => ({ ...prev, status: 'Published' }));
             toast({ title: 'Chúc mừng!', description: 'Khóa học đã sẵn sàng cho học viên tham gia.' });
             router.push(teachingBasePath);
         } catch (error) {
@@ -244,7 +244,7 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
             {/* ── Header ── */}
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Top color strip */}
-                <div className={`h-1.5 ${course.status === 'Public' ? 'bg-gradient-to-r from-green-400 to-green-500' : 'bg-gradient-to-r from-[#3282B8] to-[#0F4C75]'}`} />
+                <div className={`h-1.5 ${(course.status === 'Public' || course.status === 'Published') ? 'bg-gradient-to-r from-green-400 to-green-500' : 'bg-gradient-to-r from-[#3282B8] to-[#0F4C75]'}`} />
 
                 <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -264,11 +264,11 @@ export function TrainerCourseDashboard({ initialCourse, teachingBasePath = '/ent
                     
                     <div className="flex items-center gap-3">
                         <Badge className={`border-0 font-semibold text-xs px-3 py-1 ${
-                            course.status === 'Public'
+                            (course.status === 'Public' || course.status === 'Published')
                                 ? 'bg-green-50 text-green-700'
                                 : 'bg-amber-50 text-amber-700'
                         }`}>
-                            {course.status === 'Public' ? '✓ Hoàn thành' : '◉ Đang thiết lập'}
+                            {(course.status === 'Public' || course.status === 'Published') ? '✓ Hoàn thành' : '◉ Đang thiết lập'}
                         </Badge>
                         <Button variant="outline" className="rounded-xl border-gray-200 gap-2 font-semibold" onClick={handleSaveDraft} disabled={isSaving}>
                             <Save className="w-4 h-4" />

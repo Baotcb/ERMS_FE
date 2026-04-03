@@ -44,3 +44,8 @@ export interface TrainingPlansResult {
     pageSize?: number;
     totalPages?: number;
 }
+
+export interface CloseTrainingPlanRequest {
+    trainingPlanId: string;
+    closingNote?: string;
+}

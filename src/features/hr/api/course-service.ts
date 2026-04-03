@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { Course, CourseResult, CreateCourseCommand, PublishCourseCommand, UpdateCourseCommand } from '../types/course-types';
 
 export const courseService = {
@@ -11,7 +12,7 @@ export const courseService = {
     }): Promise<CourseResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page || 1),
-            pageSize: String(params?.pageSize || 20),
+            pageSize: String(params?.pageSize || DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);

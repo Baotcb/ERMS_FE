@@ -78,14 +78,17 @@ export const feedbackService = {
         return res.json();
     },
 
-    async checkFeedback(courseId: string): Promise<boolean> {
+    async checkFeedback(courseId: string): Promise<{ hasSubmitted: boolean; feedbackData?: { feedbackId: number; courseRating: number; trainerRating: number; comment: string | null; isAnonymous: boolean; createdAt: string; } }> {
         try {
             const res = await apiClient.get(`/api/Feedback/check/${courseId}`);
-            if (!res.ok) return false;
-            const data = await res.json() as { hasSubmitted?: boolean };
-            return data.hasSubmitted === true;
+            if (!res.ok) return { hasSubmitted: false };
+            const data = await res.json();
+            return {
+                hasSubmitted: data.hasSubmitted === true,
+                feedbackData: data.hasSubmitted ? data : undefined
+            };
         } catch {
-            return false;
+            return { hasSubmitted: false };
         }
     },
 

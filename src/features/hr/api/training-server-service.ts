@@ -1,4 +1,5 @@
 import { serverFetch } from '@/lib/server-fetch';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { TrainingRequestsResult } from '../../dept-head/types/training-types';
 import { TrainingPlansResult } from '../types/training-plan-types';
 import { Course, CourseResult } from '../types/course-types';
@@ -193,7 +194,7 @@ export const trainingServerService = {
     }): Promise<TrainingRequestsResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page || 1),
-            pageSize: String(params?.pageSize || 20),
+            pageSize: String(params?.pageSize || DEFAULT_PAGE_SIZE),
             status: params?.status || 'Pending',
         });
 
@@ -214,7 +215,7 @@ export const trainingServerService = {
     }): Promise<TrainingPlansResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page || 1),
-            pageSize: String(params?.pageSize || 20),
+            pageSize: String(params?.pageSize || DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);
@@ -234,7 +235,7 @@ export const trainingServerService = {
     }): Promise<CourseResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page || 1),
-            pageSize: String(params?.pageSize || 20),
+            pageSize: String(params?.pageSize || DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);
@@ -311,7 +312,7 @@ export const trainingServerService = {
     }): Promise<PaginatedResult<Employee>> {
         const searchParams = new URLSearchParams({
             page: String(params?.page || 1),
-            pageSize: String(params?.pageSize || 20),
+            pageSize: String(params?.pageSize || DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);

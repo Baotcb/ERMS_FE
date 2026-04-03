@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import useSWR from 'swr';
-import { Plus, Search, MoreHorizontal, Eye, BookOpen, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, BookOpen, Pencil, Lock } from 'lucide-react';
 import { format } from 'date-fns';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,41 +22,73 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan, TrainingPlansResult } from '../../types/training-plan-types';
 import { useRouter } from 'next/navigation';
 import { TrainingPlanDetail } from './training-plan-detail';
 import { EditPlanDialog } from './edit-plan-dialog';
-import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote } from '../../utils/training-status-utils';
+import { STATUS_COLORS, STATUS_LABELS, getStatusLabel, getDisplayReviewNote } from '../../utils/training-status-utils';
 import { formatVND } from '@/lib/utils';
-
-const PAGE_SIZE = 7;
-
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { useAsyncAction } from '@/hooks/use-async-action';
+import { TablePagination } from '@/components/common/table-pagination';
 
 
 export function TrainingPlansList({ initialData }: { initialData?: TrainingPlansResult }) {
     const router = useRouter();
-    const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const debouncedSearch = useDebouncedValue(search, 300);
+    const [statusFilter, setStatusFilter] = useState<string>('all');
 
-    const { data, isLoading, mutate } = useSWR<TrainingPlansResult>(
-        ['/api/TrainingPlan', debouncedSearch, page],
-        () => hrTrainingService.getPlans({ search: debouncedSearch, page, pageSize: PAGE_SIZE }),
-        { fallbackData: initialData }
-    );
+    const {
+        items: plans, totalCount, totalPages, page, setPage,
+        search, handleSearch, isLoading, mutate,
+    } = usePaginatedList({
+        key: ['/api/TrainingPlan'],
+        fetcher: (params) => hrTrainingService.getPlans({
+            ...params,
+            status: statusFilter === 'all' ? undefined : statusFilter,
+        }),
+        initialData,
+        extraParams: { status: statusFilter === 'all' ? undefined : statusFilter },
+    });
 
-    const plans = data?.items || [];
-    const totalPages = data?.totalPages ?? 1;
-    const totalCount = data?.totalCount ?? plans.length;
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isCloseOpen, setIsCloseOpen] = useState(false);
+    const [closingNote, setClosingNote] = useState('');
 
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
+    const { execute: executeClose, isSubmitting: isClosing } = useAsyncAction();
+
+    const handleClose = () => executeClose(
+        () => hrTrainingService.closePlan({
+            trainingPlanId: selectedPlan!.id,
+            closingNote: closingNote.trim() || undefined,
+        }),
+        {
+            successMessage: { title: 'Đã đóng', description: 'Kế hoạch đào tạo đã được đóng thành công.' },
+            onSuccess: () => {
+                setIsCloseOpen(false);
+                setClosingNote('');
+                mutate();
+            },
+        },
+    );
 
     return (
         <div className="space-y-6">
@@ -77,7 +107,7 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
                 </Button>
             </div>
 
-            <div className="flex items-center bg-white px-4 py-3 rounded-lg border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-4 bg-white px-4 py-3 rounded-lg border border-gray-100 shadow-sm">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -87,6 +117,17 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
                         onChange={(e) => handleSearch(e.target.value)}
                     />
                 </div>
+                <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+                    <SelectTrigger className="w-[180px] border-gray-200">
+                        <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                        {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[420px]">
@@ -181,6 +222,17 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
                                                             <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa kế hoạch
                                                         </DropdownMenuItem>
                                                     )}
+                                                    {plan.status === 'Approved' && (
+                                                        <DropdownMenuItem
+                                                            className="cursor-pointer text-slate-600"
+                                                            onClick={() => {
+                                                                setSelectedPlan(plan);
+                                                                setIsCloseOpen(true);
+                                                            }}
+                                                        >
+                                                            <Lock className="mr-2 h-4 w-4" /> Đóng kế hoạch
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -192,31 +244,7 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Trước
-                    </Button>
-                    <span className="text-sm font-medium text-slate-600">
-                        Trang {page} / {totalPages}
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        Tiếp
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
+                <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             <TrainingPlanDetail
@@ -237,6 +265,34 @@ export function TrainingPlansList({ initialData }: { initialData?: TrainingPlans
                 }}
                 onSuccess={() => mutate()}
             />
+
+            {/* Close Plan Dialog */}
+            <Dialog open={isCloseOpen} onOpenChange={(open) => {
+                setIsCloseOpen(open);
+                if (!open) { setClosingNote(''); setTimeout(() => setSelectedPlan(null), 300); }
+            }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Đóng kế hoạch đào tạo</DialogTitle>
+                        <DialogDescription>
+                            Bạn có chắc chắn muốn đóng kế hoạch <strong>{selectedPlan?.planName}</strong>?
+                            Tất cả các yêu cầu đào tạo liên quan sẽ được chuyển sang trạng thái &quot;Hoàn thành&quot;.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        placeholder="Ghi chú khi đóng (tùy chọn)..."
+                        value={closingNote}
+                        onChange={(e) => setClosingNote(e.target.value)}
+                        className="min-h-[80px]"
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setIsCloseOpen(false); setClosingNote(''); }}>Hủy</Button>
+                        <Button onClick={handleClose} disabled={isClosing} className="bg-slate-700 hover:bg-slate-800 text-white">
+                            {isClosing ? 'Đang xử lý...' : 'Đóng kế hoạch'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import useSWR from 'swr';
-import { Search, BookOpen, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, BookOpen, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { courseService } from '@/features/hr/api/course-service';
 import type { Course, CourseResult } from '@/features/hr/types/course-types';
 
@@ -28,20 +26,17 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 
-const PAGE_SIZE = 7;
+import { STATUS_COLORS } from '@/features/hr/utils/training-status-utils';
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { TablePagination } from '@/components/common/table-pagination';
 
-const STATUS_COLORS: Record<string, string> = {
-    Published: 'bg-green-100 text-green-800',
-    Draft: 'bg-gray-100 text-gray-800',
-    Archived: 'bg-slate-100 text-slate-700',
-};
 
 function getDeploymentLabel(course: Course): string {
     const hasTrainer = Boolean(course.trainerEmail?.trim());
     const hasTrainees = (course.enrollmentCount || 0) > 0;
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
-    if (course.status === 'Public') {
+    if ((course.status === 'Public' || course.status === 'Published')) {
         return 'Đã mở khóa';
     }
 
@@ -61,27 +56,18 @@ function getDeploymentLabel(course: Course): string {
 }
 
 export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: CourseResult }) {
-    const [search, setSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const debouncedSearch = useDebouncedValue(search, 300);
-
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-    const { data, isLoading } = useSWR<CourseResult>(
-        ['/api/Course', 'dept-head-available-courses', debouncedSearch, page, 'Public'],
-        () => courseService.getAllCourses({ search: debouncedSearch, page, pageSize: PAGE_SIZE, status: 'Public' }),
-        { fallbackData: initialData }
-    );
-
-    const courses = data?.items || [];
-    const totalPages = data?.totalPages ?? 1;
-    const totalCount = data?.totalCount ?? courses.length;
-
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
+    const {
+        items: courses, totalCount, totalPages, page, setPage,
+        search, handleSearch, isLoading,
+    } = usePaginatedList({
+        key: ['/api/Course', 'dept-head-available-courses'],
+        fetcher: (params) => courseService.getAllCourses({ ...params, status: 'Published' }),
+        initialData,
+        extraParams: { status: 'Published' },
+    });
 
     return (
         <div className="space-y-6">
@@ -179,31 +165,7 @@ export function DeptHeadAvailableCoursesList({ initialData }: { initialData?: Co
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Trước
-                    </Button>
-                    <span className="text-sm font-medium text-slate-600">
-                        Trang {page} / {totalPages}
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        Tiếp
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
+                <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>

@@ -103,7 +103,7 @@ export function TeachingTasksPage({
 
     const stats = useMemo(() => {
         const all = initialCourses.filter(c => user ? isCourseOwnedByUser(c, user, user.role) : false);
-        const published = all.filter(c => c.status === 'Public').length;
+        const published = all.filter(c => c.status === 'Public' || c.status === 'Published').length;
         const draft = all.length - published;
         const totalEnroll = all.reduce((sum, c) => sum + (c.enrollmentCount || 0), 0);
         return { total: all.length, published, draft, totalEnroll };
@@ -190,7 +190,7 @@ export function TeachingTasksPage({
                     paginatedCourses.map((course) => {
                         const currentStep = getStatusStep(course);
                         const stepConfig = STEPS[currentStep - 1];
-                        const isPublished = course.status === 'Public';
+                        const isPublished = course.status === 'Public' || course.status === 'Published';
 
                         return (
                             <div key={course.id} className="group rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:border-[#BBE1FA] transition-all duration-300 flex flex-col overflow-hidden">

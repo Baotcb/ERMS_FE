@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import useSWR from 'swr';
-import { Check, RotateCcw, X, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Check, RotateCcw, X, Eye, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatVND } from '@/lib/utils';
 
@@ -25,17 +24,18 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import { directorTrainingService } from '../../api/director-training-service';
 import { TrainingPlan } from '../../../hr/types/training-plan-types';
 import type { TrainingPlansResult } from '../../../hr/types/training-plan-types';
 import { TrainingPlanDetail } from '../../../hr/components/training/training-plan-detail';
+import { STATUS_COLORS, getStatusLabel } from '../../../hr/utils/training-status-utils';
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { useAsyncAction } from '@/hooks/use-async-action';
+import { TablePagination } from '@/components/common/table-pagination';
 
-const PAGE_SIZE = 7;
 
 export function TrainingPlansApprovalList({ initialData }: { initialData?: TrainingPlansResult }) {
-    const { toast } = useToast();
-    const [page, setPage] = useState(1);
+    const [statusFilter, setStatusFilter] = useState<'Pending' | 'Approved' | 'Closed'>('Pending');
     const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
     const [isApproveOpen, setIsApproveOpen] = useState(false);
     const [isResubmitRequestOpen, setIsResubmitRequestOpen] = useState(false);
@@ -43,90 +43,83 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
     const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
     const [isDetailOpen, setIsDetailOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCloseOpen, setIsCloseOpen] = useState(false);
+    const [closingNote, setClosingNote] = useState('');
 
-    const { data, isLoading, mutate } = useSWR<TrainingPlansResult>(
-        ['/api/TrainingPlan', 'director-approval', page],
-        () => directorTrainingService.getPlans({ status: 'Pending', page, pageSize: PAGE_SIZE }),
-        { fallbackData: initialData }
+    const {
+        items: plans, totalCount, totalPages, page, setPage,
+        isLoading, mutate,
+    } = usePaginatedList({
+        key: ['/api/TrainingPlan', 'director-approval'],
+        fetcher: (params) => directorTrainingService.getPlans({ ...params, status: statusFilter }),
+        initialData,
+        extraParams: { status: statusFilter },
+    });
+
+    const { execute, isSubmitting } = useAsyncAction();
+
+    const handleApprove = () => execute(
+        () => directorTrainingService.approvePlan(selectedPlan!.id),
+        {
+            successMessage: { title: 'Đã phê duyệt', description: 'Kế hoạch đào tạo đã được phê duyệt thành công.' },
+            onSuccess: () => { setIsApproveOpen(false); mutate(); },
+        },
     );
 
-    const plans = data?.items || [];
-    const totalPages = data?.totalPages ?? 1;
-    const totalCount = data?.totalCount ?? plans.length;
-
-    const handleApprove = async () => {
-        if (!selectedPlan) return;
-        setIsSubmitting(true);
-        try {
-            const res = await directorTrainingService.approvePlan(selectedPlan.id);
-            if (res.ok) {
-                toast({ title: 'Đã phê duyệt', description: 'Kế hoạch đào tạo đã được phê duyệt thành công.' });
-                setIsApproveOpen(false);
-                mutate();
-            } else {
-                toast({ title: 'Lỗi', description: 'Không thể phê duyệt kế hoạch.', variant: 'destructive' });
-            }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Không thể phê duyệt kế hoạch. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
+    const handleRequestResubmission = () => {
+        if (!resubmitRequestNote.trim()) return;
+        return execute(
+            () => directorTrainingService.requestPlanResubmission(selectedPlan!.id, resubmitRequestNote.trim()),
+            {
+                successMessage: { title: 'Đã yêu cầu gửi lại', description: 'Kế hoạch đã được trả về HR để chỉnh sửa và gửi lại.' },
+                onSuccess: () => { setIsResubmitRequestOpen(false); setResubmitRequestNote(''); mutate(); },
+            },
+        );
     };
 
-    const handleRequestResubmission = async () => {
-        if (!selectedPlan || !resubmitRequestNote.trim()) return;
-        setIsSubmitting(true);
-        try {
-            const res = await directorTrainingService.requestPlanResubmission(
-                selectedPlan.id,
-                resubmitRequestNote.trim()
-            );
-            if (res.ok) {
-                toast({ title: 'Đã yêu cầu gửi lại', description: 'Kế hoạch đã được trả về HR để chỉnh sửa và gửi lại.' });
-                setIsResubmitRequestOpen(false);
-                setResubmitRequestNote('');
-                mutate();
-            } else {
-                toast({ title: 'Lỗi', description: 'Không thể gửi yêu cầu chỉnh sửa.', variant: 'destructive' });
-            }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Không thể gửi yêu cầu. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
+    const handleReject = () => {
+        if (!rejectReason.trim()) return;
+        return execute(
+            () => directorTrainingService.rejectPlan(selectedPlan!.id, rejectReason.trim()),
+            {
+                successMessage: { title: 'Đã từ chối', description: 'Kế hoạch đào tạo đã bị từ chối.' },
+                onSuccess: () => { setIsRejectOpen(false); setRejectReason(''); mutate(); },
+            },
+        );
     };
 
-    const handleReject = async () => {
-        if (!selectedPlan || !rejectReason.trim()) return;
-        setIsSubmitting(true);
-        try {
-            const res = await directorTrainingService.rejectPlan(selectedPlan.id, rejectReason.trim());
-            if (res.ok) {
-                toast({ title: 'Đã từ chối', description: 'Kế hoạch đào tạo đã bị từ chối.' });
-                setIsRejectOpen(false);
-                setRejectReason('');
-                mutate();
-            } else {
-                toast({ title: 'Lỗi', description: 'Không thể từ chối kế hoạch.', variant: 'destructive' });
-            }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Không thể từ chối kế hoạch. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: msg, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    const handleClosePlan = () => execute(
+        () => directorTrainingService.closePlan(selectedPlan!.id, closingNote.trim() || undefined),
+        {
+            successMessage: { title: 'Đã đóng', description: 'Kế hoạch đào tạo đã được đóng thành công.' },
+            onSuccess: () => { setIsCloseOpen(false); setClosingNote(''); mutate(); },
+        },
+    );
 
     return (
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Phê duyệt kế hoạch đào tạo</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">Quản lý kế hoạch đào tạo</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                    Duyệt các kế hoạch đào tạo do HR đề xuất ({totalCount} kế hoạch chờ duyệt)
+                    Duyệt và quản lý các kế hoạch đào tạo ({totalCount} kế hoạch)
                 </p>
+                <div className="flex gap-2 mt-4">
+                    {(['Pending', 'Approved', 'Closed'] as const).map((status) => {
+                        const labels: Record<string, string> = { Pending: 'Chờ duyệt', Approved: 'Đã duyệt', Closed: 'Đã đóng' };
+                        const isActive = statusFilter === status;
+                        return (
+                            <Button
+                                key={status}
+                                variant={isActive ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => { setStatusFilter(status); setPage(1); }}
+                                className={isActive ? 'bg-[#0F4C75] hover:bg-[#1A5F8C] text-white' : 'text-gray-600 border-gray-200 hover:bg-gray-50'}
+                            >
+                                {labels[status]}
+                            </Button>
+                        );
+                    })}
+                </div>
             </div>
 
 
@@ -140,20 +133,23 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                 <TableHead className="font-bold text-[#0F4C75]">Số khóa học</TableHead>
                                 <TableHead className="font-bold text-[#0F4C75]">Tổng ngân sách</TableHead>
                                 <TableHead className="font-bold text-[#0F4C75]">Ngày tạo</TableHead>
+                                {statusFilter !== 'Pending' && (
+                                    <TableHead className="font-bold text-[#0F4C75]">Trạng thái</TableHead>
+                                )}
                                 <TableHead className="text-right font-bold text-[#0F4C75]">Thao tác</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12 text-gray-400">
+                                    <TableCell colSpan={statusFilter !== 'Pending' ? 7 : 6} className="text-center py-12 text-gray-400">
                                         Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             ) : plans.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12 text-gray-400 italic">
-                                        Không có kế hoạch nào chờ duyệt
+                                    <TableCell colSpan={statusFilter !== 'Pending' ? 7 : 6} className="text-center py-12 text-gray-400 italic">
+                                        Không có kế hoạch nào
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -175,20 +171,36 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                             {formatVND(plan.totalBudget)}
                                         </TableCell>
                                         <TableCell className="text-gray-500">{format(new Date(plan.createdAt), 'dd/MM/yyyy')}</TableCell>
+                                        {statusFilter !== 'Pending' && (
+                                            <TableCell>
+                                                <Badge variant="outline" className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[plan.status] || 'bg-gray-100'}`}>
+                                                    {getStatusLabel(plan)}
+                                                </Badge>
+                                            </TableCell>
+                                        )}
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="outline" size="sm" className="text-[#0F4C75] border-blue-200 hover:bg-blue-50" onClick={() => { setSelectedPlan(plan); setIsDetailOpen(true); }}>
                                                     <Eye className="w-4 h-4 mr-1" /> Chi tiết
                                                 </Button>
-                                                <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
-                                                    <Check className="w-4 h-4 mr-1" /> Phê duyệt
-                                                </Button>
-                                                <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}>
-                                                    <RotateCcw className="w-4 h-4 mr-1" /> Gửi lại
-                                                </Button>
-                                                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}>
-                                                    <X className="w-4 h-4 mr-1" /> Từ chối
-                                                </Button>
+                                                {plan.status === 'Pending' && (
+                                                    <>
+                                                        <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => { setSelectedPlan(plan); setIsApproveOpen(true); }}>
+                                                            <Check className="w-4 h-4 mr-1" /> Phê duyệt
+                                                        </Button>
+                                                        <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => { setSelectedPlan(plan); setIsResubmitRequestOpen(true); }}>
+                                                            <RotateCcw className="w-4 h-4 mr-1" /> Gửi lại
+                                                        </Button>
+                                                        <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setSelectedPlan(plan); setIsRejectOpen(true); }}>
+                                                            <X className="w-4 h-4 mr-1" /> Từ chối
+                                                        </Button>
+                                                    </>
+                                                )}
+                                                {plan.status === 'Approved' && (
+                                                    <Button variant="outline" size="sm" className="text-slate-600 border-slate-200 hover:bg-slate-50" onClick={() => { setSelectedPlan(plan); setIsCloseOpen(true); }}>
+                                                        <Lock className="w-4 h-4 mr-1" /> Đóng kế hoạch
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -199,31 +211,7 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                 </div>
 
                 {/* Pagination */}
-                <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Trước
-                    </Button>
-                    <span className="text-sm font-medium text-slate-600">
-                        Trang {page} / {totalPages}
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages}
-                        className="flex items-center gap-1 text-slate-500 hover:text-[#0369A1] hover:bg-slate-50 cursor-pointer"
-                    >
-                        Tiếp
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
+                <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
 
             {/* Approve Dialog */}
@@ -297,6 +285,34 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                 open={isDetailOpen} 
                 onOpenChange={setIsDetailOpen} 
             />
+
+            {/* Close Plan Dialog */}
+            <Dialog open={isCloseOpen} onOpenChange={(open) => {
+                setIsCloseOpen(open);
+                if (!open) { setClosingNote(''); setTimeout(() => setSelectedPlan(null), 300); }
+            }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Đóng kế hoạch đào tạo</DialogTitle>
+                        <DialogDescription>
+                            Bạn có chắc chắn muốn đóng kế hoạch <strong>{selectedPlan?.planName}</strong>?
+                            Tất cả các yêu cầu đào tạo liên quan sẽ được chuyển sang trạng thái &quot;Hoàn thành&quot;.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        placeholder="Ghi chú khi đóng (tùy chọn)..."
+                        value={closingNote}
+                        onChange={(e) => setClosingNote(e.target.value)}
+                        className="min-h-[80px]"
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setIsCloseOpen(false); setClosingNote(''); }}>Hủy</Button>
+                        <Button onClick={handleClosePlan} disabled={isSubmitting} className="bg-slate-700 hover:bg-slate-800 text-white">
+                            {isSubmitting ? 'Đang xử lý...' : 'Đóng kế hoạch'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

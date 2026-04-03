@@ -48,7 +48,7 @@ export default async function TrainingReportPage() {
         getAllPlans('Approved'),
         getAllPlans('Rejected'),
         getAllCourses(),
-        getAllCourses('Public'),
+        getAllCourses('Published'),
     ])
 
     const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length

@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { format } from 'date-fns';
 import { BookOpen, Eye, MessageSquare, Search, Star, TrendingUp } from 'lucide-react';
 
+import { DROPDOWN_PAGE_SIZE } from '@/lib/pagination';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { courseService } from '@/features/hr/api/course-service';
 import { feedbackService, type CourseFeedbackDto } from '@/features/employee/api/feedback-service';
@@ -28,7 +29,7 @@ function getDeploymentLabel(course: Course): string {
     const hasTrainees = (course.enrollmentCount || 0) > 0;
     const hasSchedule = Boolean(course.description?.includes('Lịch trình:'));
 
-    if (course.status === 'Public') return 'Đã xuất bản';
+    if ((course.status === 'Public' || course.status === 'Published')) return 'Đã xuất bản';
     if (hasTrainer && hasTrainees && hasSchedule) return 'Sẵn sàng triển khai';
     if (hasTrainer && hasSchedule) return 'Đã có lịch';
     if (hasTrainer) return 'Đã phân công';
@@ -151,7 +152,7 @@ function CourseDetailContent({
                 </div>
             )}
 
-            {onViewFeedback && course.status === 'Public' && (
+            {onViewFeedback && (course.status === 'Public' || course.status === 'Published') && (
                 <Button
                     variant="outline"
                     className="w-full border-[#0F4C75] text-[#0F4C75] hover:bg-blue-50"
@@ -176,7 +177,7 @@ function CoursesTab({
 
     const { data, isLoading } = useSWR<{ items: Course[] }>(
         ['/api/Course', 'hr-courses', debouncedSearch],
-        () => courseService.getAllCourses({ search: debouncedSearch, pageSize: 100 }),
+        () => courseService.getAllCourses({ search: debouncedSearch, pageSize: DROPDOWN_PAGE_SIZE }),
     );
 
     const courses = data?.items || [];
