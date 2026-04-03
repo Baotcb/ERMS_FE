@@ -28,7 +28,7 @@ import {
     type TrainingRequestValues, 
     type TrainingRequestFormProps, 
     TRAINING_REQUEST_DEFAULTS 
-} from './training-request-types';
+} from '../../schema/training-request-schema';
 
 export function TrainingRequestForm({ open, onOpenChange, onSuccess, initialData }: TrainingRequestFormProps) {
     const { execute, isSubmitting: isLoading } = useAsyncAction();

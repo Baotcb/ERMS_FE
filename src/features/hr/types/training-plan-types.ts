@@ -1,3 +1,5 @@
+import type { TrainingRequest } from '@/features/dept-head/types/training-types';
+
 export interface TrainingPlan {
     id: string;
     planCode: string; // From backend DTO
@@ -48,4 +50,8 @@ export interface TrainingPlansResult {
 export interface CloseTrainingPlanRequest {
     trainingPlanId: string;
     closingNote?: string;
+}
+
+export interface TrainingPlanDetailDto extends TrainingPlan {
+    trainingRequests: TrainingRequest[];
 }

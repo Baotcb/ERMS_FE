@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import useSWR from 'swr';
 import { format } from 'date-fns';
 import { BookOpen, Eye, MessageSquare, Search, Star, TrendingUp } from 'lucide-react';
 
-import { DROPDOWN_PAGE_SIZE } from '@/lib/pagination';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { usePaginatedList } from '@/hooks/use-paginated-list';
+import { TablePagination } from '@/components/common/table-pagination';
 import { courseService } from '@/features/hr/api/course-service';
 import { feedbackService, type CourseFeedbackDto } from '@/features/employee/api/feedback-service';
 import type { Course } from '@/features/hr/types/course-types';
@@ -165,17 +164,22 @@ function CoursesTab({
 }: {
     onSwitchToFeedback?: (courseCode: string) => void;
 }) {
-    const [search, setSearch] = useState('');
-    const debouncedSearch = useDebouncedValue(search, 300);
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-    const { data, isLoading } = useSWR<{ items: Course[] }>(
-        ['/api/Course', 'hr-courses', debouncedSearch],
-        () => courseService.getAllCourses({ search: debouncedSearch, pageSize: DROPDOWN_PAGE_SIZE }),
-    );
-
-    const courses = data?.items || [];
+    const {
+        items: courses,
+        isLoading,
+        search,
+        handleSearch,
+        page,
+        totalPages,
+        setPage,
+    } = usePaginatedList<Course>({
+        key: ['/api/Course', 'hr-courses'],
+        fetcher: courseService.getAllCourses,
+        pageSize: 10,
+    });
 
     return (
         <>
@@ -186,7 +190,7 @@ function CoursesTab({
                         placeholder="Tìm kiếm khóa học..."
                         className="border-gray-200 pl-10 focus:border-[#3282B8]"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)}
                     />
                 </div>
             </div>
@@ -259,6 +263,7 @@ function CoursesTab({
                     </TableBody>
                 </Table>
             </div>
+            <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
                 <DialogContent className="max-w-2xl">

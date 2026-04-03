@@ -99,7 +99,7 @@ export const hrTrainingService = {
         };
     },
 
-    async getPlanDetail(id: string) {
+    async getPlanDetail(id: string): Promise<import('../types/training-plan-types').TrainingPlanDetailDto> {
         const response = await apiClient.get(`/api/TrainingPlan/${id}`);
         if (!response.ok) {
             throw new Error('Không thể tải chi tiết kế hoạch');

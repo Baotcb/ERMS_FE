@@ -169,8 +169,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
-                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                            {detailData.trainingRequests.map((req: any) => (
+                                            {detailData.trainingRequests.map((req) => (
                                                 <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
                                                     <td className="px-4 py-3 font-medium text-gray-900">{req.departmentName}</td>
                                                     <td className="px-4 py-3 text-gray-600 line-clamp-1 truncate max-w-[200px]" title={req.subject}>{req.subject}</td>
