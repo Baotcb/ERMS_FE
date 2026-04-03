@@ -76,7 +76,7 @@ export function AssignTrainingPage({
     const [localTraineeSearch, setLocalTraineeSearch] = useState(searchParams.search);
     const debouncedTraineeSearch = useDebouncedValue(localTraineeSearch, 300);
 
-    const enrolledEmployeeIds = initialEnrolledEmployeeIds || [];
+    const enrolledEmployeeIds = useMemo(() => initialEnrolledEmployeeIds || [], [initialEnrolledEmployeeIds]);
     const currentCourse = initialCurrentCourse || null;
     const invitedTrainer = initialInvitedTrainer || null;
     const traineesData = initialTrainees || { items: [], totalCount: 0, totalPages: 1 };
@@ -98,7 +98,7 @@ export function AssignTrainingPage({
             if (hasExcludedRole(employee)) return false;
             return true;
         });
-    }, [invitedTrainer?.id, traineesData.items]);
+    }, [invitedTrainer, traineesData.items]);
 
     // Handle "Select All" checking only valid potential trainees
     const assignableTrainees = useMemo(() => {
@@ -123,10 +123,12 @@ export function AssignTrainingPage({
 
     useEffect(() => {
         if (!invitedTrainer?.id) return;
+        // eslint-disable-next-line
         setSelectedTraineeIds((prev) => prev.filter((id) => id !== invitedTrainer.id));
     }, [invitedTrainer?.id]);
 
     useEffect(() => {
+        // eslint-disable-next-line
         setNotifyTrainer(parseNotifyConfig(currentCourse?.description));
     }, [currentCourse?.description]);
 
@@ -291,7 +293,7 @@ export function AssignTrainingPage({
                                 value={searchParams.courseId}
                                 onValueChange={handleCourseChange}
                                 fetcher={async (search, page) => {
-                                    const res = await courseService.getAllCourses({ search, page, pageSize: 20 });
+                                    const res = await courseService.getAllCourses({ search, page, pageSize: 20, status: 'Published' });
                                     const total = res.totalPages || 1;
                                     return { items: res.items, hasNextPage: page < total };
                                 }}

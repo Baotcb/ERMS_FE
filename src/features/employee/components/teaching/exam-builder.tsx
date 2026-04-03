@@ -25,9 +25,9 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
     const courseLabel = courseId.slice(0, 8).toUpperCase();
     const [quizTitle, setQuizTitle] = useState(`Bài thi cuối khóa ${courseLabel}`);
     const [description, setDescription] = useState('Đánh giá cuối khóa để xác định học viên đạt hay không đạt.');
-    const [passingScore, setPassingScore] = useState(80);
-    const [timeLimit, setTimeLimit] = useState(30);
-    const [maxAttempts, setMaxAttempts] = useState(1);
+    const [passingScore, setPassingScore] = useState<number | string>(80);
+    const [timeLimit, setTimeLimit] = useState<number | string>(30);
+    const [maxAttempts, setMaxAttempts] = useState<number | string>(1);
     const [shuffleQuestions, setShuffleQuestions] = useState(true);
     const [shuffleAnswers, setShuffleAnswers] = useState(true);
     const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
@@ -156,17 +156,20 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
             return;
         }
 
-        if (Number.isNaN(passingScore) || passingScore < 0 || passingScore > 100) {
+        const parsedPassingScore = Number(passingScore);
+        if (Number.isNaN(parsedPassingScore) || parsedPassingScore < 0 || parsedPassingScore > 100) {
             toast({ title: 'Điểm đạt không hợp lệ', description: 'Điểm đạt phải từ 0 đến 100.', variant: 'destructive' });
             return;
         }
 
-        if (Number.isNaN(timeLimit) || timeLimit <= 0) {
+        const parsedTimeLimit = Number(timeLimit);
+        if (Number.isNaN(parsedTimeLimit) || parsedTimeLimit <= 0) {
             toast({ title: 'Thời lượng không hợp lệ', description: 'Thời gian làm bài phải lớn hơn 0 phút.', variant: 'destructive' });
             return;
         }
 
-        if (Number.isNaN(maxAttempts) || maxAttempts <= 0) {
+        const parsedMaxAttempts = Number(maxAttempts);
+        if (Number.isNaN(parsedMaxAttempts) || parsedMaxAttempts <= 0) {
             toast({ title: 'Số lượt làm không hợp lệ', description: 'Số lượt làm tối đa phải lớn hơn 0.', variant: 'destructive' });
             return;
         }
@@ -202,9 +205,9 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
             const { quizId } = await quizService.createQuiz(courseId, {
                 quizTitle: quizTitle.trim(),
                 description: description.trim() || undefined,
-                timeLimitMinutes: timeLimit,
-                passingScore,
-                maxAttempts,
+                timeLimitMinutes: parsedTimeLimit,
+                passingScore: parsedPassingScore,
+                maxAttempts: parsedMaxAttempts,
                 shuffleQuestions,
                 shuffleAnswers,
                 showCorrectAnswers,
@@ -260,7 +263,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={passingScore} 
-                            onChange={(e) => setPassingScore(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => setPassingScore(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
                             disabled={Boolean(savedQuizId)}
                         />
@@ -272,7 +275,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={timeLimit} 
-                            onChange={(e) => setTimeLimit(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => setTimeLimit(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
                             disabled={Boolean(savedQuizId)}
                         />
@@ -282,7 +285,7 @@ export function ExamBuilder({ courseId, initialQuizId = '', onQuizLinked }: Exam
                         <Input 
                             type="number" 
                             value={maxAttempts} 
-                            onChange={(e) => setMaxAttempts(parseInt(e.target.value, 10))}
+                            onChange={(e) => setMaxAttempts(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                             className="w-24 h-9 rounded-xl border-gray-200 bg-white font-bold text-[#0F4C75]"
                             disabled={Boolean(savedQuizId)}
                         />

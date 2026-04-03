@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import useSWR from 'swr';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Calendar as CalendarIcon, Clock, Video, Building2, ChevronLeft, Send, Users, Loader2, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,16 +36,12 @@ export function SetupTrainingSchedulePage({
     const searchParams = useSearchParams();
     const initialCourseId = searchParams.get('courseId') || initialCourseDetails?.id || '';
 
-    const { data: currentCourse, isLoading: isLoadingDetails } = useSWR<Course>(
-        initialCourseId ? `/api/Course/${initialCourseId}` : null,
-        () => courseService.getCourseDetails(initialCourseId),
-        { fallbackData: initialCourseId === initialCourseDetails?.id ? initialCourseDetails : undefined }
-    );
-
     const {
         form,
         locationType,
         selectedCourseId,
+        currentCourse,
+        isLoadingDetails,
         isSubmitting,
         isCreateCourseOpen,
         setIsCreateCourseOpen,
@@ -55,7 +50,7 @@ export function SetupTrainingSchedulePage({
         handleCourseCreated
     } = useTrainingScheduleForm({
         initialCourseId,
-        currentCourse,
+        initialCourseDetails,
         publishRedirectPath
     });
 

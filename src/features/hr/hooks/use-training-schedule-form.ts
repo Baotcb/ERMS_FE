@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import useSWR from 'swr';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -41,11 +42,11 @@ function buildScheduleDescription(
 
 export function useTrainingScheduleForm({
     initialCourseId,
-    currentCourse,
+    initialCourseDetails,
     publishRedirectPath
 }: {
     initialCourseId: string;
-    currentCourse?: Course;
+    initialCourseDetails?: Course;
     publishRedirectPath: string;
 }) {
     const { toast } = useToast();
@@ -72,6 +73,12 @@ export function useTrainingScheduleForm({
 
     const locationType = useWatch({ control: form.control, name: 'locationType' });
     const selectedCourseId = useWatch({ control: form.control, name: 'selectedCourseId' });
+
+    const { data: currentCourse, isLoading: isLoadingDetails } = useSWR<Course>(
+        selectedCourseId ? `/api/Course/${selectedCourseId}` : null,
+        () => courseService.getCourseDetails(selectedCourseId),
+        { fallbackData: selectedCourseId === initialCourseDetails?.id ? initialCourseDetails : undefined }
+    );
 
     const buildDateTime = (date: string, time: string): Date | null => {
         if (!date || !time) {
@@ -161,6 +168,8 @@ export function useTrainingScheduleForm({
         form,
         locationType,
         selectedCourseId,
+        currentCourse,
+        isLoadingDetails,
         isSubmitting,
         isCreateCourseOpen,
         setIsCreateCourseOpen,
