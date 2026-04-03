@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import useSWR from 'swr';
 import { ChevronLeft, Save, AlertTriangle, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
     const [startDate, setStartDate] = useState(`${currentYear}-${currentMonth}-01`);
     const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
     const [plannedBudget, setPlannedBudget] = useState<string>('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { execute, isSubmitting } = useAsyncAction();
     const [search, setSearch] = useState('');
     const [deptFilter, setDeptFilter] = useState('all');
 
@@ -89,36 +90,29 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            const res = await hrTrainingService.createPlan({
-                planCode: `TP-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`,
-                planName,
-                description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
-                startDate: startDate,
-                endDate: endDate,
-                totalBudget: budgetValue,
-                status: 'Pending',
-                trainingRequestIds: selectedIds,
-            });
-
-            if (res.ok) {
-                toast({
-                    title: 'Thành công',
-                    description: 'Đã tạo kế hoạch đào tạo năm và cập nhật trạng thái các yêu cầu.',
+        await execute(
+            async () => {
+                const res = await hrTrainingService.createPlan({
+                    planCode: `TP-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    planName,
+                    description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
+                    startDate: startDate,
+                    endDate: endDate,
+                    totalBudget: budgetValue,
+                    status: 'Pending',
+                    trainingRequestIds: selectedIds,
                 });
-                router.push('/enterprise/hr/training/plans');
+                if (!res.ok) throw new Error('Không thể tạo kế hoạch.');
+                return res;
+            },
+            {
+                successMessage: { title: 'Thành công', description: 'Đã tạo kế hoạch đào tạo năm và cập nhật trạng thái các yêu cầu.' },
+                errorFallback: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
+                onSuccess: () => {
+                    router.push('/enterprise/hr/training/plans');
+                }
             }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Không thể tạo kế hoạch. Vui lòng thử lại.';
-            toast({
-                title: 'Lỗi',
-                description: msg,
-                variant: 'destructive',
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+        );
     };
 
     return (

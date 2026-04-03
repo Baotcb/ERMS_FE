@@ -1,23 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 import type { CreateQuizCommand, CreateQuizQuestionCommand } from '../types/quiz-types';
 
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-    try {
-        const body = await response.text();
-        if (!body) {
-            return fallback;
-        }
-
-        try {
-            const json = JSON.parse(body);
-            return json.message ?? json.Message ?? json.title ?? json.detail ?? fallback;
-        } catch {
-            return body;
-        }
-    } catch {
-        return fallback;
-    }
-}
+import { readApiErrorMessage } from '@/lib/api-error';
 
 export const quizService = {
     async getCourseQuiz(courseId: string): Promise<{ quizId: string | null; hasFinalQuiz: boolean; timeLimitMinutes?: number; maxAttempts?: number; passingScore?: number; totalQuestions?: number }> {
@@ -56,7 +40,7 @@ export const quizService = {
         const response = await apiClient.post(`/api/Course/${courseId}/quizzes`, data);
         if (!response.ok) {
             const fallback = `Không thể tạo bài thi cuối khóa (HTTP ${response.status}).`;
-            const rawMessage = await readErrorMessage(response, fallback);
+            const rawMessage = await readApiErrorMessage(response, fallback);
 
             const lowerRawMessage = rawMessage.toLowerCase();
             const looksLikeDuplicateQuizError =
@@ -90,7 +74,7 @@ export const quizService = {
     async createQuestion(quizId: string, data: CreateQuizQuestionCommand): Promise<{ questionId: string }> {
         const response = await apiClient.post(`/api/quizzes/${quizId}/questions`, data);
         if (!response.ok) {
-            throw new Error(await readErrorMessage(response, 'Không thể tạo câu hỏi quiz.'));
+            throw new Error(await readApiErrorMessage(response, 'Không thể tạo câu hỏi quiz.'));
         }
 
         const result = await response.json() as string | { questionId?: string; id?: string };
@@ -107,7 +91,7 @@ export const quizService = {
 
         const response = await apiClient.post(`/api/quizzes/${quizId}/import-excel`, formData);
         if (!response.ok) {
-            throw new Error(await readErrorMessage(response, 'Không thể import câu hỏi từ file Excel.'));
+            throw new Error(await readApiErrorMessage(response, 'Không thể import câu hỏi từ file Excel.'));
         }
 
         const result = await response.json() as number | { importedCount?: number; count?: number };
@@ -121,7 +105,7 @@ export const quizService = {
     async deleteQuiz(quizId: string): Promise<void> {
         const response = await apiClient.delete(`/api/quizzes/${quizId}`);
         if (!response.ok) {
-            throw new Error(await readErrorMessage(response, 'Không thể xóa bài thi cuối khóa cũ.'));
+            throw new Error(await readApiErrorMessage(response, 'Không thể xóa bài thi cuối khóa cũ.'));
         }
     },
 };

@@ -18,6 +18,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAsyncAction } from '@/hooks/use-async-action';
 import { apiClient } from '@/lib/api-client';
 
 
@@ -30,8 +31,8 @@ import {
 } from './training-request-types';
 
 export function TrainingRequestForm({ open, onOpenChange, onSuccess, initialData }: TrainingRequestFormProps) {
+    const { execute, isSubmitting: isLoading } = useAsyncAction();
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
     const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
     const [detectError, setDetectError] = useState<string | null>(null);
 
@@ -112,47 +113,36 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess, initialData
             return;
         }
 
-        setIsLoading(true);
-        try {
-            if (initialData) {
-                const res = await trainingService.updateRequest({
-                    trainingRequestId: initialData.id,
-                    ...values,
-                });
-
-                if (res.ok) {
-                    toast({
-                        title: 'Thành công',
-                        description: 'Cập nhật yêu cầu đào tạo thành công.',
+        await execute(
+            async () => {
+                if (initialData) {
+                    const res = await trainingService.updateRequest({
+                        trainingRequestId: initialData.id,
+                        ...values,
                     });
-                    onOpenChange(false);
-                    if (onSuccess) onSuccess();
+                    if (!res.ok) throw new Error('Cập nhật thất bại.');
+                    return res;
+                } else {
+                    const res = await trainingService.createRequest({
+                        ...values,
+                        requestedById: detectedEmp!.id,
+                    });
+                    if (!res.ok) throw new Error('Tạo yêu cầu thất bại.');
+                    return res;
                 }
-            } else {
-                const res = await trainingService.createRequest({
-                    ...values,
-                    requestedById: detectedEmp!.id,
-                });
-
-                if (res.ok) {
-                    toast({
-                        title: 'Thành công',
-                        description: 'Yêu cầu đào tạo đã được gửi đi.',
-                    });
+            },
+            {
+                successMessage: { 
+                    title: 'Thành công', 
+                    description: initialData ? 'Cập nhật yêu cầu đào tạo thành công.' : 'Yêu cầu đào tạo đã được gửi đi.' 
+                },
+                errorFallback: 'Không thể xử lý yêu cầu đào tạo. Vui lòng thử lại.',
+                onSuccess: () => {
                     onOpenChange(false);
                     if (onSuccess) onSuccess();
                 }
             }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Không thể thực hiện. Vui lòng thử lại.';
-            toast({
-                variant: 'destructive',
-                title: 'Lỗi',
-                description: errorMessage,
-            });
-        } finally {
-            setIsLoading(false);
-        }
+        );
     };
 
     const isEditMode = !!initialData;

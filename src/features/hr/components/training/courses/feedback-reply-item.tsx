@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { FeedbackReplyDto } from '@/features/employee/api/feedback-service';
 import { useAuth } from '@/features/core/auth/hooks/use-auth';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 interface FeedbackReplyItemProps {
     reply: FeedbackReplyDto;
@@ -20,19 +21,19 @@ export function FeedbackReplyItem({ reply, onUpdate, onDelete, onReplyTo }: Feed
     const isOwner = user?.id === reply.replyBy;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(reply.replyContent);
-    const [isSaving, setIsSaving] = useState(false);
+    const { execute, isSubmitting: isSaving } = useAsyncAction();
 
     const handleSave = async () => {
         if (!editContent.trim()) return;
-        setIsSaving(true);
-        try {
-            await onUpdate(reply.id, editContent);
-            setIsEditing(false);
-        } catch (error) {
-            console.error('Lỗi khi cập nhật:', error);
-        } finally {
-            setIsSaving(false);
-        }
+        await execute(
+            async () => {
+                await onUpdate(reply.id, editContent);
+            },
+            {
+                errorFallback: 'Lỗi khi cập nhật phản hồi.',
+                onSuccess: () => setIsEditing(false)
+            }
+        );
     };
 
     const initial = reply.isAnonymous ? '?' : (reply.replyByName?.charAt(0) || 'U');

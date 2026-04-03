@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Settings, Save } from 'lucide-react';
@@ -15,11 +15,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 import { courseService } from '../../api/course-service';
 import type { Course } from '../../types/course-types';
@@ -33,8 +31,7 @@ interface UpdateCourseDialogProps {
 }
 
 export function UpdateCourseDialog({ course, open, onOpenChange, onSuccess }: UpdateCourseDialogProps) {
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+    const { execute, isSubmitting: isLoading } = useAsyncAction();
 
     const form = useForm<UpdateCourseValues>({
         resolver: zodResolver(updateCourseSchema),
@@ -76,46 +73,40 @@ export function UpdateCourseDialog({ course, open, onOpenChange, onSuccess }: Up
     }, [open, course, form]);
 
     const onSubmit = async (values: UpdateCourseValues) => {
-        setIsLoading(true);
-        try {
-            const payload = {
-                id: course.id,
-                trainingPlanId: course.trainingPlanId,
-                courseName: values.courseName,
-                courseCode: values.courseCode,
-                trainerEmail: values.trainerEmail,
-                description: values.description,
-                location: values.location,
-                startTime: new Date(values.startTime).toISOString(),
-                isOnline: values.isOnline,
-                durationMinutes: values.durationMinutes,
-                level: values.level,
-                isMandatory: values.isMandatory,
-                maxEnrollments: values.maxEnrollments,
-                enrollmentDeadline: values.enrollmentDeadline ? new Date(values.enrollmentDeadline).toISOString() : undefined,
-                completionCriteria: values.completionCriteria,
-                thumbnailUrl: course.thumbnailUrl,
-            };
+        const payload = {
+            id: course.id,
+            trainingPlanId: course.trainingPlanId,
+            courseName: values.courseName,
+            courseCode: values.courseCode,
+            trainerEmail: values.trainerEmail,
+            description: values.description,
+            location: values.location,
+            startTime: new Date(values.startTime).toISOString(),
+            isOnline: values.isOnline,
+            durationMinutes: values.durationMinutes,
+            level: values.level,
+            isMandatory: values.isMandatory,
+            maxEnrollments: values.maxEnrollments,
+            enrollmentDeadline: values.enrollmentDeadline ? new Date(values.enrollmentDeadline).toISOString() : undefined,
+            completionCriteria: values.completionCriteria,
+            thumbnailUrl: course.thumbnailUrl,
+        };
 
-            const res = await courseService.updateCourse(course.id, payload);
-
-            if (res.ok) {
-                toast({
-                    title: 'Thành công',
-                    description: 'Thông tin khóa học đã được cập nhật.',
-                });
-                onOpenChange(false);
-                onSuccess();
+        await execute(
+            async () => {
+                const res = await courseService.updateCourse(course.id, payload);
+                if (!res.ok) throw new Error('Cập nhật thất bại.');
+                return res;
+            },
+            {
+                successMessage: { title: 'Thành công', description: 'Thông tin khóa học đã được cập nhật.' },
+                errorFallback: 'Không thể cập nhật khóa học.',
+                onSuccess: () => {
+                    onOpenChange(false);
+                    onSuccess();
+                }
             }
-        } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: 'Lỗi',
-                description: error instanceof Error ? error.message : 'Không thể cập nhật khóa học.',
-            });
-        } finally {
-            setIsLoading(false);
-        }
+        );
     };
 
     return (

@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useAsyncAction } from '@/hooks/use-async-action';
 import { courseService } from '@/features/hr/api/course-service';
 import { Course, CourseResult, UpdateCourseCommand } from '@/features/hr/types/course-types';
 import type { TrainingPlan } from '@/features/hr/types/training-plan-types';
@@ -71,7 +72,7 @@ export function SetupTrainingSchedulePage({
     const searchParams = useSearchParams();
     const initialCourseId = searchParams.get('courseId') || initialCourseDetails?.id || '';
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { execute, isSubmitting } = useAsyncAction();
     const [isCreateCourseOpen, setIsCreateCourseOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -141,45 +142,43 @@ export function SetupTrainingSchedulePage({
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            const { baseDescription } = parseScheduleConfig(currentCourse?.description);
-            const normalizedMeetingLink = (data.meetingLink || '').trim();
-            const normalizedOfflineLocation = sanitizePlainText(data.offlineLocation || '');
-            
-            const locationValue = data.locationType === 'online' 
-                ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') 
-                : normalizedOfflineLocation;
+        await execute(
+            async () => {
+                const { baseDescription } = parseScheduleConfig(currentCourse?.description);
+                const normalizedMeetingLink = (data.meetingLink || '').trim();
+                const normalizedOfflineLocation = sanitizePlainText(data.offlineLocation || '');
                 
-            await courseService.updateCourse(selectedCourseId, {
-                ...currentCourse,
-                trainerEmail: normalizedTrainerEmail,
-                startTime: resolvedStartTime,
-                isOnline: data.locationType === 'online',
-                location: locationValue,
-                description: buildScheduleDescription(
-                    baseDescription, 
-                    { startDate: data.startDate, startTime: data.startTime, endDate: data.endDate, endTime: data.endTime }, 
-                    locationValue, 
-                    data.notifyTrainerOnAssignment, 
-                    isDraft
-                ),
-            } as UpdateCourseCommand);
-
-            if (isDraft) {
-                toast({ title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' });
-            } else {
-                toast({ title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học. Email trainer sẽ được gửi cùng lúc khi phân công học viên.' });
-                router.push(publishRedirectPath);
+                const locationValue = data.locationType === 'online' 
+                    ? (normalizedMeetingLink || 'Zoom (tự động tạo khi phân công)') 
+                    : normalizedOfflineLocation;
+                    
+                await courseService.updateCourse(selectedCourseId, {
+                    ...currentCourse,
+                    trainerEmail: normalizedTrainerEmail,
+                    startTime: resolvedStartTime,
+                    isOnline: data.locationType === 'online',
+                    location: locationValue,
+                    description: buildScheduleDescription(
+                        baseDescription, 
+                        { startDate: data.startDate, startTime: data.startTime, endDate: data.endDate, endTime: data.endTime }, 
+                        locationValue, 
+                        data.notifyTrainerOnAssignment, 
+                        isDraft
+                    ),
+                } as UpdateCourseCommand);
+            },
+            {
+                successMessage: isDraft 
+                    ? { title: 'Thành công', description: 'Đã lưu bản nháp lịch trình.' }
+                    : { title: 'Thành công', description: 'Đã thiết lập lịch trình khóa học. Email trainer sẽ được gửi cùng lúc khi phân công học viên.' },
+                errorFallback: 'Không thể hoàn tất thiết lập lịch trình. Vui lòng thử lại.',
+                onSuccess: () => {
+                    if (!isDraft) {
+                        router.push(publishRedirectPath);
+                    }
+                }
             }
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error
-                ? error.message
-                : 'Không thể hoàn tất thiết lập lịch trình. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
+        );
     };
 
     const handleCourseCreated = async (courseId: string) => {

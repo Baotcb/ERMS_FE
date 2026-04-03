@@ -18,12 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-const STATUS_COLORS: Record<string, string> = {
-    Published: 'bg-green-100 text-green-800',
-    Draft: 'bg-gray-100 text-gray-800',
-    Archived: 'bg-slate-100 text-slate-700',
-};
-
+import { STATUS_COLORS } from '@/features/hr/utils/training-status-utils';
 function getDeploymentLabel(course: Course): string {
     const hasTrainer = Boolean(course.trainerEmail?.trim());
     const hasTrainees = (course.enrollmentCount || 0) > 0;

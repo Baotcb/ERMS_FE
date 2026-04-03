@@ -3,12 +3,7 @@ import type { Course } from '@/features/hr/types/course-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const STATUS_COLORS: Record<string, string> = {
-    Published: 'bg-green-100 text-green-800',
-    Draft: 'bg-gray-100 text-gray-800',
-    Archived: 'bg-slate-100 text-slate-700',
-};
-
+import { STATUS_COLORS } from '@/features/hr/utils/training-status-utils';
 export function getDeploymentLabel(course: Course): string {
     const hasTrainer = Boolean(course.trainerEmail?.trim());
     const hasTrainees = (course.enrollmentCount || 0) > 0;

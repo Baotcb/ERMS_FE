@@ -12,6 +12,7 @@ import { SearchableCombobox } from '@/components/ui/searchable-combobox';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, usePathname, useSearchParams as useBaseSearchParams } from 'next/navigation';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 import { getEmployees, Employee, PaginatedResult } from '@/features/hr/api/employee-service';
 import { normalizeEmail } from '@/features/hr/utils/course-workflow';
@@ -68,8 +69,8 @@ export function AssignTrainingPage({
     // Component States
     const [selectedTraineeIds, setSelectedTraineeIds] = useState<string[]>([]);
     const [notifyTrainer, setNotifyTrainer] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSelectingAll, setIsSelectingAll] = useState(false);
+    const { execute, isSubmitting } = useAsyncAction();
+    const { execute: executeSelectAll, isSubmitting: isSelectingAll } = useAsyncAction();
 
     // Sync search input locally before debouncing to URL
     const [localTraineeSearch, setLocalTraineeSearch] = useState(searchParams.search);
@@ -148,31 +149,31 @@ export function AssignTrainingPage({
 
 
     const handleSelectAllAcrossPages = async () => {
-        setIsSelectingAll(true);
-        try {
-            const result = await getEmployees({
-                search: searchParams.search,
-                page: 1,
-                pageSize: 10000,
-                departmentId: searchParams.departmentId !== 'all' ? Number(searchParams.departmentId) : undefined,
-            });
+        await executeSelectAll(
+            async () => {
+                const result = await getEmployees({
+                    search: searchParams.search,
+                    page: 1,
+                    pageSize: 10000,
+                    departmentId: searchParams.departmentId !== 'all' ? Number(searchParams.departmentId) : undefined,
+                });
 
-            // Filter out trainer, already enrolled, and special roles
-            const validIds = result.items
-                .filter((emp: Employee) => 
-                    emp.id !== invitedTrainer?.id && 
-                    !enrolledEmployeeIds.includes(emp.id) &&
-                    !hasExcludedRole(emp)
-                )
-                .map((emp: Employee) => emp.id);
+                // Filter out trainer, already enrolled, and special roles
+                const validIds = result.items
+                    .filter((emp: Employee) => 
+                        emp.id !== invitedTrainer?.id && 
+                        !enrolledEmployeeIds.includes(emp.id) &&
+                        !hasExcludedRole(emp)
+                    )
+                    .map((emp: Employee) => emp.id);
 
-            setSelectedTraineeIds(validIds);
-            toast({ title: 'Thành công', description: `Đã chọn ${validIds.length} học viên thỏa mãn điều kiện tìm kiếm và chưa tham gia khóa học.` });
-        } catch {
-            toast({ title: 'Lỗi', description: 'Không thể tải toàn bộ danh sách. Vui lòng thử lại.', variant: 'destructive' });
-        } finally {
-            setIsSelectingAll(false);
-        }
+                setSelectedTraineeIds(validIds);
+                toast({ title: 'Thành công', description: `Đã chọn ${validIds.length} học viên thỏa mãn điều kiện tìm kiếm và chưa tham gia khóa học.` });
+            },
+            {
+                errorFallback: 'Không thể tải toàn bộ danh sách. Vui lòng thử lại.',
+            }
+        );
     };
 
     const handleSaveAssignment = async () => {
@@ -213,25 +214,25 @@ export function AssignTrainingPage({
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            await courseService.assignEmployees(
-                searchParams.courseId,
-                validSelectedIds,
-                {
-                    meetUrl: currentCourse.isOnline ? (currentCourse.location || '') : '',
-                    notifyTrainer,
+        await execute(
+            async () => {
+                await courseService.assignEmployees(
+                    searchParams.courseId,
+                    validSelectedIds,
+                    {
+                        meetUrl: currentCourse.isOnline ? (currentCourse.location || '') : '',
+                        notifyTrainer,
+                    }
+                );
+            },
+            {
+                successMessage: { title: 'Thành công', description: 'Đã lưu phân công đào tạo' },
+                errorFallback: 'Không thể lưu phân công đào tạo. Vui lòng thử lại.',
+                onSuccess: () => {
+                    router.push('/enterprise/dept-head/training');
                 }
-            );
-
-            toast({ title: 'Thành công', description: 'Đã lưu phân công đào tạo' });
-            router.push('/enterprise/dept-head/training');
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Không thể lưu phân công đào tạo. Vui lòng thử lại.';
-            toast({ title: 'Lỗi', description: errorMessage, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
+            }
+        );
     };
 
     return (

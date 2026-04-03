@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Calendar as CalendarIcon, Save } from 'lucide-react';
@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 import { hrTrainingService } from '../../api/hr-training-service';
 import { TrainingPlan } from '../../types/training-plan-types';
@@ -29,8 +30,8 @@ interface EditPlanDialogProps {
 }
 
 export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlanDialogProps) {
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast(); // Kept for the fetchDetail error
+    const { execute, isSubmitting: isLoading } = useAsyncAction();
     const [isFetchingDetail, setIsFetchingDetail] = useState(false);
     const [requestIds, setRequestIds] = useState<string[]>([]);
 
@@ -82,36 +83,30 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
     const onSubmit = async (values: EditPlanValues) => {
         if (!plan) return;
 
-        setIsLoading(true);
-        try {
-            const res = await hrTrainingService.updatePlan({
-                id: plan.id,
-                planCode: plan.planCode, // Preserve planCode
-                planName: values.planName,
-                description: values.description,
-                startDate: new Date(values.startDate).toISOString(),
-                endDate: new Date(values.endDate).toISOString(),
-                totalBudget: values.totalBudget,
-                trainingRequestIds: requestIds, // Inject preserved IDs
-            });
-
-            if (res.ok) {
-                toast({
-                    title: 'Thành công',
-                    description: 'Kế hoạch đào tạo đã được cập nhật và gửi lại.',
+        await execute(
+            async () => {
+                const res = await hrTrainingService.updatePlan({
+                    id: plan.id,
+                    planCode: plan.planCode, // Preserve planCode
+                    planName: values.planName,
+                    description: values.description,
+                    startDate: new Date(values.startDate).toISOString(),
+                    endDate: new Date(values.endDate).toISOString(),
+                    totalBudget: values.totalBudget,
+                    trainingRequestIds: requestIds, // Inject preserved IDs
                 });
-                onOpenChange(false);
-                onSuccess();
+                if (!res.ok) throw new Error('Cập nhật kế hoạch thất bại.');
+                return res;
+            },
+            {
+                successMessage: { title: 'Thành công', description: 'Kế hoạch đào tạo đã được cập nhật và gửi lại.' },
+                errorFallback: 'Lỗi khi cập nhật kế hoạch',
+                onSuccess: () => {
+                    onOpenChange(false);
+                    onSuccess();
+                }
             }
-        } catch (error) {
-            toast({
-                variant: 'destructive',
-                title: 'Lỗi',
-                description: error instanceof Error ? error.message : 'Lỗi khi cập nhật kế hoạch',
-            });
-        } finally {
-            setIsLoading(false);
-        }
+        );
     };
 
     return (
