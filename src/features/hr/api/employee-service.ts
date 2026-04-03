@@ -146,35 +146,6 @@ export async function deleteEmployee(id: string): Promise<void> {
     }
 }
 
-// Bulk import
-export interface EmployeeImportItem {
-    fullName: string
-    email: string
-    phone?: string
-    departmentCode?: string
-    position?: string
-    password?: string
-    role?: string // Optional: Employee, Trainer, Director, DepartmentHead
-}
-
-export interface BulkCreateResult {
-    totalCount: number
-    successCount: number
-    failedCount: number
-    errors: { rowIndex: number; email: string; errorMessage: string }[]
-}
-
-export async function bulkCreateEmployees(items: EmployeeImportItem[]): Promise<BulkCreateResult> {
-    const response = await apiClient.post(`/api/Employees/bulk`, { items })
-
-    if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Không thể import nhân viên')
-    }
-
-    return response.json()
-}
-
 // Fetch wrapper with error handling (for SSR pages)
 // fetchEmployeeList moved to a server utility to avoid next/headers in client bundle
 

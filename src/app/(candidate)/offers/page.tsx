@@ -2,8 +2,8 @@ import { Metadata } from 'next'
 import { CandidateOffersPage } from '@/features/candidate/components/candidate-offers-page'
 
 export const metadata: Metadata = {
-    title: 'Äá» nghá»‹ cĂ´ng viá»‡c | ERMS',
-    description: 'Danh sĂ¡ch cĂ¡c Ä‘á» nghá»‹ cĂ´ng viá»‡c báº¡n Ä‘Ă£ nháº­n vĂ  tráº¡ng thĂ¡i hiá»‡n táº¡i.',
+    title: 'Đề nghị công việc | ERMS',
+    description: 'Danh sách các đề nghị công việc bạn đã nhận và trạng thái hiện tại.',
 }
 
 export default function OffersPage() {

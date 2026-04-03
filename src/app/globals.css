@@ -126,6 +126,21 @@
 }
 
 @layer base {
+  .admin-theme {
+    --admin-canvas: #eef3f6;
+    --admin-shell: #121926;
+    --admin-shell-2: #1a2333;
+    --admin-panel: rgba(255, 255, 255, 0.9);
+    --admin-panel-subtle: rgba(248, 250, 252, 0.82);
+    --admin-border: rgba(148, 163, 184, 0.18);
+    --admin-accent: #0f766e;
+    --admin-accent-soft: rgba(20, 184, 166, 0.14);
+    color: var(--admin-shell);
+    background-color: var(--admin-canvas);
+  }
+}
+
+@layer base {
   * {
     @apply border-border outline-ring/50;
   }
@@ -144,6 +159,58 @@
 }
 
 @layer utilities {
+  .admin-canvas {
+    background-color: var(--admin-canvas);
+  }
+
+  .admin-shell {
+    background-color: var(--admin-shell);
+    color: white;
+  }
+
+  .admin-shell-2 {
+    background-color: var(--admin-shell-2);
+    color: white;
+  }
+
+  .admin-panel {
+    background-color: var(--admin-panel);
+    border-color: var(--admin-border);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(18px);
+  }
+
+  .admin-panel-subtle {
+    background-color: var(--admin-panel-subtle);
+    border-color: var(--admin-border);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(14px);
+  }
+
+  .admin-panel-ghost {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .admin-border {
+    border-color: var(--admin-border);
+  }
+
+  .admin-accent {
+    color: var(--admin-accent);
+  }
+
+  .admin-accent-bg {
+    background-color: var(--admin-accent);
+    color: white;
+  }
+
+  .admin-accent-soft {
+    background-color: var(--admin-accent-soft);
+    color: var(--admin-accent);
+  }
+
   @media (min-width: 1024px) {
     .enterprise-scale {
       zoom: 0.85;

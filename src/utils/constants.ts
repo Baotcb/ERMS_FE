@@ -37,12 +37,9 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
     [USER_ROLES.DEPARTMENT_HEAD]: '/enterprise/dept-head/dashboard',
     [USER_ROLES.EMPLOYEE]: '/enterprise/employee/dashboard',
     // Trainer cũng dùng employee portal (sidebar có section Giảng vụ)
-    [USER_ROLES.ADMIN]: '/enterprise/hr/dashboard',
+    [USER_ROLES.ADMIN]: '/admin/dashboard',
     [USER_ROLES.TRAINER]: '/enterprise/employee/dashboard',
 } as const
 
 export const DEFAULT_ENTERPRISE_DASHBOARD =
     ROLE_DASHBOARD_MAP[USER_ROLES.HR_MANAGER]
-
-// Roles that access /enterprise/hr/* portal
-export const HR_ROLES = [USER_ROLES.HR_MANAGER, USER_ROLES.HR, USER_ROLES.ADMIN] as const
