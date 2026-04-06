@@ -46,6 +46,31 @@ export function useQuizEngine({
 
   const [isWorkshopConfirmed, setIsWorkshopConfirmed] = useState<boolean | null>(null);
 
+  // Cooldown timer
+  const [cooldownRemainingSeconds, setCooldownRemainingSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!result?.nextAvailableTime) {
+      setCooldownRemainingSeconds(null);
+      return;
+    }
+    const updateCooldown = () => {
+      const now = new Date().getTime();
+      const availableAt = new Date(result.nextAvailableTime!).getTime();
+      const diff = Math.floor((availableAt - now) / 1000);
+      
+      if (diff <= 0) {
+        setCooldownRemainingSeconds(null);
+      } else {
+        setCooldownRemainingSeconds(diff);
+      }
+    };
+    
+    updateCooldown();
+    const inv = setInterval(updateCooldown, 1000);
+    return () => clearInterval(inv);
+  }, [result?.nextAvailableTime]);
+
   // Quiz timer
   const [quizRemainingSeconds, setQuizRemainingSeconds] = useState<number | null>(null);
   const [quizHasTimeLimit, setQuizHasTimeLimit] = useState(false);
@@ -436,6 +461,8 @@ export function useQuizEngine({
       isWorkshopConfirmed,
       quizRemainingSeconds,
       quizHasTimeLimit,
+      cooldownRemainingSeconds,
+
     },
     refs: {
       examContainerRef,
