@@ -16,7 +16,7 @@ import { learningQuizService } from "@/features/employee/api/learning-quiz-servi
 import { CourseFeedbackForm } from "./quiz/course-feedback-form";
 import { CourseNavBar } from "./course-nav-bar";
 import type { CourseProgressDto } from "@/features/employee/types/learning-quiz-types";
-import { FeedbackReplyThread } from "./quiz/feedback-reply-thread";
+import { FeedbackReplySection } from "./quiz/feedback-reply-section";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -295,7 +295,7 @@ export function CourseReviewPage({
                     <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                         Thảo luận phản hồi
                     </h4>
-                    <FeedbackReplyThread feedbackId={feedbackData.feedbackId} currentUserRole="trainee" />
+                    <FeedbackReplySection feedbackId={feedbackData.feedbackId} />
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 text-center">
