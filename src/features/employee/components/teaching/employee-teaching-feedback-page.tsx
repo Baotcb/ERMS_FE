@@ -8,7 +8,7 @@ import { feedbackService, type TrainerFeedbackDto } from '@/features/employee/ap
 
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FeedbackReplyThread } from '../learning/quiz/feedback-reply-thread';
+import { FeedbackReplySection } from '../learning/quiz/feedback-reply-section';
 
 function StarDisplay({ rating }: { rating: number }) {
     return (
@@ -190,7 +190,7 @@ export default function EmployeeTeachingFeedbackPage() {
                                         
                                         {expandedId === feedback.id && (
                                             <div className="mt-4">
-                                                <FeedbackReplyThread feedbackId={feedback.id} currentUserRole="trainer" />
+                                                <FeedbackReplySection feedbackId={feedback.id} />
                                             </div>
                                         )}
                                     </div>

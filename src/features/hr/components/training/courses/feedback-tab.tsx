@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { Search, Star, MessageSquare, TrendingUp } from 'lucide-react';
 import type { CourseFeedbackDto } from '@/features/employee/api/feedback-service';
-import { FeedbackReplySection } from './feedback-reply-section';
+import { FeedbackReplySection } from '@/features/employee/components/learning/quiz/feedback-reply-section';
 
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';

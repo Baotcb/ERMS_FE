@@ -19,8 +19,11 @@ export function isCourseOwnedByUser(
     user: CourseUserIdentity | null | undefined,
     role?: string | string[] | null
 ): boolean {
-    if (role && (Array.isArray(role) ? role.includes('HR') : role === 'HR')) {
-        return true;
+    if (role) {
+        const roles = Array.isArray(role) ? role : [role];
+        if (roles.includes('HR') || roles.includes('HRManager')) {
+            return true;
+        }
     }
 
     if (!user) {

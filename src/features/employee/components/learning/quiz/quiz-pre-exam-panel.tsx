@@ -29,6 +29,7 @@ interface QuizPreExamPanelProps {
     maxAttempts: number | null;
     attemptCount: number;
     isWorkshopConfirmed: boolean | null;
+    cooldownRemainingSeconds?: number | null;
   };
   result: LearnerQuizResultDto | null;
   isStarting: boolean;
@@ -46,6 +47,14 @@ export function QuizPreExamPanel({
   const router = useRouter();
   const isWorkshop = course.isOnline === false;
   const isReadyToStart = !isWorkshop || config.isWorkshopConfirmed === true;
+  const isCooldownActive = config.cooldownRemainingSeconds !== null && config.cooldownRemainingSeconds !== undefined && config.cooldownRemainingSeconds > 0;
+
+  let cdMin = "00";
+  let cdSec = "00";
+  if (isCooldownActive) {
+    cdMin = Math.floor(config.cooldownRemainingSeconds! / 60).toString().padStart(2, "0");
+    cdSec = (config.cooldownRemainingSeconds! % 60).toString().padStart(2, "0");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50 flex items-start justify-center pt-12 px-4">
@@ -137,7 +146,7 @@ export function QuizPreExamPanel({
               disabled={
                 isStarting ||
                 !isReadyToStart ||
-                (config.maxAttempts !== null && config.attemptCount >= config.maxAttempts)
+                isCooldownActive
               }
               className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             >
@@ -175,10 +184,15 @@ export function QuizPreExamPanel({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {config.maxAttempts !== null && config.attemptCount >= config.maxAttempts && (
-          <p className="text-xs text-red-500 font-medium">Bạn đã dùng hết số lượt làm bài.</p>
-        )}
+        {isCooldownActive ? (
+          <p className="text-xs text-red-500 font-medium text-center bg-red-50 py-2 rounded-lg border border-red-100">
+            Bạn đã dùng hết lượt. Vui lòng thử lại sau <strong>{cdMin}:{cdSec}</strong>
+          </p>
+        ) : config.maxAttempts !== null && config.attemptCount >= config.maxAttempts ? (
+          <p className="text-xs text-blue-600 font-medium text-center bg-blue-50 py-2 rounded-lg border border-blue-100">
+            ✨ Bạn có thể tiếp tục thi lấy điểm cao hơn
+          </p>
+        ) : null}
       </div>
     </div>
   );

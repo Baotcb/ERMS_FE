@@ -20,10 +20,15 @@ export interface LearnerQuizQuestionDto {
 }
 
 export interface LearnerQuizResultDto {
+    attemptId?: string;
     score: number;
     isPassed: boolean;
     correctAnswers: number;
     totalQuestions: number;
+    attemptCount: number;
+    maxAttempts?: number | null;
+    completedAt?: string | null;
+    nextAvailableTime?: string | null;
 }
 
 export interface SubmitLearnerAnswerCommand {

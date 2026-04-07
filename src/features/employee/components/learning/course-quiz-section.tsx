@@ -40,6 +40,7 @@ export function CourseQuizSection({
           maxAttempts: state.quizMaxAttempts,
           attemptCount: state.quizAttemptCount,
           isWorkshopConfirmed: state.isWorkshopConfirmed,
+          cooldownRemainingSeconds: state.cooldownRemainingSeconds,
         }}
         result={state.result}
         isStarting={state.isStarting}

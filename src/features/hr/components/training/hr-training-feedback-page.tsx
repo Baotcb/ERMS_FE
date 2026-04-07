@@ -11,7 +11,7 @@ import { feedbackService, type CourseFeedbackDto } from '@/features/employee/api
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FeedbackReplyThread } from '@/features/employee/components/learning/quiz/feedback-reply-thread';
+import { FeedbackReplySection } from '@/features/employee/components/learning/quiz/feedback-reply-section';
 
 function StarDisplay({ rating }: { rating: number }) {
     return (
@@ -172,7 +172,7 @@ export default function HRTrainingFeedbackPage() {
                                 
                                 {expandedId === feedback.id && (
                                     <div className="mt-4">
-                                        <FeedbackReplyThread feedbackId={feedback.id} currentUserRole="hr" />
+                                        <FeedbackReplySection feedbackId={feedback.id} />
                                     </div>
                                 )}
                             </div>
