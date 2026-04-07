@@ -128,6 +128,9 @@ export interface PaymentHistoryItem {
   currency: string
   paymentMethod: string | null
   paymentReference: string | null
+  paymentLinkId?: string
+  payosReference?: string
+  paymentOrderStatus?: string
   periodStartDate: string
   periodEndDate: string
   note: string | null

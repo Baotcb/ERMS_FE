@@ -1,6 +1,7 @@
 import {
     CalendarCheck,
     CalendarRange,
+    CreditCard,
     FileText,
     GraduationCap,
     LayoutDashboard,
@@ -75,6 +76,12 @@ export const HR_NAV_ITEMS: HRNavItem[] = [
             { label: 'Quản lý Workshop', href: '/enterprise/hr/training/workshop' },
             { label: 'Quản lý bài giảng', href: '/enterprise/hr/teaching' },
         ],
+    },
+    {
+        label: 'Thanh toán',
+        href: '/enterprise/hr/subscription',
+        icon: CreditCard,
+        roles: [USER_ROLES.HR_MANAGER, USER_ROLES.DIRECTOR],
     },
 ]
 
