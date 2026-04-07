@@ -205,6 +205,12 @@ export function PaymentHistoryPageContent() {
             : '—',
       },
       {
+        key: 'reference',
+        header: 'Mã tham chiếu',
+        className: 'text-sm text-slate-600 font-mono text-[11px]',
+        render: (item) => item.payosReference || item.paymentReference || '—',
+      },
+      {
         key: 'period',
         header: 'Thời hạn',
         className: 'text-sm text-slate-600',
