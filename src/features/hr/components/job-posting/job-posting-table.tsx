@@ -34,48 +34,14 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-import type { JobPostingDetailDto, JobStatus } from '../../types/job-posting-types'
+import { StatusBadge } from './status-badge'
+import type { JobPostingDetailDto } from '../../types/job-posting-types'
 
 interface JobPostingTableProps {
     data: JobPostingDetailDto[]
     onPublish: (id: string) => void
     onClose: (id: string) => void
     onDelete: (id: string) => void
-}
-
-function StatusBadge({ status }: { status: JobStatus }) {
-    const config: Record<JobStatus, { bg: string; text: string; dot: string }> = {
-        Published: {
-            bg: 'bg-green-100 border-green-200/50',
-            text: 'text-green-700',
-            dot: 'bg-green-500',
-        },
-        Draft: {
-            bg: 'bg-slate-100 border-slate-200/50',
-            text: 'text-slate-600',
-            dot: 'bg-slate-400',
-        },
-        Closed: {
-            bg: 'bg-orange-100 border-orange-200/50',
-            text: 'text-orange-700',
-            dot: 'bg-orange-500',
-        },
-    }
-
-    const labels: Record<JobStatus, string> = {
-        Published: 'Đang tuyển',
-        Draft: 'Nháp',
-        Closed: 'Đã đóng',
-    }
-
-    const c = config[status] ?? config.Draft
-
-    return (
-        <span className={`inline-flex items-center justify-center min-w-[100px] px-2.5 py-1 rounded-full text-xs font-medium border ${c.bg} ${c.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 flex-shrink-0 ${c.dot}`} />
-            {labels[status] ?? status}
-        </span>
-    )
 }
 
 export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPostingTableProps) {
@@ -120,7 +86,7 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                 key={job.id}
                                 className="hover:bg-sky-50/30 transition-colors group"
                             >
-                                {/* Job Title & Code */}
+                                {/* Vị trí & Mã */}
                                 <TableCell className="px-6 py-4 align-middle">
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-[#0C4A6E] text-sm">
@@ -132,17 +98,17 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                     </div>
                                 </TableCell>
 
-                                {/* Department */}
+                                {/* Phòng ban */}
                                 <TableCell className="px-6 py-4 align-middle text-sm text-slate-600">
                                     {job.departmentName}
                                 </TableCell>
 
-                                {/* Status */}
+                                {/* Trạng thái */}
                                 <TableCell className="px-6 py-4 align-middle">
                                     <StatusBadge status={job.status} />
                                 </TableCell>
 
-                                {/* Application Count */}
+                                {/* Số hồ sơ */}
                                 <TableCell className="px-6 py-4 align-middle">
                                     <div
                                         className="flex items-center gap-1.5 cursor-pointer hover:underline"
@@ -163,14 +129,14 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                     </div>
                                 </TableCell>
 
-                                {/* Published Date */}
+                                {/* Ngày đăng */}
                                 <TableCell className="px-6 py-4 align-middle text-sm text-slate-500">
                                     {job.publishedAt
                                         ? format(new Date(job.publishedAt), 'dd/MM/yyyy', { locale: vi })
                                         : '--/--/----'}
                                 </TableCell>
 
-                                {/* Actions */}
+                                {/* Hành động */}
                                 <TableCell className="px-6 py-4 align-middle text-right">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -178,7 +144,7 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                                 type="button"
                                                 className="text-slate-400 hover:text-[#0369A1] p-2 rounded-full hover:bg-sky-50 transition-colors cursor-pointer"
                                             >
-                                                <span className="sr-only">Open menu</span>
+                                                <span className="sr-only">Mở menu</span>
                                                 <MoreVertical className="h-4 w-4" />
                                             </button>
                                         </DropdownMenuTrigger>
@@ -198,13 +164,15 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                                 <FileText className="mr-2 h-4 w-4" />
                                                 Xem chi tiết
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/edit`)}
-                                                className="cursor-pointer"
-                                            >
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Chỉnh sửa
-                                            </DropdownMenuItem>
+                                            {(job.status === 'Draft' || job.status === 'Published') && (
+                                                <DropdownMenuItem
+                                                    onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/edit`)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Chỉnh sửa
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuSeparator />
                                             {job.status === 'Draft' && (
                                                 <DropdownMenuItem
@@ -268,4 +236,3 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
         </>
     )
 }
-

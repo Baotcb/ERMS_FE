@@ -5,7 +5,7 @@ import type {
     UpdateJobPostingDto,
 } from '../types/job-posting-types'
 
-// GET /api/job-postings - Get all job postings (HR/Director)
+// GET /api/job-postings - Lấy danh sách bài đăng tuyển dụng (HR/Director)
 export async function getJobPostings(params?: {
     page?: number
     pageSize?: number
@@ -29,14 +29,14 @@ export async function getJobPostings(params?: {
     }
 }
 
-// GET /api/job-postings/{id} - Get job posting details
+// GET /api/job-postings/{id} - Lấy chi tiết bài đăng
 export async function getJobPostingById(id: string): Promise<JobPostingDetailDto> {
     const response = await apiClient.get(`/api/job-postings/${id}`)
-    if (!response.ok) throw new Error('Không thể tải thông tin bài đăng')
+    if (!response.ok) throw new Error('Không thể tải thông tin bài đăng tuyển dụng')
     return response.json() as Promise<JobPostingDetailDto>
 }
 
-// POST /api/job-postings - Create from approved PlanDetail
+// POST /api/job-postings - Tạo bài đăng từ PlanDetail đã duyệt
 export async function createJobPosting(data: CreateJobPostingDto) {
     const response = await apiClient.post('/api/job-postings', data)
     if (!response.ok) {
@@ -45,51 +45,66 @@ export async function createJobPosting(data: CreateJobPostingDto) {
             const err = JSON.parse(errorText)
             throw new Error(err.message || 'Không thể tạo bài đăng tuyển dụng')
         } catch (e: unknown) {
-            const error = e as Error;
-            // If we already created an Error with a message from JSON, throw it
+            const error = e as Error
             if (error.message !== 'Unexpected end of JSON input' && !error.message.includes('JSON')) {
-                throw error;
+                throw error
             }
-            console.error('Non-JSON error response:', errorText)
+            console.error('Phản hồi lỗi không phải JSON:', errorText)
             throw new Error(`Lỗi server (${response.status}): ${errorText.substring(0, 100)}`)
         }
     }
     return response.json() as Promise<{ id: string }>
 }
 
-// PUT /api/job-postings - Update job posting
-// Backend: Id must be in request body, not URL path
+// PUT /api/job-postings - Cập nhật bài đăng
+// Backend: Id phải nằm trong request body, không phải URL path
+// id được truyền vào đây để đảm bảo payload luôn có đúng id
 export async function updateJobPosting(id: string, data: UpdateJobPostingDto) {
-    const response = await apiClient.put('/api/job-postings', { id, ...data })
-    if (!response.ok) throw new Error('Không thể cập nhật bài đăng')
-    return response.json()
+    const response = await apiClient.put('/api/job-postings', { ...data, id })
+    if (!response.ok) {
+        const errorText = await response.text()
+        try {
+            const err = JSON.parse(errorText)
+            throw new Error(err.message || 'Không thể cập nhật bài đăng tuyển dụng')
+        } catch (e: unknown) {
+            const error = e as Error
+            if (error.message !== 'Unexpected end of JSON input' && !error.message.includes('JSON')) {
+                throw error
+            }
+            console.error('Phản hồi lỗi không phải JSON:', errorText)
+            throw new Error(`Lỗi server (${response.status}): ${errorText.substring(0, 100)}`)
+        }
+    }
+    // Backend trả về Unit (204/rỗng) — không cần parse JSON
+    if (response.status === 204 || response.headers.get('content-length') === '0') return
+    return response.json().catch(() => undefined)
 }
 
-// PATCH /api/job-postings/publish - Publish job
-// Backend: Id in request body, not URL path
+// PATCH /api/job-postings/publish - Đăng bài
+// Backend: Id trong request body, không phải URL path
 export async function publishJobPosting(id: string) {
     const response = await apiClient.patch('/api/job-postings/publish', { id })
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Không thể đăng bài viết');
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Không thể đăng bài tuyển dụng')
     }
     return response.json().catch(() => ({ success: true }))
 }
 
-// PATCH /api/job-postings/close - Close job
-// Backend: Id in request body, not URL path
+// PATCH /api/job-postings/close - Đóng tuyển dụng
+// Backend: Id trong request body, không phải URL path
 export async function closeJobPosting(id: string) {
     const response = await apiClient.patch('/api/job-postings/close', { id })
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Không thể đóng bài đăng');
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Không thể đóng bài đăng tuyển dụng')
     }
     return response.json().catch(() => ({ success: true }))
 }
 
-// DELETE /api/job-postings - Delete job posting
-// Backend: Id in request body, not URL path
+// DELETE /api/job-postings - Xóa bài đăng
+// Backend: Id trong request body, không phải URL path
 export async function deleteJobPosting(id: string) {
     const response = await apiClient.delete('/api/job-postings', { id })
-    if (!response.ok) throw new Error('Không thể xóa bài đăng')
+    if (!response.ok) throw new Error('Không thể xóa bài đăng tuyển dụng')
 }
