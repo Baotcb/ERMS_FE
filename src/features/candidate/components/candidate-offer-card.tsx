@@ -41,6 +41,7 @@ export const CandidateOfferCard = memo(function CandidateOfferCard({
                 return { label: 'Đã nhận việc', style: 'bg-emerald-50 text-emerald-700 cursor-default' }
             case 'Rejected':
             case 'Expired':
+            case 'Cancelled':
                 return { label: 'Không khả dụng', style: 'bg-slate-100 text-slate-400 cursor-default' }
             default:
                 return { label: 'Xem chi tiết', style: 'bg-slate-100 text-slate-600 hover:bg-slate-200' }
@@ -96,6 +97,13 @@ export const CandidateOfferCard = memo(function CandidateOfferCard({
                             </span>
                         )}
                     </div>
+
+                    {/* Cancelled notice */}
+                    {offer.status === 'Cancelled' && (
+                        <p className="text-xs text-red-600 font-medium">
+                            Offer này đã bị hủy bởi nhà tuyển dụng. Vui lòng kiểm tra email để biết thêm chi tiết.
+                        </p>
+                    )}
                 </div>
 
                 {/* Action */}

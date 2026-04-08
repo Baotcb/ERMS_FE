@@ -123,58 +123,84 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
 
     return (
         <div className="max-w-[960px] mx-auto flex flex-col gap-6">
-            {/* Congratulations Banner */}
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0F4C75] to-[#3282B8] p-8 text-white shadow-lg">
-                <div
-                    className="absolute inset-0 opacity-10"
-                    style={{
-                        backgroundImage:
-                            'radial-gradient(#ffffff 1px, transparent 1px)',
-                        backgroundSize: '20px 20px',
-                    }}
-                />
-                <div className="relative z-10 flex flex-col items-center text-center gap-3">
-                    <div className="size-16 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-2 shadow-inner border border-white/20">
-                        <span className="text-4xl">🎉</span>
-                    </div>
-                    <h1 className="text-2xl md:text-3xl font-bold leading-tight">
-                        Chúc mừng! Bạn đã nhận được đề nghị công việc
-                    </h1>
-                    <p className="text-blue-100 text-base md:text-lg max-w-2xl">
-                        Chúng tôi rất ấn tượng với kỹ năng và kinh nghiệm của
-                        bạn. Dưới đây là chi tiết lời mời gia nhập đội ngũ của
-                        chúng tôi.
-                    </p>
-                </div>
-            </div>
-
-            {/* Timer Alert */}
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-start sm:items-center gap-3 shadow-sm">
-                <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
-                    <div>
-                        <h3 className="text-sm font-bold text-amber-800">
-                            Thời hạn phản hồi
-                        </h3>
-                        <p className="text-sm text-amber-700">
-                            Vui lòng phản hồi trước{' '}
-                            <span className="font-bold">
-                                23:59 ngày {formatDate(offer.expirationDate)}
-                            </span>
+            {/* Banner */}
+            {offer.status === 'Cancelled' ? (
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-600 to-red-400 p-8 text-white shadow-lg">
+                    <div
+                        className="absolute inset-0 opacity-10"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(#ffffff 1px, transparent 1px)',
+                            backgroundSize: '20px 20px',
+                        }}
+                    />
+                    <div className="relative z-10 flex flex-col items-center text-center gap-3">
+                        <div className="size-16 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-2 shadow-inner border border-white/20">
+                            <span className="text-4xl">❌</span>
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+                            Đề nghị công việc đã bị hủy
+                        </h1>
+                        <p className="text-red-50 text-base md:text-lg max-w-2xl">
+                            Offer này đã bị hủy bởi nhà tuyển dụng. Vui lòng kiểm tra email của bạn để biết thêm chi tiết.
                         </p>
                     </div>
-                    <div className="bg-white px-3 py-1.5 rounded-md border border-amber-100 shadow-sm">
-                        <span
-                            className={`text-sm font-mono font-medium ${countdown?.expired
-                                    ? 'text-red-600'
-                                    : 'text-amber-700'
-                                }`}
-                        >
-                            {countdown?.text}
-                        </span>
+                </div>
+            ) : (
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0F4C75] to-[#3282B8] p-8 text-white shadow-lg">
+                    <div
+                        className="absolute inset-0 opacity-10"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(#ffffff 1px, transparent 1px)',
+                            backgroundSize: '20px 20px',
+                        }}
+                    />
+                    <div className="relative z-10 flex flex-col items-center text-center gap-3">
+                        <div className="size-16 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mb-2 shadow-inner border border-white/20">
+                            <span className="text-4xl">🎉</span>
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+                            Chúc mừng! Bạn đã nhận được đề nghị công việc
+                        </h1>
+                        <p className="text-blue-100 text-base md:text-lg max-w-2xl">
+                            Chúng tôi rất ấn tượng với kỹ năng và kinh nghiệm của
+                            bạn. Dưới đây là chi tiết lời mời gia nhập đội ngũ của
+                            chúng tôi.
+                        </p>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {/* Timer Alert */}
+            {offer.status !== 'Cancelled' && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-start sm:items-center gap-3 shadow-sm">
+                    <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2">
+                        <div>
+                            <h3 className="text-sm font-bold text-amber-800">
+                                Thời hạn phản hồi
+                            </h3>
+                            <p className="text-sm text-amber-700">
+                                Vui lòng phản hồi trước{' '}
+                                <span className="font-bold">
+                                    23:59 ngày {formatDate(offer.expirationDate)}
+                                </span>
+                            </p>
+                        </div>
+                        <div className="bg-white px-3 py-1.5 rounded-md border border-amber-100 shadow-sm">
+                            <span
+                                className={`text-sm font-mono font-medium ${countdown?.expired
+                                        ? 'text-red-600'
+                                        : 'text-amber-700'
+                                    }`}
+                            >
+                                {countdown?.text}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Offer Details Card */}
             <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">

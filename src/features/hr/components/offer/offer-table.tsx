@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { UserCheck } from 'lucide-react'
+import { UserCheck, XCircle } from 'lucide-react'
 
 import {
     Table,
@@ -15,6 +15,7 @@ import {
 import type { HROfferDto } from '../../types/offer-types'
 import { OfferStatusBadge } from './offer-status-badge'
 import { ConfirmHireDialog } from './confirm-hire-dialog'
+import { CancelOfferDialog } from './cancel-offer-dialog'
 
 interface OfferTableProps {
     data: HROfferDto[]
@@ -34,6 +35,10 @@ function formatDate(dateStr: string): string {
 
 export function OfferTable({ data }: OfferTableProps) {
     const [hireDialog, setHireDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
+        open: false,
+        offer: null,
+    })
+    const [cancelDialog, setCancelDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
         open: false,
         offer: null,
     })
@@ -140,16 +145,28 @@ export function OfferTable({ data }: OfferTableProps) {
 
                                 {/* Actions */}
                                 <TableCell className="px-6 py-4 align-middle text-right">
-                                    {offer.status === 'Accepted' && offer.applicationStage !== 'Hired' && (
-                                        <button
-                                            onClick={() => setHireDialog({ open: true, offer })}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200 ml-auto"
-                                            title="Xác nhận tuyển dụng"
-                                        >
-                                            <UserCheck className="w-4 h-4" />
-                                            Xác nhận tuyển
-                                        </button>
-                                    )}
+                                    <div className="flex flex-col gap-2 justify-end items-end">
+                                        {offer.status === 'Accepted' && offer.applicationStage !== 'Hired' && (
+                                            <button
+                                                onClick={() => setHireDialog({ open: true, offer })}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200 ml-auto"
+                                                title="Xác nhận tuyển dụng"
+                                            >
+                                                <UserCheck className="w-4 h-4" />
+                                                Xác nhận tuyển
+                                            </button>
+                                        )}
+                                        {(offer.status === 'Sent' || offer.status === 'Accepted') && offer.applicationStage !== 'Hired' && (
+                                            <button
+                                                onClick={() => setCancelDialog({ open: true, offer })}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold transition-colors border border-red-200 ml-auto"
+                                                title="Hủy offer"
+                                            >
+                                                <XCircle className="w-4 h-4" />
+                                                Hủy offer
+                                            </button>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )
@@ -164,6 +181,14 @@ export function OfferTable({ data }: OfferTableProps) {
                     applicationId={hireDialog.offer.applicationId}
                     candidateName={hireDialog.offer.position}
                     position={hireDialog.offer.position}
+                />
+            )}
+
+            {cancelDialog.offer && (
+                <CancelOfferDialog
+                    open={cancelDialog.open}
+                    onOpenChange={(open) => setCancelDialog((prev) => ({ ...prev, open }))}
+                    offer={cancelDialog.offer}
                 />
             )}
         </>
