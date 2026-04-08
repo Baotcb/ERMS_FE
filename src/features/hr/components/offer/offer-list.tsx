@@ -22,6 +22,8 @@ const STATUS_TABS: StatusTab[] = [
     { key: 'sent', label: 'Đã gửi', statusFilter: 'Sent' },
     { key: 'accepted', label: 'Đã chấp nhận', statusFilter: 'Accepted' },
     { key: 'rejected', label: 'Đã từ chối', statusFilter: 'Rejected' },
+    { key: 'expired', label: 'Hết hạn', statusFilter: 'Expired' },
+    { key: 'cancelled', label: 'Đã hủy', statusFilter: 'Cancelled' },
 ]
 
 export function OfferList() {
