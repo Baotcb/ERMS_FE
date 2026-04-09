@@ -114,3 +114,14 @@ export interface JobPostingDetailDto {
 
   history?: JobPostingHistoryEntry[]
 }
+
+export interface GenerateJDRequest {
+  planDetailId: string;
+}
+
+export interface GenerateJDResult {
+  description: string;
+  requirements?: string;
+  benefits?: string;
+  planDetailId: string;
+}

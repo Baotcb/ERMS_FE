@@ -55,3 +55,10 @@ export function useDeleteJobPosting() {
         (_, { arg: id }: { arg: string }) => service.deleteJobPosting(id)
     )
 }
+
+export function useGenerateJD() {
+    return useSWRMutation(
+        'generate-jd',
+        (_, { arg: planDetailId }: { arg: string }) => service.generateJD(planDetailId)
+    )
+}

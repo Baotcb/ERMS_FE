@@ -3,6 +3,7 @@ import type {
     JobPostingDetailDto,
     CreateJobPostingDto,
     UpdateJobPostingDto,
+    GenerateJDResult,
 } from '../types/job-posting-types'
 
 // GET /api/job-postings - Lấy danh sách bài đăng tuyển dụng (HR/Director)
@@ -107,4 +108,26 @@ export async function closeJobPosting(id: string) {
 export async function deleteJobPosting(id: string) {
     const response = await apiClient.delete('/api/job-postings', { id })
     if (!response.ok) throw new Error('Không thể xóa bài đăng tuyển dụng')
+}
+
+// POST /api/job-postings/generate-jd - Generate JD bằng AI
+export async function generateJD(planDetailId: string): Promise<GenerateJDResult> {
+    const response = await apiClient.post('/api/job-postings/generate-jd', { planDetailId })
+    if (!response.ok) {
+        const errorText = await response.text()
+        try {
+            const err = JSON.parse(errorText)
+            throw new Error(err.message || 'Không thể tạo Job Description bằng AI')
+        } catch (e: unknown) {
+            const error = e as Error
+            if (error.message !== 'Unexpected end of JSON input' && !error.message.includes('JSON')) {
+                throw error
+            }
+            console.error('Phản hồi lỗi không phải JSON:', errorText)
+            throw new Error(`Lỗi server (${response.status}): ${errorText.substring(0, 100)}`)
+        }
+    }
+    const result = await response.json()
+    // handle backend api format returning { data: GenerateJDResult } or directly GenerateJDResult
+    return result.data ?? result
 }
