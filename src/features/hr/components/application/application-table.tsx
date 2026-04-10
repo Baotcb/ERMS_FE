@@ -26,6 +26,7 @@ import { ForwardApplicationDialog } from './forward-application-dialog'
 import { ConfirmScheduleDialog } from '../interview/confirm-schedule-dialog'
 import { RejectApplicationDialog } from './reject-application-dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 
 interface ApplicationTableProps {
     applications: ApplicationDto[]
@@ -101,7 +102,14 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                 <AvatarFallback>{app.candidateName.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-slate-900 line-clamp-1">{app.candidateName}</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-medium text-slate-900 line-clamp-1">{app.candidateName}</span>
+                                                    {app.isExternal && (
+                                                        <Badge variant="outline" className="text-xs border-orange-200 text-orange-600 bg-orange-50 px-1.5 py-0">
+                                                            HR Added
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                                 <span className="text-xs text-slate-500 line-clamp-1">{app.candidateEmail}</span>
                                             </div>
                                         </div>
@@ -206,6 +214,8 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                     onOpenChange={setScheduleOpen}
                     applicationId={selectedApp.id}
                     candidateName={selectedApp.candidateName}
+                    candidateEmail={selectedApp.candidateEmail}
+                    isExternal={selectedApp.isExternal}
                     onSuccess={onRefresh}
                 />
             )}

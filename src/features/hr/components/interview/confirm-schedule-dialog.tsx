@@ -20,6 +20,8 @@ interface ConfirmScheduleDialogProps {
     onOpenChange: (open: boolean) => void
     applicationId: string
     candidateName: string
+    candidateEmail?: string
+    isExternal?: boolean
     interviewerNames?: string[]
     onSuccess?: () => void
 }
@@ -33,7 +35,7 @@ const DURATION_OPTIONS = [
 ]
 
 export function ConfirmScheduleDialog({
-    open, onOpenChange, applicationId, candidateName, interviewerNames = [], onSuccess,
+    open, onOpenChange, applicationId, candidateName, candidateEmail, isExternal = false, interviewerNames = [], onSuccess,
 }: ConfirmScheduleDialogProps) {
     const { toast } = useToast()
     const { trigger, isMutating } = useConfirmSchedule()
@@ -183,6 +185,15 @@ export function ConfirmScheduleDialog({
                                 value={location}
                                 onChange={e => setLocation(e.target.value)}
                             />
+                        </div>
+                    )}
+
+                    {/* External candidate info */}
+                    {isExternal && candidateEmail && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                            <p className="text-blue-800">
+                                📧 Email phỏng vấn sẽ được gửi tới: <strong>{candidateEmail}</strong>
+                            </p>
                         </div>
                     )}
 
