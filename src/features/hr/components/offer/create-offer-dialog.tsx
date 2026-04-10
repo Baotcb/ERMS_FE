@@ -33,8 +33,6 @@ interface CreateOfferDialogProps {
     applicationId?: string
     candidateName?: string
     position?: string
-    isExternal?: boolean
-    candidateEmail?: string
 }
 
 interface JobOption { id: string; title: string; code: string }
@@ -54,8 +52,6 @@ export function CreateOfferDialog({
     applicationId: propApplicationId,
     candidateName: propCandidateName,
     position: propPosition,
-    isExternal: propIsExternal,
-    candidateEmail: propCandidateEmail,
 }: CreateOfferDialogProps) {
     const [form, setForm] = useState(INITIAL_FORM)
     const { trigger, isMutating } = useCreateOffer()
@@ -206,14 +202,6 @@ export function CreateOfferDialog({
                                 position={effectivePosition}
                                 initials={initials}
                             />
-                        )}
-
-                        {/* External candidate notice */}
-                        {(selectedCandidate?.isExternal || propIsExternal) && (
-                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
-                                📧 Ứng viên ngoài hệ thống — Offer sẽ được gửi kèm liên kết chấp nhận/từ chối qua email:{' '}
-                                <strong>{selectedCandidate?.candidateEmail ?? propCandidateEmail}</strong>
-                            </div>
                         )}
 
                         {/* Position (readonly) */}

@@ -60,21 +60,3 @@ export async function cancelOffer(
     const json = await response.json()
     return json.data ?? json
 }
-
-// Phản hồi offer qua token (dành cho ứng viên ngoài hệ thống — không cần đăng nhập)
-// Backend: POST /api/applications/offer-response/{token}?action=accept|reject
-export async function respondOfferByToken(
-    token: string,
-    action: 'accept' | 'reject'
-): Promise<{ message?: string }> {
-    // Use apiClient so the request is proxied via Next.js rewrites to the backend
-    const response = await apiClient.post(
-        `${BASE_URL}/offer-response/${token}?action=${action}`,
-        null
-    )
-    const json = await response.json().catch(() => ({}))
-    if (!response.ok) {
-        throw new Error(json?.message || 'Có lỗi xảy ra')
-    }
-    return json
-}

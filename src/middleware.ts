@@ -50,7 +50,6 @@ const CSRF_EXEMPT_ROUTE_PATTERNS = [
   '/api/Auth/resend-confirmation',
   '/api/Auth/register-enterprise',
   '/api/Auth/create-hr-account',
-  '/api/applications/offer-response',
 ] as const
 
 const CSP_TEMPLATE = `
