@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import { PublicJobDetail } from '@/features/jobs/components/public-job-detail'
+
 import { getPublicJobById } from '@/features/jobs/api/public-job-service'
+import { PublicJobDetail } from '@/features/jobs/components/public-job-detail'
 
 interface JobDetailPageProps {
     params: Promise<{
@@ -13,21 +14,21 @@ export async function generateMetadata({ params }: JobDetailPageProps): Promise<
     const job = await getPublicJobById(id).catch(() => null)
 
     if (!job) {
-        return { title: 'Việc làm — ERMS' }
+        return { title: 'Việc làm - ERMS' }
     }
 
     const description = job.description
         ? job.description.replace(/<[^>]*>/g, '').slice(0, 160)
-        : `${job.employmentType ?? ''} · ${job.location ?? ''}`
+        : `${job.employmentType ?? ''} - ${job.location ?? ''}`
 
     return {
-        title: `${job.jobTitle} — ${job.companyName ?? 'ERMS'}`,
+        title: `${job.jobTitle} - ${job.enterpriseName ?? 'ERMS'}`,
         description,
         openGraph: {
-            title: `${job.jobTitle} — ${job.companyName ?? 'ERMS'}`,
+            title: `${job.jobTitle} - ${job.enterpriseName ?? 'ERMS'}`,
             description,
             type: 'website',
-            ...(job.companyLogoUrl ? { images: [{ url: job.companyLogoUrl }] } : {}),
+            ...(job.enterpriseLogoUrl ? { images: [{ url: job.enterpriseLogoUrl }] } : {}),
         },
     }
 }
