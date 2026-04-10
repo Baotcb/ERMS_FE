@@ -5,6 +5,7 @@ import { Search, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TablePagination } from '@/components/common/table-pagination'
 import { useHROffers } from '../../hooks/use-offers'
 import { OfferTable } from './offer-table'
 import { CreateOfferDialog } from './create-offer-dialog'
@@ -26,11 +27,14 @@ const STATUS_TABS: StatusTab[] = [
     { key: 'cancelled', label: 'Đã hủy', statusFilter: 'Cancelled' },
 ]
 
+const PAGE_SIZE = 10
+
 export function OfferList() {
     const { data: offers, isLoading } = useHROffers()
     const [activeTab, setActiveTab] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
 
     // Filter danh sách theo tab + search
     const filteredOffers = useMemo(() => {
@@ -56,6 +60,24 @@ export function OfferList() {
         return result
     }, [offers, activeTab, searchTerm])
 
+    // Reset về trang 1 khi filter thay đổi
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab)
+        setCurrentPage(1)
+    }
+
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value)
+        setCurrentPage(1)
+    }
+
+    // Pagination
+    const totalPages = Math.ceil(filteredOffers.length / PAGE_SIZE)
+    const paginatedOffers = filteredOffers.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+    )
+
     return (
         <div className="flex flex-col gap-6">
             {/* Page Header */}
@@ -77,7 +99,7 @@ export function OfferList() {
                         <Input
                             placeholder="Tìm ứng viên, vị trí hoặc mã offer..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => handleSearchChange(e.target.value)}
                             className="pl-10 h-10 rounded-xl bg-slate-50 border-slate-200 focus-visible:ring-sky-200 focus-visible:border-sky-300"
                         />
                     </div>
@@ -88,7 +110,7 @@ export function OfferList() {
                             <button
                                 key={tab.key}
                                 type="button"
-                                onClick={() => setActiveTab(tab.key)}
+                                onClick={() => handleTabChange(tab.key)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${activeTab === tab.key
                                     ? 'bg-white shadow-sm text-[#0C4A6E]'
                                     : 'text-slate-500 hover:text-[#0369A1]'
@@ -121,16 +143,21 @@ export function OfferList() {
                             <Skeleton className="h-16 w-full" />
                         </div>
                     ) : (
-                        <OfferTable data={filteredOffers} />
+                        <OfferTable data={paginatedOffers} />
                     )}
                 </div>
 
-                {/* Pagination info */}
+                {/* Pagination */}
                 {!isLoading && filteredOffers.length > 0 && (
                     <div className="mt-auto px-6 py-4 border-t border-slate-100 flex items-center justify-between">
                         <p className="text-sm text-slate-500">
-                            Hiển thị {filteredOffers.length} trên {offers?.length || 0} offer
+                            Hiển thị {Math.min(currentPage * PAGE_SIZE, filteredOffers.length)} / {filteredOffers.length} offer
                         </p>
+                        <TablePagination
+                            page={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
                     </div>
                 )}
             </div>
