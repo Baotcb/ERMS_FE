@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Edit2, CheckCircle, XCircle, Users, Clock, DollarSign, Briefcase, MapPin, GraduationCap, Globe, UserCheck, CalendarDays } from 'lucide-react'
+import { ArrowLeft, Edit2, CheckCircle, XCircle, Users, Clock, DollarSign, Briefcase, MapPin, GraduationCap, Globe, UserCheck, CalendarDays, Link2, Share2, UserPlus } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast'
 
 import { useJobPosting, usePublishJobPosting, useCloseJobPosting } from '../../hooks/use-job-postings'
 import { StatusBadge } from './status-badge'
+import { AddExternalCvDialog } from '../application/add-external-cv-dialog'
 import type { JobStatus } from '../../types/job-posting-types'
 
 const HISTORY_LIMIT = 20
@@ -114,6 +115,27 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                         )}
                         {detail.status === 'Published' && (
                             <>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/jobs/${detail.id}`
+                                        navigator.clipboard.writeText(url)
+                                        toast({ title: 'Đã sao chép liên kết' })
+                                    }}
+                                >
+                                    <Link2 className="w-4 h-4 mr-2" /> Copy Link
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const url = encodeURIComponent(`${window.location.origin}/jobs/${detail.id}`)
+                                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400')
+                                    }}
+                                >
+                                    <Share2 className="w-4 h-4 mr-2" /> Facebook
+                                </Button>
                                 <Button variant="outline" onClick={() => router.push(`/enterprise/hr/job-postings/${detail.id}/edit`)}>
                                     <Edit2 className="w-4 h-4 mr-2" /> Chỉnh sửa
                                 </Button>
@@ -268,9 +290,23 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                     <div className="bg-white rounded-xl border border-slate-200 p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-slate-900">Tiến trình ứng viên ({detail.totalApplications ?? detail.applicationCount ?? 0})</h3>
-                            <Button variant="outline" onClick={() => router.push(`/enterprise/hr/job-postings/${detail.id}/applications`)}>
-                                <Users className="w-4 h-4 mr-2" /> Xem danh sách ứng viên
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                {detail.status === 'Published' && (
+                                    <AddExternalCvDialog
+                                        jobPostingId={detail.id}
+                                        onSuccess={() => mutate()}
+                                        trigger={
+                                            <Button variant="outline" size="sm" className="gap-2">
+                                                <UserPlus className="w-4 h-4" />
+                                                Thêm CV
+                                            </Button>
+                                        }
+                                    />
+                                )}
+                                <Button variant="outline" onClick={() => router.push(`/enterprise/hr/job-postings/${detail.id}/applications`)}>
+                                    <Users className="w-4 h-4 mr-2" /> Xem danh sách ứng viên
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
