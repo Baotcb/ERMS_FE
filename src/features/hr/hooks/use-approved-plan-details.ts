@@ -37,14 +37,48 @@ interface PlansApiResponse {
     [key: string]: unknown
 }
 
-// Fetcher: lấy tất cả PlanDetail có status = Approved từ các plan đã duyệt
-async function fetchApprovedPlanDetails(): Promise<ApprovedPlanDetail[]> {
-    const response = await apiClient.get(
-        '/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=50'
-    )
-    if (!response.ok) return []
+interface JobPostingItem {
+    planDetailId?: string
+    [key: string]: unknown
+}
 
-    const data = (await response.json()) as PlansApiResponse
+interface JobPostingsResponse {
+    items?: JobPostingItem[]
+    [key: string]: unknown
+}
+
+// Lấy set planDetailId đã có Job Posting (Draft/Published/Closed)
+async function getUsedPlanDetailIds(): Promise<Set<string>> {
+    try {
+        const response = await apiClient.get(
+            '/api/job-postings?pageNumber=1&pageSize=200'
+        )
+        if (!response.ok) return new Set()
+
+        const data = (await response.json()) as JobPostingsResponse
+        const ids = new Set<string>()
+        if (data.items && Array.isArray(data.items)) {
+            data.items.forEach((jp) => {
+                if (jp.planDetailId) ids.add(jp.planDetailId)
+            })
+        }
+        return ids
+    } catch {
+        return new Set()
+    }
+}
+
+// Fetcher: lấy PlanDetail chưa có Job Posting từ các plan đã duyệt
+async function fetchApprovedPlanDetails(): Promise<ApprovedPlanDetail[]> {
+    // Fetch song song: plans + job postings đã tồn tại
+    const [plansResponse, usedIds] = await Promise.all([
+        apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=50'),
+        getUsedPlanDetailIds(),
+    ])
+
+    if (!plansResponse.ok) return []
+
+    const data = (await plansResponse.json()) as PlansApiResponse
     if (!data.items || !Array.isArray(data.items)) return []
 
     // Tách plans có/chưa có planDetails
@@ -90,7 +124,7 @@ async function fetchApprovedPlanDetails(): Promise<ApprovedPlanDetail[]> {
         })
     }
 
-    // Gộp & lọc chỉ PlanDetail status = Approved
+    // Gộp & lọc: status = Approved + chưa có Job Posting
     const allPlans = [...plansWithDetails, ...plansNeedingDetails]
     const approvedDetails: ApprovedPlanDetail[] = []
 
@@ -102,9 +136,12 @@ async function fetchApprovedPlanDetails(): Promise<ApprovedPlanDetail[]> {
                 ? plan.planDetails
                 : fetchedDetailsMap[plan.id] || []
 
-        const approved = details.filter((d) => d.status === 'Approved')
+        // Lọc: Approved + chưa tồn tại Job Posting nào
+        const available = details.filter(
+            (d) => d.status === 'Approved' && !usedIds.has(d.id)
+        )
 
-        approved.forEach((detail) => {
+        available.forEach((detail) => {
             approvedDetails.push({
                 id: detail.id,
                 positionTitle:
