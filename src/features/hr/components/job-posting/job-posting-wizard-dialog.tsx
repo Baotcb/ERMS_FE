@@ -59,6 +59,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { useCreateJobPosting, useGenerateJD } from '../../hooks/use-job-postings'
 import { cn } from '@/lib/utils'
+import { PlanDetailSelector } from './plan-detail-selector'
 
 // Data types (aligned with CreateJobPostingForm)
 const jobPostingSchema = z.object({
@@ -381,23 +382,7 @@ export function JobPostingWizardDialog({
 
                                                         <div className="grid grid-cols-2 gap-6">
                                                             {!hidePlanDetailId && (
-                                                                <FormField
-                                                                    control={form.control}
-                                                                    name="planDetailId"
-                                                                    render={({ field }) => (
-                                                                        <FormItem className="col-span-2">
-                                                                            <FormLabel className="text-slate-700">Mã Kế Hoạch Tuyển Dụng</FormLabel>
-                                                                            <FormControl>
-                                                                                <div className="relative group">
-                                                                                    <Input {...field} readOnly className="bg-slate-50 font-mono text-slate-500 border-slate-200 focus-visible:ring-0 pl-10 transition-colors group-hover:bg-slate-100/50" />
-                                                                                    <div className="absolute left-3 top-2.5 text-slate-400">#</div>
-                                                                                    <CheckCircle2 className="absolute right-3 top-2.5 w-4 h-4 text-green-500" />
-                                                                                </div>
-                                                                            </FormControl>
-                                                                            <FormMessage />
-                                                                        </FormItem>
-                                                                    )}
-                                                                />
+                                                                <PlanDetailSelector form={form} />
                                                             )}
 
                                                             <FormField
