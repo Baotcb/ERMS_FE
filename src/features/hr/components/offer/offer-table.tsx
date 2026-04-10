@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { UserCheck, XCircle } from 'lucide-react'
+import { UserCheck, XCircle, MoreVertical, Eye } from 'lucide-react'
 
 import {
     Table,
@@ -11,11 +11,19 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 import type { HROfferDto } from '../../types/offer-types'
 import { OfferStatusBadge } from './offer-status-badge'
 import { ConfirmHireDialog } from './confirm-hire-dialog'
 import { CancelOfferDialog } from './cancel-offer-dialog'
+import { OfferDetailDialog } from './offer-detail-dialog'
 
 interface OfferTableProps {
     data: HROfferDto[]
@@ -39,6 +47,10 @@ export function OfferTable({ data }: OfferTableProps) {
         offer: null,
     })
     const [cancelDialog, setCancelDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
+        open: false,
+        offer: null,
+    })
+    const [detailDialog, setDetailDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
         open: false,
         offer: null,
     })
@@ -145,28 +157,49 @@ export function OfferTable({ data }: OfferTableProps) {
 
                                 {/* Actions */}
                                 <TableCell className="px-6 py-4 align-middle text-right">
-                                    <div className="flex flex-col gap-2 justify-end items-end">
-                                        {offer.status === 'Accepted' && offer.applicationStage !== 'Hired' && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
                                             <button
-                                                onClick={() => setHireDialog({ open: true, offer })}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-colors border border-emerald-200 ml-auto"
-                                                title="Xác nhận tuyển dụng"
+                                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                                                title="Hành động"
                                             >
-                                                <UserCheck className="w-4 h-4" />
-                                                Xác nhận tuyển
+                                                <MoreVertical className="w-4 h-4" />
                                             </button>
-                                        )}
-                                        {(offer.status === 'Sent' || offer.status === 'Accepted') && offer.applicationStage !== 'Hired' && (
-                                            <button
-                                                onClick={() => setCancelDialog({ open: true, offer })}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold transition-colors border border-red-200 ml-auto"
-                                                title="Hủy offer"
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuItem
+                                                onClick={() => setDetailDialog({ open: true, offer })}
+                                                className="flex items-center gap-2 cursor-pointer"
                                             >
-                                                <XCircle className="w-4 h-4" />
-                                                Hủy offer
-                                            </button>
-                                        )}
-                                    </div>
+                                                <Eye className="w-4 h-4 text-sky-500" />
+                                                <span>Xem chi tiết</span>
+                                            </DropdownMenuItem>
+
+                                            {(offer.status === 'Accepted' && offer.applicationStage !== 'Hired') || (offer.status === 'Sent' || offer.status === 'Accepted') && offer.applicationStage !== 'Hired' ? (
+                                                <DropdownMenuSeparator />
+                                            ) : null}
+
+                                            {offer.status === 'Accepted' && offer.applicationStage !== 'Hired' && (
+                                                <DropdownMenuItem
+                                                    onClick={() => setHireDialog({ open: true, offer })}
+                                                    className="flex items-center gap-2 cursor-pointer text-emerald-700 focus:text-emerald-700 focus:bg-emerald-50"
+                                                >
+                                                    <UserCheck className="w-4 h-4" />
+                                                    <span>Xác nhận tuyển</span>
+                                                </DropdownMenuItem>
+                                            )}
+
+                                            {(offer.status === 'Sent' || offer.status === 'Accepted') && offer.applicationStage !== 'Hired' && (
+                                                <DropdownMenuItem
+                                                    onClick={() => setCancelDialog({ open: true, offer })}
+                                                    className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                    <span>Hủy offer</span>
+                                                </DropdownMenuItem>
+                                            )}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         )
@@ -191,6 +224,12 @@ export function OfferTable({ data }: OfferTableProps) {
                     offer={cancelDialog.offer}
                 />
             )}
+
+            <OfferDetailDialog
+                open={detailDialog.open}
+                onOpenChange={(open) => setDetailDialog((prev) => ({ ...prev, open }))}
+                offer={detailDialog.offer}
+            />
         </>
     )
 }
