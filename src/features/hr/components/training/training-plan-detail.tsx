@@ -55,12 +55,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
 
                 <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
                     {/* Summary Stats */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex flex-col items-center text-center">
-                            <BookOpen className="w-5 h-5 text-blue-600 mb-2" />
-                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tổng khóa học</span>
-                            <span className="text-xl font-bold text-[#0F4C75]">{plan.totalCourses}</span>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100/50 flex flex-col items-center text-center">
                             <DollarSign className="w-5 h-5 text-green-600 mb-2" />
                             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tổng ngân sách</span>

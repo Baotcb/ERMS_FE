@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import useSWR from 'swr';
-import { ChevronLeft, Save, AlertTriangle, Search } from 'lucide-react';
+import { ChevronLeft, Save, AlertTriangle, Search, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAsyncAction } from '@/hooks/use-async-action';
 
@@ -28,6 +28,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '../../api/hr-training-service';
 import type { TrainingRequest } from '../../../dept-head/types/training-types';
+import { TrainingRequestDetail } from '../../../dept-head/components/training/training-request-detail';
 import { formatVND } from '@/lib/utils';
 
 export function ConsolidateRequests({ initialData }: { initialData?: { items: TrainingRequest[] } }) {
@@ -41,6 +42,9 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
     const [startDate, setStartDate] = useState(`${currentYear}-${currentMonth}-01`);
     const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
     const [plannedBudget, setPlannedBudget] = useState<string>('');
+    const [description, setDescription] = useState<string>('');
+    const [selectedRequest, setSelectedRequest] = useState<TrainingRequest | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
     const { execute, isSubmitting } = useAsyncAction();
     const [search, setSearch] = useState('');
     const [deptFilter, setDeptFilter] = useState('all');
@@ -95,7 +99,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                 const res = await hrTrainingService.createPlan({
                     planCode: `TP-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`,
                     planName,
-                    description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
+                    description: description || `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
                     startDate: startDate,
                     endDate: endDate,
                     totalBudget: budgetValue,
@@ -177,6 +181,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                     <TableHead className="font-bold text-[#0F4C75]">Ưu tiên</TableHead>
                                     <TableHead className="font-bold text-[#0F4C75]">Dự kiến</TableHead>
                                     <TableHead className="text-right font-bold text-[#0F4C75]">Ngân sách</TableHead>
+                                    <TableHead className="text-center font-bold text-[#0F4C75]">Thao tác</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -203,6 +208,11 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                             <TableCell>{request.estimatedParticipants} học viên</TableCell>
                                             <TableCell className="text-right font-medium">
                                                 {formatVND(request.estimatedBudget || 0)}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Button variant="ghost" size="sm" onClick={() => { setSelectedRequest(request); setIsDetailOpen(true); }} className="text-[#0F4C75] hover:bg-blue-50">
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -251,10 +261,6 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                             </div>
 
                             <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Số lượng khóa:</span>
-                                    <span className="font-bold text-gray-700">{selectedIds.length}</span>
-                                </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tổng ngân sách dự kiến (VNĐ)</label>
                                     <Input
@@ -271,6 +277,15 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                     <span className="font-bold text-[#0F4C75]">
                                         {formatVND(Number(plannedBudget) || 0)}
                                     </span>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-gray-100">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mô tả dành cho hr viết</label>
+                                    <textarea
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="Nhập mô tả..."
+                                        className="w-full min-h-[80px] p-2 text-sm border border-gray-200 rounded-md focus:border-[#3282B8] focus:ring-1 focus:ring-[#3282B8] outline-none resize-y"
+                                    />
                                 </div>
                             </div>
 
@@ -290,6 +305,15 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                     </div>
                 </div>
             </div>
+
+            <TrainingRequestDetail
+                request={selectedRequest}
+                open={isDetailOpen}
+                onOpenChange={(open) => {
+                    setIsDetailOpen(open);
+                    if (!open) setTimeout(() => setSelectedRequest(null), 300);
+                }}
+            />
         </div>
     );
 }
