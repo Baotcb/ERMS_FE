@@ -7,6 +7,8 @@ export const STORAGE_KEYS = {
     AUTH_TOKEN: 'auth_token',
     USER_ROLE: 'user_role',
     USER_NAME: 'user_name',
+    USER_EMAIL: 'user_email',
+    USER_ID: 'user_id',
     USER_AVATAR: 'user_avatar',
     SAVED_JOBS: 'erms-saved-jobs',
 } as const
@@ -29,6 +31,13 @@ export const USER_ROLES = {
     CANDIDATE: 'Candidate',
 } as const
 
+/** Roles that have access to HR teaching workspace */
+export const HR_ROLES = [
+    USER_ROLES.HR_MANAGER,
+    USER_ROLES.HR,
+    USER_ROLES.TRAINER,
+] as const
+
 // Role → dashboard redirect mapping
 export const ROLE_DASHBOARD_MAP: Record<string, string> = {
     [USER_ROLES.HR_MANAGER]: '/enterprise/hr/dashboard',
@@ -36,13 +45,10 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
     [USER_ROLES.DIRECTOR]: '/enterprise/director/dashboard',
     [USER_ROLES.DEPARTMENT_HEAD]: '/enterprise/dept-head/dashboard',
     [USER_ROLES.EMPLOYEE]: '/enterprise/employee/dashboard',
-    // Admin, Trainer chưa có portal riêng → fallback HR
-    [USER_ROLES.ADMIN]: '/enterprise/hr/dashboard',
-    [USER_ROLES.TRAINER]: '/enterprise/dept-head/dashboard',
+    // Trainer cũng dùng employee portal (sidebar có section Giảng vụ)
+    [USER_ROLES.ADMIN]: '/admin/dashboard',
+    [USER_ROLES.TRAINER]: '/enterprise/employee/dashboard',
 } as const
 
 export const DEFAULT_ENTERPRISE_DASHBOARD =
     ROLE_DASHBOARD_MAP[USER_ROLES.HR_MANAGER]
-
-// Roles that access /enterprise/hr/* portal
-export const HR_ROLES = [USER_ROLES.HR_MANAGER, USER_ROLES.HR, USER_ROLES.ADMIN] as const

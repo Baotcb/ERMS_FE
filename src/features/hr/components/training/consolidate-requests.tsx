@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import useSWR from 'swr';
-import { ChevronLeft, Save, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Save, AlertTriangle, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,26 +18,51 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { hrTrainingService } from '../../api/hr-training-service';
 import type { TrainingRequest } from '../../../dept-head/types/training-types';
+import { formatVND } from '@/lib/utils';
 
 export function ConsolidateRequests({ initialData }: { initialData?: { items: TrainingRequest[] } }) {
     const router = useRouter();
     const { toast } = useToast();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${new Date().getFullYear() + 1}`);
-    const [startDate, setStartDate] = useState(`${new Date().getFullYear() + 1}-01-01`);
-    const [endDate, setEndDate] = useState(`${new Date().getFullYear() + 1}-12-31`);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const currentYear = new Date().getFullYear();
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    
+    const [planName, setPlanName] = useState(`Kế hoạch đào tạo năm ${currentYear}`);
+    const [startDate, setStartDate] = useState(`${currentYear}-${currentMonth}-01`);
+    const [endDate, setEndDate] = useState(`${currentYear}-12-31`);
+    const [plannedBudget, setPlannedBudget] = useState<string>('');
+    const { execute, isSubmitting } = useAsyncAction();
+    const [search, setSearch] = useState('');
+    const [deptFilter, setDeptFilter] = useState('all');
 
     const { data, isLoading } = useSWR<{ items: TrainingRequest[] }>(
         '/api/TrainingRequest?status=Pending',
-        () => hrTrainingService.getAllRequests({ status: 'Pending' }),
+        () => hrTrainingService.getAllPendingRequests(),
         { fallbackData: initialData }
     );
 
-    const pendingRequests = data?.items || [];
+    const pendingRequests = useMemo(() => data?.items || [], [data?.items]);
+
+    const departmentOptions = useMemo(() => Array.from(new Set(pendingRequests.map(r => r.departmentName))).sort(), [pendingRequests]);
+
+    const filteredRequests = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return pendingRequests.filter(r => {
+            const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.departmentName.toLowerCase().includes(q);
+            const matchDept = deptFilter === 'all' || r.departmentName === deptFilter;
+            return matchSearch && matchDept;
+        });
+    }, [pendingRequests, search, deptFilter]);
 
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => 
@@ -54,41 +80,40 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            const res = await hrTrainingService.createPlan({
-                planCode: `TP-${new Date().getFullYear() + 1}-${Math.floor(1000 + Math.random() * 9000)}`,
-                planName,
-                description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
-                startDate: startDate,
-                endDate: endDate,
-                totalBudget: totalSelectedBudget,
-                status: 'Pending',
-                trainingRequestIds: selectedIds,
-            });
-
-            if (res.ok) {
-                toast({
-                    title: 'Thành công',
-                    description: 'Đã tạo kế hoạch đào tạo năm và cập nhật trạng thái các yêu cầu.',
-                });
-                router.push('/enterprise/hr/training/plans');
-            }
-        } catch (error) {
-            void error;
+        const budgetValue = Number(plannedBudget);
+        if (!plannedBudget || Number.isNaN(budgetValue) || budgetValue <= 0) {
             toast({
-                title: 'Lỗi',
-                description: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
+                title: 'Thiếu ngân sách dự kiến',
+                description: 'Vui lòng nhập tổng ngân sách dự kiến lớn hơn 0.',
                 variant: 'destructive',
             });
-        } finally {
-            setIsSubmitting(false);
+            return;
         }
-    };
 
-    const totalSelectedBudget = pendingRequests
-        .filter((r: TrainingRequest) => selectedIds.includes(r.id))
-        .reduce((sum: number, r: TrainingRequest) => sum + (r.estimatedBudget || 0), 0);
+        await execute(
+            async () => {
+                const res = await hrTrainingService.createPlan({
+                    planCode: `TP-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    planName,
+                    description: `Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`,
+                    startDate: startDate,
+                    endDate: endDate,
+                    totalBudget: budgetValue,
+                    status: 'Pending',
+                    trainingRequestIds: selectedIds,
+                });
+                if (!res.ok) throw new Error('Không thể tạo kế hoạch.');
+                return res;
+            },
+            {
+                successMessage: { title: 'Thành công', description: 'Đã tạo kế hoạch đào tạo năm và cập nhật trạng thái các yêu cầu.' },
+                errorFallback: 'Không thể tạo kế hoạch. Vui lòng thử lại.',
+                onSuccess: () => {
+                    router.push('/enterprise/hr/training/plans');
+                }
+            }
+        );
+    };
 
     return (
         <div className="space-y-6">
@@ -105,17 +130,40 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-4">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="bg-blue-50 text-blue-700">
-                                {pendingRequests.length} Yêu cầu đang chờ
-                            </Badge>
-                            <span className="text-sm text-gray-400">|</span>
-                            <span className="text-sm font-medium text-gray-600">Đã chọn: {selectedIds.length}</span>
+                    {/* Search + Filter */}
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+                        <div className="flex flex-col md:flex-row items-center gap-3">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Tìm theo chủ đề hoặc phòng ban..."
+                                    className="pl-10 border-gray-200 focus:border-[#3282B8]"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <Select value={deptFilter} onValueChange={setDeptFilter}>
+                                <SelectTrigger className="w-[200px]">
+                                    <SelectValue placeholder="Phòng ban" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tất cả phòng ban</SelectItem>
+                                    {departmentOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedIds(pendingRequests.map((r: TrainingRequest) => r.id))}>Chọn tất cả</Button>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>Bỏ chọn</Button>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                                    {filteredRequests.length} Yêu cầu đang chờ
+                                </Badge>
+                                <span className="text-sm text-gray-400">|</span>
+                                <span className="text-sm font-medium text-gray-600">Đã chọn: {selectedIds.length}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={() => setSelectedIds(filteredRequests.map((r: TrainingRequest) => r.id))}>Chọn tất cả</Button>
+                                <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>Bỏ chọn</Button>
+                            </div>
                         </div>
                     </div>
 
@@ -134,10 +182,10 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow><TableCell colSpan={6} className="text-center py-8">Đang tải...</TableCell></TableRow>
-                                ) : pendingRequests.length === 0 ? (
-                                    <TableRow><TableCell colSpan={6} className="text-center py-8 italic text-gray-400">Không có yêu cầu nào đang chờ xử lý</TableCell></TableRow>
+                                ) : filteredRequests.length === 0 ? (
+                                    <TableRow><TableCell colSpan={6} className="text-center py-8 italic text-gray-400">{pendingRequests.length === 0 ? 'Không có yêu cầu nào đang chờ xử lý' : 'Không tìm thấy kết quả phù hợp'}</TableCell></TableRow>
                                 ) : (
-                                    pendingRequests.map((request: TrainingRequest) => (
+                                    filteredRequests.map((request: TrainingRequest) => (
                                         <TableRow key={request.id} className={selectedIds.includes(request.id) ? 'bg-blue-50/30' : ''}>
                                             <TableCell>
                                                 <Checkbox 
@@ -154,7 +202,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                             </TableCell>
                                             <TableCell>{request.estimatedParticipants} học viên</TableCell>
                                             <TableCell className="text-right font-medium">
-                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget || 0)}
+                                                {formatVND(request.estimatedBudget || 0)}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -207,10 +255,21 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                     <span className="text-gray-500">Số lượng khóa:</span>
                                     <span className="font-bold text-gray-700">{selectedIds.length}</span>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tổng ngân sách dự kiến (VNĐ)</label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={plannedBudget}
+                                        onChange={(e) => setPlannedBudget(e.target.value)}
+                                        placeholder="Nhập tổng ngân sách dự kiến"
+                                        className="bg-white"
+                                    />
+                                </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">Tổng ngân sách:</span>
+                                    <span className="text-gray-500">Ngân sách đã nhập:</span>
                                     <span className="font-bold text-[#0F4C75]">
-                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalSelectedBudget)}
+                                        {formatVND(Number(plannedBudget) || 0)}
                                     </span>
                                 </div>
                             </div>
@@ -222,7 +281,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
 
                             <Button 
                                 className="w-full bg-[#0F4C75] hover:bg-[#1A5F8C] h-11"
-                                disabled={selectedIds.length === 0 || isSubmitting}
+                                disabled={selectedIds.length === 0 || isSubmitting || !plannedBudget}
                                 onClick={handleCreatePlan}
                             >
                                 {isSubmitting ? 'Đang xử lý...' : 'Lưu kế hoạch & Gửi duyệt'}

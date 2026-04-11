@@ -29,7 +29,7 @@ export interface CVScreeningResult {
 export interface ApplicationDto {
     id: string
     jobPostingId: string
-    candidateId: string
+    candidateId: string | null
     candidateName: string
     candidateEmail: string
     candidatePhone?: string
@@ -38,7 +38,29 @@ export interface ApplicationDto {
     appliedAt: string
     cvUrl: string
     hrNote?: string
+    isExternal?: boolean
+    source?: string
     cvScreeningResult?: CVScreeningResult
+}
+
+// Extracted CV info from HR-uploaded CV
+export interface ExtractedCvInfo {
+    resumeUrl: string
+    resumePublicId: string
+    fullName?: string
+    email?: string
+    phone?: string
+    resumeText: string
+}
+
+// Request to add external candidate application
+export interface AddExternalApplicationRequest {
+    jobPostingId: string
+    candidateName: string
+    candidateEmail: string
+    candidatePhone?: string
+    resumeUrl: string
+    resumeText: string
 }
 
 // Paginated Response — khớp với BE GetApplicationsByJobResponse
@@ -55,4 +77,8 @@ export interface ApplicationsResponse {
 // Forward Request
 export interface ForwardApplicationRequest {
     hrNote?: string
+}
+
+export interface RejectApplicationRequest {
+    rejectionReason: string
 }

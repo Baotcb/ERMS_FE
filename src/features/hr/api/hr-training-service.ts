@@ -1,40 +1,52 @@
 import { apiClient } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { TrainingRequestsResult } from '../../dept-head/types/training-types';
-import { CreateTrainingPlan, TrainingPlansResult } from '../types/training-plan-types';
+import { CreateTrainingPlan, CloseTrainingPlanRequest, TrainingPlansResult } from '../types/training-plan-types';
+import { fetchAllPages } from '../utils/fetch-all-pages';
 
 export const hrTrainingService = {
-    async getAllRequests(params?: {
+    async getRequests(params?: {
+        page?: number;
+        pageSize?: number;
         search?: string;
-        departmentId?: number;
         status?: string;
     }): Promise<TrainingRequestsResult> {
-        const status = params?.status || 'Pending';
-        const allItems: TrainingRequestsResult['items'] = [];
-        let page = 1;
-        const pageSize = 20;
+        const searchParams = new URLSearchParams({
+            page: String(params?.page ?? 1),
+            pageSize: String(params?.pageSize ?? DEFAULT_PAGE_SIZE),
+            status: params?.status || 'Pending',
+        });
 
-        while (true) {
-            const searchParams = new URLSearchParams({
-                page: String(page),
-                pageSize: String(pageSize),
-                status,
-            });
+        if (params?.search) searchParams.set('search', params.search);
 
-            if (params?.search) searchParams.set('search', params.search);
-            if (params?.departmentId) searchParams.set('departmentId', String(params.departmentId));
+        const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
 
-            const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
-
-            if (!response.ok) {
-                throw new Error('Không thể tải danh sách yêu cầu');
-            }
-
-            const result: TrainingRequestsResult = await response.json();
-            allItems.push(...result.items);
-
-            if (page >= result.totalPages || result.items.length === 0) break;
-            page++;
+        if (!response.ok) {
+            throw new Error('Không thể tải danh sách yêu cầu');
         }
+
+        return response.json();
+    },
+
+    /** Fetch ALL pending requests (no paging). Only used by consolidate-requests page. */
+    async getAllPendingRequests(): Promise<TrainingRequestsResult> {
+        const allItems = await fetchAllPages<TrainingRequestsResult['items'][number]>(
+            async (page, pageSize) => {
+                const searchParams = new URLSearchParams({
+                    page: String(page),
+                    pageSize: String(pageSize),
+                    status: 'Pending',
+                });
+
+                const response = await apiClient.get(`/api/TrainingRequest?${searchParams}`);
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải danh sách yêu cầu');
+                }
+
+                return response.json();
+            }
+        );
 
         return {
             items: allItems,
@@ -53,7 +65,7 @@ export const hrTrainingService = {
     }): Promise<TrainingPlansResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page ?? 1),
-            pageSize: String(params?.pageSize ?? 20),
+            pageSize: String(params?.pageSize ?? DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);
@@ -80,5 +92,43 @@ export const hrTrainingService = {
             ok: true,
             planId: result.id || result.trainingRequestId
         };
+    },
+
+    async getPlanDetail(id: string): Promise<import('../types/training-plan-types').TrainingPlanDetailDto> {
+        const response = await apiClient.get(`/api/TrainingPlan/${id}`);
+        if (!response.ok) {
+            throw new Error('Không thể tải chi tiết kế hoạch');
+        }
+        return response.json();
+    },
+
+    async updatePlan(data: import('../types/training-plan-types').UpdateTrainingPlan): Promise<{ ok: boolean }> {
+        const response = await apiClient.put(`/api/TrainingPlan/${data.id}`, data);
+
+        if (!response.ok) {
+            let message = 'Không thể cập nhật kế hoạch đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch { /* response body is not JSON */ }
+            throw new Error(message);
+        }
+
+        return { ok: true };
+    },
+
+    async closePlan(data: CloseTrainingPlanRequest): Promise<{ ok: boolean }> {
+        const response = await apiClient.put('/api/TrainingPlan/close', data);
+
+        if (!response.ok) {
+            let message = 'Không thể đóng kế hoạch đào tạo';
+            try {
+                const error = await response.json();
+                message = error.message || message;
+            } catch { /* response body is not JSON */ }
+            throw new Error(message);
+        }
+
+        return { ok: true };
     }
 };

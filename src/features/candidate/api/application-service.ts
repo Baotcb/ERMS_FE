@@ -4,6 +4,7 @@ import type {
     CVScreeningResult,
     GetMyApplicationsResponse,
     ApplicationHistoryParams,
+    WithdrawApplicationRequest,
 } from '../types/application-types'
 
 const BASE_URL = '/api/applications'
@@ -61,3 +62,18 @@ export async function getMyApplications(params?: ApplicationHistoryParams): Prom
     return response.json()
 }
 
+// Withdraw application
+// Backend: PATCH /api/applications/withdraw — { applicationId, reason? } in body
+export async function withdrawApplication(
+    applicationId: string,
+    data?: WithdrawApplicationRequest
+): Promise<void> {
+    const response = await apiClient.patch(`${BASE_URL}/withdraw`, {
+        applicationId,
+        reason: data?.reason,
+    })
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
+        throw new Error(error.message || 'Không thể rút đơn ứng tuyển')
+    }
+}

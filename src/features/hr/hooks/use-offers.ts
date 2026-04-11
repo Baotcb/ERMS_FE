@@ -2,7 +2,7 @@ import { useData } from '@/lib/swr/hooks'
 import useSWRMutation from 'swr/mutation'
 import { mutate } from 'swr'
 import * as service from '../api/offer-service'
-import type { CreateOfferRequest, ConfirmHireRequest } from '../types/offer-types'
+import type { CreateOfferRequest, ConfirmHireRequest, CancelOfferRequest } from '../types/offer-types'
 
 const HR_OFFERS_KEY = '/api/applications/hr/my-offers'
 
@@ -40,6 +40,20 @@ export function useConfirmHire() {
         'confirm-hire',
         (_, { arg }: { arg: ConfirmHireRequest }) =>
             service.confirmHire(arg),
+        {
+            onSuccess: () => {
+                mutate(HR_OFFERS_KEY)
+            },
+        }
+    )
+}
+
+// Hook hủy offer
+export function useCancelOffer() {
+    return useSWRMutation(
+        HR_OFFERS_KEY,
+        (_, { arg }: { arg: CancelOfferRequest }) =>
+            service.cancelOffer(arg),
         {
             onSuccess: () => {
                 mutate(HR_OFFERS_KEY)

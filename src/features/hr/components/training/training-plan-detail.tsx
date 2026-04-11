@@ -1,15 +1,21 @@
 'use client';
 
+import useSWR from 'swr';
+
 import { 
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-    DollarSign, BookOpen, Clock, User, ClipboardList, Info, BarChart3, TrendingUp
+    DollarSign, BookOpen, Clock, User, ClipboardList, Info, BarChart3, TrendingUp,
+    Layers, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TrainingPlan } from '../../types/training-plan-types';
+import { STATUS_COLORS, getStatusLabel, getDisplayReviewNote, getReviewNoteHeading } from '../../utils/training-status-utils';
+import { formatVND } from '@/lib/utils';
+import { hrTrainingService } from '../../api/hr-training-service';
 
 interface TrainingPlanDetailProps {
     plan: TrainingPlan | null;
@@ -17,23 +23,12 @@ interface TrainingPlanDetailProps {
     onOpenChange: (open: boolean) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-800 border-gray-200',
-    Pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    Approved: 'bg-green-100 text-green-800 border-green-200',
-    Active: 'bg-blue-100 text-blue-800 border-blue-200',
-    Completed: 'bg-purple-100 text-purple-800 border-purple-200',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    Draft: 'Bản nháp',
-    Pending: 'Chờ duyệt',
-    Approved: 'Đã duyệt',
-    Active: 'Đang triển khai',
-    Completed: 'Đã hoàn thành',
-};
-
 export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDetailProps) {
+    const { data: detailData, isLoading } = useSWR(
+        open && plan ? `/api/TrainingPlan/${plan.id}` : null,
+        () => plan ? hrTrainingService.getPlanDetail(plan.id) : null
+    );
+
     if (!plan) return null;
 
     return (
@@ -52,7 +47,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                                 </DialogDescription>
                             </div>
                             <Badge className={`${STATUS_COLORS[plan.status]} border font-bold px-3 py-1 shadow-sm`}>
-                                {STATUS_LABELS[plan.status] || plan.status}
+                                {getStatusLabel(plan)}
                             </Badge>
                         </div>
                     </DialogHeader>
@@ -70,7 +65,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                             <DollarSign className="w-5 h-5 text-green-600 mb-2" />
                             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tổng ngân sách</span>
                             <span className="text-lg font-bold text-green-700">
-                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.totalBudget)}
+                                {formatVND(plan.totalBudget)}
                             </span>
                         </div>
                         <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50 flex flex-col items-center text-center">
@@ -124,26 +119,72 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                         </div>
                     </div>
 
-                    {/* Description */}
+                    {/* Description or Review Note */}
                     <div className="space-y-3 pt-2">
-                        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                            <ClipboardList className="w-3.5 h-3.5" /> Mô tả chi tiết
-                        </h3>
-                        <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl border border-gray-100 min-h-[80px]">
-                            {plan.description || 'Không có mô tả chi tiết cho kế hoạch này.'}
-                        </div>
+                        {plan.reviewNote ? (
+                           <>
+                                <h3 className="text-[11px] font-bold text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Info className="w-3.5 h-3.5" /> {getReviewNoteHeading(plan.reviewNote)}
+                                </h3>
+                                <div className="text-sm text-orange-800 leading-relaxed bg-orange-50 p-4 rounded-2xl border border-orange-100 min-h-[80px]">
+                                    {getDisplayReviewNote(plan.reviewNote)}
+                                </div>
+                           </>
+                        ) : (
+                            <>
+                                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                    <ClipboardList className="w-3.5 h-3.5" /> Mô tả chi tiết
+                                </h3>
+                                <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl border border-gray-100 min-h-[80px]">
+                                    {plan.description || 'Không có mô tả chi tiết cho kế hoạch này.'}
+                                </div>
+                            </>
+                        )}
                     </div>
 
-                    {/* Review Note if exists */}
-                    {plan.reviewNote && (
-                        <div className="mt-4 p-4 bg-orange-50 rounded-2xl border border-orange-100 flex gap-3">
-                            <Info className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
-                            <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-orange-500 uppercase">Ghi chú phê duyệt</span>
-                                <p className="text-sm text-orange-800">{plan.reviewNote}</p>
-                            </div>
+                    {/* Danh sách Request */}
+                    <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                            <Layers className="w-3.5 h-3.5" /> Các yêu cầu đào tạo ({detailData?.trainingRequests?.length || 0})
+                        </h3>
+                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                            {isLoading ? (
+                                <div className="p-8 text-center text-sm text-gray-500 flex flex-col items-center gap-2">
+                                    <Loader2 className="w-5 h-5 animate-spin text-[#3282B8]" />
+                                    Đang tải dữ liệu...
+                                </div>
+                            ) : !detailData?.trainingRequests || detailData.trainingRequests.length === 0 ? (
+                                <div className="p-6 text-center text-sm text-gray-500 italic">
+                                    Không có yêu cầu đào tạo nào.
+                                </div>
+                            ) : (
+                                <div className="max-h-[250px] overflow-y-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 border-b">
+                                            <tr>
+                                                <th className="px-4 py-3 font-semibold">Phòng ban</th>
+                                                <th className="px-4 py-3 font-semibold">Chủ đề</th>
+                                                <th className="px-4 py-3 font-semibold text-right">Dự kiến</th>
+                                                <th className="px-4 py-3 font-semibold text-right">Ngân sách</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {detailData.trainingRequests.map((req) => (
+                                                <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="px-4 py-3 font-medium text-gray-900">{req.departmentName}</td>
+                                                    <td className="px-4 py-3 text-gray-600 line-clamp-1 truncate max-w-[200px]" title={req.subject}>{req.subject}</td>
+                                                    <td className="px-4 py-3 text-gray-500 text-right">{req.estimatedParticipants} hv</td>
+                                                    <td className="px-4 py-3 font-medium text-[#0F4C75] text-right">
+                                                        {formatVND(req.estimatedBudget || 0)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 <DialogFooter className="px-6 py-4 bg-gray-50 border-t">

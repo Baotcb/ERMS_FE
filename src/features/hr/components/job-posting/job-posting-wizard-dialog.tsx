@@ -31,6 +31,16 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog'
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
     Form,
     FormControl,
     FormDescription,
@@ -47,8 +57,9 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { useCreateJobPosting } from '../../hooks/use-job-postings'
+import { useCreateJobPosting, useGenerateJD } from '../../hooks/use-job-postings'
 import { cn } from '@/lib/utils'
+import { PlanDetailSelector } from './plan-detail-selector'
 
 // Data types (aligned with CreateJobPostingForm)
 const jobPostingSchema = z.object({
@@ -94,8 +105,10 @@ export function JobPostingWizardDialog({
 }: JobPostingWizardDialogProps) {
     const { toast } = useToast()
     const { trigger: createJob, isMutating } = useCreateJobPosting()
+    const { trigger: generateJD, isMutating: isGeneratingJD } = useGenerateJD()
     const [step, setStep] = useState(1)
     const [direction, setDirection] = useState(0) // -1 for back, 1 for forward
+    const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
 
     // Extract form data from initialData (remove non-form fields like hidePlanDetailId)
     const getFormData = (data?: Partial<JobPostingFormValues> & { hidePlanDetailId?: boolean }) => {
@@ -123,9 +136,7 @@ export function JobPostingWizardDialog({
     // Reset form when initialData changes or dialog opens
     useEffect(() => {
         if (open && initialData) {
-            console.log('🔄 Resetting form with initialData:', initialData)
             const formData = getFormData(initialData)
-            console.log('📋 Form data (without hidePlanDetailId):', formData)
 
             form.reset({
                 showSalary: true,
@@ -176,8 +187,49 @@ export function JobPostingWizardDialog({
     }
 
     const prevStep = () => {
+        if (isGeneratingJD) return
         setDirection(-1)
         setStep((prev) => Math.max(prev - 1, 1))
+    }
+
+    const doGenerate = async () => {
+        const planDetailId = form.getValues('planDetailId')
+        try {
+            const result = await generateJD(planDetailId)
+            form.setValue('description', result.description, { shouldValidate: true })
+            form.setValue('requirements', result.requirements ?? '')
+            form.setValue('benefits', result.benefits ?? '')
+            toast({
+                title: 'Tạo thành công',
+                description: 'Nội dung tin tuyển dụng đã được điền tự động bằng AI.',
+            })
+        } catch (err) {
+            console.error('Lỗi khi gọi AI:', err)
+            toast({
+                title: 'Lỗi',
+                description: err instanceof Error ? err.message : 'Tạo JD thất bại, vui lòng thử lại.',
+                variant: 'destructive',
+            })
+        }
+    }
+
+    const handleGenerateJD = async () => {
+        const planDetailId = form.getValues('planDetailId')
+        if (!planDetailId) {
+            toast({ title: 'Lỗi', description: 'Vui lòng chọn Kế hoạch tuyển dụng trước.', variant: 'destructive' })
+            return
+        }
+
+        const currentDesc = form.getValues('description')
+        const currentReq = form.getValues('requirements')
+        const currentBen = form.getValues('benefits')
+
+        if (currentDesc || currentReq || currentBen) {
+            setShowOverwriteConfirm(true)
+            return
+        }
+
+        await doGenerate()
     }
 
     const onSubmit = async (data: JobPostingFormValues) => {
@@ -193,9 +245,6 @@ export function JobPostingWizardDialog({
                 remoteOption: data.remoteOption,
                 applicationDeadline: data.applicationDeadline ? new Date(data.applicationDeadline).toISOString() : new Date().toISOString(), // Fallback to now if empty, although validation should catch it
             }
-
-            console.log('📤 Submitting job posting:', payload)
-            console.log('📋 planDetailId:', payload.planDetailId)
 
             await createJob(payload)
             toast({
@@ -333,23 +382,7 @@ export function JobPostingWizardDialog({
 
                                                         <div className="grid grid-cols-2 gap-6">
                                                             {!hidePlanDetailId && (
-                                                                <FormField
-                                                                    control={form.control}
-                                                                    name="planDetailId"
-                                                                    render={({ field }) => (
-                                                                        <FormItem className="col-span-2">
-                                                                            <FormLabel className="text-slate-700">Mã Kế Hoạch Tuyển Dụng</FormLabel>
-                                                                            <FormControl>
-                                                                                <div className="relative group">
-                                                                                    <Input {...field} readOnly className="bg-slate-50 font-mono text-slate-500 border-slate-200 focus-visible:ring-0 pl-10 transition-colors group-hover:bg-slate-100/50" />
-                                                                                    <div className="absolute left-3 top-2.5 text-slate-400">#</div>
-                                                                                    <CheckCircle2 className="absolute right-3 top-2.5 w-4 h-4 text-green-500" />
-                                                                                </div>
-                                                                            </FormControl>
-                                                                            <FormMessage />
-                                                                        </FormItem>
-                                                                    )}
-                                                                />
+                                                                <PlanDetailSelector form={form} />
                                                             )}
 
                                                             <FormField
@@ -444,11 +477,26 @@ export function JobPostingWizardDialog({
                                             {step === 2 && (
                                                 <div className="space-y-6">
                                                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-                                                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-2">
-                                                            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                                                                <FileText className="w-5 h-5" />
+                                                        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                                                    <FileText className="w-5 h-5" />
+                                                                </div>
+                                                                <h3 className="text-lg font-semibold text-slate-800">Chi tiết công việc</h3>
                                                             </div>
-                                                            <h3 className="text-lg font-semibold text-slate-800">Chi tiết công việc</h3>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={handleGenerateJD}
+                                                                disabled={isGeneratingJD || !form.getValues('planDetailId')}
+                                                            >
+                                                                {isGeneratingJD ? (
+                                                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Đang tạo...</>
+                                                                ) : (
+                                                                    <><Sparkles className="mr-2 h-4 w-4" />Tạo với AI</>
+                                                                )}
+                                                            </Button>
                                                         </div>
 
                                                         <FormField
@@ -460,6 +508,7 @@ export function JobPostingWizardDialog({
                                                                     <FormControl>
                                                                         <Textarea
                                                                             placeholder="Liệt kê các trách nhiệm chính..."
+                                                                            disabled={isGeneratingJD}
                                                                             className="min-h-[150px] resize-y shadow-sm transition-all focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                                                                             {...field}
                                                                         />
@@ -478,6 +527,7 @@ export function JobPostingWizardDialog({
                                                                     <FormControl>
                                                                         <Textarea
                                                                             placeholder="Kỹ năng, kinh nghiệm, học vấn..."
+                                                                            disabled={isGeneratingJD}
                                                                             className="min-h-[120px] shadow-sm transition-all focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                                                                             {...field}
                                                                         />
@@ -496,6 +546,7 @@ export function JobPostingWizardDialog({
                                                                     <FormControl>
                                                                         <Textarea
                                                                             placeholder="Bảo hiểm, thưởng, du lịch..."
+                                                                            disabled={isGeneratingJD}
                                                                             className="min-h-[80px] transition-all focus:ring-2 focus:ring-indigo-100"
                                                                             {...field}
                                                                         />
@@ -659,6 +710,7 @@ export function JobPostingWizardDialog({
                                         type="button"
                                         variant="ghost"
                                         onClick={step === 1 ? () => onOpenChange(false) : prevStep}
+                                        disabled={isGeneratingJD || isMutating}
                                         className="text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-medium"
                                     >
                                         {step === 1 ? 'Hủy bỏ' : (
@@ -673,6 +725,7 @@ export function JobPostingWizardDialog({
                                             <Button
                                                 type="button"
                                                 onClick={nextStep}
+                                                disabled={isGeneratingJD || isMutating}
                                                 className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px] shadow-md shadow-indigo-200 transition-all hover:scale-[1.02] hover:shadow-lg"
                                             >
                                                 Tiếp tục <ChevronRight className="w-4 h-4 ml-1" />
@@ -681,17 +734,10 @@ export function JobPostingWizardDialog({
                                             <Button
                                                 type="button"
                                                 onClick={async () => {
-                                                    console.log('🔘 Submit button clicked')
-                                                    console.log('📝 Current form values:', form.getValues())
-                                                    console.log('❌ Form errors:', form.formState.errors)
-
                                                     const isValid = await form.trigger()
-                                                    console.log('✅ Form valid?', isValid)
 
                                                     if (isValid) {
                                                         form.handleSubmit(onSubmit)()
-                                                    } else {
-                                                        console.log('⚠️ Form validation failed')
                                                     }
                                                 }}
                                                 disabled={isMutating}
@@ -708,6 +754,24 @@ export function JobPostingWizardDialog({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận ghi đè nội dung</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Nội dung mô tả, yêu cầu và phúc lợi hiện tại sẽ bị thay thế bằng nội dung do AI tạo ra.
+                            Bạn có chắc chắn muốn tiếp tục?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
+                        <AlertDialogAction onClick={doGenerate}>
+                            Đồng ý, tạo lại
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </LazyMotion>
     )
 }

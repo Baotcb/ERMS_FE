@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api-client';
-import { Course, CourseResult, CreateCourseCommand, UpdateCourseCommand } from '../types/course-types';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
+import { Course, CourseResult, CreateCourseCommand, PublishCourseCommand, UpdateCourseCommand } from '../types/course-types';
 
 export const courseService = {
     async getAllCourses(params?: {
@@ -11,7 +12,7 @@ export const courseService = {
     }): Promise<CourseResult> {
         const searchParams = new URLSearchParams({
             page: String(params?.page || 1),
-            pageSize: String(params?.pageSize || 20),
+            pageSize: String(params?.pageSize || DEFAULT_PAGE_SIZE),
         });
 
         if (params?.search) searchParams.set('search', params.search);
@@ -66,14 +67,25 @@ export const courseService = {
         return { ok: true };
     },
 
-    async assignEmployees(courseId: string, employeeIds: string[]): Promise<{ totalAssigned: number }> {
-        const response = await apiClient.post(`/api/Course/${courseId}/assign-employees`, employeeIds);
+    async assignEmployees(
+        courseId: string,
+        employeeIds: string[],
+        options: {
+            meetUrl?: string;
+            notifyTrainer?: boolean;
+        } = {}
+    ): Promise<{ totalAssigned: number }> {
+        const response = await apiClient.post(`/api/Course/${courseId}/assign-employees`, {
+            meetUrl: options.meetUrl || '',
+            notifyTrainer: options.notifyTrainer ?? true,
+            employeeIds,
+        });
         if (!response.ok) throw new Error('Không thể phân công nhân viên');
         return response.json();
     },
 
-    async publishCourse(id: string): Promise<{ ok: boolean }> {
-        const response = await apiClient.post(`/api/Course/${id}/publish`, {}, { retries: 0 });
+    async publishCourse(command: PublishCourseCommand): Promise<{ ok: boolean }> {
+        const response = await apiClient.post(`/api/Course/${command.id}/publish`, command, { retries: 0 });
         if (!response.ok) {
             let message = `Không thể công khai khóa học (HTTP ${response.status})`;
             try {

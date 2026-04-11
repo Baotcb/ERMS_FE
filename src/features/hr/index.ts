@@ -5,6 +5,7 @@
 
 // Components
 export { HRSidebar } from './components/hr-sidebar'
+export { HRNavbar } from './components/hr-navbar'
 export { HRDashboard } from './components/hr-dashboard'
 
 // Types only (no runtime imports)
@@ -20,7 +21,5 @@ export type {
     CreateEmployeeData,
     UpdateEmployeeData,
     GetEmployeesParams,
-    EmployeeImportItem,
-    BulkCreateResult
 } from './api/employee-service'
 

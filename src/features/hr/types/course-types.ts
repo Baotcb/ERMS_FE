@@ -5,6 +5,10 @@ export interface Course {
     courseCode: string;
     description?: string;
     thumbnailUrl?: string;
+    trainerEmail?: string;
+    location?: string;
+    startTime?: string;
+    isOnline?: boolean;
     trainerId?: string;
     trainerName?: string;
     durationMinutes?: number;
@@ -17,6 +21,8 @@ export interface Course {
     publishedAt?: string;
     lessonCount: number;
     enrollmentCount: number;
+    hasFinalQuiz?: boolean;
+    finalQuizId?: string;
     createdAt: string;
 }
 
@@ -26,7 +32,10 @@ export interface CreateCourseCommand {
     courseCode: string;
     description?: string;
     thumbnailUrl?: string;
-    trainerId?: string;
+    trainerEmail: string;
+    location?: string;
+    startTime: string;
+    isOnline: boolean;
     durationMinutes?: number;
     level?: string;
     isMandatory: boolean;
@@ -37,6 +46,13 @@ export interface CreateCourseCommand {
 
 export interface UpdateCourseCommand extends CreateCourseCommand {
     id: string;
+}
+
+export interface PublishCourseCommand {
+    id: string;
+    startTime: string;
+    trainingType: 'Online' | 'Offline';
+    location: string;
 }
 
 export interface CourseResult {

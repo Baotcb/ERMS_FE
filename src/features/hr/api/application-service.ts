@@ -3,7 +3,10 @@ import type {
     ApplicationDto,
     ApplicationsResponse,
     ForwardApplicationRequest,
+    RejectApplicationRequest,
     CVScreeningResult,
+    ExtractedCvInfo,
+    AddExternalApplicationRequest,
 } from '../types/application-types'
 
 const BASE_URL = '/api/applications'
@@ -18,7 +21,7 @@ const BASE_URL = '/api/applications'
  */
 interface BEApplicationItem {
     applicationId: string
-    candidateId: string
+    candidateId: string | null
     candidateName: string
     candidateEmail?: string
     candidatePhone?: string
@@ -27,6 +30,8 @@ interface BEApplicationItem {
     status: string
     appliedAt: string
     hrNote?: string
+    isExternal?: boolean
+    source?: string
     overallScore?: number
     skillMatchScore?: number
     experienceMatchScore?: number
@@ -84,7 +89,7 @@ export async function getApplicationsByJob(
         data: (result.items || []).map((item: BEApplicationItem): ApplicationDto => ({
             id: item.applicationId,
             jobPostingId: jobPostingId,
-            candidateId: item.candidateId,
+            candidateId: item.candidateId ?? null,
             candidateName: item.candidateName,
             candidateEmail: item.candidateEmail || '',
             candidatePhone: item.candidatePhone,
@@ -93,6 +98,8 @@ export async function getApplicationsByJob(
             appliedAt: item.appliedAt,
             cvUrl: item.resumeUrl || '',
             hrNote: item.hrNote,
+            isExternal: item.isExternal ?? false,
+            source: item.source,
             cvScreeningResult: mapCvScreeningResult(item),
         })),
         totalCount: result.totalCount || 0,
@@ -120,5 +127,45 @@ export async function forwardApplication(
         hrNote: data.hrNote,
     })
     if (!response.ok) throw new Error('Không thể chuyển hồ sơ')
+    return response.json()
+}
+
+// Reject application (HR)
+// Backend: PATCH /api/applications/reject — { applicationId, rejectionReason } in body
+export async function rejectApplication(
+    id: string,
+    data: RejectApplicationRequest
+): Promise<void> {
+    const response = await apiClient.patch(`${BASE_URL}/reject`, {
+        applicationId: id,
+        rejectionReason: data.rejectionReason,
+    })
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
+        throw new Error(error.message || 'Không thể từ chối hồ sơ')
+    }
+}
+
+// Extract CV info via AI (Step 1 of HR add external flow)
+export async function extractCvInfo(file: File): Promise<ExtractedCvInfo> {
+    const formData = new FormData()
+    formData.append('cvFile', file)
+    const response = await apiClient.post(`${BASE_URL}/extract-cv-info`, formData)
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Không thể phân tích CV' }))
+        throw new Error(error.message || 'Không thể phân tích CV')
+    }
+    return response.json()
+}
+
+// Add external application (Step 2 of HR add external flow)
+export async function addExternalApplication(
+    data: AddExternalApplicationRequest
+): Promise<{ applicationId: string; stage: string; appliedAt: string }> {
+    const response = await apiClient.post(`${BASE_URL}/add-external`, data)
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
+        throw new Error(error.message || 'Không thể thêm hồ sơ')
+    }
     return response.json()
 }

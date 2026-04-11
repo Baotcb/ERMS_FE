@@ -55,6 +55,12 @@ const STATUS_CONFIG: Record<OfferStatus, {
         text: 'text-gray-600',
         dot: 'bg-gray-400',
     },
+    Cancelled: {
+        label: 'Đã hủy',
+        bg: 'bg-red-100',
+        text: 'text-red-800',
+        dot: 'bg-red-500',
+    },
 }
 
 export const OfferStatusBadge = memo(function OfferStatusBadge({
@@ -64,9 +70,9 @@ export const OfferStatusBadge = memo(function OfferStatusBadge({
 
     return (
         <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${config.bg} ${config.text}`}
+            className={`inline-flex items-center justify-center min-w-[120px] px-2.5 py-1 rounded-full text-xs font-bold ${config.bg} ${config.text}`}
         >
-            <span className={`size-1.5 rounded-full ${config.dot} mr-2`} />
+            <span className={`size-1.5 rounded-full ${config.dot} mr-2 flex-shrink-0`} />
             {config.label}
         </span>
     )

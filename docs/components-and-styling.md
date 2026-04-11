@@ -12,7 +12,7 @@ Giữ components, functions, styles, state, v.v. gần nhất có thể với n�
 export const JobCard = () => {}
 
 // ✅ Tốt - Feature component trong feature folder
-// src/features/domains/jobs/components/job-card.tsx
+// src/features/jobs/components/job-card.tsx
 export const JobCard = () => {}
 ```
 
@@ -26,11 +26,11 @@ function JobList() {
   function renderFilters() {
     return <div>{/* bộ lọc phức tạp */}</div>
   }
-  
+
   function renderJobCards() {
     return jobs.map(job => <div key={job.id}>{/* card phức tạp */}</div>)
   }
-  
+
   return (
     <div>
       {renderFilters()}
@@ -99,13 +99,6 @@ interface JobCardProps {
   job: Job
   actions: JobCardActions
 }
-
-// Hoặc dùng composition
-<JobCard>
-  <JobCard.Header {...headerProps} />
-  <JobCard.Content {...contentProps} />
-  <JobCard.Actions {...actionsProps} />
-</JobCard>
 ```
 
 
@@ -141,8 +134,6 @@ export const ExpensiveComponent = memo(function ExpensiveComponent({
 })
 ```
 
-[Ví Dụ Memoization - CandidateNavbar](../src/components/layout/candidate-navbar.tsx)
-
 ### Pattern Composition
 
 ```typescript
@@ -154,7 +145,7 @@ interface DialogProps {
 
 export function Dialog({ children, open, onClose }: DialogProps) {
   if (!open) return null
-  
+
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog-content" onClick={e => e.stopPropagation()}>
@@ -163,31 +154,11 @@ export function Dialog({ children, open, onClose }: DialogProps) {
     </div>
   )
 }
-
-// Compound components
-Dialog.Header = function DialogHeader({ children }: { children: React.ReactNode }) {
-  return <div className="dialog-header">{children}</div>
-}
-
-Dialog.Body = function DialogBody({ children }: { children: React.ReactNode }) {
-  return <div className="dialog-body">{children}</div>
-}
-
-Dialog.Footer = function DialogFooter({ children }: { children: React.ReactNode }) {
-  return <div className="dialog-footer">{children}</div>
-}
-
-// Sử dụng
-<Dialog open={open} onClose={handleClose}>
-  <Dialog.Header>Tiêu đề</Dialog.Header>
-  <Dialog.Body>Nội dung</Dialog.Body>
-  <Dialog.Footer>Hành động</Dialog.Footer>
-</Dialog>
 ```
 
 ## Thư Viện Components
 
-ERMS sử dụng **shadcn/ui** - một thư viện component headless với các lợi ích:
+ERMS sử dụng **shadcn/ui** - một thư viện component headless xây dựng trên Radix UI:
 
 ### Tại Sao shadcn/ui?
 
@@ -197,29 +168,47 @@ ERMS sử dụng **shadcn/ui** - một thư viện component headless với các
 - ✅ **An toàn kiểu** - TypeScript first
 - ✅ **Hiện đại** - Sử dụng các React patterns mới nhất
 
-### Cấu Trúc Components
+### Danh Sách Components Hiện Có
 
 ```
 src/components/ui/
-├── button.tsx          # Component button cơ bản
-├── input.tsx           # Component input cơ bản
-├── select.tsx          # Component select cơ bản
-├── dialog.tsx          # Dialog primitives
-├── dropdown-menu.tsx   # Dropdown menu
-└── ...
+├── alert-dialog.tsx    # Confirmation dialogs
+├── alert.tsx           # Alert messages
+├── avatar.tsx          # User avatars
+├── badge.tsx           # Status badges
+├── button.tsx          # Button variants
+├── calendar.tsx        # Date picker calendar
+├── card.tsx            # Card containers
+├── checkbox.tsx        # Checkbox input
+├── dialog.tsx          # Modal dialogs
+├── dropdown-menu.tsx   # Dropdown menus
+├── form.tsx            # React Hook Form integration
+├── form-field.tsx      # Form field wrapper
+├── input.tsx           # Text input
+├── label.tsx           # Form labels
+├── popover.tsx         # Popover containers
+├── progress.tsx        # Progress bars
+├── select.tsx          # Select dropdowns
+├── separator.tsx       # Visual separators
+├── sheet.tsx           # Side panels
+├── skeleton.tsx        # Loading skeletons
+├── switch.tsx          # Toggle switches
+├── table.tsx           # Data tables
+├── tabs.tsx            # Tab navigation
+├── textarea.tsx        # Multi-line input
+├── toast.tsx           # Toast notifications
+└── tooltip.tsx         # Tooltips
 ```
-
-[Components shadcn/ui](../src/components/ui/)
 
 ### Thêm Components Mới
 
 ```bash
 # Thêm component mới từ shadcn/ui
-npx shadcn-ui@latest add [component-name]
+npx shadcn@latest add [component-name]
 
 # Ví dụ
-npx shadcn-ui@latest add dialog
-npx shadcn-ui@latest add dropdown-menu
+npx shadcn@latest add accordion
+npx shadcn@latest add slider
 ```
 
 ### Tùy Biến Components
@@ -255,106 +244,112 @@ const buttonVariants = cva(
 
 ## Giải Pháp Styling
 
-ERMS sử dụng **Tailwind CSS 4** cho styling với các lý do sau:
+ERMS sử dụng **Tailwind CSS 4** với cú pháp mới (`@theme inline`, `@import`).
 
 ### Tại Sao Tailwind CSS?
 
 - ✅ **Không có runtime** - Styles được tạo lúc build
-- ✅ **An toàn kiểu** - với `tailwind-merge` và `class-variance-authority`
 - ✅ **Utility-first** - Phát triển nhanh chóng
 - ✅ **Responsive** - Tiếp cận mobile-first
 - ✅ **Dark mode** - Hỗ trợ sẵn có
 - ✅ **Hiệu năng** - Bundle size nhỏ
 
-### Cấu Hình Tailwind
+### Cấu Hình Tailwind CSS 4
 
-```typescript
-// tailwind.config.ts
-import type { Config } from 'tailwindcss'
-
-const config: Config = {
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/features/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          dark: '#3f51b5',
-          primary: '#2196f3',
-          secondary: '#00bcd4',
-          coral: '#ff4081',
-          light: '#f5f7fa',
-        },
-      },
-    },
-  },
-  plugins: [],
-}
-```
-
-### Design Tokens
+ERMS dùng Tailwind CSS 4 với cú pháp mới trong `globals.css`:
 
 ```css
 /* globals.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-@layer base {
-  :root {
-    --brand-dark: #3f51b5;
-    --brand-primary: #2196f3;
-    --brand-secondary: #00bcd4;
-    --brand-coral: #ff4081;
-    --brand-light: #f5f7fa;
-    
-    --radius: 0.5rem;
-  }
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Brand Colors - Deep Blue / Coral Theme */
+  --color-brand-primary: #0F4C75;
+  --color-brand-secondary: #BBE1FA;
+  --color-brand-coral: #FF7E67;
+  --color-brand-dark: #0F4C75;
+  --color-brand-light: #F7F9FC;
+  --color-brand-white: #FFFFFF;
+  --color-brand-bg: #F7F9FC;
+
+  /* shadcn/ui CSS variables mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-destructive: var(--destructive);
+  /* ... */
+
+  /* Radius tokens */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-@layer components {
-  .btn-primary {
-    @apply bg-brand-primary text-white rounded-lg px-4 py-2 hover:bg-brand-primary/90 transition-colors;
-  }
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  /* ... light mode variables */
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  /* ... dark mode variables */
 }
 ```
 
-### Sử Dụng Tailwind
+> **Chú ý:** Tailwind CSS 4 KHÔNG dùng `tailwind.config.ts`. Tất cả config nằm trong CSS bằng `@theme inline` và `@custom-variant`.
 
-```typescript
-// ✅ Tốt - Các utility classes có ngữ nghĩa
-<button className="bg-brand-primary text-white rounded-lg px-4 py-2 hover:bg-brand-primary/90 transition-colors">
-  Nhấn vào đây
-</button>
+### Sử Dụng Brand Colors
 
-// ✅ Tốt hơn - Tách thành component
-<Button variant="primary">Nhấn vào đây</Button>
+```tsx
+// Sử dụng brand colors trong components
+<div className="bg-brand-primary text-white">Primary</div>
+<div className="bg-brand-coral">Coral accent</div>
+<div className="bg-brand-light">Light background</div>
+<div className="bg-brand-secondary">Secondary blue</div>
+```
 
-// ✅ Tốt nhất - Sử dụng cva cho variants
-const buttonVariants = cva('base-classes', {
-  variants: {
-    variant: {
-      primary: 'brand-primary-classes',
-      secondary: 'brand-secondary-classes',
-    },
-  },
-})
+### Sử Dụng shadcn/ui Colors
+
+```tsx
+// shadcn/ui semantic colors (auto dark mode)
+<div className="bg-background text-foreground">Auto theme</div>
+<div className="bg-card text-card-foreground">Card</div>
+<div className="bg-muted text-muted-foreground">Muted</div>
+<div className="bg-destructive">Error</div>
+```
+
+### Enterprise Scale Utility
+
+ERMS có custom utility `enterprise-scale` để zoom UI cho enterprise portal:
+
+```css
+@layer utilities {
+  @media (min-width: 1024px) {
+    .enterprise-scale {
+      zoom: 0.85;
+      min-height: calc(100vh / 0.85);
+    }
+  }
+}
 ```
 
 ### Responsive Design
 
 ```typescript
 <div className="
-  grid 
+  grid
   grid-cols-1        // Mobile
   md:grid-cols-2     // Tablet
   lg:grid-cols-3     // Desktop
-  gap-4 
-  p-4 
+  gap-4
+  p-4
   lg:p-6
 ">
   {items.map(item => <Card key={item.id} {...item} />)}
@@ -364,109 +359,42 @@ const buttonVariants = cva('base-classes', {
 ### Dark Mode
 
 ```typescript
-// Bật dark mode trong Tailwind
+// Sử dụng custom variant dark
 <div className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
   Nội dung
 </div>
 ```
 
-## CSS Modules (Khi Cần)
+## Shared Components (components/common/)
 
-Cho các animations hoặc styles phức tạp, có thể sử dụng CSS Modules:
+### Danh Sách Components Hiện Có
 
-```typescript
-// component.module.css
-.card {
-  @apply bg-white rounded-lg shadow-md;
-  animation: fadeIn 0.3s ease-in;
-}
+| Component | File | Mục Đích |
+|-----------|------|----------|
+| Alert | `alert.tsx` | Hiển thị thông báo (success, error, warning) |
+| AvatarDropdown | `avatar-dropdown.tsx` | Menu dropdown cho user avatar |
+| BrandLogo | `brand-logo.tsx` | Logo ERMS |
+| DashboardWidgets | `dashboard/widget-containers.tsx` | Container cho dashboard cards |
+| ErrorBoundary | `error-boundary.tsx` | Catch React errors |
+| ErrorDialog | `error-dialog.tsx` | Dialog hiển thị lỗi |
+| FileUpload | `file-upload.tsx` | Upload file (react-dropzone) |
+| ImageUpload | `image-upload.tsx` | Upload ảnh (Cloudinary) |
+| LoadingSpinner | `loading-spinner.tsx` | Loading indicator |
+| Skeleton | `skeleton.tsx` | Loading skeleton |
+| ListSkeleton | `skeletons/list-skeleton.tsx` | Skeleton cho danh sách |
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+### Layout Components
 
-// component.tsx
-import styles from './component.module.css'
-
-export function Card() {
-  return <div className={styles.card}>Nội dung</div>
-}
-```
-
-## Kiểm Thử Components
-
-### Unit Testing Components
-
-```typescript
-// button.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react'
-import { Button } from './button'
-
-describe('Button', () => {
-  it('hiển thị đúng', () => {
-    render(<Button>Nhấn vào đây</Button>)
-    expect(screen.getByText('Nhấn vào đây')).toBeInTheDocument()
-  })
-
-  it('xử lý click', () => {
-    const handleClick = jest.fn()
-    render(<Button onClick={handleClick}>Nhấn vào đây</Button>)
-    
-    fireEvent.click(screen.getByText('Nhấn vào đây'))
-    expect(handleClick).toHaveBeenCalledTimes(1)
-  })
-
-  it('áp dụng variant styles', () => {
-    render(<Button variant="destructive">Xóa</Button>)
-    const button = screen.getByText('Xóa')
-    expect(button).toHaveClass('bg-red-500')
-  })
-})
-```
-
-## Storybook (Khuyến Nghị)
-
-Storybook là công cụ xuất sắc cho việc phát triển và kiểm thử components một cách độc lập.
-
-### Cài Đặt
-
-```bash
-npm install --save-dev @storybook/react @storybook/addon-essentials
-npx storybook init
-```
-
-### Ví Dụ Story
-
-```typescript
-// button.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react'
-import { Button } from './button'
-
-const meta: Meta<typeof Button> = {
-  title: 'UI/Button',
-  component: Button,
-  tags: ['autodocs'],
-}
-
-export default meta
-type Story = StoryObj<typeof Button>
-
-export const Primary: Story = {
-  args: {
-    children: 'Button',
-    variant: 'default',
-  },
-}
-
-export const Destructive: Story = {
-  args: {
-    children: 'Xóa',
-    variant: 'destructive',
-  },
-}
-```
+| Component | File | Mục Đích |
+|-----------|------|----------|
+| AuthNavbar | `auth-navbar.tsx` | Navbar trang auth |
+| AuthFooter | `auth-footer.tsx` | Footer trang auth |
+| BrandDecoration | `brand-decoration.tsx` | Trang trí brand gradient |
+| CandidateNavbar | `candidate-navbar.tsx` | Navbar ứng viên |
+| ClientLayoutElements | `client-layout-elements.tsx` | Client-side layout logic |
+| FloatingMenu | `floating-menu.tsx` | Menu floating mobile |
+| Footer | `footer.tsx` | Footer chung |
+| NavItem | `nav-item.tsx` | Item trong sidebar |
+| SettingsSidebar | `settings-sidebar.tsx` | Sidebar trang settings |
 
 ---
-
-

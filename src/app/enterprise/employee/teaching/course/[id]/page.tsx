@@ -1,34 +1,30 @@
 import { Suspense } from 'react';
 import { TrainerCourseDashboard } from '@/features/employee/components/teaching/trainer-course-dashboard';
-import { Loader2 } from 'lucide-react';
-import { notFound, redirect } from 'next/navigation';
-import { getServerSession } from '@/lib/server-fetch';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { trainingServerService } from '@/features/hr/api/training-server-service';
 
-export default async function Page({ params }: { params: { id: string } }) {
-    const session = await getServerSession();
-    const canAccess = Boolean(session.user?.isTrainer || session.role === 'Trainer');
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
-    if (!canAccess) {
-        redirect('/enterprise/employee/dashboard');
+    let course = null;
+    let errorMessage = '';
+    try {
+        course = await trainingServerService.getCourseDetails(id);
+    } catch (err: unknown) {
+        errorMessage = err instanceof Error ? err.message : 'Không thể tải dữ liệu khóa học';
+        console.error('[Teaching Course Page] getCourseDetails failed:', errorMessage, 'courseId:', id);
     }
-
-    const course = await trainingServerService.getCourseDetails(params.id).catch(() => null);
 
     if (!course) {
-        notFound();
-    }
-
-    const normalizedTrainerName = course.trainerName?.trim().toLowerCase();
-    const normalizedUserFullName = session.user?.fullName?.trim().toLowerCase();
-    const ownsCourse = course.trainerId === session.user?.id || (
-        Boolean(normalizedTrainerName) &&
-        Boolean(normalizedUserFullName) &&
-        normalizedTrainerName === normalizedUserFullName
-    );
-
-    if (!ownsCourse) {
-        notFound();
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
+                <AlertTriangle className="w-12 h-12 text-amber-500" />
+                <h2 className="text-xl font-bold text-gray-700">Không thể tải khóa học</h2>
+                <p className="text-gray-500 max-w-md">
+                    {errorMessage || `Khóa học với ID "${id}" không tồn tại hoặc bạn chưa có quyền truy cập. Hãy thử đăng nhập lại.`}
+                </p>
+            </div>
+        );
     }
 
     return (

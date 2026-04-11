@@ -24,6 +24,16 @@ export interface CreateTrainingRequest {
     estimatedBudget?: number;
 }
 
+export interface UpdateTrainingRequest {
+    trainingRequestId: string;
+    subject?: string;
+    urgency?: string;
+    description?: string;
+    targetAudience?: string;
+    estimatedParticipants?: number;
+    estimatedBudget?: number;
+}
+
 export interface TrainingRequestsResult {
     items: TrainingRequest[];
     totalCount: number;

@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { HROfferDto, CreateOfferRequest, ConfirmHireRequest, ConfirmHireResult } from '../types/offer-types'
+import type { HROfferDto, CreateOfferRequest, ConfirmHireRequest, ConfirmHireResult, CancelOfferRequest, CancelOfferResult } from '../types/offer-types'
 
 const BASE_URL = '/api/applications'
 
@@ -45,4 +45,36 @@ export async function confirmHire(
     const json = await response.json()
     // Backend wraps response in { message, data }
     return json.data ?? json
+}
+
+// Hủy offer
+// Backend: PATCH /api/applications/cancel-offer
+export async function cancelOffer(
+    data: CancelOfferRequest
+): Promise<CancelOfferResult> {
+    const response = await apiClient.patch(`${BASE_URL}/cancel-offer`, data)
+    if (!response.ok) {
+        const error = await response.json().catch(() => null)
+        throw new Error(error?.message || 'Không thể hủy offer')
+    }
+    const json = await response.json()
+    return json.data ?? json
+}
+
+// Phản hồi offer qua token (dành cho ứng viên ngoài hệ thống — không cần đăng nhập)
+// Backend: POST /api/applications/offer-response/{token}?action=accept|reject
+export async function respondOfferByToken(
+    token: string,
+    action: 'accept' | 'reject'
+): Promise<{ message?: string }> {
+    // Use apiClient so the request is proxied via Next.js rewrites to the backend
+    const response = await apiClient.post(
+        `${BASE_URL}/offer-response/${token}?action=${action}`,
+        null
+    )
+    const json = await response.json().catch(() => ({}))
+    if (!response.ok) {
+        throw new Error(json?.message || 'Có lỗi xảy ra')
+    }
+    return json
 }

@@ -36,6 +36,25 @@ export interface ChartData {
     color: string
 }
 
+export interface DepartmentTrainingResultItem {
+    id: string
+    employeeName: string
+    employeeEmail: string
+    departmentName: string
+    courseName: string
+    courseCode: string
+    assignedAt: string
+    completedAt: string | null
+    progressPercentage: number
+    totalLessons: number
+    completedLessons: number
+    quizScore: number | null
+    attemptCount: number
+    learningStatus: 'InProgress' | 'Completed' | 'NotStarted'
+    evaluationStatus: 'Passed' | 'Failed' | 'Pending'
+    note?: string
+}
+
 interface PlanDetailDto {
     id: string
     recruitmentPlanId: string

@@ -7,6 +7,7 @@ export type OfferStatus =
     | 'Accepted'
     | 'Rejected'
     | 'Expired'
+    | 'Cancelled'
 
 // HR Offer DTO — khớp với BE HROfferDto (GetAllOfferByHR)
 export interface HROfferDto {
@@ -59,4 +60,16 @@ export interface ConfirmHireResult {
     employeeCode: string
     newStage: string
     employeeEmail: string
+}
+
+export interface CancelOfferRequest {
+    offerId: string;
+    cancellationReason: string;
+}
+
+export interface CancelOfferResult {
+    offerId: string;
+    newOfferStatus: string;
+    newApplicationStage: string;
+    cancelledAt: string;
 }

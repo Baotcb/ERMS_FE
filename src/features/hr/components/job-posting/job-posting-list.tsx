@@ -221,7 +221,7 @@ function JobPostingListContent() {
             </div>
 
             {/* Data Table Card */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[500px]">
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 flex flex-col min-h-[420px]">
                 <div className="flex-1 overflow-x-auto">
                     {isLoading ? (
                         <div className="p-6 space-y-4">

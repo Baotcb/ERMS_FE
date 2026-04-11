@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, DollarSign, Users, Info, Send } from 'lucide-react';
+import { Loader2, Users, Info, Send } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAsyncAction } from '@/hooks/use-async-action';
 import { apiClient } from '@/lib/api-client';
 
 
@@ -27,11 +28,11 @@ import {
     type TrainingRequestValues, 
     type TrainingRequestFormProps, 
     TRAINING_REQUEST_DEFAULTS 
-} from './training-request-types';
+} from '../../schema/training-request-schema';
 
-export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingRequestFormProps) {
+export function TrainingRequestForm({ open, onOpenChange, onSuccess, initialData }: TrainingRequestFormProps) {
+    const { execute, isSubmitting: isLoading } = useAsyncAction();
     const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
     const [detectedEmp, setDetectedEmp] = useState<{ id: string; departmentName: string } | null>(null);
     const [detectError, setDetectError] = useState<string | null>(null);
 
@@ -82,17 +83,28 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
 
                 setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng đăng nhập lại.');
             } catch (e) {
-                console.error('Failed to detect employee:', e);
-                setDetectError('Không thể xác định thông tin nhân viên hiện tại. Vui lòng thử lại.');
+                const msg = e instanceof Error ? e.message : 'Lỗi không xác định';
+                setDetectError(`Không thể xác định thông tin nhân viên hiện tại: ${msg}`);
             }
         };
 
         detectUser();
-        form.reset(TRAINING_REQUEST_DEFAULTS);
-    }, [open, form]);
+        if (initialData) {
+            form.reset({
+                requestedById: initialData.requestedById,
+                subject: initialData.subject,
+                urgency: initialData.urgency as 'Normal' | 'High' | 'Urgent',
+                description: initialData.description || '',
+                targetAudience: initialData.targetAudience || '',
+                estimatedParticipants: initialData.estimatedParticipants || 1,
+            });
+        } else {
+            form.reset(TRAINING_REQUEST_DEFAULTS);
+        }
+    }, [open, form, initialData]);
 
     const onSubmit: SubmitHandler<TrainingRequestValues> = async (values) => {
-        if (!detectedEmp?.id) {
+        if (!detectedEmp?.id && !initialData) {
             toast({
                 variant: 'destructive',
                 title: 'Lỗi',
@@ -101,38 +113,39 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
             return;
         }
 
-        setIsLoading(true);
-        try {
-            const res = await trainingService.createRequest({
-                ...values,
-                requestedById: detectedEmp.id,
-            });
-
-            if (res.ok) {
-                toast({
-                    title: 'Thành công',
-                    description: 'Yêu cầu đào tạo đã được gửi đi.',
-                });
-                onOpenChange(false);
-                if (onSuccess) onSuccess();
-            } else {
-                toast({
-                    variant: 'destructive',
-                    title: 'Lỗi',
-                    description: 'Không thể gửi yêu cầu.',
-                });
+        await execute(
+            async () => {
+                if (initialData) {
+                    const res = await trainingService.updateRequest({
+                        trainingRequestId: initialData.id,
+                        ...values,
+                    });
+                    if (!res.ok) throw new Error('Cập nhật thất bại.');
+                    return res;
+                } else {
+                    const res = await trainingService.createRequest({
+                        ...values,
+                        requestedById: detectedEmp!.id,
+                    });
+                    if (!res.ok) throw new Error('Tạo yêu cầu thất bại.');
+                    return res;
+                }
+            },
+            {
+                successMessage: { 
+                    title: 'Thành công', 
+                    description: initialData ? 'Cập nhật yêu cầu đào tạo thành công.' : 'Yêu cầu đào tạo đã được gửi đi.' 
+                },
+                errorFallback: 'Không thể xử lý yêu cầu đào tạo. Vui lòng thử lại.',
+                onSuccess: () => {
+                    onOpenChange(false);
+                    if (onSuccess) onSuccess();
+                }
             }
-        } catch (error) {
-            void error;
-            toast({
-                variant: 'destructive',
-                title: 'Lỗi',
-                description: 'Không thể gửi yêu cầu đào tạo. Vui lòng thử lại.',
-            });
-        } finally {
-            setIsLoading(false);
-        }
+        );
     };
+
+    const isEditMode = !!initialData;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -140,10 +153,12 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                 <div className="bg-gradient-to-r from-[#0F4C75] to-[#3282B8] px-6 py-8 text-white">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                            <Send className="w-6 h-6" /> Gửi Yêu Cầu Đào Tạo
+                            <Send className="w-6 h-6" /> {isEditMode ? 'Cập Nhật Yêu Cầu' : 'Gửi Yêu Cầu Đào Tạo'}
                         </DialogTitle>
                         <DialogDescription className="text-blue-100">
-                            Điền các thông tin cần thiết để gửi yêu cầu đào tạo cho phòng ban của bạn.
+                            {isEditMode 
+                                ? 'Chỉnh sửa và nộp lại yêu cầu đào tạo theo phản hồi.'
+                                : 'Điền các thông tin cần thiết để gửi yêu cầu đào tạo cho phòng ban của bạn.'}
                         </DialogDescription>
                     </DialogHeader>
                 </div>
@@ -207,25 +222,6 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                     </FormItem>
                                 )} />
 
-                                <FormField control={form.control} name="estimatedBudget" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-[#0F4C75] font-semibold">Ngân sách dự kiến (VNĐ)</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                                                <Input 
-                                                    type="number" 
-                                                    className="pl-9 border-gray-200" 
-                                                    placeholder="0" 
-                                                    {...field} 
-                                                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-                                                />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-
                                 <FormField control={form.control} name="targetAudience" render={({ field }) => (
                                     <FormItem className="col-span-2">
                                         <FormLabel className="text-[#0F4C75] font-semibold">Đối tượng học viên</FormLabel>
@@ -246,24 +242,24 @@ export function TrainingRequestForm({ open, onOpenChange, onSuccess }: TrainingR
                                     </FormItem>
                                 )} />
                             </div>
+
+                            <DialogFooter className="px-0 py-4 bg-transparent border-t flex items-center justify-between">
+                                <div className="flex items-center text-xs text-gray-500 gap-1 italic">
+                                    <Info className="w-3 h-3" /> Yêu cầu của bạn sẽ được gửi tới HR Manager để xem xét.
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="border-gray-300">
+                                        Hủy
+                                    </Button>
+                                    <Button type="submit" className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white min-w-[120px]" disabled={isLoading || (!detectedEmp?.id && !isEditMode)}>
+                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                                        {isEditMode ? 'Cập nhật' : 'Gửi yêu cầu'}
+                                    </Button>
+                                </div>
+                            </DialogFooter>
                         </form>
                     </Form>
                 </div>
-
-                <DialogFooter className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
-                    <div className="flex items-center text-xs text-gray-500 gap-1 italic">
-                        <Info className="w-3 h-3" /> Yêu cầu của bạn sẽ được gửi tới HR Manager để xem xét.
-                    </div>
-                    <div className="flex gap-3">
-                        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} className="border-gray-300">
-                            Hủy
-                        </Button>
-                        <Button className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white min-w-[120px]" disabled={isLoading || !detectedEmp?.id} onClick={form.handleSubmit(onSubmit)}>
-                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                            Gửi yêu cầu
-                        </Button>
-                    </div>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

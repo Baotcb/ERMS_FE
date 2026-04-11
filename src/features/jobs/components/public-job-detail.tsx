@@ -31,6 +31,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogTrigger,
 } from '@/components/ui/dialog'
 
 import { usePublicJob } from '../hooks/use-public-jobs'
@@ -311,14 +312,31 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
 
                                 {/* Action Buttons Row */}
                                 <div className="flex gap-3">
-                                    <Button
-                                        size="lg"
-                                        onClick={handleOpenApply}
-                                        className="flex-1 bg-[#1B5583] hover:bg-[#154360] text-white font-bold h-[48px] text-[15px] rounded-lg transition-colors shadow-none"
-                                    >
-                                        <Send className="mr-2 h-5 w-5" />
-                                        Ứng tuyển ngay
-                                    </Button>
+                                    <Dialog open={!showStickyBar && isApplyOpen} onOpenChange={setIsApplyOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                size="lg"
+                                                onClick={(event) => {
+                                                    event.preventDefault()
+                                                    handleOpenApply()
+                                                }}
+                                                className="flex-1 bg-[#1B5583] hover:bg-[#154360] text-white font-bold h-[48px] text-[15px] rounded-lg transition-colors shadow-none"
+                                            >
+                                                <Send className="mr-2 h-5 w-5" />
+                                                Ứng tuyển ngay
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-xl">Ứng tuyển: {job.jobTitle}</DialogTitle>
+                                            </DialogHeader>
+                                            <JobApplyForm
+                                                jobId={job.id}
+                                                jobTitle={job.jobTitle}
+                                                onSuccess={() => setIsApplyOpen(false)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
 
                                     <Button
                                         variant="outline"
@@ -475,7 +493,7 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                     className="w-full border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white rounded-lg h-10 font-medium transition-colors text-sm"
                                     asChild
                                 >
-                                    <Link href={`/companies/${encodeURIComponent(job.enterpriseName)}`}>
+                                    <Link href={`/companies/${job.enterpriseId || encodeURIComponent(job.enterpriseName)}`}>
                                         Xem trang công ty
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Link>

@@ -22,6 +22,25 @@ async function fetchProfileSnapshot(token: string) {
     }
 }
 
+async function parseBackendResponse(response: Response) {
+    const rawText = await response.text()
+
+    if (!rawText) {
+        return {}
+    }
+
+    try {
+        return JSON.parse(rawText) as {
+            message?: string
+            token?: string
+        }
+    } catch {
+        return {
+            message: rawText,
+        }
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const body = await request.json()
@@ -36,12 +55,25 @@ export async function POST(request: Request) {
             body: JSON.stringify({ email, password }),
         })
 
-        const data = await backendRes.json()
+        const data = await parseBackendResponse(backendRes)
 
         if (!backendRes.ok) {
+            const message =
+                data.message ||
+                (backendRes.status === 429
+                    ? 'Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 1 phút.'
+                    : `Login failed with status ${backendRes.status}`)
+
             return NextResponse.json(
-                { message: data.message || 'Login failed' },
+                { message },
                 { status: backendRes.status }
+            )
+        }
+
+        if (!data.token || typeof data.token !== 'string') {
+            return NextResponse.json(
+                { message: 'Login response is missing token.' },
+                { status: 502 }
             )
         }
 
@@ -107,6 +139,12 @@ export async function POST(request: Request) {
 
         // 2. Public Cookies (For UI hydration)
         response.cookies.set(STORAGE_KEYS.USER_ROLE, userRole, { ...cookieOptions, httpOnly: false })
+        if (userId) {
+            response.cookies.set(STORAGE_KEYS.USER_ID, userId, { ...cookieOptions, httpOnly: false })
+        }
+        if (userEmail) {
+            response.cookies.set(STORAGE_KEYS.USER_EMAIL, encodeURIComponent(userEmail), { ...cookieOptions, httpOnly: false })
+        }
         if (userName) {
             response.cookies.set(STORAGE_KEYS.USER_NAME, encodeURIComponent(userName), { ...cookieOptions, httpOnly: false })
         }

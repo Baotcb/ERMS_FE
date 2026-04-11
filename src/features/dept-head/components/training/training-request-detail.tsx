@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TrainingRequest } from '../../types/training-types';
+import { formatVND } from '@/lib/utils';
 
 interface TrainingRequestDetailProps {
     request: TrainingRequest | null;
@@ -28,6 +29,7 @@ const STATUSES: Record<string, { label: string; color: string }> = {
     Approved: { label: 'Đã duyệt', color: 'bg-green-100 text-green-800 border-green-200' },
     Rejected: { label: 'Từ chối', color: 'bg-red-100 text-red-800 border-red-200' },
     Planned: { label: 'Đã lập kế hoạch', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    AddedToPlan: { label: 'Đã thêm vào KH', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
 };
 
 export function TrainingRequestDetail({ request, open, onOpenChange }: TrainingRequestDetailProps) {
@@ -111,7 +113,7 @@ export function TrainingRequestDetail({ request, open, onOpenChange }: TrainingR
                                     <DollarSign className="w-3.5 h-3.5" /> Ngân sách dự kiến
                                 </span>
                                 <p className="text-sm font-bold text-blue-600">
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(request.estimatedBudget || 0)}
+                                    {formatVND(request.estimatedBudget || 0)}
                                 </p>
                             </div>
                         </div>

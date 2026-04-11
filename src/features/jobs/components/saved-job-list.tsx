@@ -9,6 +9,9 @@ import { getPublicJobById } from '../api/public-job-service'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { useCandidateAccess } from '@/features/core/auth/hooks'
 import Link from 'next/link'
+import { useJobPreview } from '../hooks/use-job-preview'
+import { JobPreviewPopup } from './job-preview-popup'
+import { JobPreviewWrapper } from './job-preview-wrapper'
 
 export interface EnrichedSavedPost extends SavedPostDto {
     enterpriseLogoUrl?: string
@@ -92,6 +95,8 @@ export function SavedJobList() {
             fetchSavedJobIds()
         }
     }, [fetchSavedJobIds, isCandidate])
+
+    const { preview, showPreview, hidePreview } = useJobPreview()
 
     if (authLoading || isLoading) {
         return (
@@ -199,13 +204,27 @@ export function SavedJobList() {
                 >
                     {savedJobs.map((job) => (
                         <m.div key={job.savedJobId} variants={item}>
-                            <Link href={`/jobs/${job.jobPostingId}`} className="block" style={{ textDecoration: 'none' }}>
-                                <SavedJobCard job={job} onUnsaved={handleUnsaved} />
-                            </Link>
+                            <JobPreviewWrapper
+                                jobId={job.jobPostingId}
+                                onHover={showPreview}
+                                onLeave={hidePreview}
+                            >
+                                <Link href={`/jobs/${job.jobPostingId}`} className="block" style={{ textDecoration: 'none' }}>
+                                    <SavedJobCard job={job} onUnsaved={handleUnsaved} />
+                                </Link>
+                            </JobPreviewWrapper>
                         </m.div>
                     ))}
                 </m.div>
             </LazyMotion>
+
+            {preview && (
+                <JobPreviewPopup
+                    job={preview.job}
+                    isLoading={preview.isLoading}
+                    anchorRect={preview.anchorRect}
+                />
+            )}
         </>
     )
 }
