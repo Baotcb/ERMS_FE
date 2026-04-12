@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import useSWR from 'swr';
 import { feedbackService } from '@/features/employee/api/feedback-service';

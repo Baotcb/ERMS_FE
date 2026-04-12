@@ -184,7 +184,7 @@ export const DeptHeadDashboard = memo(function DeptHeadDashboard() {
 
                 <DashboardChartWidget
                     title="Hoàn thành Đào tạo"
-                    subtitle="Theo Team/Nhóm"
+                    subtitle="Theo Nhân viên"
                     data={data.trainingData}
                 />
             </div>

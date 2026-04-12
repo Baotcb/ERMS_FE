@@ -373,13 +373,17 @@ const TRAINING_CHART_COLORS = ['#3282B8', '#0F4C75', '#1B9AAA', '#06D6A0'];
 
 export async function getTrainingPerformance(): Promise<ChartData[]> {
     try {
-        // Mock data for training performance
-        return [
-            { label: 'Kỹ năng mềm', value: 85, color: '#3282B8' },
-            { label: 'Chuyên môn', value: 92, color: '#1B9AAA' },
-            { label: 'Lãnh đạo', value: 78, color: '#06D6A0' },
-            { label: 'Hội nhập', value: 95, color: '#FFD166' }
-        ];
+        const response = await apiClient.get('/api/Course/performance')
+        if (!response.ok) return []
+
+        const data = await response.json() as { label: string, value: number }[]
+        if (!data || !Array.isArray(data)) return []
+
+        return data.map((item, index) => ({
+            label: item.label,
+            value: item.value,
+            color: TRAINING_CHART_COLORS[index % TRAINING_CHART_COLORS.length]
+        }))
     } catch {
         return []
     }

@@ -157,20 +157,18 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 border-b">
                                             <tr>
-                                                <th className="px-4 py-3 font-semibold">Phòng ban</th>
+                                                <th className="px-4 py-3 font-semibold">Người yêu cầu</th>
                                                 <th className="px-4 py-3 font-semibold">Chủ đề</th>
-                                                <th className="px-4 py-3 font-semibold text-right">Dự kiến</th>
-                                                <th className="px-4 py-3 font-semibold text-right">Ngân sách</th>
+                                                <th className="px-4 py-3 font-semibold text-right">Trạng thái</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {detailData.trainingRequests.map((req) => (
                                                 <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-gray-900">{req.departmentName}</td>
-                                                    <td className="px-4 py-3 text-gray-600 line-clamp-1 truncate max-w-[200px]" title={req.subject}>{req.subject}</td>
-                                                    <td className="px-4 py-3 text-gray-500 text-right">{req.estimatedParticipants} hv</td>
-                                                    <td className="px-4 py-3 font-medium text-[#0F4C75] text-right">
-                                                        {formatVND(req.estimatedBudget || 0)}
+                                                    <td className="px-4 py-3 font-medium text-gray-900">{req.requestedByName}</td>
+                                                    <td className="px-4 py-3 text-gray-600 line-clamp-1 truncate max-w-[300px]" title={req.subject}>{req.subject}</td>
+                                                    <td className="px-4 py-3 font-medium text-right">
+                                                        <Badge variant="outline" className="bg-white">{req.status}</Badge>
                                                     </td>
                                                 </tr>
                                             ))}
