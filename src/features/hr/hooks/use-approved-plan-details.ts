@@ -8,6 +8,8 @@ export interface ApprovedPlanDetail {
     quantity: number
     priority: string
     requiredSkills?: string
+    salaryRangeMin?: number
+    salaryRangeMax?: number
     planName: string
     planCode?: string
     endDate?: string
@@ -20,6 +22,8 @@ interface RecruitmentPlanDetail {
     status?: string
     priority?: string
     requiredSkills?: string
+    salaryRangeMin?: number
+    salaryRangeMax?: number
     [key: string]: unknown
 }
 
@@ -45,6 +49,21 @@ interface JobPostingItem {
 interface JobPostingsResponse {
     items?: JobPostingItem[]
     [key: string]: unknown
+}
+
+function toNullableNumber(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value
+    }
+
+    if (typeof value === 'string') {
+        const parsed = Number(value)
+        if (Number.isFinite(parsed)) {
+            return parsed
+        }
+    }
+
+    return undefined
 }
 
 // Lấy set planDetailId đã có Job Posting (Draft/Published/Closed)
@@ -150,6 +169,8 @@ async function fetchApprovedPlanDetails(): Promise<ApprovedPlanDetail[]> {
                 quantity: detail.quantity || 1,
                 priority: detail.priority || 'Normal',
                 requiredSkills: detail.requiredSkills,
+                salaryRangeMin: toNullableNumber(detail.salaryRangeMin ?? detail['SalaryRangeMin']),
+                salaryRangeMax: toNullableNumber(detail.salaryRangeMax ?? detail['SalaryRangeMax']),
                 planName: plan.planName || '',
                 planCode: plan.planCode,
                 endDate: plan.endDate,

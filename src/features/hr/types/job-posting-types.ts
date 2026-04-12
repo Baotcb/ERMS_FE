@@ -6,6 +6,9 @@ export interface CreateJobPostingDto {
   benefits?: string
   location?: string
   remoteOption?: string
+  salaryRangeMin?: number
+  salaryRangeMax?: number
+  showSalary?: boolean
 }
 
 export interface UpdateJobPostingDto {

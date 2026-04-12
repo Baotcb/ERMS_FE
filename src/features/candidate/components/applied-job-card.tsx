@@ -103,10 +103,8 @@ export const AppliedJobCard = memo(function AppliedJobCard({ application, onRefr
             <div className="applied-job-card__info">
                 {/* Row 1: Title */}
                 <div className="applied-job-card__title-row">
-                    <h3 className="applied-job-card__title">
-                        {application.jobTitle}
-                        <CheckCircle className="applied-job-card__verified" />
-                    </h3>
+                    <h3 className="applied-job-card__title">{application.jobTitle}</h3>
+                    <CheckCircle className="applied-job-card__verified" />
                 </div>
 
                 {/* Row 2: Company Name */}

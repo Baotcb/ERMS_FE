@@ -3,7 +3,12 @@ import type { OfferStatus } from '@/features/hr/types/offer-types'
 // Match backend CandidateOfferDto (GET /api/applications/my-offers)
 export interface CandidateOfferDto {
     offerId: string
+    applicationId: string
+    jobPostingId: string
+    enterpriseId: string
     offerCode: string | null
+    enterpriseName: string
+    enterpriseLogoUrl: string | null
     position: string
     departmentName: string
     jobTitle: string

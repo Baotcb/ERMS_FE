@@ -230,9 +230,26 @@ export async function getRequests(token?: string): Promise<RequestItem[]> {
     }
 }
 
-// TODO: Replace with actual API call when backend endpoint is available
 export async function getTasks(): Promise<TaskItem[]> {
-    return []
+    try {
+        const response = await apiClient.get('/api/TrainingRequest?page=1&pageSize=5&status=Pending')
+        if (!response.ok) return []
+
+        const data = await response.json() as { items: import('../../dept-head/types/training-types').TrainingRequest[] }
+        if (!data.items || !Array.isArray(data.items)) return []
+
+        return data.items.map(req => ({
+            id: req.id,
+            title: req.subject,
+            project: req.departmentName,
+            dueDate: new Date(req.createdAt).toLocaleDateString('vi-VN'),
+            assignee: req.requestedByName,
+            avatar: req.requestedByName ? req.requestedByName.substring(0, 2).toUpperCase() : 'U',
+            link: `/enterprise/hr/training/requests`
+        }))
+    } catch {
+        return []
+    }
 }
 
 // Lấy danh sách ứng viên tiềm năng từ API thật
@@ -352,7 +369,22 @@ export async function getRecruitmentPerformance(): Promise<ChartData[]> {
     }
 }
 
-// TODO: Replace with actual API call when backend endpoint is available
+const TRAINING_CHART_COLORS = ['#3282B8', '#0F4C75', '#1B9AAA', '#06D6A0'];
+
 export async function getTrainingPerformance(): Promise<ChartData[]> {
-    return []
+    try {
+        const response = await apiClient.get('/api/Course/performance')
+        if (!response.ok) return []
+
+        const data = await response.json() as { label: string, value: number }[]
+        if (!data || !Array.isArray(data)) return []
+
+        return data.map((item, index) => ({
+            label: item.label,
+            value: item.value,
+            color: TRAINING_CHART_COLORS[index % TRAINING_CHART_COLORS.length]
+        }))
+    } catch {
+        return []
+    }
 }

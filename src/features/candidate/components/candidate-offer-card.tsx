@@ -1,9 +1,17 @@
 'use client'
 
 import { memo, useMemo } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { Calendar, DollarSign, ArrowRight, Briefcase, Building2 } from 'lucide-react'
+import {
+    ArrowRight,
+    Briefcase,
+    Building2,
+    Calendar,
+    DollarSign,
+} from 'lucide-react'
 import { OfferStatusBadge } from '@/features/hr/components/offer/offer-status-badge'
+import { getCompanyProfileHref } from '@/features/jobs/utils/company-detail'
 import type { CandidateOfferDto } from '../types/offer-types'
 
 interface CandidateOfferCardProps {
@@ -31,8 +39,11 @@ export const CandidateOfferCard = memo(function CandidateOfferCard({
     )
 
     const isExpired = new Date(offer.expirationDate) < new Date()
+    const companyHref = getCompanyProfileHref({
+        id: offer.enterpriseId,
+        enterpriseName: offer.enterpriseName,
+    })
 
-    // Xác định text và style cho action button theo status
     const actionConfig = useMemo(() => {
         switch (offer.status) {
             case 'Sent':
@@ -49,76 +60,93 @@ export const CandidateOfferCard = memo(function CandidateOfferCard({
     }, [offer.status])
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-            <div className="flex flex-col sm:flex-row gap-4 p-5">
-                {/* Image placeholder */}
-                <div className="w-full sm:w-28 h-20 sm:h-24 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    <Briefcase className="w-8 h-8 text-slate-400" />
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex flex-col gap-4 p-5 md:flex-row md:items-start">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:h-24 sm:w-24">
+                    {offer.enterpriseLogoUrl ? (
+                        <div className="relative h-full w-full">
+                            <Image
+                                src={offer.enterpriseLogoUrl}
+                                alt={offer.enterpriseName}
+                                fill
+                                sizes="96px"
+                                className="object-contain p-2"
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+                            <Briefcase className="h-8 w-8 text-slate-400" />
+                        </div>
+                    )}
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
-                    {/* Status + Offer Code */}
-                    <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex min-w-0 flex-1 flex-col gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <OfferStatusBadge status={offer.status} />
                         {offer.offerCode && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">
                                 {offer.offerCode}
                             </span>
                         )}
                     </div>
 
-                    {/* Position */}
-                    <h3 className="text-base font-bold text-slate-900 truncate">
-                        {offer.position}
-                    </h3>
+                    <div className="space-y-2">
+                        <h3 className="text-base font-bold leading-6 text-slate-900 break-words">
+                            {offer.position}
+                        </h3>
 
-                    {/* Department + Company */}
-                    <div className="flex items-center gap-3 text-sm text-slate-500">
-                        <span className="flex items-center gap-1">
-                            <Building2 className="w-3.5 h-3.5" />
-                            {offer.departmentName}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-500">
+                            <Link
+                                href={companyHref}
+                                className="inline-flex min-w-0 items-center gap-1 text-[#0F4C75] transition-colors hover:text-[#0a3857]"
+                            >
+                                <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                <span className="break-words font-semibold">
+                                    {offer.enterpriseName}
+                                </span>
+                            </Link>
+                            <span className="inline-flex min-w-0 items-center gap-1">
+                                <Briefcase className="h-3.5 w-3.5 shrink-0" />
+                                <span className="break-words">{offer.departmentName}</span>
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Salary + Start Date */}
                     <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1.5 font-semibold text-slate-800">
-                            <DollarSign className="w-3.5 h-3.5 text-[#0F4C75]" />
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+                            <DollarSign className="h-3.5 w-3.5 text-[#0F4C75]" />
                             {formatCurrency(offer.salary)} VND / {frequencyLabel}
                         </span>
-                        <span className="flex items-center gap-1.5 text-slate-500">
-                            <Calendar className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1.5 text-slate-500">
+                            <Calendar className="h-3.5 w-3.5" />
                             Bắt đầu: {formatDate(offer.startDate)}
                         </span>
                         {isExpired && (
-                            <span className="text-xs text-red-500 font-medium">
+                            <span className="text-xs font-medium text-red-500">
                                 Hết hạn: {formatDate(offer.expirationDate)}
                             </span>
                         )}
                     </div>
 
-                    {/* Cancelled notice */}
                     {offer.status === 'Cancelled' && (
-                        <p className="text-xs text-red-600 font-medium">
+                        <p className="text-xs font-medium text-red-600">
                             Offer này đã bị hủy bởi nhà tuyển dụng. Vui lòng kiểm tra email để biết thêm chi tiết.
                         </p>
                     )}
                 </div>
 
-                {/* Action */}
-                <div className="flex items-center sm:ml-4">
+                <div className="flex w-full shrink-0 md:w-auto md:justify-end">
                     {offer.status === 'Sent' ? (
                         <Link
                             href={`/offers/${offer.offerId}`}
-                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors ${actionConfig.style}`}
+                            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold transition-colors md:w-auto ${actionConfig.style}`}
                         >
                             {actionConfig.label}
-                            <ArrowRight className="w-4 h-4" />
+                            <ArrowRight className="h-4 w-4" />
                         </Link>
                     ) : (
                         <span
-                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold ${actionConfig.style}`}
+                            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold md:w-auto ${actionConfig.style}`}
                         >
                             {actionConfig.label}
                         </span>

@@ -55,12 +55,7 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
 
                 <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
                     {/* Summary Stats */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex flex-col items-center text-center">
-                            <BookOpen className="w-5 h-5 text-blue-600 mb-2" />
-                            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tổng khóa học</span>
-                            <span className="text-xl font-bold text-[#0F4C75]">{plan.totalCourses}</span>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100/50 flex flex-col items-center text-center">
                             <DollarSign className="w-5 h-5 text-green-600 mb-2" />
                             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tổng ngân sách</span>
@@ -162,20 +157,18 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 border-b">
                                             <tr>
-                                                <th className="px-4 py-3 font-semibold">Phòng ban</th>
+                                                <th className="px-4 py-3 font-semibold">Người yêu cầu</th>
                                                 <th className="px-4 py-3 font-semibold">Chủ đề</th>
-                                                <th className="px-4 py-3 font-semibold text-right">Dự kiến</th>
-                                                <th className="px-4 py-3 font-semibold text-right">Ngân sách</th>
+                                                <th className="px-4 py-3 font-semibold text-right">Trạng thái</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {detailData.trainingRequests.map((req) => (
                                                 <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-gray-900">{req.departmentName}</td>
-                                                    <td className="px-4 py-3 text-gray-600 line-clamp-1 truncate max-w-[200px]" title={req.subject}>{req.subject}</td>
-                                                    <td className="px-4 py-3 text-gray-500 text-right">{req.estimatedParticipants} hv</td>
-                                                    <td className="px-4 py-3 font-medium text-[#0F4C75] text-right">
-                                                        {formatVND(req.estimatedBudget || 0)}
+                                                    <td className="px-4 py-3 font-medium text-gray-900">{req.requestedByName}</td>
+                                                    <td className="px-4 py-3 text-gray-600 line-clamp-1 truncate max-w-[300px]" title={req.subject}>{req.subject}</td>
+                                                    <td className="px-4 py-3 font-medium text-right">
+                                                        <Badge variant="outline" className="bg-white">{req.status}</Badge>
                                                     </td>
                                                 </tr>
                                             ))}
