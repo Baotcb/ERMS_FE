@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api-client'
 import { useSubmitFinalDecision } from '../../hooks/use-interview'
 import type { FinalDecision } from '../../types/interview-types'
+import { getApplicationResumeDownloadUrl } from '@/features/applications/utils/resume-download'
 
 interface EmployeeOption {
     id: string
@@ -184,6 +185,7 @@ export function FinalDecisionPage({
         : '—'
 
     const displayRating = hoverRating || overallRating
+    const resumeDownloadUrl = getApplicationResumeDownloadUrl(applicationId)
 
     const handleSubmit = useCallback(async () => {
         if (!decision) return
@@ -335,7 +337,7 @@ export function FinalDecisionPage({
                     </div>
 
                     {/* Attachments */}
-                    {resumeUrl && (
+                    {(resumeUrl || applicationId) && (
                         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                             <h3 className="font-semibold text-[#1B262C] mb-3 flex items-center gap-2">
                                 📎 Tài liệu đính kèm
@@ -343,7 +345,7 @@ export function FinalDecisionPage({
                             <div className="flex flex-wrap gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => window.open(resumeUrl, '_blank')}
+                                    onClick={() => window.open(resumeDownloadUrl, '_blank', 'noopener,noreferrer')}
                                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300 transition-all text-sm group"
                                 >
                                     <div className="w-8 h-8 rounded bg-red-100 flex items-center justify-center">

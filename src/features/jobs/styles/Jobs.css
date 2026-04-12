@@ -23,6 +23,11 @@
     box-shadow: 0 2px 12px rgba(0, 177, 79, 0.08);
 }
 
+.applied-job-card {
+    flex-wrap: wrap;
+    row-gap: 12px;
+}
+
 /* ----- Company Logo ----- */
 .saved-job-card__logo,
 .applied-job-card__logo {
@@ -46,12 +51,17 @@
     gap: 4px;
 }
 
+.applied-job-card__info {
+    flex: 1 1 320px;
+}
+
 .saved-job-card__title-row,
 .applied-job-card__title-row {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .saved-job-card__badge {
@@ -92,6 +102,8 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .saved-job-card:hover .saved-job-card__title,
@@ -118,6 +130,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.applied-job-card__company {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
 }
 
 .saved-job-card__meta,
@@ -158,6 +177,11 @@
     gap: 8px;
     min-width: 120px;
     flex-shrink: 0;
+}
+
+.applied-job-card__right {
+    margin-left: auto;
+    min-width: fit-content;
 }
 
 .saved-job-card__salary,

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Edit2, CheckCircle, XCircle, Users, Clock, DollarSign, Briefcase, MapPin, GraduationCap, Globe, UserCheck, CalendarDays, Link2, Share2, UserPlus } from 'lucide-react'
+import { ArrowLeft, Edit2, CheckCircle, XCircle, Users, Clock, DollarSign, Briefcase, MapPin, GraduationCap, Globe, UserCheck, CalendarDays, Link2, UserPlus } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useJobPosting, usePublishJobPosting, useCloseJobPosting } from '../../hooks/use-job-postings'
 import { StatusBadge } from './status-badge'
 import { AddExternalCvDialog } from '../application/add-external-cv-dialog'
+import { FacebookShareButton } from '@/components/shared/facebook-share-button'
 import type { JobStatus } from '../../types/job-posting-types'
 
 const HISTORY_LIMIT = 20
@@ -48,6 +49,9 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
             toast({ title: 'Lỗi đóng tuyển dụng', description: message, variant: 'destructive' })
         }
     }
+
+    // Get job URL for sharing
+    const getJobUrl = () => `${window.location.origin}/jobs/${detail?.id || ''}`
 
     if (isLoading) {
         return (
@@ -126,16 +130,11 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                                 >
                                     <Link2 className="w-4 h-4 mr-2" /> Copy Link
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        const url = encodeURIComponent(`${window.location.origin}/jobs/${detail.id}`)
-                                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400')
-                                    }}
-                                >
-                                    <Share2 className="w-4 h-4 mr-2" /> Facebook
-                                </Button>
+                                <FacebookShareButton
+                                    url={getJobUrl()}
+                                    title={detail.jobTitle}
+                                    shareText={`💼 ${detail.jobTitle} - ${detail.departmentName}\n📍 ${detail.location || 'Việt Nam'}\n💰 ${detail.showSalary ? ((detail.salaryRangeMin || 0) > 0 || (detail.salaryRangeMax || 0) > 0 ? `${((detail.salaryRangeMin || 0) / 1000000).toLocaleString('vi-VN')} - ${((detail.salaryRangeMax || 0) / 1000000).toLocaleString('vi-VN')} triệu` : 'Thỏa thuận') : 'Hấp dẫn'}\n\n✨ Ứng tuyển ngay!`}
+                                />
                                 <Button variant="outline" onClick={() => router.push(`/enterprise/hr/job-postings/${detail.id}/edit`)}>
                                     <Edit2 className="w-4 h-4 mr-2" /> Chỉnh sửa
                                 </Button>

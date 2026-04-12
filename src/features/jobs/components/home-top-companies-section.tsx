@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ChevronRight, ChevronLeft, Building2, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { usePublicEnterprises } from "../hooks/use-public-enterprises"
+import { getCompanyProfileHref } from "../utils/company-detail"
 import { cn } from "@/lib/utils"
 
 const INDUSTRY_TABS = [
@@ -131,7 +132,7 @@ export function TopCompaniesSection() {
                         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4">
                             {/* ===== Featured Company (Left) - Dark background card ===== */}
                             {featuredCompany && (
-                                <Link href={`/companies/${featuredCompany.id || encodeURIComponent(featuredCompany.enterpriseName)}`}>
+                                <Link href={getCompanyProfileHref(featuredCompany)}>
                                     <div className="relative h-full rounded-xl overflow-hidden cursor-pointer group min-h-[360px]">
                                         {/* Dark background with subtle pattern */}
                                         <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460]" />
@@ -255,7 +256,7 @@ interface CompanyData {
 
 function CompanyCard({ company }: { company: CompanyData }) {
     return (
-        <Link href={`/companies/${company.id || encodeURIComponent(company.enterpriseName)}`}>
+        <Link href={getCompanyProfileHref(company)}>
             <div className="flex items-start gap-4 p-4 rounded-xl border border-[#e8e8e8] hover:border-[#1B5583] hover:shadow-[0_4px_16px_rgba(27,85,131,0.1)] transition-all cursor-pointer group bg-white h-full">
                 {/* Logo */}
                 <div className="w-[60px] h-[60px] border border-[#e8e8e8] rounded-lg flex-shrink-0 relative overflow-hidden bg-white group-hover:border-[#1B5583]/30 transition-colors">

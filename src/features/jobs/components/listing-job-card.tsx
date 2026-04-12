@@ -34,11 +34,13 @@ export const ListingJobCard = memo(function ListingJobCard({ job }: { job: Job }
 
     const displaySalary = useMemo(() => {
         if (!job.showSalary) return 'Thoả thuận'
-        if (job.salaryRangeMin && job.salaryRangeMax) {
-            return `${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} - ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+        const min = job.salaryRangeMin ? Math.round(job.salaryRangeMin / 1000000) : 0
+        const max = job.salaryRangeMax ? Math.round(job.salaryRangeMax / 1000000) : 0
+        if (min > 0 && max > 0) {
+            return `${min.toLocaleString('vi-VN')} - ${max.toLocaleString('vi-VN')} triệu`
         }
-        if (job.salaryRangeMin) return `Từ ${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} triệu`
-        if (job.salaryRangeMax) return `Đến ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+        if (min > 0) return `Từ ${min.toLocaleString('vi-VN')} triệu`
+        if (max > 0) return `Đến ${max.toLocaleString('vi-VN')} triệu`
         return 'Thoả thuận'
     }, [job.showSalary, job.salaryRangeMin, job.salaryRangeMax])
 

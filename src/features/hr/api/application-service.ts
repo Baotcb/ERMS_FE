@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client'
+import { getApplicationResumeDownloadUrl } from '@/features/applications/utils/resume-download'
 import type {
     ApplicationDto,
     ApplicationsResponse,
@@ -96,7 +97,7 @@ export async function getApplicationsByJob(
             stage: item.stage as ApplicationDto['stage'],
             status: item.status,
             appliedAt: item.appliedAt,
-            cvUrl: item.resumeUrl || '',
+            cvUrl: item.resumeUrl ? getApplicationResumeDownloadUrl(item.applicationId) : '',
             hrNote: item.hrNote,
             isExternal: item.isExternal ?? false,
             source: item.source,

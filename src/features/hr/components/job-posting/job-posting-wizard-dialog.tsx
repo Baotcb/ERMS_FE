@@ -244,6 +244,15 @@ export function JobPostingWizardDialog({
                 location: data.location,
                 remoteOption: data.remoteOption,
                 applicationDeadline: data.applicationDeadline ? new Date(data.applicationDeadline).toISOString() : new Date().toISOString(), // Fallback to now if empty, although validation should catch it
+                showSalary: data.showSalary,
+            }
+
+            if ((data.salaryRangeMin ?? 0) > 0) {
+                payload.salaryRangeMin = data.salaryRangeMin
+            }
+
+            if ((data.salaryRangeMax ?? 0) > 0) {
+                payload.salaryRangeMax = data.salaryRangeMax
             }
 
             await createJob(payload)
