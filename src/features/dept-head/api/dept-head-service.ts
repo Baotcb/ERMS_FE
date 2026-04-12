@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api-client'
 import { format } from 'date-fns'
 import { RecruitmentPlan } from '../types/recruitment-plan-types'
+import { trainingService } from './training-service'
 
 export interface ProposalItem {
     id: string
@@ -135,11 +136,18 @@ export async function getShortlistedPositions(): Promise<ShortlistedPosition[]> 
 }
 
 export async function getTrainingRequests(): Promise<TrainingRequest[]> {
-    return [
-        { id: '1', title: 'Đào tạo kỹ năng bán hàng B2B', type: 'Kỹ năng mềm', attendees: 10, status: 'pending' },
-        { id: '2', title: 'Cập nhật luật thuế 2026', type: 'Chuyên môn', attendees: 3, status: 'approved' },
-        { id: '3', title: 'Onboarding nhân viên mới T2', type: 'Hội nhập', attendees: 5, status: 'pending' },
-    ]
+    try {
+        const result = await trainingService.getRequests({ page: 1, pageSize: 5 });
+        return (result.items || []).map((req) => ({
+            id: req.id,
+            title: req.subject,
+            type: req.departmentName || 'Chung',
+            attendees: req.estimatedParticipants || 0,
+            status: (req.status?.toLowerCase() === 'approved' ? 'approved' : 'pending') as 'pending' | 'approved',
+        }));
+    } catch {
+        return [];
+    }
 }
 
 export async function getRecruitmentProgress(): Promise<ChartData[]> {
@@ -153,10 +161,36 @@ export async function getRecruitmentProgress(): Promise<ChartData[]> {
 }
 
 export async function getTrainingCompletion(): Promise<ChartData[]> {
-    return [
-        { label: 'Team A', value: 80, color: '#0F4C75' },
-        { label: 'Team B', value: 65, color: '#3282B8' },
-        { label: 'Team C', value: 90, color: '#BBE1FA' },
-        { label: 'Team D', value: 45, color: '#0F4C75' },
-    ]
+    try {
+        const res = await apiClient.get('/api/Course/department-training-results')
+        if (!res.ok) return []
+        const data: DepartmentTrainingResultItem[] = await res.json()
+        
+        // Group by employeeName and calculate average progress
+        const employeeMap = new Map<string, { totalProgress: number, count: number }>()
+        
+        data.forEach(item => {
+            const name = item.employeeName || 'Unknown'
+            if (!employeeMap.has(name)) {
+                employeeMap.set(name, { totalProgress: 0, count: 0 })
+            }
+            const record = employeeMap.get(name)!
+            record.totalProgress += item.progressPercentage
+            record.count += 1
+        })
+        
+        const colors = ['#0F4C75', '#3282B8', '#BBE1FA', '#1A5F7A', '#57C5B6', '#159895']
+        
+        const chartData = Array.from(employeeMap.entries()).map(([name, record], index) => ({
+            label: name,
+            value: Math.round(record.totalProgress / record.count),
+            color: colors[index % colors.length]
+        }))
+        
+        // Return top 5 or let UI handle? We'll return top 5 employees by highest progress
+        return chartData.sort((a, b) => b.value - a.value).slice(0, 5)
+    } catch (error) {
+        console.error('Failed to fetch training completion', error)
+        return []
+    }
 }

@@ -283,7 +283,7 @@ export function ConsolidateRequests({ initialData }: { initialData?: { items: Tr
                                     <textarea
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="Nhập mô tả..."
+                                        placeholder={`Kế hoạch tổng hợp từ ${selectedIds.length} yêu cầu của các phòng ban.`}
                                         className="w-full min-h-[80px] p-2 text-sm border border-gray-200 rounded-md focus:border-[#3282B8] focus:ring-1 focus:ring-[#3282B8] outline-none resize-y"
                                     />
                                 </div>

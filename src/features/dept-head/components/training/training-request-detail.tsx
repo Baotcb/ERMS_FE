@@ -108,14 +108,6 @@ export function TrainingRequestDetail({ request, open, onOpenChange }: TrainingR
                                 </span>
                                 <p className="text-sm font-semibold text-gray-900">{request.estimatedParticipants} nhân viên</p>
                             </div>
-                            <div className="space-y-1">
-                                <span className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
-                                    <DollarSign className="w-3.5 h-3.5" /> Ngân sách dự kiến
-                                </span>
-                                <p className="text-sm font-bold text-blue-600">
-                                    {formatVND(request.estimatedBudget || 0)}
-                                </p>
-                            </div>
                         </div>
                     </div>
 

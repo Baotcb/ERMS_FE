@@ -287,7 +287,7 @@ export function CourseReviewPage({
                     </div>
                   )}
                   <p className="text-xs text-gray-400 pt-2">
-                    Gửi lúc: {format(new Date(feedbackData.createdAt), 'dd/MM/yyyy HH:mm')}
+                    Gửi lúc: {feedbackData.createdAt ? format(new Date(feedbackData.createdAt), 'dd/MM/yyyy HH:mm') : 'Vừa xong'}
                   </p>
                 </div>
 

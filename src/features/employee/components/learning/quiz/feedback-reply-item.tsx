@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
