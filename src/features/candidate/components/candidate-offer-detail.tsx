@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
     ArrowLeft,
@@ -17,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { OfferStatusBadge } from '@/features/hr/components/offer/offer-status-badge'
+import { getCompanyProfileHref } from '@/features/jobs/utils/company-detail'
 import { useMyOfferById, useAcceptOffer, useRejectOffer } from '../hooks/use-offers'
 
 interface CandidateOfferDetailProps {
@@ -120,6 +123,10 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
     const bonusItems = offer.bonus
         ? offer.bonus.split(',').map((b) => b.trim()).filter(Boolean)
         : []
+    const companyHref = getCompanyProfileHref({
+        id: offer.enterpriseId,
+        enterpriseName: offer.enterpriseName,
+    })
 
     return (
         <div className="max-w-[960px] mx-auto flex flex-col gap-6">
@@ -202,6 +209,51 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
                 </div>
             )}
 
+            <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+                <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+                    <div className="size-16 rounded-xl border border-slate-200 bg-white overflow-hidden shrink-0 shadow-sm">
+                        {offer.enterpriseLogoUrl ? (
+                            <div className="relative h-full w-full">
+                                <Image
+                                    src={offer.enterpriseLogoUrl}
+                                    alt={offer.enterpriseName}
+                                    fill
+                                    sizes="64px"
+                                    className="object-contain p-2"
+                                />
+                            </div>
+                        ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-400">
+                                <Building2 className="w-7 h-7" />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm text-slate-500">
+                            Doanh nghiệp tuyển dụng
+                        </p>
+                        <Link
+                            href={companyHref}
+                            className="mt-1 block text-lg font-bold text-slate-900 break-words transition-colors hover:text-[#0F4C75]"
+                        >
+                            {offer.enterpriseName}
+                        </Link>
+                        <p className="mt-1 text-sm text-slate-500 break-words">
+                            {offer.departmentName}
+                        </p>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        className="w-full sm:w-auto border-[#0F4C75] text-[#0F4C75] hover:bg-[#0F4C75] hover:text-white"
+                        asChild
+                    >
+                        <Link href={companyHref}>Xem trang công ty</Link>
+                    </Button>
+                </div>
+            </div>
+
             {/* Offer Details Card */}
             <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
                 {/* Card Header */}
@@ -226,16 +278,16 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
                 <div className="p-6 md:p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                         {/* Column 1: Thông tin vị trí */}
-                        <div className="space-y-5">
+                        <div className="space-y-5 min-w-0">
                             <h3 className="text-slate-900 text-lg font-bold flex items-center gap-2 pb-2 border-b border-slate-100">
-                                <Building2 className="w-5 h-5 text-slate-400" />
+                                <Building2 className="w-5 h-5 text-slate-400 shrink-0" />
                                 Thông tin vị trí
                             </h3>
                             <div className="space-y-1">
                                 <p className="text-sm text-slate-500">
                                     Vị trí công việc
                                 </p>
-                                <p className="text-slate-900 font-semibold text-lg">
+                                <p className="text-slate-900 font-semibold text-lg break-words">
                                     {offer.position}
                                 </p>
                             </div>
@@ -243,7 +295,7 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
                                 <p className="text-sm text-slate-500">
                                     Phòng ban
                                 </p>
-                                <p className="text-slate-900 font-medium">
+                                <p className="text-slate-900 font-medium break-words">
                                     {offer.departmentName}
                                 </p>
                             </div>
@@ -259,7 +311,7 @@ export function CandidateOfferDetail({ offerId }: CandidateOfferDetailProps) {
                         </div>
 
                         {/* Column 2: Chế độ đãi ngộ */}
-                        <div className="space-y-5">
+                        <div className="space-y-5 min-w-0">
                             <h3 className="text-slate-900 text-lg font-bold flex items-center gap-2 pb-2 border-b border-slate-100">
                                 <span className="text-slate-400 text-xl">💰</span>
                                 Chế độ đãi ngộ

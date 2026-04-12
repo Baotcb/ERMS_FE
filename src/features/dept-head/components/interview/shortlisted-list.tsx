@@ -12,6 +12,7 @@ import {
 import { useShortlistedApplications } from '../../hooks/use-interview'
 import { AssignInterviewerDialog } from './assign-interviewer-dialog'
 import type { ShortlistedApplicationDto } from '../../types/interview-types'
+import { getApplicationResumeDownloadUrl } from '@/features/applications/utils/resume-download'
 
 interface ShortlistedListProps {
     planDetailId: string
@@ -260,7 +261,7 @@ export function ShortlistedList({ planDetailId }: ShortlistedListProps) {
                                                 {app.resumeUrl && (
                                                     <button
                                                         className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-medium hover:bg-slate-50 hover:text-[#0F4C75] transition-colors"
-                                                        onClick={() => window.open(app.resumeUrl, '_blank')}
+                                                        onClick={() => window.open(getApplicationResumeDownloadUrl(app.applicationId), '_blank', 'noopener,noreferrer')}
                                                     >
                                                         Xem CV
                                                     </button>

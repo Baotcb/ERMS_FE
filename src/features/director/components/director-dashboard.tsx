@@ -1,17 +1,19 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
 import { Eye } from 'lucide-react'
 import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
 import { apiClient } from '@/lib/api-client'
 import {
     DashboardListWidget,
     DashboardChartWidget
 } from '@/components/common/dashboard/widget-containers'
 import type { RecruitmentPlan, PlanListResponse } from '@/features/dept-head/types/recruitment-plan-types'
+import type { TrainingPlansResult } from '@/features/hr/types/training-plan-types'
 
 // Types for Dashboard
 interface ActivityItem {
@@ -106,23 +108,97 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
         () => apiClient.get('/api/RecruitmentPlans?Status=Pending&Page=1&PageSize=5').then(res => res.json())
     )
 
-    // Fetch Total Budget (Mocked or aggregated)
-    // For now, let's just use placeholder data for charts/stats
+    // Fetch Approved plans for budget stats
+    const { data: approvedPlansData } = useSWR<PlanListResponse>(
+        '/RecruitmentPlans/approved-dashboard',
+        () => apiClient.get('/api/RecruitmentPlans?Status=Approved&Page=1&PageSize=50').then(res => res.json())
+    )
 
-    // Mock Activities
-    const activities: ActivityItem[] = [
-        { id: '1', title: 'HR Manager đã duyệt danh sách ứng viên Marketing', time: '2 giờ trước', type: 'success' },
-        { id: '2', title: 'Cần phê duyệt ngân sách điều chỉnh cho IT Dept', time: '5 giờ trước', type: 'warning' },
-        { id: '3', title: 'Báo cáo tuyển dụng Q1/2026 đã sẵn sàng', time: '1 ngày trước', type: 'info' },
-    ]
+    // Fetch Approved training plans for budget stats
+    const { data: approvedTrainingPlansData } = useSWR<TrainingPlansResult>(
+        '/TrainingPlan/approved-dashboard',
+        () => apiClient.get('/api/TrainingPlan?status=Approved&page=1&pageSize=50').then(res => res.json())
+    )
 
-    // Mock Chart Data
-    const budgetData = [
-        { label: 'IT', value: 450, color: '#0F4C75' },
-        { label: 'Marketing', value: 300, color: '#3282B8' },
-        { label: 'Sales', value: 250, color: '#BBE1FA' },
-        { label: 'HR', value: 100, color: '#1B262C' },
-    ]
+    // Fetch Published job postings count
+    const { data: publishedJobsData } = useSWR(
+        '/JobPostings/published-count',
+        () => apiClient.get('/api/JobPostings?Status=Published&Page=1&PageSize=1').then(res => res.json())
+    )
+
+    // Compute total budget from approved plans
+    const totalBudget = useMemo(() => {
+        if (!approvedPlansData?.items) return 0
+        return approvedPlansData.items.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0)
+    }, [approvedPlansData])
+
+    const formatBudget = (amount: number) => {
+        if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)} Tỷ`
+        if (amount >= 1_000_000) return `${Math.round(amount / 1_000_000)} Triệu`
+        return new Intl.NumberFormat('vi-VN').format(amount)
+    }
+
+    // Build activities from recent pending plans
+    const activities: ActivityItem[] = useMemo(() => {
+        const items: ActivityItem[] = []
+        const pendingItems = pendingPlansData?.items || []
+        for (const plan of pendingItems.slice(0, 5)) {
+            const createdDate = new Date(plan.createdAt)
+            const now = new Date()
+            const diffMs = now.getTime() - createdDate.getTime()
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+            const timeText = diffDays > 0 ? `${diffDays} ngày trước` : diffHours > 0 ? `${diffHours} giờ trước` : 'Vừa xong'
+
+            items.push({
+                id: plan.id,
+                title: `Kế hoạch "${plan.planName}" cần phê duyệt (${plan.createdByName})`,
+                time: timeText,
+                type: 'warning',
+            })
+        }
+        if (items.length === 0) {
+            items.push({ id: 'empty', title: 'Không có hoạt động nào gần đây', time: '', type: 'info' })
+        }
+        return items
+    }, [pendingPlansData])
+
+    // Build budget chart data from approved plans (group by department)
+    const CHART_COLORS = ['#0F4C75', '#3282B8', '#BBE1FA', '#1B262C', '#6A8CAF', '#2E86AB']
+    const budgetData = useMemo(() => {
+        if (!approvedPlansData?.items?.length) return []
+        const deptMap = new Map<string, number>()
+        for (const plan of approvedPlansData.items) {
+            const dept = plan.departmentName || 'Khác'
+            deptMap.set(dept, (deptMap.get(dept) || 0) + (plan.totalBudget || 0))
+        }
+        return Array.from(deptMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([label, value], i) => ({
+                label,
+                value: Math.round(value / 1_000_000),
+                color: CHART_COLORS[i % CHART_COLORS.length],
+            }))
+    }, [approvedPlansData])
+
+    // Build training budget chart data from approved training plans
+    const trainingBudgetData = useMemo(() => {
+        if (!approvedTrainingPlansData?.items?.length) return []
+        const planMap = new Map<string, number>()
+        for (const plan of approvedTrainingPlansData.items) {
+            const label = plan.planName || 'Khác'
+            planMap.set(label, (planMap.get(label) || 0) + (plan.totalBudget || 0))
+        }
+        return Array.from(planMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([label, value], i) => ({
+                label,
+                value: Math.round(value / 1_000_000),
+                color: CHART_COLORS[(i + 3) % CHART_COLORS.length],
+            }))
+    }, [approvedTrainingPlansData])
 
     const pendingPlans = pendingPlansData?.items || []
 
@@ -135,7 +211,7 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
             </div>
 
             {/* Quick Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
                 <StatCard
                     title="Kế hoạch chờ duyệt"
                     value={pendingPlansData?.totalCount?.toString() || '0'}
@@ -143,22 +219,16 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
                     color="border-l-yellow-500"
                 />
                 <StatCard
-                    title="Tổng ngân sách (Q1)"
-                    value="2.4 Tỷ"
-                    subtext="Đã phê duyệt"
+                    title="Tổng ngân sách"
+                    value={totalBudget > 0 ? formatBudget(totalBudget) : '—'}
+                    subtext={`${approvedPlansData?.totalCount ?? 0} kế hoạch đã duyệt`}
                     color="border-l-blue-500"
                 />
                 <StatCard
                     title="Vị trí đang tuyển"
-                    value="15"
-                    subtext="Trên 5 phỏng ban"
+                    value={publishedJobsData?.totalCount?.toString() ?? '0'}
+                    subtext="Tin tuyển dụng đang mở"
                     color="border-l-green-500"
-                />
-                <StatCard
-                    title="Gói dịch vụ"
-                    value="Premium"
-                    subtext="Còn 240 ngày"
-                    color="border-l-purple-500"
                 />
             </div>
 
@@ -194,16 +264,21 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
                     data={budgetData}
                 />
 
-                {/* Another chart placeholder */}
+                {/* Training Budget Chart */}
                 <DashboardChartWidget
-                    title="Hiệu quả tuyển dụng"
-                    subtitle="Tỷ lệ lấp đầy vị trí (%)"
-                    data={[
-                        { label: 'T1', value: 65, color: '#0F4C75' },
-                        { label: 'T2', value: 78, color: '#3282B8' },
-                        { label: 'T3', value: 85, color: '#BBE1FA' },
-                    ]}
+                    title="Phân bổ ngân sách đào tạo"
+                    subtitle="Theo kế hoạch (Đơn vị: Triệu VNĐ)"
+                    data={trainingBudgetData}
                 />
+
+                {/* Another chart placeholder */}
+                {publishedJobsData?.totalCount > 0 && (
+                    <DashboardChartWidget
+                        title="Tổng quan tuyển dụng"
+                        subtitle={`${publishedJobsData.totalCount} vị trí đang tuyển`}
+                        data={[{ label: 'Đang tuyển', value: publishedJobsData.totalCount, color: '#0F4C75' }]}
+                    />
+                )}
             </div>
         </div>
     )

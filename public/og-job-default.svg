@@ -1,0 +1,30 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B5583"/>
+      <stop offset="100%" style="stop-color:#154360"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="100" cy="100" r="200" fill="white" fill-opacity="0.05"/>
+  <circle cx="1100" cy="530" r="250" fill="white" fill-opacity="0.05"/>
+  
+  <!-- ERMS Logo placeholder -->
+  <rect x="50" y="50" width="60" height="60" rx="10" fill="white"/>
+  <text x="80" y="90" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1B5583" text-anchor="middle">E</text>
+  
+  <!-- Main text -->
+  <text x="600" y="260" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">ERMS</text>
+  <text x="600" y="340" font-family="Arial, sans-serif" font-size="36" fill="white" fill-opacity="0.9" text-anchor="middle">Hệ thống Tuyển dụng &amp; Quản lý Nhân sự</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="420" font-family="Arial, sans-serif" font-size="28" fill="white" fill-opacity="0.8" text-anchor="middle">Cơ hội việc làm hấp dẫn đang chờ bạn!</text>
+  
+  <!-- Call to action -->
+  <rect x="450" y="480" width="300" height="60" rx="30" fill="white"/>
+  <text x="600" y="520" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1B5583" text-anchor="middle">Ứng tuyển ngay →</text>
+</svg>
