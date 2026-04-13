@@ -45,6 +45,7 @@ export function AssignTrainingPage({
     initialCurrentCourse,
     initialInvitedTrainer,
     initialEnrolledEmployeeIds,
+    deptHeadDepartmentId,
     searchParams
 }: {
     initialCourses?: CourseResult;
@@ -157,7 +158,7 @@ export function AssignTrainingPage({
                     search: searchParams.search,
                     page: 1,
                     pageSize: 10000,
-                    departmentId: searchParams.departmentId !== 'all' ? Number(searchParams.departmentId) : undefined,
+                    departmentId: deptHeadDepartmentId || (searchParams.departmentId !== 'all' ? Number(searchParams.departmentId) : undefined),
                 });
 
                 // Filter out trainer, already enrolled, and special roles

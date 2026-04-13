@@ -135,7 +135,7 @@ export function AssignTraineeTable({
 
             <div className="pt-2 flex items-center justify-between text-sm">
                 <span className="text-gray-500 font-medium">
-                    Đã chọn {selectedTraineeIds.length} nhân viên · Hiển thị {potentialTrainees.length}/{totalCount}
+                    Đã chọn {selectedTraineeIds.length} nhân viên · Hiển thị {potentialTrainees.length} học viên đủ điều kiện
                 </span>
                 {totalPages > 1 && (
                     <div className="flex items-center gap-1">
