@@ -21,18 +21,26 @@ async function getAllCourses(status?: string): Promise<Course[]> {
 }
 
 export default async function TrainingReportPage() {
-    const [pendingPlans, approvedPlans, rejectedPlans, allCourses, publishedCourses] = await Promise.all([
+    const [pendingPlans, approvedPlans, rejectedPlans, closedPlans, allCourses, publishedCourses] = await Promise.all([
         getAllPlans('Pending'),
         getAllPlans('Approved'),
         getAllPlans('Rejected'),
+        getAllPlans('Closed'),
         getAllCourses(),
         getAllCourses('Public'),
     ]);
 
-    const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length;
-    const totalBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
+    const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length + closedPlans.length;
+    const approvedBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
+    const closedBudget = closedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
+    const totalApprovedBudget = approvedBudget + closedBudget;
     const totalCourses = allCourses.length;
     const publishedRate = totalCourses > 0 ? Math.round((publishedCourses.length / totalCourses) * 100) : 0;
+
+    // Budget Utilization: Tỷ lệ ngân sách đã sử dụng = budget của plans đã đóng / tổng budget approved+closed
+    const budgetUtilization = totalApprovedBudget > 0
+        ? Math.round((closedBudget / totalApprovedBudget) * 100)
+        : 0;
 
     const totalEnrollments = publishedCourses.reduce((sum, course) => sum + (course.enrollmentCount || 0), 0);
     const averageEnrollments = publishedCourses.length > 0 ? Math.round(totalEnrollments / publishedCourses.length) : 0;
@@ -46,6 +54,7 @@ export default async function TrainingReportPage() {
         { label: 'Chờ duyệt', value: pendingPlans.length, color: 'bg-yellow-500' },
         { label: 'Đã duyệt', value: approvedPlans.length, color: 'bg-green-500' },
         { label: 'Từ chối', value: rejectedPlans.length, color: 'bg-red-500' },
+        { label: 'Đã đóng', value: closedPlans.length, color: 'bg-slate-500' },
     ];
 
     const maxStatusValue = Math.max(1, ...statusBars.map((item) => item.value));
@@ -54,8 +63,10 @@ export default async function TrainingReportPage() {
         <TrainingReportDashboard
             pendingPlansLength={pendingPlans.length}
             approvedPlansLength={approvedPlans.length}
+            closedPlansLength={closedPlans.length}
             totalPlans={totalPlans}
-            totalBudget={totalBudget}
+            totalBudget={totalApprovedBudget}
+            budgetUtilization={budgetUtilization}
             totalCourses={totalCourses}
             publishedCoursesLength={publishedCourses.length}
             publishedRate={publishedRate}
