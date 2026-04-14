@@ -27,20 +27,14 @@ export default async function TrainingReportPage() {
         getAllPlans('Rejected'),
         getAllPlans('Closed'),
         getAllCourses(),
-        getAllCourses('Public'),
+        getAllCourses('Published'),
     ]);
 
     const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length + closedPlans.length;
-    const approvedBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
-    const closedBudget = closedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
-    const totalApprovedBudget = approvedBudget + closedBudget;
+    const totalBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0)
+        + closedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
     const totalCourses = allCourses.length;
     const publishedRate = totalCourses > 0 ? Math.round((publishedCourses.length / totalCourses) * 100) : 0;
-
-    // Budget Utilization: Tỷ lệ ngân sách đã sử dụng = budget của plans đã đóng / tổng budget approved+closed
-    const budgetUtilization = totalApprovedBudget > 0
-        ? Math.round((closedBudget / totalApprovedBudget) * 100)
-        : 0;
 
     const totalEnrollments = publishedCourses.reduce((sum, course) => sum + (course.enrollmentCount || 0), 0);
     const averageEnrollments = publishedCourses.length > 0 ? Math.round(totalEnrollments / publishedCourses.length) : 0;
@@ -65,8 +59,7 @@ export default async function TrainingReportPage() {
             approvedPlansLength={approvedPlans.length}
             closedPlansLength={closedPlans.length}
             totalPlans={totalPlans}
-            totalBudget={totalApprovedBudget}
-            budgetUtilization={budgetUtilization}
+            totalBudget={totalBudget}
             totalCourses={totalCourses}
             publishedCoursesLength={publishedCourses.length}
             publishedRate={publishedRate}
