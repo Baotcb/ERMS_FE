@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
     DollarSign, BookOpen, Clock, User, ClipboardList, Info, BarChart3, TrendingUp,
-    Layers, Loader2
+    Layers, Loader2, Lock, Archive
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TrainingPlan } from '../../types/training-plan-types';
@@ -34,15 +34,24 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-white border-none shadow-2xl">
-                <div className="bg-gradient-to-r from-[#0F4C75] to-[#3282B8] px-6 py-8 text-white relative overflow-hidden">
+                <div className={`px-6 py-8 text-white relative overflow-hidden ${
+                    plan.status === 'Closed'
+                        ? 'bg-gradient-to-r from-slate-600 to-slate-500'
+                        : 'bg-gradient-to-r from-[#0F4C75] to-[#3282B8]'
+                }`}>
                     <div className="absolute right-0 top-0 opacity-10 translate-x-1/4 -translate-y-1/4">
-                        <BarChart3 size={200} />
+                        {plan.status === 'Closed' ? <Archive size={200} /> : <BarChart3 size={200} />}
                     </div>
                     <DialogHeader>
                         <div className="flex justify-between items-start relative z-10">
                             <div className="space-y-1">
-                                <DialogTitle className="text-2xl font-bold">{plan.planName}</DialogTitle>
-                                <DialogDescription className="text-blue-100 opacity-90 font-medium">
+                                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                    {plan.status === 'Closed' && <Lock className="w-5 h-5" />}
+                                    {plan.planName}
+                                </DialogTitle>
+                                <DialogDescription className={`opacity-90 font-medium ${
+                                    plan.status === 'Closed' ? 'text-slate-200' : 'text-blue-100'
+                                }`}>
                                     Kế hoạch năm {plan.year} | Mã: {plan.planCode}
                                 </DialogDescription>
                             </div>
@@ -54,6 +63,17 @@ export function TrainingPlanDetail({ plan, open, onOpenChange }: TrainingPlanDet
                 </div>
 
                 <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
+                    {/* Closed Plan Alert */}
+                    {plan.status === 'Closed' && (
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                            <Archive className="w-5 h-5 text-slate-500 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-700">Kế hoạch đã được đóng</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Dữ liệu chỉ ở chế độ xem. Không thể chỉnh sửa hoặc thêm khóa học mới.</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Summary Stats */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100/50 flex flex-col items-center text-center">
