@@ -182,9 +182,7 @@ export function TeachingTasksPage({
                         <p className="text-lg font-bold text-[#0F4C75]">
                             {search.trim() ? 'Không tìm thấy khóa học phù hợp' : teachingBasePath?.includes('hr') ? 'Không có khóa học nào từ Giảng viên ngoài' : 'Chưa có nhiệm vụ nào'}
                         </p>
-                        <p className="text-sm text-gray-400">
-                            {search.trim() ? 'Thử từ khóa khác.' : teachingBasePath?.includes('hr') ? 'Hiện tại không có khóa học nào từ giảng viên bên ngoài cần bạn thiết lập thay.' : 'Bạn sẽ nhận được thông báo khi có khóa học được phân công.'}
-                        </p>
+
                     </div>
                 ) : (
                     paginatedCourses.map((course) => {
