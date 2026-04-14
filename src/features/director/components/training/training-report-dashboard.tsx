@@ -1,7 +1,7 @@
 'use client';
 
 import { MetricCard } from '@/components/ui/metric-card';
-import { Archive, CheckCircle2, DollarSign, BookOpen, TrendingUp, BarChart3 } from 'lucide-react';
+import { Archive, CheckCircle2, DollarSign, BookOpen, BarChart3 } from 'lucide-react';
 
 interface StatusBar {
     label: string;
@@ -15,7 +15,6 @@ interface TrainingReportDashboardProps {
     closedPlansLength: number;
     totalPlans: number;
     totalBudget: number;
-    budgetUtilization: number;
     totalCourses: number;
     publishedCoursesLength: number;
     publishedRate: number;
@@ -65,7 +64,6 @@ export function TrainingReportDashboard({
     closedPlansLength,
     totalPlans,
     totalBudget,
-    budgetUtilization,
     totalCourses,
     publishedCoursesLength,
     publishedRate,
@@ -107,22 +105,14 @@ export function TrainingReportDashboard({
                 />
             </div>
 
-            {/* Row 2: Analytics metrics - 3 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {/* Row 2: Analytics metrics - 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <MetricCard
                     title="Kế hoạch đã đóng"
                     value={closedPlansLength}
                     icon={Archive}
                     theme="default"
                     subtext="Kế hoạch đã hoàn tất vòng đời"
-                />
-
-                <MetricCard
-                    title="Tỷ lệ sử dụng ngân sách"
-                    value={`${budgetUtilization}%`}
-                    icon={TrendingUp}
-                    theme={budgetUtilization >= 70 ? 'green' : budgetUtilization >= 30 ? 'amber' : 'default'}
-                    subtext="Ngân sách đã đóng / Tổng ngân sách duyệt"
                 />
 
                 <MetricCard
@@ -176,18 +166,9 @@ export function TrainingReportDashboard({
                         <MetricCard theme="blue" className="p-4" title="TB học viên/khóa" value={averageEnrollments} />
                     </div>
 
-                    {/* Visual Insight: Budget & Completion rings */}
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                        <div className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
-                            <div className="relative">
-                                <ProgressRing value={budgetUtilization} color="#0F4C75" />
-                                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-[#0F4C75]">
-                                    {budgetUtilization}%
-                                </span>
-                            </div>
-                            <span className="text-xs font-semibold text-gray-500 text-center">Sử dụng ngân sách</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+                    {/* Visual Insight: Completion ring */}
+                    <div className="flex justify-center pt-2">
+                        <div className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50/50 w-48">
                             <div className="relative">
                                 <ProgressRing value={completionReadyRate} color="#16a34a" />
                                 <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-green-700">
