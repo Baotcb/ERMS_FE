@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Course } from "@/features/hr/types/course-types";
 import type { CourseProgressDto } from "@/features/employee/types/learning-quiz-types";
@@ -10,6 +10,7 @@ import { CourseNavBar } from "./course-nav-bar";
 import { LessonSidebar } from "./quiz/lesson-sidebar";
 import { LessonContent } from "./quiz/lesson-content";
 import { CourseRightPanel } from "./course-right-panel";
+import { learningQuizService } from "@/features/employee/api/learning-quiz-service";
 
 export function CourseLessonsPage({
   initialCourse,
@@ -23,6 +24,15 @@ export function CourseLessonsPage({
   const ctx = useCourseLearning(initialCourse, initialProgress);
   const router = useRouter();
   const currentBasePath = basePath || "/enterprise/employee/learning/course";
+
+  // Check if user has quiz result to unlock Result/Review tabs
+  const [hasQuizResult, setHasQuizResult] = useState(false);
+  useEffect(() => {
+    if (!initialCourse.hasFinalQuiz) return;
+    learningQuizService.getQuizResult(initialCourse.id)
+      .then((r) => { if (r?.isPassed !== undefined) setHasQuizResult(true); })
+      .catch(() => {});
+  }, [initialCourse.id, initialCourse.hasFinalQuiz]);
 
   // Redirect to quiz if course has no lessons
   useEffect(() => {
@@ -72,6 +82,7 @@ export function CourseLessonsPage({
             completedLessons={ctx.completedLessonsCount}
             totalLessons={ctx.knownTotalLessons}
             isAllLessonsComplete={ctx.isAllLessonsComplete}
+            hasQuizResult={hasQuizResult}
             basePath={currentBasePath}
             hasFinalQuiz={initialCourse.hasFinalQuiz}
           />
