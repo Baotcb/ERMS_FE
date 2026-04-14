@@ -53,7 +53,7 @@ export interface ReplyFeedbackPayload {
 }
 
 export interface UpdateReplyPayload {
-    replyContent: string;
+    content: string;
 }
 
 export const feedbackService = {
@@ -85,7 +85,7 @@ export const feedbackService = {
             const data = await res.json();
             return {
                 hasSubmitted: data.hasSubmitted === true,
-                feedbackData: data.hasSubmitted ? data : undefined
+                feedbackData: data.hasSubmitted ? data.feedbackData : undefined
             };
         } catch {
             return { hasSubmitted: false };
