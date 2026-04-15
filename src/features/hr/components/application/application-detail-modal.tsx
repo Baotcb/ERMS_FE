@@ -55,7 +55,7 @@ export function ApplicationDetailModal({
                                     <h2 className="text-2xl font-bold tracking-tight">{application.candidateName}</h2>
                                     <StageBadge stage={application.stage} />
                                     {application.isExternal && (
-                                        <Badge className="bg-orange-500 text-white text-xs">External</Badge>
+                                        <Badge className="bg-orange-500 text-white text-xs">CV Độc lập</Badge>
                                     )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-300 text-sm mt-2">
