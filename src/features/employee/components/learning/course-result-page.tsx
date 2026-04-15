@@ -47,9 +47,11 @@ interface UserProfile {
 export function CourseResultPage({
   initialCourse,
   basePath,
+  isClosed = false,
 }: {
   initialCourse: Course;
   basePath?: string;
+  isClosed?: boolean;
 }) {
   const currentBasePath = basePath || "/enterprise/employee/learning/course";
   const router = useRouter();
@@ -76,9 +78,7 @@ export function CourseResultPage({
         ]);
 
         if (!quizData) {
-          router.replace(
-            `${currentBasePath}/${initialCourse.id}/quiz`,
-          );
+          router.replace(`${currentBasePath}/${initialCourse.id}/quiz`);
           return;
         }
 
@@ -148,7 +148,8 @@ export function CourseResultPage({
   if (!result) return null;
 
   const canRetry =
-    result.maxAttempts === null || result.attemptCount < result.maxAttempts;
+    !isClosed &&
+    (result.maxAttempts === null || result.attemptCount < result.maxAttempts);
   const totalLessons = progress?.totalLessons ?? 0;
   const completedLessons = progress?.completedLessons ?? 0;
 
@@ -237,9 +238,7 @@ export function CourseResultPage({
         {!result.isPassed && canRetry && (
           <Button
             onClick={() =>
-              router.push(
-                `${currentBasePath}/${initialCourse.id}/quiz`,
-              )
+              router.push(`${currentBasePath}/${initialCourse.id}/quiz`)
             }
             variant="outline"
             className="rounded-xl px-6 py-5 font-bold gap-2 border-[#0F4C75] text-[#0F4C75]"
@@ -250,9 +249,7 @@ export function CourseResultPage({
 
         <Button
           onClick={() =>
-            router.push(
-              `${currentBasePath}/${initialCourse.id}/review`,
-            )
+            router.push(`${currentBasePath}/${initialCourse.id}/review`)
           }
           variant="outline"
           className="rounded-xl px-6 py-5 font-bold gap-2"

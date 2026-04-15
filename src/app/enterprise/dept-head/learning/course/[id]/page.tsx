@@ -32,6 +32,11 @@ export default async function Page({
   }
 
   return (
-    <CourseLessonsPage initialCourse={course} initialProgress={progress} basePath="/enterprise/dept-head/learning/course" />
+    <CourseLessonsPage
+      initialCourse={course}
+      initialProgress={progress}
+      basePath="/enterprise/dept-head/learning/course"
+      isClosed={course.status === "Closed"}
+    />
   );
 }
