@@ -73,3 +73,14 @@ export interface CancelOfferResult {
     newApplicationStage: string;
     cancelledAt: string;
 }
+
+export interface OfferPublicInfo {
+    candidateName: string;
+    position: string;
+    departmentName: string;
+    companyName?: string;
+    salary: number;
+    salaryFrequency: string;
+    startDate: string;
+    expirationDate: string;
+}

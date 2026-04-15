@@ -9,6 +9,13 @@ import { useApplications } from '../../hooks/use-applications'
 import { useJobPosting } from '../../hooks/use-job-postings'
 import { ApplicationTable } from './application-table'
 import { ApplicationStage } from '../../types/application-types'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 
 interface ApplicationsViewProps {
     jobPostingId: string
@@ -46,6 +53,7 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
     const [page, setPage] = useState(1)
     const [pageSize] = useState(20)
     const [stageFilter, setStageFilter] = useState<string>('all')
+    const [sourceFilter, setSourceFilter] = useState<'all' | 'Website' | 'HRImported'>('all')
     const [searchTerm, setSearchTerm] = useState('')
 
     // Job Info
@@ -69,9 +77,11 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
             app.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             app.candidateEmail.toLowerCase().includes(searchTerm.toLowerCase())
 
+        const matchesSource = sourceFilter === 'all' || app.source === sourceFilter || (sourceFilter === 'HRImported' && app.isExternal);
+
         // If we are searching, we might want to ignore stage filter on client side if data is already fetched
         // But here data is fetched based on stage filter from server.
-        return matchesSearch
+        return matchesSearch && matchesSource
     }) || []
 
     return (
@@ -138,14 +148,26 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
                         ))}
                     </div>
 
-                    <div className="w-full xl:w-auto relative min-w-[300px]">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input
-                            placeholder="Tìm kiếm theo tên, email..."
-                            className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors h-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="w-full xl:w-auto flex flex-col sm:flex-row gap-3 min-w-[300px]">
+                        <Select value={sourceFilter} onValueChange={(val: 'all' | 'Website' | 'HRImported') => setSourceFilter(val)}>
+                            <SelectTrigger className="w-full sm:w-[160px] h-10 border-slate-200">
+                                <SelectValue placeholder="Nguồn CV" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả nguồn</SelectItem>
+                                <SelectItem value="Website">Từ Website</SelectItem>
+                                <SelectItem value="HRImported">CV Độc lập</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                            <Input
+                                placeholder="Tìm kiếm theo tên, email..."
+                                className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors h-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,14 +175,14 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
             {/* Table */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <ApplicationTable
-                    applications={searchTerm ? filteredApplications : (applicationsData?.data || [])}
+                    applications={searchTerm || sourceFilter !== 'all' ? filteredApplications : (applicationsData?.data || [])}
                     isLoading={isAppsLoading}
                     onRefresh={() => mutate()}
                 />
             </div>
 
             {/* Pagination */}
-            {applicationsData && applicationsData.totalPages > 1 && !searchTerm && (
+            {applicationsData && applicationsData.totalPages > 1 && !searchTerm && sourceFilter === 'all' && (
                 <div className="flex items-center justify-center space-x-4 py-4">
                     <Button
                         variant="outline"

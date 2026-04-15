@@ -32,7 +32,7 @@ interface BEApplicationItem {
     appliedAt: string
     hrNote?: string
     isExternal?: boolean
-    source?: string
+    source?: "Website" | "HRImported"
     overallScore?: number
     skillMatchScore?: number
     experienceMatchScore?: number
@@ -156,7 +156,8 @@ export async function extractCvInfo(file: File): Promise<ExtractedCvInfo> {
         const error = await response.json().catch(() => ({ message: 'Không thể phân tích CV' }))
         throw new Error(error.message || 'Không thể phân tích CV')
     }
-    return response.json()
+    const json = await response.json()
+    return json.data ?? json
 }
 
 // Add external application (Step 2 of HR add external flow)
@@ -168,5 +169,6 @@ export async function addExternalApplication(
         const error = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }))
         throw new Error(error.message || 'Không thể thêm hồ sơ')
     }
-    return response.json()
+    const json = await response.json()
+    return json.data ?? json
 }
