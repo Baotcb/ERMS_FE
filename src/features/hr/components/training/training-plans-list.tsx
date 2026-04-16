@@ -218,15 +218,22 @@ export function TrainingPlansList({
                   </TableCell>
                 </TableRow>
               ) : (
-                plans?.map((plan: TrainingPlan) => (
+                plans?.map((plan: TrainingPlan) => {
+                  const isClosed = plan.status === 'Closed';
+                  return (
                   <TableRow
                     key={plan.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+                    className={`hover:bg-gray-50/50 transition-colors ${isClosed ? 'opacity-60' : ''}`}
                   >
                     <TableCell className="font-medium text-gray-900">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-blue-500" />
-                        {plan.planName}
+                        <BookOpen className={`w-4 h-4 ${isClosed ? 'text-slate-400' : 'text-blue-500'}`} />
+                        <span>{plan.planName}</span>
+                        {isClosed && (
+                          <Badge className="ml-1 bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-1.5 py-0">
+                            <Lock className="w-3 h-3 mr-0.5" /> Đã đóng
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -284,7 +291,7 @@ export function TrainingPlansList({
                           >
                             <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                           </DropdownMenuItem>
-                          {["Pending", "Rejected"].includes(plan.status) && (
+                          {!isClosed && ["Pending", "Rejected"].includes(plan.status) && (
                             <DropdownMenuItem
                               className="cursor-pointer text-[#0F4C75]"
                               onClick={() => {
@@ -296,7 +303,7 @@ export function TrainingPlansList({
                               hoạch
                             </DropdownMenuItem>
                           )}
-                          {plan.status === "Approved" && (
+                          {!isClosed && plan.status === "Approved" && (
                             <DropdownMenuItem
                               className="cursor-pointer text-slate-600"
                               onClick={() => {
@@ -311,7 +318,8 @@ export function TrainingPlansList({
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>

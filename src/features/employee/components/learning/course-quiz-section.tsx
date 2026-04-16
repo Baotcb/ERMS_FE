@@ -14,21 +14,41 @@ import { QuizQuestionArea } from "./quiz/quiz-question-area";
 
 export function CourseQuizSection({
   initialCourse,
+  initialProgress,
   basePath,
+  isClosed = false,
 }: {
   initialCourse: Course;
   initialProgress?: CourseProgressDto | null;
   basePath?: string;
+  isClosed?: boolean;
 }) {
   const currentBasePath = basePath || "/enterprise/employee/learning/course";
   const { user } = useAuth();
-  
-  const { state, refs, derived, actions } = useQuizEngine({ 
-    initialCourse, 
-    currentBasePath 
+
+  const { state, refs, derived, actions } = useQuizEngine({
+    initialCourse,
+    currentBasePath,
   });
 
   if (!state.examMode && !state.attemptId) {
+    if (isClosed) {
+      return (
+        <div className="min-h-[400px] bg-gray-50/50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex flex-col items-center justify-center mx-auto mb-4 border border-slate-200">
+            <ShieldAlert className="w-8 h-8 text-slate-400" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800">
+            Kế hoạch đã kết thúc
+          </h2>
+          <p className="text-sm text-slate-500 max-w-md mt-2">
+            Không thể làm bài kiểm tra vì khóa học này thuộc một kế hoạch đào
+            tạo đã bị đóng. Bạn chỉ có thể xem lại kết quả nếu đã từng làm.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <QuizPreExamPanel
         course={initialCourse}
@@ -65,7 +85,9 @@ export function CourseQuizSection({
             <ShieldCheck className="w-4 h-4 text-[#BBE1FA]" />
           </div>
           <div>
-            <p className="quiz-topbar__course-name">{initialCourse.courseName}</p>
+            <p className="quiz-topbar__course-name">
+              {initialCourse.courseName}
+            </p>
             <p className="quiz-topbar__module-name">Kiểm tra cuối khóa</p>
           </div>
         </div>
@@ -77,7 +99,12 @@ export function CourseQuizSection({
             disabled={state.isSaving}
             className="text-white/60 hover:text-white hover:bg-white/10 text-xs gap-1.5"
           >
-            {state.isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />} Lưu & Thoát
+            {state.isSaving ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <LogOut className="w-3.5 h-3.5" />
+            )}{" "}
+            Lưu & Thoát
           </Button>
           <Avatar className="w-8 h-8 border-2 border-white/20">
             <AvatarFallback className="bg-[#3282B8] text-white text-xs font-bold">
@@ -132,10 +159,25 @@ export function CourseQuizSection({
             currentQuestion={derived.currentQuestion}
             currentQuestionIndex={state.currentQuestionIndex}
             totalQuestions={derived.quizQuestions.length}
-            selectedAnswer={derived.currentQuestion ? state.answers[derived.currentQuestion.id] : undefined}
-            onAnswerSelect={(qId, value) => state.setAnswers((prev: Record<string, string>) => ({ ...prev, [qId]: value }))}
-            onPrevious={() => state.setCurrentQuestionIndex((p: number) => Math.max(0, p - 1))}
-            onNext={() => state.setCurrentQuestionIndex((p: number) => Math.min(derived.quizQuestions.length - 1, p + 1))}
+            selectedAnswer={
+              derived.currentQuestion
+                ? state.answers[derived.currentQuestion.id]
+                : undefined
+            }
+            onAnswerSelect={(qId, value) =>
+              state.setAnswers((prev: Record<string, string>) => ({
+                ...prev,
+                [qId]: value,
+              }))
+            }
+            onPrevious={() =>
+              state.setCurrentQuestionIndex((p: number) => Math.max(0, p - 1))
+            }
+            onNext={() =>
+              state.setCurrentQuestionIndex((p: number) =>
+                Math.min(derived.quizQuestions.length - 1, p + 1),
+              )
+            }
           />
         </div>
       </div>

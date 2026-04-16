@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, RotateCcw, X, Eye, Lock } from 'lucide-react';
+import { Check, RotateCcw, X, Eye, Lock, Archive } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatVND } from '@/lib/utils';
 
@@ -154,10 +154,17 @@ export function TrainingPlansApprovalList({ initialData }: { initialData?: Train
                                 </TableRow>
                             ) : (
                                 plans.map((plan) => (
-                                    <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <TableCell className="font-medium text-gray-900">
+                                    <TableRow key={plan.id} className={`hover:bg-gray-50/50 transition-colors ${plan.status === 'Closed' ? 'opacity-60' : ''}`}>
+                                         <TableCell className="font-medium text-gray-900">
                                             <div className="flex flex-col">
-                                                <span className="font-bold">{plan.planName}</span>
+                                                <span className="font-bold flex items-center gap-1.5">
+                                                    {plan.planName}
+                                                    {plan.status === 'Closed' && (
+                                                        <Badge className="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-1.5 py-0">
+                                                            <Lock className="w-3 h-3 mr-0.5" /> Đã lưu trữ
+                                                        </Badge>
+                                                    )}
+                                                </span>
                                                 <span className="text-xs text-gray-400">{plan.planCode}</span>
                                             </div>
                                         </TableCell>

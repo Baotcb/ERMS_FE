@@ -253,8 +253,8 @@ export function CreateCourseDialog({
                             searchPlaceholder="Tìm tên hoặc mã kế hoạch..."
                             defaultItems={
                               availablePlans.length > 0
-                                ? availablePlans
-                                : selectedPlan
+                                ? availablePlans.filter(p => p.status !== 'Closed')
+                                : selectedPlan && selectedPlan.status !== 'Closed'
                                   ? [selectedPlan]
                                   : []
                             }

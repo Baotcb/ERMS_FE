@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Search, MoreHorizontal, Eye, BookOpen, ArrowRight, Loader2 } from 'lucide-react';
+import { Search, MoreHorizontal, Eye, BookOpen, ArrowRight, Loader2, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 
@@ -122,11 +122,16 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                             </TableRow>
                         ) : (
                             plans.map((plan: TrainingPlan) => (
-                                <TableRow key={plan.id} className="hover:bg-gray-50/50 transition-colors">
+                                <TableRow key={plan.id} className={`hover:bg-gray-50/50 transition-colors ${plan.status === 'Closed' ? 'opacity-60' : ''}`}>
                                     <TableCell className="font-medium text-gray-900">
                                         <div className="flex items-center gap-2">
-                                            <BookOpen className="w-4 h-4 text-blue-500" />
-                                            {plan.planName}
+                                            <BookOpen className={`w-4 h-4 ${plan.status === 'Closed' ? 'text-slate-400' : 'text-blue-500'}`} />
+                                            <span>{plan.planName}</span>
+                                            {plan.status === 'Closed' && (
+                                                <Badge className="ml-1 bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-1.5 py-0">
+                                                    <Lock className="w-3 h-3 mr-0.5" /> Đã đóng
+                                                </Badge>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -169,6 +174,7 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                                                 >
                                                     <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                                                 </DropdownMenuItem>
+                                                {plan.status !== 'Closed' && (
                                                 <DropdownMenuItem
                                                     className="cursor-pointer text-blue-600 focus:text-blue-700 focus:bg-blue-50"
                                                     onClick={() => handleGoAssignTrainer(plan.id)}
@@ -178,6 +184,7 @@ export function DeptHeadPlansList({ initialData }: { initialData?: { items: Trai
                                                         : <ArrowRight className="mr-2 h-4 w-4" />}
                                                     Phân công trainer
                                                 </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
