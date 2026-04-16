@@ -16,6 +16,7 @@ import {
   Loader2,
   Award,
   XCircle,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -173,6 +174,10 @@ export function TrainerCourseDashboard({
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const isCourseCompleted =
     course.status === "Published" || course.status === "Public";
+  const isReadOnly =
+    course.status === "Published" ||
+    course.status === "Public" ||
+    course.status === "Closed";
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -291,7 +296,6 @@ export function TrainerCourseDashboard({
       setIsSaving(false);
     }
   };
-
   /* ── Pre-publish checklist items (dynamic) ── */
   const publishChecks = [
     {
@@ -316,6 +320,19 @@ export function TrainerCourseDashboard({
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      {/* ── Read-only Banner ── */}
+      {course.status === "Closed" && (
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900 shadow-sm">
+          <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+          <div>
+            <p className="font-bold text-sm">Khóa học đã đóng</p>
+            <p className="text-xs opacity-90">
+              Kế hoạch đào tạo đã kết thúc. Bạn hiện đang ở chế độ chỉ xem.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Header ── */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Top color strip */}
@@ -357,7 +374,7 @@ export function TrainerCourseDashboard({
             >
               {isCourseCompleted ? "✓ Hoàn thành" : "◉ Đang thiết lập"}
             </Badge>
-            {!isCourseCompleted && (
+            {!isCourseCompleted && course.status !== "Closed" && (
               <Button
                 variant="outline"
                 className="rounded-xl border-gray-200 gap-2 font-semibold"
@@ -415,6 +432,7 @@ export function TrainerCourseDashboard({
                           <Input
                             {...field}
                             className="rounded-xl border-gray-200 h-12 text-base"
+                            disabled={isReadOnly}
                           />
                         </FormControl>
                         <FormMessage />
@@ -436,6 +454,7 @@ export function TrainerCourseDashboard({
                             rows={6}
                             className="rounded-xl border-gray-200 resize-none"
                             placeholder="Nhập mục tiêu, nội dung chính của khóa học..."
+                            disabled={isReadOnly}
                           />
                         </FormControl>
                         <FormMessage />
@@ -460,6 +479,7 @@ export function TrainerCourseDashboard({
                                 field.onChange(parseInt(e.target.value) || 0)
                               }
                               className="rounded-xl border-gray-200 h-12"
+                              disabled={isReadOnly}
                             />
                           </FormControl>
                           <FormMessage />
@@ -468,18 +488,20 @@ export function TrainerCourseDashboard({
                     />
                   </div>
 
-                  <Button
-                    type="submit"
-                    className="bg-[#0F4C75] hover:bg-[#1B262C] text-white px-8 py-6 rounded-xl font-bold gap-2"
-                    disabled={isSaving}
-                  >
-                    Lưu & Tiếp tục
-                    {isSaving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4" />
-                    )}
-                  </Button>
+                  {!isReadOnly && (
+                    <Button
+                      type="submit"
+                      className="bg-[#0F4C75] hover:bg-[#1B262C] text-white px-8 py-6 rounded-xl font-bold gap-2"
+                      disabled={isSaving}
+                    >
+                      Lưu & Tiếp tục
+                      {isSaving ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ArrowRight className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
                 </form>
               </Form>
             </div>
@@ -499,7 +521,7 @@ export function TrainerCourseDashboard({
                   thể học theo từng học phần.
                 </p>
               </div>
-              <CurriculumManager courseId={course.id} />
+              <CurriculumManager courseId={course.id} isReadOnly={isReadOnly} />
               <Separator className="bg-gray-100" />
               <div className="flex items-center justify-between pt-2">
                 <Button
@@ -533,6 +555,7 @@ export function TrainerCourseDashboard({
             <ExamBuilder
               courseId={course.id}
               initialQuizId={course.finalQuizId}
+              isReadOnly={isReadOnly}
               onQuizLinked={(quizId) =>
                 setCourse((prev) => ({
                   ...prev,
@@ -618,37 +641,39 @@ export function TrainerCourseDashboard({
               <Separator className="bg-gray-100" />
 
               {/* Publish CTA */}
-              <div className="relative rounded-3xl bg-gradient-to-br from-[#0F4C75] to-[#1B262C] p-8 text-white overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-[#3282B8]/15 rounded-full -translate-y-1/2 translate-x-1/3" />
-                <div className="relative z-10 space-y-5">
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-black">
-                      {allChecksOk
-                        ? "Sẵn sàng mở khóa học! 🎉"
-                        : "Chưa đủ điều kiện"}
-                    </h3>
-                    <p className="text-[#BBE1FA]/70 text-sm">
-                      {allChecksOk
-                        ? "Khóa học sẽ xuất hiện trong danh mục đào tạo và học viên có thể tham gia."
-                        : "Vui lòng hoàn tất các mục trên trước khi mở khóa."}
-                    </p>
+              {!isReadOnly && (
+                <div className="relative rounded-3xl bg-gradient-to-br from-[#0F4C75] to-[#1B262C] p-8 text-white overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-[#3282B8]/15 rounded-full -translate-y-1/2 translate-x-1/3" />
+                  <div className="relative z-10 space-y-5">
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-black">
+                        {allChecksOk
+                          ? "Sẵn sàng mở khóa học! 🎉"
+                          : "Chưa đủ điều kiện"}
+                      </h3>
+                      <p className="text-[#BBE1FA]/70 text-sm">
+                        {allChecksOk
+                          ? "Khóa học sẽ xuất hiện trong danh mục đào tạo và học viên có thể tham gia."
+                          : "Vui lòng hoàn tất các mục trên trước khi mở khóa."}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setShowPublishConfirm(true)}
+                      className="w-full bg-white text-[#0F4C75] hover:bg-[#BBE1FA] px-12 py-7 rounded-2xl font-bold text-lg shadow-lg transition-all gap-3"
+                      disabled={isSaving || !allChecksOk}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5" />
+                          MỞ KHÓA HỌC
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => setShowPublishConfirm(true)}
-                    className="w-full bg-white text-[#0F4C75] hover:bg-[#BBE1FA] px-12 py-7 rounded-2xl font-bold text-lg shadow-lg transition-all gap-3"
-                    disabled={isSaving || !allChecksOk}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="w-5 h-5" />
-                        MỞ KHÓA HỌC
-                      </>
-                    )}
-                  </Button>
                 </div>
-              </div>
+              )}
 
               <AlertDialog
                 open={showPublishConfirm}
