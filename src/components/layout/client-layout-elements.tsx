@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { ChatbotWidget } from '@/components/floating/chatbot-widget'
 
 const Toaster = dynamic(() => import("@/components/ui/toaster").then(mod => mod.Toaster), {
     ssr: false
@@ -14,6 +15,7 @@ export function ClientLayoutElements() {
         <>
             <FloatingMenu />
             <Toaster />
+            <ChatbotWidget key="chatbot" />
         </>
     )
 }

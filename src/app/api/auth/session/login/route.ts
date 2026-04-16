@@ -3,6 +3,11 @@ import { config } from '@/config'
 import { COOKIE_OPTIONS, STORAGE_KEYS } from '@/utils/constants'
 import { parseJwt } from '@/utils/jwt'
 
+interface BackendLoginResponse {
+    message?: string
+    token?: string
+}
+
 async function fetchProfileSnapshot(token: string) {
     try {
         const response = await fetch(`${config.apiUrl}/api/User/profile`, {
@@ -22,23 +27,80 @@ async function fetchProfileSnapshot(token: string) {
     }
 }
 
-async function parseBackendResponse(response: Response) {
+function normalizeErrorText(value: string) {
+    return value.replace(/\s+/g, ' ').trim()
+}
+
+async function parseBackendResponse(response: Response): Promise<BackendLoginResponse> {
     const rawText = await response.text()
 
     if (!rawText) {
         return {}
     }
 
-    try {
-        return JSON.parse(rawText) as {
-            message?: string
-            token?: string
-        }
-    } catch {
-        return {
-            message: rawText,
+    const contentType = response.headers.get('content-type') || ''
+
+    if (contentType.includes('json')) {
+        try {
+            const parsed = JSON.parse(rawText) as {
+                message?: unknown
+                token?: unknown
+            }
+
+            return {
+                message: typeof parsed.message === 'string' ? parsed.message : undefined,
+                token: typeof parsed.token === 'string' ? parsed.token : undefined,
+            }
+        } catch {
+            console.error('Login proxy received invalid JSON payload from backend.', {
+                status: response.status,
+                contentType,
+                preview: normalizeErrorText(rawText).slice(0, 180),
+            })
+
+            return {}
         }
     }
+
+    const normalizedText = normalizeErrorText(rawText)
+    const lowerText = normalizedText.toLowerCase()
+    const looksLikeHtmlOrScript =
+        lowerText.includes('<!doctype html') ||
+        lowerText.includes('<html') ||
+        lowerText.includes('<script') ||
+        lowerText.includes('window.__next') ||
+        lowerText.includes('webpack') ||
+        lowerText.includes('sourcemappingurl')
+
+    if (!looksLikeHtmlOrScript && normalizedText.length <= 240) {
+        return {
+            message: normalizedText,
+        }
+    }
+
+    console.error('Login proxy received unexpected non-JSON payload from backend.', {
+        status: response.status,
+        contentType,
+        preview: normalizedText.slice(0, 180),
+    })
+
+    return {}
+}
+
+function getLoginFallbackMessage(status: number) {
+    if (status === 400 || status === 401) {
+        return 'Dang nhap that bai. Vui long kiem tra email/ten dang nhap va mat khau.'
+    }
+
+    if (status === 429) {
+        return 'Ban da dang nhap sai qua nhieu lan. Vui long thu lai sau 1 phut.'
+    }
+
+    if (status === 502 || status === 503 || status === 504) {
+        return 'Khong the ket noi dich vu dang nhap. Vui long thu lai sau.'
+    }
+
+    return 'Dang nhap that bai. Vui long thu lai.'
 }
 
 export async function POST(request: Request) {
@@ -58,11 +120,7 @@ export async function POST(request: Request) {
         const data = await parseBackendResponse(backendRes)
 
         if (!backendRes.ok) {
-            const message =
-                data.message ||
-                (backendRes.status === 429
-                    ? 'Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 1 phút.'
-                    : `Login failed with status ${backendRes.status}`)
+            const message = data.message || getLoginFallbackMessage(backendRes.status)
 
             return NextResponse.json(
                 { message },
@@ -106,7 +164,9 @@ export async function POST(request: Request) {
                     || email
                 )
             }
-        } catch { /* fallback to defaults */ }
+        } catch {
+            // Keep fallback values when token payload cannot be decoded.
+        }
 
         const profile = await fetchProfileSnapshot(token)
         if (profile?.fullName) {

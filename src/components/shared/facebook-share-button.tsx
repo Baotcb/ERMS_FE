@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Facebook, Check, Copy } from 'lucide-react'
+import { Facebook, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Tooltip,

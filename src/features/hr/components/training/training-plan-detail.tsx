@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-    DollarSign, BookOpen, Clock, User, ClipboardList, Info, BarChart3, TrendingUp,
+    DollarSign, Clock, User, ClipboardList, Info, BarChart3, TrendingUp,
     Layers, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';

@@ -6,11 +6,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-    Clock, Users, DollarSign, Target, AlignLeft, Calendar, User, Building2, AlertCircle 
+    Clock, Users, Target, AlignLeft, Calendar, User, Building2, AlertCircle 
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TrainingRequest } from '../../types/training-types';
-import { formatVND } from '@/lib/utils';
+
 
 interface TrainingRequestDetailProps {
     request: TrainingRequest | null;
