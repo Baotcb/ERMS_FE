@@ -20,11 +20,24 @@ export interface CompanyDetailDeps {
   getEnterpriseByName: (name: string) => Promise<CompanyDetailResult>
 }
 
-const GUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export function isGuidIdentifier(identifier: string): boolean {
-  return GUID_PATTERN.test(identifier)
+  return UUID_PATTERN.test(identifier)
+}
+
+export function getCompanyProfileHref(company: {
+  id?: string | null
+  enterpriseName: string
+}): string {
+  const trimmedId = company.id?.trim()
+  const identifier =
+    trimmedId && isGuidIdentifier(trimmedId)
+      ? trimmedId
+      : encodeURIComponent(company.enterpriseName)
+
+  return `/companies/${identifier}`
 }
 
 export async function getCompanyDetailByIdentifier(

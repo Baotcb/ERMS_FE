@@ -160,6 +160,7 @@ export function TrainingRequestDetail({
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
@@ -187,6 +188,25 @@ export function TrainingRequestDetail({
               </div>
             </div>
           </div>
+=======
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <span className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
+                                    <urgency.icon className="w-3.5 h-3.5" /> Mức độ ưu tiên
+                                </span>
+                                <Badge className={`${urgency.color} font-medium border-0`}>
+                                    {urgency.label}
+                                </Badge>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5" /> Học viên dự kiến
+                                </span>
+                                <p className="text-sm font-semibold text-gray-900">{request.estimatedParticipants} nhân viên</p>
+                            </div>
+                        </div>
+                    </div>
+>>>>>>> 45aae32ad9c33ecdcf340333462dab586d35d0e3
 
           {/* Target Audience */}
           <div className="space-y-2 pt-2 border-t border-gray-100">

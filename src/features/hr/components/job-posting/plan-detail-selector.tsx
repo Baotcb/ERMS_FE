@@ -41,6 +41,8 @@ export function PlanDetailSelector({ form, onSelect }: PlanDetailSelectorProps) 
         // Auto-fill các trường liên quan từ PlanDetail
         form.setValue('jobTitle', selected.positionTitle, { shouldValidate: true })
         form.setValue('quantity', selected.quantity, { shouldValidate: true })
+        form.setValue('salaryRangeMin', selected.salaryRangeMin ?? 0, { shouldValidate: true })
+        form.setValue('salaryRangeMax', selected.salaryRangeMax ?? 0, { shouldValidate: true })
 
         if (selected.requiredSkills) {
             form.setValue('requirements', selected.requiredSkills)

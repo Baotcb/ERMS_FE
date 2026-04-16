@@ -21,16 +21,18 @@ async function getAllCourses(status?: string): Promise<Course[]> {
 }
 
 export default async function TrainingReportPage() {
-    const [pendingPlans, approvedPlans, rejectedPlans, allCourses, publishedCourses] = await Promise.all([
+    const [pendingPlans, approvedPlans, rejectedPlans, closedPlans, allCourses, publishedCourses] = await Promise.all([
         getAllPlans('Pending'),
         getAllPlans('Approved'),
         getAllPlans('Rejected'),
+        getAllPlans('Closed'),
         getAllCourses(),
-        getAllCourses('Public'),
+        getAllCourses('Published'),
     ]);
 
-    const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length;
-    const totalBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
+    const totalPlans = pendingPlans.length + approvedPlans.length + rejectedPlans.length + closedPlans.length;
+    const totalBudget = approvedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0)
+        + closedPlans.reduce((sum, plan) => sum + (plan.totalBudget || 0), 0);
     const totalCourses = allCourses.length;
     const publishedRate = totalCourses > 0 ? Math.round((publishedCourses.length / totalCourses) * 100) : 0;
 
@@ -46,6 +48,7 @@ export default async function TrainingReportPage() {
         { label: 'Chờ duyệt', value: pendingPlans.length, color: 'bg-yellow-500' },
         { label: 'Đã duyệt', value: approvedPlans.length, color: 'bg-green-500' },
         { label: 'Từ chối', value: rejectedPlans.length, color: 'bg-red-500' },
+        { label: 'Đã đóng', value: closedPlans.length, color: 'bg-slate-500' },
     ];
 
     const maxStatusValue = Math.max(1, ...statusBars.map((item) => item.value));
@@ -54,6 +57,7 @@ export default async function TrainingReportPage() {
         <TrainingReportDashboard
             pendingPlansLength={pendingPlans.length}
             approvedPlansLength={approvedPlans.length}
+            closedPlansLength={closedPlans.length}
             totalPlans={totalPlans}
             totalBudget={totalBudget}
             totalCourses={totalCourses}

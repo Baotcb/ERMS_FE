@@ -29,9 +29,9 @@ function formatDate(dateStr: string): string {
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
     return (
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5 min-w-0">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
-            <span className="text-sm text-slate-700">{value ?? <span className="text-slate-300 italic">—</span>}</span>
+            <span className="text-sm text-slate-700 break-words whitespace-pre-wrap">{value ?? <span className="text-slate-300 italic">—</span>}</span>
         </div>
     )
 }
@@ -43,7 +43,7 @@ export function OfferDetailDialog({ open, onOpenChange, offer }: OfferDetailDial
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-[#0C4A6E] text-lg">Chi tiết Offer</DialogTitle>
                 </DialogHeader>
@@ -87,8 +87,8 @@ export function OfferDetailDialog({ open, onOpenChange, offer }: OfferDetailDial
                         }
                     />
 
-                    {offer.bonus && <Row label="Thưởng" value={offer.bonus} />}
-                    {offer.benefits && <Row label="Phúc lợi" value={offer.benefits} />}
+                    {offer.bonus && <div className="col-span-2"><Row label="Thưởng" value={offer.bonus} /></div>}
+                    {offer.benefits && <div className="col-span-2"><Row label="Phúc lợi" value={offer.benefits} /></div>}
 
                     <Row label="Ngày bắt đầu" value={formatDate(offer.startDate)} />
                     <Row

@@ -12,6 +12,7 @@ export interface RecruitmentPlan {
     createdByName: string
     createdAt: string
     updatedAt: string
+    departmentName?: string
     planDetails: PlanDetail[]
 }
 

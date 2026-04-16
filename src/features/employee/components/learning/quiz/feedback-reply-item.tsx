@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
@@ -36,14 +38,17 @@ export function FeedbackReplyItem({ reply, onUpdate, onDelete, onReplyTo }: Feed
         );
     };
 
-    const initial = reply.isAnonymous ? '?' : (reply.replyByName?.charAt(0) || 'U');
+    const initial = reply.isAnonymous ? 'A' : (reply.replyByName?.charAt(0).toUpperCase() || 'U');
     const authorName = reply.isAnonymous ? 'Người dùng ẩn danh' : (reply.replyByName || 'Người dùng Ẩn');
 
     return (
         <div className="flex gap-3 mb-4">
             <Avatar className="w-8 h-8 shrink-0">
-                <AvatarImage src={reply.isAnonymous ? '' : (reply.replyByAvatarUrl || '')} />
-                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">{initial}</AvatarFallback>
+                {reply.isAnonymous || !reply.replyByAvatarUrl ? (
+                    <AvatarFallback className="text-xs bg-blue-100 text-blue-700">{initial}</AvatarFallback>
+                ) : (
+                    <AvatarImage src={reply.replyByAvatarUrl} />
+                )}
             </Avatar>
             <div className="flex-1 min-w-0">
                 <div className="bg-gray-50 rounded-2xl px-4 py-2.5 inline-block max-w-full">

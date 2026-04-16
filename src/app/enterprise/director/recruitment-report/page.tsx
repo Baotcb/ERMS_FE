@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { RecruitmentReportDashboard } from "@/features/director/components/recruitment-report-dashboard";
 
 export default function RecruitmentReportPage() {
@@ -12,3 +13,8 @@ export default function RecruitmentReportPage() {
     </div>
   );
 }
+=======
+import RecruitmentReportPage from '@/features/director/components/recruitment-report-page'
+
+export default RecruitmentReportPage
+>>>>>>> 45aae32ad9c33ecdcf340333462dab586d35d0e3

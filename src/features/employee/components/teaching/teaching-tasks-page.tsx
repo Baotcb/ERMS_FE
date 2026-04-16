@@ -180,10 +180,10 @@ export function TeachingTasksPage({
                             {search.trim() ? <Search className="w-7 h-7 text-[#3282B8]" /> : <GraduationCap className="w-7 h-7 text-[#3282B8]" />}
                         </div>
                         <p className="text-lg font-bold text-[#0F4C75]">
-                            {search.trim() ? 'Không tìm thấy khóa học phù hợp' : 'Chưa có nhiệm vụ nào'}
+                            {search.trim() ? 'Không tìm thấy khóa học phù hợp' : teachingBasePath?.includes('hr') ? 'Không có khóa học nào từ Giảng viên ngoài' : 'Chưa có nhiệm vụ nào'}
                         </p>
                         <p className="text-sm text-gray-400">
-                            {search.trim() ? 'Thử từ khóa khác.' : 'Bạn sẽ nhận được thông báo khi có khóa học được phân công.'}
+                            {search.trim() ? 'Thử từ khóa khác.' : teachingBasePath?.includes('hr') ? 'Hiện tại không có khóa học nào từ giảng viên bên ngoài cần bạn thiết lập thay.' : 'Bạn sẽ nhận được thông báo khi có khóa học được phân công.'}
                         </p>
                     </div>
                 ) : (

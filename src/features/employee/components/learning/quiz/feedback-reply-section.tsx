@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import useSWR from 'swr';
 import { feedbackService } from '@/features/employee/api/feedback-service';
@@ -62,7 +64,7 @@ export function FeedbackReplySection({ feedbackId }: FeedbackReplySectionProps) 
 
     const handleUpdate = async (id: number, content: string) => {
         try {
-            await feedbackService.updateReply(id, { replyContent: content });
+            await feedbackService.updateReply(id, { content: content });
             mutate();
         } catch (error) {
             const err = error as Error;

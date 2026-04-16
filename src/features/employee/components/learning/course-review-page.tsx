@@ -9,6 +9,7 @@ import {
   Star,
   CheckCircle2,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import type { Course } from "@/features/hr/types/course-types";
 import { feedbackService } from "@/features/employee/api/feedback-service";
@@ -35,14 +36,23 @@ const STEPS_WITHOUT_QUIZ = [
 export function CourseReviewPage({
   initialCourse,
   basePath,
+  isClosed = false,
 }: {
   initialCourse: Course;
   basePath?: string;
+  isClosed?: boolean;
 }) {
   const currentBasePath = basePath || "/enterprise/employee/learning/course";
   const router = useRouter();
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [feedbackData, setFeedbackData] = useState<{ feedbackId: number; courseRating: number; trainerRating: number; comment: string | null; isAnonymous: boolean; createdAt: string; } | null>(null);
+  const [feedbackData, setFeedbackData] = useState<{
+    feedbackId: number;
+    courseRating: number;
+    trainerRating: number;
+    comment: string | null;
+    isAnonymous: boolean;
+    createdAt: string;
+  } | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [progress, setProgress] = useState<CourseProgressDto | null>(null);
   const [isQuizNotPassed, setIsQuizNotPassed] = useState(false);
@@ -56,12 +66,14 @@ export function CourseReviewPage({
             .getCourseProgress(initialCourse.id)
             .catch(() => null),
           initialCourse.hasFinalQuiz
-            ? learningQuizService.getQuizResult(initialCourse.id).catch(() => null)
+            ? learningQuizService
+                .getQuizResult(initialCourse.id)
+                .catch(() => null)
             : Promise.resolve(null),
         ]);
         setHasSubmitted(feedbackCheck.hasSubmitted);
         if (feedbackCheck.feedbackData) {
-            setFeedbackData(feedbackCheck.feedbackData);
+          setFeedbackData(feedbackCheck.feedbackData);
         }
         if (progressData) setProgress(progressData);
         if (initialCourse.hasFinalQuiz && !quizResult?.isPassed) {
@@ -126,7 +138,10 @@ export function CourseReviewPage({
               Lộ trình học
             </p>
             <div className="space-y-1">
-              {(initialCourse.hasFinalQuiz ? STEPS_WITH_QUIZ : STEPS_WITHOUT_QUIZ).map((step, idx, arr) => {
+              {(initialCourse.hasFinalQuiz
+                ? STEPS_WITH_QUIZ
+                : STEPS_WITHOUT_QUIZ
+              ).map((step, idx, arr) => {
                 const isActive = idx === arr.length - 1; // Last step (Đánh giá) is current
                 const isCompleted = idx < arr.length - 1;
                 const Icon = step.icon;
@@ -215,6 +230,19 @@ export function CourseReviewPage({
                   Đang kiểm tra...
                 </span>
               </div>
+            ) : isClosed && !hasSubmitted ? (
+              <div className="text-center py-12 space-y-4">
+                <div className="w-20 h-20 rounded-full bg-amber-100 mx-auto flex items-center justify-center">
+                  <AlertCircle className="w-10 h-10 text-amber-600" />
+                </div>
+                <h3 className="text-xl font-black text-[#0F4C75]">
+                  Không thể đánh giá
+                </h3>
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                  Kế hoạch đào tạo chứa khóa học này đã kết thúc. Bạn không thể
+                  gửi thêm đánh giá mới vào lúc này.
+                </p>
+              </div>
             ) : isQuizNotPassed ? (
               /* Not Passed Quiz State */
               <div className="text-center py-12 space-y-4">
@@ -225,13 +253,12 @@ export function CourseReviewPage({
                   Chưa đủ điều kiện đánh giá
                 </h3>
                 <p className="text-sm text-gray-500 max-w-md mx-auto">
-                  Bạn cần phải hoàn thành và vượt qua bài kiểm tra cuối khóa để có thể đánh giá khóa học này.
+                  Bạn cần phải hoàn thành và vượt qua bài kiểm tra cuối khóa để
+                  có thể đánh giá khóa học này.
                 </p>
                 <button
                   onClick={() =>
-                    router.push(
-                      `${currentBasePath}/${initialCourse.id}/quiz`,
-                    )
+                    router.push(`${currentBasePath}/${initialCourse.id}/quiz`)
                   }
                   className="text-sm text-[#3282B8] hover:text-[#0F4C75] font-medium mt-4 inline-block transition"
                 >
@@ -250,13 +277,19 @@ export function CourseReviewPage({
                       Cảm ơn bạn đã chia sẻ trải nghiệm!
                     </p>
                   </div>
-                  {feedbackData.isAnonymous && <Badge variant="outline" className="bg-gray-100">Đã gửi ẩn danh</Badge>}
+                  {feedbackData.isAnonymous && (
+                    <Badge variant="outline" className="bg-gray-100">
+                      Đã gửi ẩn danh
+                    </Badge>
+                  )}
                 </div>
-                
+
                 <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 space-y-4">
                   <div className="flex gap-6">
                     <div className="space-y-1">
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Khóa học</p>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">
+                        Khóa học
+                      </p>
                       <div className="flex items-center gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
@@ -267,7 +300,9 @@ export function CourseReviewPage({
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Giảng viên</p>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">
+                        Giảng viên
+                      </p>
                       <div className="flex items-center gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
@@ -278,7 +313,7 @@ export function CourseReviewPage({
                       </div>
                     </div>
                   </div>
-                  
+
                   {feedbackData.comment && (
                     <div className="pt-3 border-t border-gray-100">
                       <p className="text-sm text-gray-700 whitespace-pre-wrap italic">
@@ -287,15 +322,21 @@ export function CourseReviewPage({
                     </div>
                   )}
                   <p className="text-xs text-gray-400 pt-2">
-                    Gửi lúc: {format(new Date(feedbackData.createdAt), 'dd/MM/yyyy HH:mm')}
+                    Gửi lúc:{" "}
+                    {feedbackData.createdAt
+                      ? format(
+                          new Date(feedbackData.createdAt),
+                          "dd/MM/yyyy HH:mm",
+                        )
+                      : "Vừa xong"}
                   </p>
                 </div>
 
                 <div className="pt-2">
-                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        Thảo luận phản hồi
-                    </h4>
-                    <FeedbackReplySection feedbackId={feedbackData.feedbackId} />
+                  <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                    Thảo luận phản hồi
+                  </h4>
+                  <FeedbackReplySection feedbackId={feedbackData.feedbackId} />
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 text-center">
@@ -309,7 +350,10 @@ export function CourseReviewPage({
                     }
                     className="text-sm text-[#3282B8] hover:text-[#0F4C75] font-medium inline-block transition"
                   >
-                    ← {initialCourse.hasFinalQuiz ? "Quay lại kết quả" : "Quay lại bài học"}
+                    ←{" "}
+                    {initialCourse.hasFinalQuiz
+                      ? "Quay lại kết quả"
+                      : "Quay lại bài học"}
                   </button>
                 </div>
               </div>
@@ -327,11 +371,13 @@ export function CourseReviewPage({
                 <CourseFeedbackForm
                   courseId={initialCourse.id}
                   onSubmitted={async () => {
-                      const res = await feedbackService.checkFeedback(initialCourse.id);
-                      if (res.hasSubmitted && res.feedbackData) {
-                          setFeedbackData(res.feedbackData);
-                      }
-                      setHasSubmitted(true);
+                    const res = await feedbackService.checkFeedback(
+                      initialCourse.id,
+                    );
+                    if (res.hasSubmitted && res.feedbackData) {
+                      setFeedbackData(res.feedbackData);
+                    }
+                    setHasSubmitted(true);
                   }}
                 />
               </div>

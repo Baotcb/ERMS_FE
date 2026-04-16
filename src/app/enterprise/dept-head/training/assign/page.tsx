@@ -26,9 +26,37 @@ export default async function Page({
     let deptHeadDepartmentId: number | undefined;
     try {
         const profile = await getProfileServer();
-        deptHeadDepartmentId = profile.departmentId;
-    } catch {
-        // If profile fetch fails, we can't filter by department - continue with all employees
+        deptHeadDepartmentId = profile.departmentId ?? undefined;
+
+        // Fallback: nếu User không có departmentId, tìm từ Employee record
+        if (!deptHeadDepartmentId && profile.email) {
+            const empResult = await trainingServerService.getEmployees({
+                search: profile.email,
+                pageSize: 1,
+            });
+            const matchedEmployee = empResult.items.find(
+                (e) => e.email.toLowerCase() === profile.email.toLowerCase()
+            );
+            if (matchedEmployee?.departmentId) {
+                deptHeadDepartmentId = matchedEmployee.departmentId;
+            }
+        }
+    } catch (error) {
+        console.error('Không thể lấy thông tin profile Dept Head:', error);
+    }
+
+    // Guard: Dept Head PHẢI có departmentId, nếu không thì không cho phân công
+    if (!deptHeadDepartmentId) {
+        return (
+            <div className="w-full max-w-7xl mx-auto p-8 text-center space-y-3">
+                <p className="text-red-600 font-semibold text-lg">
+                    Không thể xác định phòng ban của bạn
+                </p>
+                <p className="text-gray-500 text-sm">
+                    Vui lòng đăng nhập lại hoặc liên hệ quản trị viên để được gán phòng ban.
+                </p>
+            </div>
+        );
     }
 
     // We fetch Base Dependencies parallelly

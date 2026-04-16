@@ -38,6 +38,7 @@ import { usePublicJob } from '../hooks/use-public-jobs'
 import { useSavedJobsStore } from '../stores/use-saved-jobs-store'
 import { JobApplyForm } from '@/features/candidate/components/job-apply-form'
 import { useCandidateAccess } from '@/features/core/auth/hooks'
+import { getCompanyProfileHref } from '../utils/company-detail'
 
 interface PublicJobDetailProps {
     id: string
@@ -150,11 +151,13 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
 
     const formatSalary = () => {
         if (!job.showSalary) return 'Thỏa thuận'
-        if (job.salaryRangeMin && job.salaryRangeMax) {
-            return `${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} - ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+        const min = job.salaryRangeMin ? Math.round(job.salaryRangeMin / 1000000) : 0
+        const max = job.salaryRangeMax ? Math.round(job.salaryRangeMax / 1000000) : 0
+        if (min > 0 && max > 0) {
+            return `${min.toLocaleString('vi-VN')} - ${max.toLocaleString('vi-VN')} triệu`
         }
-        if (job.salaryRangeMin) return `Từ ${(job.salaryRangeMin / 1000000).toLocaleString('vi-VN')} triệu`
-        if (job.salaryRangeMax) return `Đến ${(job.salaryRangeMax / 1000000).toLocaleString('vi-VN')} triệu`
+        if (min > 0) return `Từ ${min.toLocaleString('vi-VN')} triệu`
+        if (max > 0) return `Đến ${max.toLocaleString('vi-VN')} triệu`
         return 'Thỏa thuận'
     }
 
@@ -493,7 +496,12 @@ export function PublicJobDetail({ id }: PublicJobDetailProps) {
                                     className="w-full border-[#1B5583] text-[#1B5583] hover:bg-[#1B5583] hover:text-white rounded-lg h-10 font-medium transition-colors text-sm"
                                     asChild
                                 >
-                                    <Link href={`/companies/${job.enterpriseId || encodeURIComponent(job.enterpriseName)}`}>
+                                    <Link
+                                        href={getCompanyProfileHref({
+                                            id: job.enterpriseId,
+                                            enterpriseName: job.enterpriseName,
+                                        })}
+                                    >
                                         Xem trang công ty
                                         <ChevronRight className="w-4 h-4 ml-1" />
                                     </Link>
