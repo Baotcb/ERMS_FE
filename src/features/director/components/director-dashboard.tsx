@@ -6,7 +6,6 @@ import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
 import { Eye } from 'lucide-react'
 import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
 import { apiClient } from '@/lib/api-client'
 import {
     DashboardListWidget,
@@ -100,6 +99,8 @@ function StatCard({ title, value, subtext, color }: { title: string, value: stri
     )
 }
 
+const CHART_COLORS = ['#0F4C75', '#3282B8', '#BBE1FA', '#1B262C', '#6A8CAF', '#2E86AB']
+
 export const DirectorDashboard = memo(function DirectorDashboard() {
 
     // Fetch Pending plans
@@ -164,7 +165,6 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
     }, [pendingPlansData])
 
     // Build budget chart data from approved plans (group by department)
-    const CHART_COLORS = ['#0F4C75', '#3282B8', '#BBE1FA', '#1B262C', '#6A8CAF', '#2E86AB']
     const budgetData = useMemo(() => {
         if (!approvedPlansData?.items?.length) return []
         const deptMap = new Map<string, number>()

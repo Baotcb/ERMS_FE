@@ -60,7 +60,7 @@ export function ApplicationDetailModal({
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-300 text-sm mt-2">
                                     <span className="flex items-center gap-2">
-                                        <Mail className="w-4 h-4 text-slate-400" /> {application.candidateEmail}
+                                        <Mail className="w-4 h-4 text-slate-400" /> {application.candidateEmail?.includes('@placeholder.local') ? 'Chưa cập nhật email' : application.candidateEmail}
                                     </span>
                                     {application.candidatePhone && (
                                         <span className="flex items-center gap-2">

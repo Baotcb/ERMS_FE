@@ -23,7 +23,7 @@ export function OfferResponseView() {
     useEffect(() => {
         const token = params.token
         if (!token) {
-            setIsLoadingInfo(false)
+            queueMicrotask(() => setIsLoadingInfo(false))
             return
         }
         getOfferByToken(token)

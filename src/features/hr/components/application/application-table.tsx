@@ -110,7 +110,9 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-slate-500 line-clamp-1">{app.candidateEmail}</span>
+                                                <span className="text-xs text-slate-500 line-clamp-1">
+                                                    {app.candidateEmail?.includes('@placeholder.local') ? 'Chưa có email' : app.candidateEmail}
+                                                </span>
                                             </div>
                                         </div>
                                     </TableCell>
