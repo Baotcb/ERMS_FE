@@ -47,12 +47,17 @@ export function QuizPreExamPanel({
   const router = useRouter();
   const isWorkshop = course.isOnline === false;
   const isReadyToStart = !isWorkshop || config.isWorkshopConfirmed === true;
-  const isCooldownActive = config.cooldownRemainingSeconds !== null && config.cooldownRemainingSeconds !== undefined && config.cooldownRemainingSeconds > 0;
+  const isCooldownActive =
+    config.cooldownRemainingSeconds !== null &&
+    config.cooldownRemainingSeconds !== undefined &&
+    config.cooldownRemainingSeconds > 0;
 
   let cdMin = "00";
   let cdSec = "00";
   if (isCooldownActive) {
-    cdMin = Math.floor(config.cooldownRemainingSeconds! / 60).toString().padStart(2, "0");
+    cdMin = Math.floor(config.cooldownRemainingSeconds! / 60)
+      .toString()
+      .padStart(2, "0");
     cdSec = (config.cooldownRemainingSeconds! % 60).toString().padStart(2, "0");
   }
 
@@ -64,7 +69,9 @@ export function QuizPreExamPanel({
         </div>
 
         <div>
-          <h2 className="text-2xl font-black text-[#0F3B64]">Kiểm tra cuối khóa</h2>
+          <h2 className="text-2xl font-black text-[#0F3B64]">
+            Kiểm tra cuối khóa
+          </h2>
           <p className="text-sm text-gray-500 mt-1">{course.courseName}</p>
         </div>
 
@@ -72,7 +79,9 @@ export function QuizPreExamPanel({
           <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center">
             <div className="flex items-center justify-center gap-1.5 text-[#0F4C75] font-bold mb-0.5">
               <Clock className="w-4 h-4" />{" "}
-              {config.timeLimitMinutes ? `${config.timeLimitMinutes} phút` : "Không giới hạn"}
+              {config.timeLimitMinutes
+                ? `${config.timeLimitMinutes} phút`
+                : "Không giới hạn"}
             </div>
             <p className="text-[11px] text-gray-400 font-medium">Thời gian</p>
           </div>
@@ -94,7 +103,9 @@ export function QuizPreExamPanel({
                 ? `${config.maxAttempts - config.attemptCount} lượt`
                 : "Không giới hạn"}
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">Lượt còn lại</p>
+            <p className="text-[11px] text-gray-400 font-medium">
+              Lượt còn lại
+            </p>
           </div>
         </div>
 
@@ -103,17 +114,22 @@ export function QuizPreExamPanel({
           <ul className="text-xs text-amber-700 space-y-1 list-disc pl-4">
             <li>Không copy/paste trong lúc thi</li>
             <li>Rời tab sẽ bị hệ thống ghi nhận</li>
-            {config.timeLimitMinutes ? <li>Hết giờ sẽ tự động nộp bài</li> : null}
+            {config.timeLimitMinutes ? (
+              <li>Hết giờ sẽ tự động nộp bài</li>
+            ) : null}
           </ul>
         </div>
 
         {isWorkshop && config.isWorkshopConfirmed === false && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center">
             <AlertTriangle className="w-5 h-5 text-red-500 mx-auto mb-2" />
-            <p className="text-sm font-bold text-red-800">Bài kiểm tra chưa mở</p>
+            <p className="text-sm font-bold text-red-800">
+              Bài kiểm tra chưa mở
+            </p>
             <p className="text-xs text-red-600 mt-1">
-              Đây là khóa học Workshop offline. Bạn cần đợi bộ phận Đào tạo (HR) xác nhận
-              Workshop đã diễn ra thành công mới có thể bắt đầu làm bài kiểm tra.
+              Đây là khóa học Workshop offline. Bạn cần đợi bộ phận Đào tạo (HR)
+              xác nhận Workshop đã diễn ra thành công mới có thể bắt đầu làm bài
+              kiểm tra.
             </p>
           </div>
         )}
@@ -122,8 +138,9 @@ export function QuizPreExamPanel({
           <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4 flex flex-col items-center justify-center space-y-3">
             <div>
               <p className="text-sm font-bold text-blue-900 text-center">
-                Lần thi trước: {result.score ?? 0} điểm ({result.correctAnswers ?? 0}/
-                {result.totalQuestions ?? 0} câu đúng)
+                Lần thi trước: {result.score ?? 0} điểm (
+                {result.correctAnswers ?? 0}/{result.totalQuestions ?? 0} câu
+                đúng)
               </p>
               <p className="text-[11px] text-blue-700 font-medium text-center mt-0.5">
                 {result.isPassed ? "🎉 Đạt yêu cầu" : "❌ Chưa đạt yêu cầu"}
@@ -132,7 +149,9 @@ export function QuizPreExamPanel({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(`${currentBasePath}/${course.id}/result`)}
+              onClick={() =>
+                router.push(`${currentBasePath}/${course.id}/result`)
+              }
               className="w-full bg-white text-blue-700 hover:bg-blue-100 border-blue-200 rounded-xl text-xs font-semibold h-9"
             >
               Xem chi tiết bài làm trước
@@ -143,11 +162,7 @@ export function QuizPreExamPanel({
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              disabled={
-                isStarting ||
-                !isReadyToStart ||
-                isCooldownActive
-              }
+              disabled={isStarting || !isReadyToStart || isCooldownActive}
               className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isStarting ? (
@@ -164,7 +179,8 @@ export function QuizPreExamPanel({
                 Xác nhận bắt đầu thi
               </DialogTitle>
               <DialogDescription className="text-gray-500">
-                Thời gian làm bài sẽ đếm ngược liên tục. Bạn có chắc chắn muốn bắt đầu lúc này?
+                Thời gian làm bài sẽ đếm ngược liên tục. Bạn có chắc chắn muốn
+                bắt đầu lúc này?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex gap-2 sm:justify-end mt-4">
@@ -178,7 +194,9 @@ export function QuizPreExamPanel({
                 disabled={isStarting}
                 className="bg-[#0F4C75] text-white rounded-xl shadow-lg font-bold"
               >
-                {isStarting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {isStarting ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
                 Đồng ý, bắt đầu ngay
               </Button>
             </DialogFooter>
@@ -186,11 +204,16 @@ export function QuizPreExamPanel({
         </Dialog>
         {isCooldownActive ? (
           <p className="text-xs text-red-500 font-medium text-center bg-red-50 py-2 rounded-lg border border-red-100">
-            Bạn đã dùng hết lượt. Vui lòng thử lại sau <strong>{cdMin}:{cdSec}</strong>
+            Bạn đang trong thời gian cooldown. Vui lòng thử lại sau{" "}
+            <strong>
+              {cdMin}:{cdSec}
+            </strong>
           </p>
-        ) : config.maxAttempts !== null && config.attemptCount >= config.maxAttempts ? (
-          <p className="text-xs text-blue-600 font-medium text-center bg-blue-50 py-2 rounded-lg border border-blue-100">
-            ✨ Bạn có thể tiếp tục thi lấy điểm cao hơn
+        ) : config.maxAttempts !== null &&
+          config.attemptCount >= config.maxAttempts ? (
+          <p className="text-xs text-red-500 font-medium text-center bg-red-50 py-2 rounded-lg border border-red-100">
+            🚫 Bạn đã sử dụng hết số lượt thi cho phép ({config.maxAttempts}/
+            {config.maxAttempts} lượt)
           </p>
         ) : null}
       </div>

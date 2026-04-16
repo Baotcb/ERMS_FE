@@ -42,6 +42,7 @@ interface CreateCourseDialogProps {
   onCreated: (courseId: string, planId: string) => void;
   hideTrainerSelection?: boolean;
   availablePlans?: TrainingPlan[];
+  isPlanClosed?: boolean;
 }
 
 function buildDefaultCourseCode(plan: TrainingPlan): string {
@@ -65,9 +66,9 @@ export function CreateCourseDialog({
   onCreated,
   hideTrainerSelection = false,
   availablePlans = [],
+  isPlanClosed = false,
 }: CreateCourseDialogProps) {
   const { toast } = useToast();
-
 
   const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null);
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
@@ -169,7 +170,6 @@ export function CreateCourseDialog({
           : "Đã tạo khóa học thành công.",
       });
 
-
       onOpenChange(false);
       onCreated(result.courseId, data.trainingPlanId);
     } catch (error) {
@@ -193,6 +193,23 @@ export function CreateCourseDialog({
               : "Điền thông tin để tạo khóa học mới."}
           </DialogDescription>
         </DialogHeader>
+
+        {isPlanClosed && (
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs font-semibold mx-6">
+            <svg
+              className="w-3.5 h-3.5 shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Kế hoạch đã đóng — Không thể tạo thêm khóa học mới.
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -442,6 +459,12 @@ export function CreateCourseDialog({
                 <Button
                   type="button"
                   onClick={handleNextStep}
+                  disabled={isPlanClosed}
+                  title={
+                    isPlanClosed
+                      ? "Không thể thao tác do Kế hoạch đào tạo đã đóng"
+                      : undefined
+                  }
                   className="bg-[#0F4C75] hover:bg-[#1A5F8C]"
                 >
                   Tiếp tục
@@ -458,7 +481,12 @@ export function CreateCourseDialog({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={form.formState.isSubmitting}
+                    disabled={form.formState.isSubmitting || isPlanClosed}
+                    title={
+                      isPlanClosed
+                        ? "Không thể thao tác do Kế hoạch đào tạo đã đóng"
+                        : undefined
+                    }
                     className="bg-[#0F4C75] hover:bg-[#1A5F8C]"
                   >
                     {form.formState.isSubmitting && (
