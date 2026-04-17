@@ -21,7 +21,16 @@ export default async function QuizPage({
   ]);
   if (!course) notFound();
 
+  if (course.status === "Closed") {
+    redirect(`/enterprise/dept-head/learning/course/${id}?closed=1`);
+  }
+
   return (
-    <CourseQuizSection initialCourse={course} initialProgress={progress} basePath="/enterprise/dept-head/learning/course" />
+    <CourseQuizSection
+      initialCourse={course}
+      initialProgress={progress}
+      basePath="/enterprise/dept-head/learning/course"
+      isClosed={false}
+    />
   );
 }

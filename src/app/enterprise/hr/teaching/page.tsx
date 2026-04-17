@@ -15,7 +15,20 @@ export default async function Page() {
     }
 
     const allCourses = await trainingServerService.getAllCourses({ pageSize: 100 }).catch(() => ({ items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 }));
-    const initialCourses = allCourses.items.filter((course) => isCourseOwnedByUser(course, session.user, session.role));
+    const employeesData = await trainingServerService.getEmployees({ pageSize: 1000 }).catch(() => ({ items: [] }));
+    
+    // Tạo tập hợp email của nhân viên nội bộ (lower case để so sánh chính xác)
+    const internalEmails = new Set(employeesData.items.map(e => e.email?.toLowerCase()).filter(Boolean));
+
+    const initialCourses = allCourses.items.filter((course) => {
+        // HR Access check
+        const hasAccess = isCourseOwnedByUser(course, session.user, session.role);
+        
+        // Kiểm tra xem giảng viên có nằm ngoài hệ thống không (email không thuộc list nhân viên nội bộ)
+        const isExternalTrainer = course.trainerEmail && !internalEmails.has(course.trainerEmail.toLowerCase());
+        
+        return hasAccess && isExternalTrainer;
+    });
 
     return (
         <Suspense fallback={

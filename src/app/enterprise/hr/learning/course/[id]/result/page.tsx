@@ -20,5 +20,11 @@ export default async function ResultPage({
     .catch(() => null);
   if (!course) notFound();
 
-  return <CourseResultPage initialCourse={course} basePath="/enterprise/hr/learning/course" />;
+  return (
+    <CourseResultPage
+      initialCourse={course}
+      basePath="/enterprise/hr/learning/course"
+      isClosed={course.status === "Closed"}
+    />
+  );
 }

@@ -34,5 +34,10 @@ export default async function ReviewPage({
     }
   }
 
-  return <CourseReviewPage initialCourse={course} />;
+  return (
+    <CourseReviewPage
+      initialCourse={course}
+      isClosed={course.status === "Closed"}
+    />
+  );
 }

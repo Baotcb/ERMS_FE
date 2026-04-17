@@ -30,5 +30,11 @@ export default async function ReviewPage({
     }
   }
 
-  return <CourseReviewPage initialCourse={course} basePath="/enterprise/hr/learning/course" />;
+  return (
+    <CourseReviewPage
+      initialCourse={course}
+      basePath="/enterprise/hr/learning/course"
+      isClosed={course.status === "Closed"}
+    />
+  );
 }
