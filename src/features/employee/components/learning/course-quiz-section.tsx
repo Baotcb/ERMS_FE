@@ -8,6 +8,7 @@ import type { Course } from "@/features/hr/types/course-types";
 import type { CourseProgressDto } from "@/features/employee/types/learning-quiz-types";
 
 import { useQuizEngine } from "@/features/employee/hooks/use-quiz-engine";
+import { CourseNavBar } from "./course-nav-bar";
 import { QuizPreExamPanel } from "./quiz/quiz-pre-exam-panel";
 import { QuizExamSidebar } from "./quiz/quiz-exam-sidebar";
 import { QuizQuestionArea } from "./quiz/quiz-question-area";
@@ -34,38 +35,70 @@ export function CourseQuizSection({
   if (!state.examMode && !state.attemptId) {
     if (isClosed) {
       return (
-        <div className="min-h-[400px] bg-gray-50/50 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 flex flex-col items-center justify-center mx-auto mb-4 border border-slate-200">
-            <ShieldAlert className="w-8 h-8 text-slate-400" />
+        <div className="space-y-6 max-w-4xl mx-auto px-4 py-8">
+          <CourseNavBar
+            courseId={initialCourse.id}
+            completedLessons={initialProgress?.completedLessons ?? 0}
+            totalLessons={initialProgress?.totalLessons ?? 0}
+            isAllLessonsComplete={
+              (initialProgress?.totalLessons ?? 0) > 0 &&
+              (initialProgress?.completedLessons ?? 0) >=
+                (initialProgress?.totalLessons ?? 0)
+            }
+            hasQuizResult={!!state.result}
+            hasLessons={(initialProgress?.totalLessons ?? 0) > 0}
+            basePath={currentBasePath}
+            hasFinalQuiz={initialCourse.hasFinalQuiz}
+          />
+          <div className="min-h-[400px] bg-gray-50/50 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex flex-col items-center justify-center mx-auto mb-4 border border-slate-200">
+              <ShieldAlert className="w-8 h-8 text-slate-400" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800">
+              Kế hoạch đã kết thúc
+            </h2>
+            <p className="text-sm text-slate-500 max-w-md mt-2">
+              Không thể làm bài kiểm tra vì khóa học này thuộc một kế hoạch đào
+              tạo đã bị đóng. Bạn chỉ có thể xem lại kết quả nếu đã từng làm.
+            </p>
           </div>
-          <h2 className="text-xl font-bold text-slate-800">
-            Kế hoạch đã kết thúc
-          </h2>
-          <p className="text-sm text-slate-500 max-w-md mt-2">
-            Không thể làm bài kiểm tra vì khóa học này thuộc một kế hoạch đào
-            tạo đã bị đóng. Bạn chỉ có thể xem lại kết quả nếu đã từng làm.
-          </p>
         </div>
       );
     }
 
     return (
-      <QuizPreExamPanel
-        course={initialCourse}
-        currentBasePath={currentBasePath}
-        config={{
-          timeLimitMinutes: state.quizTimeLimitMinutes,
-          passScore: state.quizPassScore,
-          totalQuestions: state.quizTotalQuestions,
-          maxAttempts: state.quizMaxAttempts,
-          attemptCount: state.quizAttemptCount,
-          isWorkshopConfirmed: state.isWorkshopConfirmed,
-          cooldownRemainingSeconds: state.cooldownRemainingSeconds,
-        }}
-        result={state.result}
-        isStarting={state.isStarting}
-        onStartQuiz={actions.handleStartQuiz}
-      />
+      <div className="space-y-6 max-w-4xl mx-auto px-4 py-8">
+        <CourseNavBar
+          courseId={initialCourse.id}
+          completedLessons={initialProgress?.completedLessons ?? 0}
+          totalLessons={initialProgress?.totalLessons ?? 0}
+          isAllLessonsComplete={
+            (initialProgress?.totalLessons ?? 0) > 0 &&
+            (initialProgress?.completedLessons ?? 0) >=
+              (initialProgress?.totalLessons ?? 0)
+          }
+          hasQuizResult={!!state.result}
+          hasLessons={(initialProgress?.totalLessons ?? 0) > 0}
+          basePath={currentBasePath}
+          hasFinalQuiz={initialCourse.hasFinalQuiz}
+        />
+        <QuizPreExamPanel
+          course={initialCourse}
+          currentBasePath={currentBasePath}
+          config={{
+            timeLimitMinutes: state.quizTimeLimitMinutes,
+            passScore: state.quizPassScore,
+            totalQuestions: state.quizTotalQuestions,
+            maxAttempts: state.quizMaxAttempts,
+            attemptCount: state.quizAttemptCount,
+            isWorkshopConfirmed: state.isWorkshopConfirmed,
+            cooldownRemainingSeconds: state.cooldownRemainingSeconds,
+          }}
+          result={state.result}
+          isStarting={state.isStarting}
+          onStartQuiz={actions.handleStartQuiz}
+        />
+      </div>
     );
   }
 

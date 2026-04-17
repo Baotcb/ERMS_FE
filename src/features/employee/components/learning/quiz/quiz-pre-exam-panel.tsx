@@ -62,8 +62,8 @@ export function QuizPreExamPanel({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 flex items-start justify-center pt-12 px-4">
-      <div className="quiz-confirm-panel space-y-6">
+    <div className="flex justify-center flex-1 w-full bg-white rounded-xl shadow-sm border border-slate-100 p-8 sm:p-12">
+      <div className="quiz-confirm-panel space-y-6 w-full max-w-lg mx-auto">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center mx-auto shadow-lg">
           <ShieldCheck className="w-8 h-8 text-white" />
         </div>
@@ -99,12 +99,18 @@ export function QuizPreExamPanel({
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center">
             <div className="text-[#0F4C75] font-bold mb-0.5">
-              {config.maxAttempts
-                ? `${config.maxAttempts - config.attemptCount} lượt`
-                : "Không giới hạn"}
+              {isCooldownActive ? (
+                <span className="text-red-500 tabular-nums">
+                  {cdMin}:{cdSec}
+                </span>
+              ) : config.maxAttempts ? (
+                `${Math.max(0, config.maxAttempts - config.attemptCount)} lượt`
+              ) : (
+                "Không giới hạn"
+              )}
             </div>
             <p className="text-[11px] text-gray-400 font-medium">
-              Lượt còn lại
+              {isCooldownActive ? "Thử lại sau" : "Lượt còn lại"}
             </p>
           </div>
         </div>
