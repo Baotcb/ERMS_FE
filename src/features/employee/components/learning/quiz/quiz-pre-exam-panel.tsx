@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,9 +46,18 @@ export function QuizPreExamPanel({
   onStartQuiz,
 }: QuizPreExamPanelProps) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isWorkshop = course.isOnline === false;
   const isReadyToStart = !isWorkshop || config.isWorkshopConfirmed === true;
+
+  // Use a stable value for SSR, then dynamic for CSR after mount
   const isCooldownActive =
+    mounted &&
     config.cooldownRemainingSeconds !== null &&
     config.cooldownRemainingSeconds !== undefined &&
     config.cooldownRemainingSeconds > 0;
@@ -60,6 +70,11 @@ export function QuizPreExamPanel({
       .padStart(2, "0");
     cdSec = (config.cooldownRemainingSeconds! % 60).toString().padStart(2, "0");
   }
+
+  const isAttemptsExhausted =
+    mounted &&
+    config.maxAttempts !== null &&
+    config.attemptCount >= config.maxAttempts;
 
   return (
     <div className="flex justify-center flex-1 w-full bg-white rounded-xl shadow-sm border border-slate-100 p-8 sm:p-12">
@@ -103,8 +118,10 @@ export function QuizPreExamPanel({
                 <span className="text-red-500 tabular-nums">
                   {cdMin}:{cdSec}
                 </span>
-              ) : config.maxAttempts ? (
+              ) : mounted && config.maxAttempts ? (
                 `${Math.max(0, config.maxAttempts - config.attemptCount)} lượt`
+              ) : config.maxAttempts ? (
+                `${config.maxAttempts - config.attemptCount} lượt`
               ) : (
                 "Không giới hạn"
               )}
@@ -168,7 +185,13 @@ export function QuizPreExamPanel({
         <Dialog>
           <DialogTrigger asChild>
             <Button
-              disabled={isStarting || !isReadyToStart || isCooldownActive}
+              disabled={
+                !mounted ||
+                isStarting ||
+                !isReadyToStart ||
+                isCooldownActive ||
+                isAttemptsExhausted
+              }
               className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isStarting ? (
@@ -215,8 +238,7 @@ export function QuizPreExamPanel({
               {cdMin}:{cdSec}
             </strong>
           </p>
-        ) : config.maxAttempts !== null &&
-          config.attemptCount >= config.maxAttempts ? (
+        ) : isAttemptsExhausted ? (
           <p className="text-xs text-red-500 font-medium text-center bg-red-50 py-2 rounded-lg border border-red-100">
             🚫 Bạn đã sử dụng hết số lượt thi cho phép ({config.maxAttempts}/
             {config.maxAttempts} lượt)

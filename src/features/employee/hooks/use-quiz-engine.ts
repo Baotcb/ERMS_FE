@@ -56,7 +56,10 @@ export function useQuizEngine({
     }
     const updateCooldown = () => {
       const now = new Date().getTime();
-      const availableAt = new Date(result.nextAvailableTime!).getTime();
+      // Ensure backend time is treated as UTC by appending Z if missing
+      const timeStr = result.nextAvailableTime!;
+      const normalizedTimeStr = timeStr.endsWith("Z") ? timeStr : `${timeStr}Z`;
+      const availableAt = new Date(normalizedTimeStr).getTime();
       const diff = Math.floor((availableAt - now) / 1000);
       
       if (diff <= 0) {
@@ -214,7 +217,7 @@ export function useQuizEngine({
       try {
         const existingResult = await learningQuizService.getQuizResult(initialCourse.id);
         if (!cancelled && existingResult) {
-          setResult(existingResult);
+          setResult(existingResult as LearnerQuizResultDto);
           setQuizAttemptCount(existingResult.attemptCount);
           setQuizMaxAttempts(existingResult.maxAttempts);
         }
@@ -462,7 +465,6 @@ export function useQuizEngine({
       quizRemainingSeconds,
       quizHasTimeLimit,
       cooldownRemainingSeconds,
-
     },
     refs: {
       examContainerRef,
