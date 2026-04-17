@@ -4,12 +4,25 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, MoreHorizontal, Info } from "lucide-react";
 import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import useSWR from "swr";
 import { getEmployees } from "@/features/hr/api/employee-service";
 import { format } from "date-fns";
 import { apiClient } from "@/lib/api-client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export function DeptHeadEmployeeList() {
   const { user } = useAuth();
@@ -17,10 +30,6 @@ export function DeptHeadEmployeeList() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // Department Head should only see employees in their department.
-  // The auth store does not hydrate departmentId from cookies,
-  // so we fetch it explicitly from the user profile endpoint.
-  // This ensures we always pass the correct departmentId to the employee query.
   const { data: profile } = useSWR<{ departmentId?: number }>(
     "current-user-profile",
     () =>
@@ -34,7 +43,6 @@ export function DeptHeadEmployeeList() {
   const departmentId = profile?.departmentId || user?.departmentId;
 
   const { data, isLoading, error } = useSWR(
-    // Only fetch when we know the departmentId
     departmentId
       ? ["dept-head-employees", departmentId, page, searchTerm]
       : null,
@@ -49,7 +57,7 @@ export function DeptHeadEmployeeList() {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
   const employees = data?.items || [];
@@ -57,7 +65,6 @@ export function DeptHeadEmployeeList() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-      {/* Toolbar */}
       <div className="flex justify-between items-center mb-6">
         <form onSubmit={handleSearch} className="flex gap-2 max-w-sm w-full">
           <div className="relative w-full">
@@ -75,24 +82,22 @@ export function DeptHeadEmployeeList() {
         </form>
       </div>
 
-      {/* Error state */}
       {error && (
         <div className="p-4 bg-red-50 text-red-600 rounded-md mb-4">
           {error.message || "Đã có lỗi xảy ra khi tải danh sách"}
         </div>
       )}
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-gray-600 font-medium">
             <tr>
-              <th className="px-4 py-3 rounded-tl-md">Mã NV</th>
+              <th className="px-4 py-3">Mã NV</th>
               <th className="px-4 py-3">Họ và tên</th>
               <th className="px-4 py-3">Chức vụ</th>
-              <th className="px-4 py-3">Kỹ năng</th>
               <th className="px-4 py-3">Ngày gia nhập</th>
               <th className="px-4 py-3 text-center">Trạng thái</th>
+              <th className="px-4 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -108,11 +113,11 @@ export function DeptHeadEmployeeList() {
                   <td className="px-4 py-3">
                     <div className="h-4 bg-gray-200 rounded w-24"></div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <td className="px-4 py-3 text-center">
+                    <div className="h-6 bg-gray-200 rounded-full w-20 mx-auto"></div>
                   </td>
-                  <td className="px-4 py-3 flex justify-center">
-                    <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                  <td className="px-4 py-3 text-right">
+                    <div className="h-8 bg-gray-200 rounded w-8 ml-auto"></div>
                   </td>
                 </tr>
               ))
@@ -136,24 +141,6 @@ export function DeptHeadEmployeeList() {
                   </td>
                   <td className="px-4 py-3">{emp.position || "Nhân viên"}</td>
                   <td className="px-4 py-3">
-                    {emp.skillDescription ? (
-                      <div className="flex flex-wrap gap-1">
-                        {emp.skillDescription.split(",").map((skill, i) => (
-                          <span
-                            key={i}
-                            className="inline-block bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full border border-blue-200"
-                          >
-                            {skill.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-xs italic">
-                        Chưa cập nhật
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
                     {emp.hireDate
                       ? format(new Date(emp.hireDate), "dd/MM/yyyy")
                       : "N/A"}
@@ -172,6 +159,62 @@ export function DeptHeadEmployeeList() {
                       {emp.status === "Active" ? "Đang làm việc" : "Nghỉ việc"}
                     </Badge>
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Info className="mr-2 h-4 w-4" />
+                              Xem kỹ năng
+                            </DropdownMenuItem>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Kỹ năng - {emp.fullName}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="py-4">
+                              {emp.skillDescription ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {emp.skillDescription
+                                    .split(/[,\.]+/)
+                                    .map((skill) => skill.trim())
+                                    .filter(Boolean)
+                                    .map((skill, index) => (
+                                      <Badge
+                                        key={index}
+                                        variant="outline"
+                                        className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 text-sm font-medium"
+                                      >
+                                        {skill}
+                                      </Badge>
+                                    ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500 italic">
+                                  Chưa cập nhật thông tin kỹ năng cho nhân viên
+                                  này.
+                                </p>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
                 </tr>
               ))
             )}
@@ -179,7 +222,6 @@ export function DeptHeadEmployeeList() {
         </table>
       </div>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6 border-t pt-4">
           <span className="text-sm text-gray-500">
