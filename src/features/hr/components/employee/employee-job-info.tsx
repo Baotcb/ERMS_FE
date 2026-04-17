@@ -3,6 +3,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -96,13 +97,15 @@ export function EmployeeJobInfo({ isEdit, departments }: EmployeeJobInfoProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="skillDescription">Kỹ năng (Skills)</Label>
-          <Input
+          <Textarea
             id="skillDescription"
-            placeholder="Ví dụ: React, Node.js, SQL"
+            placeholder="Ví dụ: React, Node.js, SQL. Sử dụng dấu phẩy hoặc dấu chấm để ngăn cách."
+            className="min-height-[100px] resize-y"
             {...register("skillDescription")}
           />
           <p className="text-[10px] text-gray-400 italic">
-            Nhập các kỹ năng cách nhau bởi dấu phẩy
+            Nhập các kỹ năng, ngăn cách bởi dấu phẩy hoặc dấu chấm để dễ dàng
+            cập nhật.
           </p>
         </div>
       </div>
