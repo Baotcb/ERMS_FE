@@ -11,6 +11,7 @@ export interface Employee {
     departmentId: number | null
     departmentName: string | null
     position: string | null
+    skillDescription: string | null
     employmentType: string
     hireDate: string | null
     status: string
@@ -103,6 +104,7 @@ export interface CreateEmployeeData {
     role: string
     departmentId?: number | null
     position?: string
+    skillDescription?: string
     employmentType?: string
     hireDate?: string
     managerId?: string
@@ -123,6 +125,7 @@ export interface UpdateEmployeeData {
     role: string
     departmentId?: number | null
     position?: string
+    skillDescription?: string | null
     employmentType?: string
     managerId?: string
     status?: string

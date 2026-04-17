@@ -90,6 +90,7 @@ export function DeptHeadEmployeeList() {
               <th className="px-4 py-3 rounded-tl-md">Mã NV</th>
               <th className="px-4 py-3">Họ và tên</th>
               <th className="px-4 py-3">Chức vụ</th>
+              <th className="px-4 py-3">Kỹ năng</th>
               <th className="px-4 py-3">Ngày gia nhập</th>
               <th className="px-4 py-3 text-center">Trạng thái</th>
             </tr>
@@ -117,7 +118,7 @@ export function DeptHeadEmployeeList() {
               ))
             ) : employees.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                   Không tìm thấy nhân viên nào
                 </td>
               </tr>
@@ -134,6 +135,24 @@ export function DeptHeadEmployeeList() {
                     <div className="text-xs text-gray-400">{emp.email}</div>
                   </td>
                   <td className="px-4 py-3">{emp.position || "Nhân viên"}</td>
+                  <td className="px-4 py-3">
+                    {emp.skillDescription ? (
+                      <div className="flex flex-wrap gap-1">
+                        {emp.skillDescription.split(",").map((skill, i) => (
+                          <span
+                            key={i}
+                            className="inline-block bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full border border-blue-200"
+                          >
+                            {skill.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs italic">
+                        Chưa cập nhật
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     {emp.hireDate
                       ? format(new Date(emp.hireDate), "dd/MM/yyyy")

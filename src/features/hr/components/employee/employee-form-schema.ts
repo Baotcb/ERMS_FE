@@ -17,6 +17,7 @@ const baseEmployeeSchema = z.object({
     password: z.string().optional(),
     departmentId: z.string().optional().or(z.literal('')),
     position: z.string().optional(),
+    skillDescription: z.string().optional(),
     employmentType: z.string().default('FullTime'),
     hireDate: z.date().optional(),
     status: z.string().default('Active'),
