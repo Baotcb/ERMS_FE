@@ -9,6 +9,7 @@ import { useAuth } from "@/features/core/auth/hooks/use-auth";
 import useSWR from "swr";
 import { getEmployees } from "@/features/hr/api/employee-service";
 import { format } from "date-fns";
+import { apiClient } from "@/lib/api-client";
 
 export function DeptHeadEmployeeList() {
   const { user } = useAuth();
@@ -23,9 +24,11 @@ export function DeptHeadEmployeeList() {
   const { data: profile } = useSWR<{ departmentId?: number }>(
     "current-user-profile",
     () =>
-      fetch("/api/User/profile", { credentials: "include" }).then((r) =>
-        r.ok ? r.json() : Promise.reject(new Error("Profile fetch failed")),
-      ),
+      apiClient
+        .get("/api/User/profile")
+        .then((r) =>
+          r.ok ? r.json() : Promise.reject(new Error("Profile fetch failed")),
+        ),
   );
 
   const departmentId = profile?.departmentId || user?.departmentId;

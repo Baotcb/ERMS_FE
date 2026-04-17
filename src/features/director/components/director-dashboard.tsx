@@ -6,7 +6,6 @@ import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { apiClient } from "@/lib/api-client";
 import {
   DashboardListWidget,
@@ -129,7 +128,14 @@ function StatCard({
   );
 }
 
-const CHART_COLORS = ['#0F4C75', '#3282B8', '#BBE1FA', '#1B262C', '#6A8CAF', '#2E86AB']
+const CHART_COLORS = [
+  "#0F4C75",
+  "#3282B8",
+  "#BBE1FA",
+  "#1B262C",
+  "#6A8CAF",
+  "#2E86AB",
+];
 
 export const DirectorDashboard = memo(function DirectorDashboard() {
   // Fetch Pending plans
@@ -229,14 +235,6 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
   }, [pendingPlansData]);
 
   // Build budget chart data from approved plans (group by department)
-  const CHART_COLORS = [
-    "#0F4C75",
-    "#3282B8",
-    "#BBE1FA",
-    "#1B262C",
-    "#6A8CAF",
-    "#2E86AB",
-  ];
   const budgetData = useMemo(() => {
     if (!approvedPlansData?.items?.length) return [];
     const deptMap = new Map<string, number>();
@@ -271,12 +269,6 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
         color: CHART_COLORS[(i + 3) % CHART_COLORS.length],
       }));
   }, [approvedTrainingPlansData]);
-
-  // Fallback or Empty state for budgets
-  const budgetChartData =
-    Array.isArray(trainingBudgetData) && trainingBudgetData.length > 0
-      ? trainingBudgetData
-      : []; // The Chart Widget should handle empty state
 
   return (
     <div className="flex flex-col gap-6 min-h-[calc(100vh-6rem)]">
@@ -318,7 +310,9 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
             title="Kế hoạch tuyển dụng chờ duyệt"
             subtitle="Danh sách cần phê duyệt"
             items={pendingPlansData?.items || []}
-            renderItem={(plan: any) => <PendingPlanRow plan={plan} />}
+            renderItem={(plan: RecruitmentPlan) => (
+              <PendingPlanRow plan={plan} />
+            )}
             onRefresh={() =>
               (window.location.href = "/enterprise/director/recruitment-plans")
             }
@@ -342,6 +336,7 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
           title="Phân bổ ngân sách tuyển dụng"
           subtitle="Theo phòng ban (Đơn vị: Triệu VNĐ)"
           data={budgetData}
+          valueSuffix=""
         />
 
         {/* Training Budget Chart */}
@@ -349,6 +344,7 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
           title="Phân bổ ngân sách đào tạo"
           subtitle="Theo kế hoạch (Đơn vị: Triệu VNĐ)"
           data={trainingBudgetData}
+          valueSuffix=""
         />
 
         {/* Another chart placeholder */}
