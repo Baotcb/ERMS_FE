@@ -138,6 +138,8 @@ const CHART_COLORS = [
 ];
 
 export const DirectorDashboard = memo(function DirectorDashboard() {
+  const router = useRouter();
+
   // Fetch Pending plans
   const { data: pendingPlansData } = useSWR<PlanListResponse>(
     "/RecruitmentPlans/pending-dashboard",
@@ -147,12 +149,12 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
         .then((res) => res.json()),
   );
 
-  // Fetch Active Job Postings Count
-  const { data: activeJobsData, isLoading: isLoadingJobs } = useSWR(
-    "/job-postings/count-published",
+  // Fetch Published Job Postings Count
+  const { data: publishedJobsData } = useSWR(
+    "/api/job-postings/count-published",
     () =>
       apiClient
-        .get("/api/job-postings?Status=Published&PageSize=1")
+        .get("/api/job-postings?Status=Published&Page=1&PageSize=1")
         .then((res) => res.json()),
   );
 
@@ -174,20 +176,20 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
         .then((res) => res.json()),
   );
 
-  // Fetch Published job postings count
-  const { data: publishedJobsData } = useSWR(
-    "/JobPostings/published-count",
+  // Fetch Closed training plans for budget stats
+  const { data: closedTrainingPlansData } = useSWR<TrainingPlansResult>(
+    "/TrainingPlan/closed-dashboard",
     () =>
       apiClient
-        .get("/api/JobPostings?Status=Published&Page=1&PageSize=1")
+        .get("/api/TrainingPlan?status=Closed&page=1&pageSize=50")
         .then((res) => res.json()),
   );
 
-  // Compute total budget from approved plans
+  // Compute total budget from approved recruitment plans
   const totalBudget = useMemo(() => {
     if (!approvedPlansData?.items) return 0;
     return approvedPlansData.items.reduce(
-      (sum, plan) => sum + (plan.totalBudget || 0),
+      (sum: number, plan: RecruitmentPlan) => sum + (plan.totalBudget || 0),
       0,
     );
   }, [approvedPlansData]);
@@ -247,28 +249,36 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
       .slice(0, 6)
       .map(([label, value], i) => ({
         label,
-        value: Math.round(value / 1_000_000),
+        value: value,
         color: CHART_COLORS[i % CHART_COLORS.length],
       }));
   }, [approvedPlansData]);
 
-  // Build training budget chart data from approved training plans
+  // Build training budget chart data from approved AND closed training plans
   const trainingBudgetData = useMemo(() => {
-    if (!approvedTrainingPlansData?.items?.length) return [];
+    const approvedItems = approvedTrainingPlansData?.items || [];
+    const closedItems = closedTrainingPlansData?.items || [];
+    const allRelevantItems = [...approvedItems, ...closedItems];
+
+    if (!allRelevantItems.length) return [];
+
     const planMap = new Map<string, number>();
-    for (const plan of approvedTrainingPlansData.items) {
-      const label = plan.planName || "Khác";
-      planMap.set(label, (planMap.get(label) || 0) + (plan.totalBudget || 0));
+    for (const plan of allRelevantItems) {
+      // Handle both camelCase and PascalCase from API for robustness
+      const label = (plan as any).planName || (plan as any).PlanName || "Khác";
+      const budget =
+        (plan as any).totalBudget || (plan as any).TotalBudget || 0;
+      planMap.set(label, (planMap.get(label) || 0) + budget);
     }
     return Array.from(planMap.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([label, value], i) => ({
         label,
-        value: Math.round(value / 1_000_000),
+        value: value,
         color: CHART_COLORS[(i + 3) % CHART_COLORS.length],
       }));
-  }, [approvedTrainingPlansData]);
+  }, [approvedTrainingPlansData, closedTrainingPlansData]);
 
   return (
     <div className="flex flex-col gap-6 min-h-[calc(100vh-6rem)]">
@@ -296,7 +306,11 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
         />
         <StatCard
           title="Vị trí đang tuyển"
-          value={publishedJobsData?.totalCount?.toString() ?? "0"}
+          value={(
+            publishedJobsData?.totalCount ??
+            publishedJobsData?.TotalCount ??
+            0
+          ).toString()}
           subtext="Tin tuyển dụng đang mở"
           color="border-l-green-500"
         />
@@ -334,28 +348,30 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
         <DashboardChartWidget
           title="Phân bổ ngân sách tuyển dụng"
-          subtitle="Theo phòng ban (Đơn vị: Triệu VNĐ)"
+          subtitle="Theo phòng ban"
           data={budgetData}
-          valueSuffix=""
+          valueSuffix=" VNĐ"
         />
 
         {/* Training Budget Chart */}
         <DashboardChartWidget
           title="Phân bổ ngân sách đào tạo"
-          subtitle="Theo kế hoạch (Đơn vị: Triệu VNĐ)"
+          subtitle="Theo kế hoạch"
           data={trainingBudgetData}
-          valueSuffix=""
+          valueSuffix=" VNĐ"
         />
 
         {/* Another chart placeholder */}
-        {publishedJobsData?.totalCount > 0 && (
+        {((publishedJobsData?.totalCount ?? publishedJobsData?.TotalCount) ||
+          0) > 0 && (
           <DashboardChartWidget
             title="Tổng quan tuyển dụng"
-            subtitle={`${publishedJobsData.totalCount} vị trí đang tuyển`}
+            subtitle={`${publishedJobsData.totalCount ?? publishedJobsData.TotalCount} vị trí đang tuyển`}
             data={[
               {
                 label: "Đang tuyển",
-                value: publishedJobsData.totalCount,
+                value:
+                  publishedJobsData.totalCount ?? publishedJobsData.TotalCount,
                 color: "#0F4C75",
               },
             ]}

@@ -123,7 +123,7 @@ export function DashboardChartWidget({
                     className="text-xs font-bold tabular-nums"
                     style={{ color: item.color }}
                   >
-                    {item.value}
+                    {new Intl.NumberFormat("vi-VN").format(item.value)}
                     {valueSuffix}
                   </span>
                 </div>
