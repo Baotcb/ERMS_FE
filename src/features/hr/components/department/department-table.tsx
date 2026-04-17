@@ -57,9 +57,6 @@ export const DepartmentTable = memo(function DepartmentTable({
                     <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
                         Mã
                     </TableHead>
-                    <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Quản lý
-                    </TableHead>
                     <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
                         Nhân viên
                     </TableHead>
@@ -89,9 +86,6 @@ export const DepartmentTable = memo(function DepartmentTable({
                         </TableCell>
                         <TableCell className="px-6 py-4 align-middle text-sm text-slate-600">
                             {dept.departmentCode || '-'}
-                        </TableCell>
-                        <TableCell className="px-6 py-4 align-middle text-sm text-slate-600">
-                            {dept.managerName || '-'}
                         </TableCell>
                         <TableCell className="px-6 py-4 align-middle text-center">
                             <div className="flex items-center justify-center gap-1">
