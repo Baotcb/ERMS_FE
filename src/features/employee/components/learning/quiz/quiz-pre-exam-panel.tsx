@@ -55,12 +55,30 @@ export function QuizPreExamPanel({
   const isWorkshop = course.isOnline === false;
   const isReadyToStart = !isWorkshop || config.isWorkshopConfirmed === true;
 
-  // Use a stable value for SSR, then dynamic for CSR after mount
+  // Cooldown is active if we have remaining seconds
   const isCooldownActive =
     mounted &&
     config.cooldownRemainingSeconds !== null &&
     config.cooldownRemainingSeconds !== undefined &&
     config.cooldownRemainingSeconds > 0;
+
+  // The backend StartQuizHandler allows retakes after the cooldown period (quiz duration)
+  // even if maxAttempts is reached. We reflect this in the UI by showing 1 attempt
+  // when the cooldown is over, even if attemptCount >= maxAttempts.
+  const isAttemptsExhausted =
+    mounted &&
+    config.maxAttempts !== null &&
+    config.attemptCount >= config.maxAttempts &&
+    isCooldownActive; // Only "exhausted" while cooling down
+
+  const attemptsRemainingDisplay =
+    mounted && config.maxAttempts
+      ? isCooldownActive
+        ? Math.max(0, config.maxAttempts - config.attemptCount)
+        : config.attemptCount >= config.maxAttempts
+          ? 1
+          : config.maxAttempts - config.attemptCount
+      : null;
 
   let cdMin = "00";
   let cdSec = "00";
@@ -70,11 +88,6 @@ export function QuizPreExamPanel({
       .padStart(2, "0");
     cdSec = (config.cooldownRemainingSeconds! % 60).toString().padStart(2, "0");
   }
-
-  const isAttemptsExhausted =
-    mounted &&
-    config.maxAttempts !== null &&
-    config.attemptCount >= config.maxAttempts;
 
   return (
     <div className="flex justify-center flex-1 w-full bg-white rounded-xl shadow-sm border border-slate-100 p-8 sm:p-12">
@@ -118,10 +131,8 @@ export function QuizPreExamPanel({
                 <span className="text-red-500 tabular-nums">
                   {cdMin}:{cdSec}
                 </span>
-              ) : mounted && config.maxAttempts ? (
-                `${Math.max(0, config.maxAttempts - config.attemptCount)} lượt`
-              ) : config.maxAttempts ? (
-                `${config.maxAttempts - config.attemptCount} lượt`
+              ) : attemptsRemainingDisplay !== null ? (
+                `${attemptsRemainingDisplay} lượt`
               ) : (
                 "Không giới hạn"
               )}
