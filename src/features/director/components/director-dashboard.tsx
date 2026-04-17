@@ -129,6 +129,8 @@ function StatCard({
   );
 }
 
+const CHART_COLORS = ['#0F4C75', '#3282B8', '#BBE1FA', '#1B262C', '#6A8CAF', '#2E86AB']
+
 export const DirectorDashboard = memo(function DirectorDashboard() {
   // Fetch Pending plans
   const { data: pendingPlansData } = useSWR<PlanListResponse>(

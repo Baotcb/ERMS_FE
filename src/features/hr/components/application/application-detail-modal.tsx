@@ -55,12 +55,12 @@ export function ApplicationDetailModal({
                                     <h2 className="text-2xl font-bold tracking-tight">{application.candidateName}</h2>
                                     <StageBadge stage={application.stage} />
                                     {application.isExternal && (
-                                        <Badge className="bg-orange-500 text-white text-xs">External</Badge>
+                                        <Badge className="bg-orange-500 text-white text-xs">CV Độc lập</Badge>
                                     )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-300 text-sm mt-2">
                                     <span className="flex items-center gap-2">
-                                        <Mail className="w-4 h-4 text-slate-400" /> {application.candidateEmail}
+                                        <Mail className="w-4 h-4 text-slate-400" /> {application.candidateEmail?.includes('@placeholder.local') ? 'Chưa cập nhật email' : application.candidateEmail}
                                     </span>
                                     {application.candidatePhone && (
                                         <span className="flex items-center gap-2">

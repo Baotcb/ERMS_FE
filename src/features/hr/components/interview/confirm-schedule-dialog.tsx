@@ -188,11 +188,18 @@ export function ConfirmScheduleDialog({
                         </div>
                     )}
 
-                    {/* External candidate info */}
-                    {isExternal && candidateEmail && (
+                    {/* External candidate info / Placeholder Email Warning */}
+                    {isExternal && candidateEmail && !candidateEmail.includes('@placeholder.local') && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                             <p className="text-blue-800">
                                 📧 Email phỏng vấn sẽ được gửi tới: <strong>{candidateEmail}</strong>
+                            </p>
+                        </div>
+                    )}
+                    {candidateEmail?.includes('@placeholder.local') && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                            <p className="text-amber-800">
+                                ⚠️ Ứng viên này chưa có Email hợp lệ trên hệ thống. Không thể gửi thư báo tự động.
                             </p>
                         </div>
                     )}

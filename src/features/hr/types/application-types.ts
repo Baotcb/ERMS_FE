@@ -39,7 +39,7 @@ export interface ApplicationDto {
     cvUrl: string
     hrNote?: string
     isExternal?: boolean
-    source?: string
+    source?: "Website" | "HRImported"
     cvScreeningResult?: CVScreeningResult
 }
 

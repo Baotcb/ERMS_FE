@@ -106,11 +106,13 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                                     <span className="font-medium text-slate-900 line-clamp-1">{app.candidateName}</span>
                                                     {app.isExternal && (
                                                         <Badge variant="outline" className="text-xs border-orange-200 text-orange-600 bg-orange-50 px-1.5 py-0">
-                                                            HR Added
+                                                            CV Độc lập
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-slate-500 line-clamp-1">{app.candidateEmail}</span>
+                                                <span className="text-xs text-slate-500 line-clamp-1">
+                                                    {app.candidateEmail?.includes('@placeholder.local') ? 'Chưa có email' : app.candidateEmail}
+                                                </span>
                                             </div>
                                         </div>
                                     </TableCell>

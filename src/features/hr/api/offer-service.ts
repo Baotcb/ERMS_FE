@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client'
-import type { HROfferDto, CreateOfferRequest, ConfirmHireRequest, ConfirmHireResult, CancelOfferRequest, CancelOfferResult } from '../types/offer-types'
+import type { HROfferDto, CreateOfferRequest, ConfirmHireRequest, ConfirmHireResult, CancelOfferRequest, CancelOfferResult, OfferPublicInfo } from '../types/offer-types'
 
 const BASE_URL = '/api/applications'
 
@@ -27,7 +27,13 @@ export async function createOffer(
     const response = await apiClient.post(`${BASE_URL}/offers`, data)
     if (!response.ok) {
         const error = await response.json().catch(() => null)
-        throw new Error(error?.message || 'Không thể tạo offer')
+        if (response.status === 403) {
+            throw new Error(error?.message || 'Bạn không có quyền tạo offer (yêu cầu HR Manager).')
+        }
+        if (response.status === 404) {
+            throw new Error(error?.message || 'Không tìm thấy API tạo offer (404). Vui lòng kiểm tra cấu hình API URL/proxy.')
+        }
+        throw new Error(error?.message || `Không thể tạo offer (HTTP ${response.status})`)
     }
     return response.json()
 }
@@ -56,6 +62,17 @@ export async function cancelOffer(
     if (!response.ok) {
         const error = await response.json().catch(() => null)
         throw new Error(error?.message || 'Không thể hủy offer')
+    }
+    const json = await response.json()
+    return json.data ?? json
+}
+
+// Lấy thông tin public của offer qua token
+// Backend: GET /api/applications/offer-response/{token}
+export async function getOfferByToken(token: string): Promise<OfferPublicInfo> {
+    const response = await apiClient.get(`${BASE_URL}/offer-response/${token}`)
+    if (!response.ok) {
+        throw new Error('Không thể tải thông tin offer, liên kết có thể đã hết hạn')
     }
     const json = await response.json()
     return json.data ?? json

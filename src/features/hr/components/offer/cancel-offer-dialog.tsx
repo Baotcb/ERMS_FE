@@ -68,7 +68,7 @@ export function CancelOfferDialog({ open, onOpenChange, offer }: CancelOfferDial
             console.error(error)
             toast({
                 title: 'Hủy offer thất bại',
-                description: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+                description: error instanceof Error ? error.message : 'Đã xảy ra lỗi. Vui lòng thử lại.',
                 variant: 'destructive',
             })
         }

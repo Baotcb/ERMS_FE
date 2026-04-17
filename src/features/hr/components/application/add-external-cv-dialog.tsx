@@ -22,7 +22,10 @@ import { extractCvInfo, addExternalApplication } from '../../api/application-ser
 const formSchema = z.object({
     candidateName: z.string().min(1, 'Tên ứng viên là bắt buộc').max(200),
     candidateEmail: z.string().email('Email không hợp lệ'),
-    candidatePhone: z.string().max(20).optional().or(z.literal('')),
+    candidatePhone: z.string()
+        .regex(/^(0|\+84)\d{9,10}$/, 'Số điện thoại không hợp lệ (VD: 0912345678)')
+        .optional()
+        .or(z.literal('')),
 })
 
 type FormValues = z.infer<typeof formSchema>

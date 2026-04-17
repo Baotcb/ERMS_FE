@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useJobPosting, usePublishJobPosting, useCloseJobPosting } from '../../hooks/use-job-postings'
 import { StatusBadge } from './status-badge'
 import { AddExternalCvDialog } from '../application/add-external-cv-dialog'
-import { FacebookShareButton } from '@/components/shared/facebook-share-button'
+import { ApplicationsView } from '../application/applications-view'
 import type { JobStatus } from '../../types/job-posting-types'
 
 const HISTORY_LIMIT = 20
@@ -23,6 +23,7 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
     const router = useRouter()
     const { toast } = useToast()
     const [showAllHistory, setShowAllHistory] = useState(false)
+    const defaultTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') || 'overview' : 'overview'
 
     const { data: detail, isLoading, error, mutate } = useJobPosting(postingId)
     const { trigger: publishJob, isMutating: isPublishing } = usePublishJobPosting()
@@ -49,9 +50,6 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
             toast({ title: 'Lỗi đóng tuyển dụng', description: message, variant: 'destructive' })
         }
     }
-
-    // Get job URL for sharing
-    const getJobUrl = () => `${window.location.origin}/jobs/${detail?.id || ''}`
 
     if (isLoading) {
         return (
@@ -121,7 +119,6 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                             <>
                                 <Button
                                     variant="outline"
-                                    size="sm"
                                     onClick={() => {
                                         const url = `${window.location.origin}/jobs/${detail.id}`
                                         navigator.clipboard.writeText(url)
@@ -130,10 +127,15 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                                 >
                                     <Link2 className="w-4 h-4 mr-2" /> Copy Link
                                 </Button>
-                                <FacebookShareButton
-                                    url={getJobUrl()}
-                                    title={detail.jobTitle}
-                                    shareText={`💼 ${detail.jobTitle} - ${detail.departmentName}\n📍 ${detail.location || 'Việt Nam'}\n💰 ${detail.showSalary ? ((detail.salaryRangeMin || 0) > 0 || (detail.salaryRangeMax || 0) > 0 ? `${((detail.salaryRangeMin || 0) / 1000000).toLocaleString('vi-VN')} - ${((detail.salaryRangeMax || 0) / 1000000).toLocaleString('vi-VN')} triệu` : 'Thỏa thuận') : 'Hấp dẫn'}\n\n✨ Ứng tuyển ngay!`}
+                                <AddExternalCvDialog
+                                    jobPostingId={detail.id}
+                                    onSuccess={() => mutate()}
+                                    trigger={
+                                        <Button variant="outline" className="gap-2">
+                                            <UserPlus className="w-4 h-4" />
+                                            Thêm CV
+                                        </Button>
+                                    }
                                 />
                                 <Button variant="outline" onClick={() => router.push(`/enterprise/hr/job-postings/${detail.id}/edit`)}>
                                     <Edit2 className="w-4 h-4 mr-2" /> Chỉnh sửa
@@ -174,7 +176,7 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                 </div>
             </div>
 
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
                 <TabsList className="mb-6 bg-white border border-slate-200 p-1 rounded-lg flex w-fit max-w-full overflow-x-auto">
                     <TabsTrigger value="overview" className="rounded-md data-[state=active]:bg-[#1B5583] data-[state=active]:text-white data-[state=active]:shadow-sm">Tổng quan</TabsTrigger>
                     <TabsTrigger value="pipeline" className="rounded-md data-[state=active]:bg-[#1B5583] data-[state=active]:text-white data-[state=active]:shadow-sm">Ứng viên</TabsTrigger>
@@ -286,48 +288,7 @@ export function JobPostingDetail({ postingId }: { postingId: string }) {
                 </TabsContent>
 
                 <TabsContent value="pipeline">
-                    <div className="bg-white rounded-xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-slate-900">Tiến trình ứng viên ({detail.totalApplications ?? detail.applicationCount ?? 0})</h3>
-                            <div className="flex items-center gap-2">
-                                {detail.status === 'Published' && (
-                                    <AddExternalCvDialog
-                                        jobPostingId={detail.id}
-                                        onSuccess={() => mutate()}
-                                        trigger={
-                                            <Button variant="outline" size="sm" className="gap-2">
-                                                <UserPlus className="w-4 h-4" />
-                                                Thêm CV
-                                            </Button>
-                                        }
-                                    />
-                                )}
-                                <Button variant="outline" onClick={() => router.push(`/enterprise/hr/job-postings/${detail.id}/applications`)}>
-                                    <Users className="w-4 h-4 mr-2" /> Xem danh sách ứng viên
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                            {[
-                                { label: 'Ứng tuyển', count: detail.appliedCount ?? 0, color: 'bg-slate-100 text-slate-700' },
-                                { label: 'Đang xem xét', count: detail.reviewingCount ?? 0, color: 'bg-blue-100 text-blue-700' },
-                                { label: 'Shortlist', count: detail.shortlistedCount ?? 0, color: 'bg-indigo-100 text-indigo-700' },
-                                { label: 'Xếp lịch PV', count: detail.interviewScheduledCount ?? 0, color: 'bg-purple-100 text-purple-700' },
-                                { label: 'Đã PV', count: detail.interviewedCount ?? 0, color: 'bg-fuchsia-100 text-fuchsia-700' },
-                                { label: 'Xử lý Offer', count: detail.offerProcessingCount ?? 0, color: 'bg-amber-100 text-amber-700' },
-                                { label: 'Đã gửi Offer', count: detail.offeredCount ?? 0, color: 'bg-orange-100 text-orange-700' },
-                                { label: 'Đã tuyển', count: detail.hiredCount ?? 0, color: 'bg-green-100 text-green-700' },
-                                { label: 'Từ chối', count: detail.rejectedCount ?? 0, color: 'bg-red-100 text-red-700' },
-                                { label: 'Rút lui', count: detail.withdrawnCount ?? 0, color: 'bg-gray-200 text-gray-700' },
-                            ].map((stage, i) => (
-                                <div key={i} className="p-4 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors bg-slate-50 flex flex-col items-center text-center">
-                                    <span className="text-sm font-medium text-slate-500 mb-2">{stage.label}</span>
-                                    <span className={`text-2xl font-bold px-3 py-1 rounded-full ${stage.color}`}>{stage.count}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <ApplicationsView jobPostingId={postingId} />
                 </TabsContent>
 
                 <TabsContent value="history">

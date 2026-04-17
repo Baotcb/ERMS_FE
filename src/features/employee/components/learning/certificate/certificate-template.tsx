@@ -77,6 +77,7 @@ export function CertificateTemplate({ data }: { data: CertificateData }) {
                     {/* Logo + Company */}
                     <div style={{ marginBottom: '4mm' }}>
                         {data.companyLogoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={data.companyLogoUrl}
                                 alt={data.companyName || 'Company Logo'}

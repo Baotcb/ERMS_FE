@@ -1,14 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, Filter } from 'lucide-react'
+import { Search, Filter, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useApplications } from '../../hooks/use-applications'
-import { useJobPosting } from '../../hooks/use-job-postings'
 import { ApplicationTable } from './application-table'
 import { ApplicationStage } from '../../types/application-types'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 
 interface ApplicationsViewProps {
     jobPostingId: string
@@ -42,14 +47,11 @@ const FILTER_LABELS: Record<string, string> = {
 }
 
 export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
-    const router = useRouter()
     const [page, setPage] = useState(1)
     const [pageSize] = useState(20)
     const [stageFilter, setStageFilter] = useState<string>('all')
+    const [sourceFilter, setSourceFilter] = useState<'all' | 'Website' | 'HRImported'>('all')
     const [searchTerm, setSearchTerm] = useState('')
-
-    // Job Info
-    const { data: job, isLoading: isJobLoading } = useJobPosting(jobPostingId)
 
     // Applications Data
     const { data: applicationsData, isLoading: isAppsLoading, mutate } = useApplications(jobPostingId, {
@@ -69,39 +71,15 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
             app.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             app.candidateEmail.toLowerCase().includes(searchTerm.toLowerCase())
 
+        const matchesSource = sourceFilter === 'all' || app.source === sourceFilter || (sourceFilter === 'HRImported' && app.isExternal);
+
         // If we are searching, we might want to ignore stage filter on client side if data is already fetched
         // But here data is fetched based on stage filter from server.
-        return matchesSearch
+        return matchesSearch && matchesSource
     }) || []
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-12">
-            {/* Header */}
-            <div className="flex flex-col gap-4">
-                <Button
-                    variant="ghost"
-                    className="w-fit p-0 h-auto hover:bg-transparent hover:text-brand-primary text-slate-500"
-                    onClick={() => router.push('/enterprise/hr/job-postings')}
-                >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Quay lại danh sách tin tuyển dụng
-                </Button>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-6">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                            {isJobLoading ? 'Đang tải...' : job?.jobTitle}
-                        </h1>
-                        <div className="flex items-center gap-2 mt-2 text-slate-500 text-sm">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded font-mono text-slate-600">
-                                {job?.jobCode || (isJobLoading ? 'Loading...' : 'JOB-CODE')}
-                            </span>
-                            <span>•</span>
-                            <span>Quản lý danh sách ứng viên & Kết quả AI Screening</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+        <div className="space-y-6 mt-6">
             {/* Filters & Search */}
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -138,14 +116,26 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
                         ))}
                     </div>
 
-                    <div className="w-full xl:w-auto relative min-w-[300px]">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input
-                            placeholder="Tìm kiếm theo tên, email..."
-                            className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors h-10"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="w-full xl:w-auto flex flex-col sm:flex-row gap-3 min-w-[300px]">
+                        <Select value={sourceFilter} onValueChange={(val: 'all' | 'Website' | 'HRImported') => setSourceFilter(val)}>
+                            <SelectTrigger className="w-full sm:w-[160px] h-10 border-slate-200">
+                                <SelectValue placeholder="Nguồn CV" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả nguồn</SelectItem>
+                                <SelectItem value="Website">Từ Website</SelectItem>
+                                <SelectItem value="HRImported">CV Độc lập</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                            <Input
+                                placeholder="Tìm kiếm theo tên, email..."
+                                className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors h-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,14 +143,14 @@ export function ApplicationsView({ jobPostingId }: ApplicationsViewProps) {
             {/* Table */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <ApplicationTable
-                    applications={searchTerm ? filteredApplications : (applicationsData?.data || [])}
+                    applications={searchTerm || sourceFilter !== 'all' ? filteredApplications : (applicationsData?.data || [])}
                     isLoading={isAppsLoading}
                     onRefresh={() => mutate()}
                 />
             </div>
 
             {/* Pagination */}
-            {applicationsData && applicationsData.totalPages > 1 && !searchTerm && (
+            {applicationsData && applicationsData.totalPages > 1 && !searchTerm && sourceFilter === 'all' && (
                 <div className="flex items-center justify-center space-x-4 py-4">
                     <Button
                         variant="outline"

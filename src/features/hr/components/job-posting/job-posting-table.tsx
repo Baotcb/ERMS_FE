@@ -114,11 +114,11 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                         className="flex items-center gap-1.5 cursor-pointer hover:underline"
                                         role="button"
                                         tabIndex={0}
-                                        onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/applications`)}
+                                        onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}?tab=pipeline`)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' || e.key === ' ') {
                                                 e.preventDefault()
-                                                router.push(`/enterprise/hr/job-postings/${job.id}/applications`)
+                                                router.push(`/enterprise/hr/job-postings/${job.id}?tab=pipeline`)
                                             }
                                         }}
                                     >
@@ -151,7 +151,7 @@ export function JobPostingTable({ data, onPublish, onClose, onDelete }: JobPosti
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                                             <DropdownMenuItem
-                                                onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}/applications`)}
+                                                onClick={() => router.push(`/enterprise/hr/job-postings/${job.id}?tab=pipeline`)}
                                                 className="cursor-pointer"
                                             >
                                                 <Eye className="mr-2 h-4 w-4" />

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 
-import { respondOfferByToken } from '@/features/hr/api/offer-service'
+import { respondOfferByToken, getOfferByToken } from '@/features/hr/api/offer-service'
 import { OfferConfirmAction } from '@/features/hr/components/offer/offer-confirm-action'
 import { OfferStatusDisplay } from '@/features/hr/components/offer/offer-status-display'
+import type { OfferPublicInfo } from '@/features/hr/types/offer-types'
 
 type Status = 'confirm' | 'loading' | 'accepted' | 'rejected' | 'error'
 
@@ -15,6 +16,27 @@ export function OfferResponseView() {
     const action = searchParams.get('action') as 'accept' | 'reject' | null
     const [status, setStatus] = useState<Status>('confirm')
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
+    const [offerData, setOfferData] = useState<OfferPublicInfo | null>(null)
+    const [isLoadingInfo, setIsLoadingInfo] = useState(true)
+
+    // Load offer data when token is present
+    useEffect(() => {
+        const token = params.token
+        if (!token) {
+            queueMicrotask(() => setIsLoadingInfo(false))
+            return
+        }
+        getOfferByToken(token)
+            .then(data => {
+                setOfferData(data)
+                setIsLoadingInfo(false)
+            })
+            .catch(err => {
+                setErrorMsg(err.message)
+                setStatus('error')
+                setIsLoadingInfo(false)
+            })
+    }, [params.token])
 
     const isAccept = action === 'accept'
     const isValidAction = action === 'accept' || action === 'reject'
@@ -39,8 +61,12 @@ export function OfferResponseView() {
     }
 
     const renderContent = () => {
+        if (isLoadingInfo) {
+            return <OfferStatusDisplay status="loading" />
+        }
+
         if (status === 'confirm' && isValidAction) {
-            return <OfferConfirmAction isAccept={isAccept} onConfirm={handleConfirm} />
+            return <OfferConfirmAction isAccept={isAccept} onConfirm={handleConfirm} offerData={offerData} />
         }
 
         if (status === 'confirm' && !isValidAction) {

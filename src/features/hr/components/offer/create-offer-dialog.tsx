@@ -25,6 +25,7 @@ import { useCreateOffer } from '../../hooks/use-offers'
 import { getJobPostings } from '../../api/job-posting-service'
 import { getApplicationsByJob } from '../../api/application-service'
 import type { ApplicationDto } from '../../types/application-types'
+import { useToast } from '@/hooks/use-toast'
 
 interface CreateOfferDialogProps {
     open: boolean
@@ -48,6 +49,20 @@ const INITIAL_FORM = {
     expirationDate: '',
 }
 
+function toDateInputValue(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+function getPreviousDateInputValue(dateInput: string): string {
+    const [year, month, day] = dateInput.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    date.setDate(date.getDate() - 1)
+    return toDateInputValue(date)
+}
+
 export function CreateOfferDialog({
     open,
     onOpenChange,
@@ -59,6 +74,7 @@ export function CreateOfferDialog({
 }: CreateOfferDialogProps) {
     const [form, setForm] = useState(INITIAL_FORM)
     const { trigger, isMutating } = useCreateOffer()
+    const { toast } = useToast()
 
     // Two-step picker state (chỉ dùng khi không có props)
     const hasContext = Boolean(propApplicationId)
@@ -130,7 +146,24 @@ export function CreateOfferDialog({
     )
 
     const handleSubmit = useCallback(async () => {
-        if (!effectiveAppId || !effectivePosition || !form.salary || !form.startDate || !form.expirationDate) return
+        if (!effectiveAppId || !effectivePosition || !form.salary || !form.startDate || !form.expirationDate) {
+            toast({
+                title: 'Thiếu thông tin',
+                description: 'Vui lòng nhập đầy đủ các trường bắt buộc trước khi gửi offer.',
+                variant: 'destructive',
+            })
+            return
+        }
+
+        if (new Date(form.expirationDate) >= new Date(form.startDate)) {
+            toast({
+                title: 'Ngày không hợp lệ',
+                description: 'Hạn phản hồi offer phải trước ngày bắt đầu làm việc.',
+                variant: 'destructive',
+            })
+            return
+        }
+
         try {
             await trigger({
                 applicationId: effectiveAppId,
@@ -139,14 +172,23 @@ export function CreateOfferDialog({
                 salaryFrequency: form.salaryFrequency,
                 bonus: form.bonus || undefined,
                 benefits: form.benefits || undefined,
-                startDate: new Date(form.startDate).toISOString(),
-                expirationDate: new Date(form.expirationDate).toISOString(),
+                // Keep date-only semantics to avoid timezone shift caused by toISOString().
+                startDate: `${form.startDate}T00:00:00`,
+                expirationDate: `${form.expirationDate}T23:59:59`,
             })
-            onOpenChange(false)
-        } catch {
-            // Error handled by SWR
+            toast({
+                title: 'Thành công',
+                description: 'Offer đã được tạo và gửi cho ứng viên.',
+            })
+            handleOpenChange(false)
+        } catch (error) {
+            toast({
+                title: 'Không thể tạo offer',
+                description: error instanceof Error ? error.message : 'Đã xảy ra lỗi không xác định.',
+                variant: 'destructive',
+            })
         }
-    }, [form, effectiveAppId, effectivePosition, trigger, onOpenChange])
+    }, [effectiveAppId, effectivePosition, form, handleOpenChange, toast, trigger])
 
     const initials = displayName
         .split(' ')
@@ -154,8 +196,10 @@ export function CreateOfferDialog({
         .join('')
         .toUpperCase()
         .slice(0, 2)
-
-    const isFormValid = effectiveAppId && effectivePosition && form.salary && form.startDate && form.expirationDate
+    const todayInput = toDateInputValue(new Date())
+    const expirationMaxInput = form.startDate
+        ? getPreviousDateInputValue(form.startDate)
+        : undefined
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -267,11 +311,22 @@ export function CreateOfferDialog({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-2">
                                 <Label>Ngày bắt đầu làm việc <span className="text-red-500">*</span></Label>
-                                <Input type="date" value={form.startDate} onChange={(e) => handleChange('startDate', e.target.value)} />
+                                <Input
+                                    type="date"
+                                    min={todayInput}
+                                    value={form.startDate}
+                                    onChange={(e) => handleChange('startDate', e.target.value)}
+                                />
                             </div>
                             <div className="flex flex-col gap-2">
                                 <Label>Hạn phản hồi offer <span className="text-red-500">*</span></Label>
-                                <Input type="date" value={form.expirationDate} onChange={(e) => handleChange('expirationDate', e.target.value)} />
+                                <Input
+                                    type="date"
+                                    min={todayInput}
+                                    max={expirationMaxInput}
+                                    value={form.expirationDate}
+                                    onChange={(e) => handleChange('expirationDate', e.target.value)}
+                                />
                             </div>
                         </div>
                     </div>
@@ -282,7 +337,7 @@ export function CreateOfferDialog({
                     <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={isMutating}>Hủy</Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={isMutating || !isFormValid}
+                        disabled={isMutating}
                         className="bg-[#0F4C75] hover:bg-[#0a3857] text-white"
                     >
                         {isMutating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
