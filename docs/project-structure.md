@@ -213,15 +213,7 @@ features/director/
 ```sh
 features/employee/
 |
-+-- api/
-|   +-- interview-service.ts
-|
-+-- components/
-|   +-- employee-sidebar.tsx
-|   +-- interview/              # My interviews, feedback
-|   +-- teaching/               # Teaching tasks, course dashboard, curriculum, exams
-|
-+-- hooks/
+
 +-- types/
 +-- index.ts
 ```

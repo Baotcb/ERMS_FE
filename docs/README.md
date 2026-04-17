@@ -16,9 +16,10 @@ Chào mừng đến với tài liệu ERMS Frontend! Đây là hướng dẫn to
 - **[Components và Styling](./components-and-styling.md)** - Cách viết components, Tailwind CSS 4
 - **[Quản Lý State](./state-management.md)** - State management patterns (Zustand, SWR, React Hook Form)
 
-### 📋 Kế Hoạch
-- **[Refactor Feature Structure](./refactor-feature-structure-plan.md)** - Kế hoạch tái cấu trúc features
-- **[HR Applications Plan](./hr-applications-plan.md)** - Kế hoạch triển khai HR Screening
+### ✨ Tính Năng Nổi Bật (Mới Cập Nhật)
+- **Hệ thống Quản lý Đào tạo (Training Module):** Dashboard giám đốc, quản lý khóa học, bài kiểm tra (Quiz Engine) với bộ đếm giờ và chống gian lận.
+- **Hệ thống Quản lý Tuyển dụng (Recruitment Module):** Dashboard trưởng phòng, thiết lập hội đồng phỏng vấn, đánh giá và offer ứng viên.
+- **Hồ sơ nhân viên (Employee):** Quản lý kỹ năng (Skill Gap), tiến trình học tập, lịch sử thi.
 
 ## 🎯 Chọn Tài Liệu Phù Hợp
 
@@ -101,14 +102,12 @@ Khi code thay đổi, update docs tương ứng:
 
 | Tài Liệu | Trạng Thái | Cập Nhật |
 |----------|-----------|----------|
-| Quick Start | ✅ Hoàn thành | 20/03/2026 |
-| Application Overview | ✅ Hoàn thành | 20/03/2026 |
-| Project Structure | ✅ Hoàn thành | 20/03/2026 |
-| Project Standards | ✅ Hoàn thành | 20/03/2026 |
-| Components & Styling | ✅ Hoàn thành | 20/03/2026 |
-| State Management | ✅ Hoàn thành | 20/03/2026 |
-| Refactor Plan | 📋 Kế hoạch | 20/03/2026 |
-| HR Applications Plan | 📋 Kế hoạch | 20/03/2026 |
+| Quick Start | ✅ Hoàn thành | 18/04/2026 |
+| Application Overview | ✅ Hoàn thành | 18/04/2026 |
+| Project Structure | ✅ Hoàn thành | 18/04/2026 |
+| Project Standards | ✅ Hoàn thành | 18/04/2026 |
+| Components & Styling | ✅ Hoàn thành | 18/04/2026 |
+| State Management | ✅ Hoàn thành | 18/04/2026 |
 
 **Happy coding! 🚀**
 

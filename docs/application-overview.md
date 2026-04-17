@@ -12,7 +12,7 @@
 | **HR Manager / HR** | Quản lý nhân sự: tuyển dụng, phòng ban, nhân viên, đào tạo | `/enterprise/hr/*` |
 | **Department Head** | Trưởng phòng: kế hoạch tuyển dụng, phỏng vấn, đào tạo | `/enterprise/dept-head/*` |
 | **Director** | Ban giám đốc: phê duyệt kế hoạch, báo cáo | `/enterprise/director/*` |
-| **Employee** | Nhân viên: phỏng vấn, giảng dạy | `/enterprise/employee/*` |
+| **Employee** | Nhân viên: phỏng vấn, giảng dạy, học tập (Training), quản lý kỹ năng | `/enterprise/employee/*` |
 
 ### Role Constants (Backend Mapping)
 
@@ -200,7 +200,10 @@ export const USER_ROLES = {
 | Phỏng vấn | `/interviews` | Lịch phỏng vấn của tôi |
 | Feedback | `/feedback/[applicationId]` | Nhập feedback phỏng vấn |
 | Giảng dạy | `/teaching` | Nhiệm vụ giảng dạy |
-| Chi tiết khóa | `/teaching/course/[id]` | Quản lý khóa giảng |
+| Chi tiết khóa giảng| `/teaching/course/[id]` | Quản lý khóa giảng |
+| Học tập | `/learning` | Danh sách khóa học cần tham gia |
+| Bài kiểm tra (Quiz) | `/learning/quiz/[id]` | Thực hiện bài kiểm tra cuối khóa |
+| Kỹ năng | Modal / Badge | Cập nhật skills gap & thông tin cá nhân |
 
 ### Shared Enterprise
 
