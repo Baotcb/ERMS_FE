@@ -20,6 +20,7 @@ import {
     FormDescription,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -281,6 +282,50 @@ export function JobPostingEditForm({ postingId }: { postingId: string }) {
         )
     }
 
+    const renderCurrencyField = <TName extends Path<FormValues>>(
+        name: TName,
+        label: string,
+        placeholder?: string,
+    ) => {
+        const editable = isFieldEditable(name, posting.status)
+        return (
+            <FormField
+                control={form.control}
+                name={name}
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>{label}</FormLabel>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className={!editable ? 'opacity-60 cursor-not-allowed' : ''}>
+                                        <FormControl>
+                                            <CurrencyInput
+                                                value={typeof field.value === 'number' ? field.value : undefined}
+                                                onChange={(v) => field.onChange(v ?? 0)}
+                                                onBlur={field.onBlur}
+                                                name={field.name}
+                                                ref={field.ref}
+                                                disabled={!editable || isUpdating}
+                                                placeholder={placeholder}
+                                            />
+                                        </FormControl>
+                                    </div>
+                                </TooltipTrigger>
+                                {!editable && (
+                                    <TooltipContent>
+                                        Trường này không thể chỉnh sửa khi trạng thái bài đăng là {posting.status}
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )
+    }
+
     return (
         <div className="max-w-4xl mx-auto p-6 pb-24">
             <div className="flex items-center gap-3 mb-6">
@@ -405,8 +450,8 @@ export function JobPostingEditForm({ postingId }: { postingId: string }) {
                     <div className="bg-white p-6 rounded-xl border border-slate-200 space-y-4">
                         <h2 className="text-lg font-semibold text-slate-900 border-b pb-2 mb-4">Lương & Địa điểm</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {renderEditableField('salaryRangeMin', 'Lương tối thiểu (VNĐ)', <Input type="number" min={0} />, 'number')}
-                            {renderEditableField('salaryRangeMax', 'Lương tối đa (VNĐ)', <Input type="number" min={0} />, 'number')}
+                            {renderCurrencyField('salaryRangeMin', 'Lương tối thiểu (VNĐ)', 'VD: 15.000.000')}
+                            {renderCurrencyField('salaryRangeMax', 'Lương tối đa (VNĐ)', 'VD: 30.000.000')}
 
                             <FormField
                                 control={form.control}

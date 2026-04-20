@@ -8,6 +8,7 @@ import {
     Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Textarea } from '@/components/ui/textarea'
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -165,11 +166,11 @@ export function PlanFormStep({ form, campaigns, detectedDepartment, isLoadingCam
                             <FormControl>
                                 <div className="relative">
                                     <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                                    <Input
-                                        type="number"
+                                    <CurrencyInput
                                         className={cn("pl-9", isOverBudget && "border-amber-400 focus-visible:ring-amber-400")}
-                                        placeholder="0"
+                                        placeholder="VD: 300.000.000"
                                         {...field}
+                                        onChange={(v) => field.onChange(v)}
                                     />
                                 </div>
                             </FormControl>

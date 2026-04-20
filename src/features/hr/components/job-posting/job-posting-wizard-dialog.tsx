@@ -21,6 +21,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -593,7 +594,7 @@ export function JobPostingWizardDialog({
                                                                     <FormItem>
                                                                         <FormLabel className="text-slate-700">Lương tối thiểu (VNĐ)</FormLabel>
                                                                         <FormControl>
-                                                                            <Input type="number" className="font-mono text-lg transition-all focus:ring-2 focus:ring-green-100 focus:border-green-400" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} />
+                                                                            <CurrencyInput className="transition-all focus:ring-2 focus:ring-green-100 focus:border-green-400" placeholder="VD: 15.000.000" {...field} onChange={(v) => field.onChange(v ?? 0)} />
                                                                         </FormControl>
                                                                         <FormMessage />
                                                                     </FormItem>
@@ -606,7 +607,7 @@ export function JobPostingWizardDialog({
                                                                     <FormItem>
                                                                         <FormLabel className="text-slate-700">Lương tối đa (VNĐ)</FormLabel>
                                                                         <FormControl>
-                                                                            <Input type="number" className="font-mono text-lg transition-all focus:ring-2 focus:ring-green-100 focus:border-green-400" {...field} onChange={e => field.onChange(parseInt(e.target.value) || 0)} />
+                                                                            <CurrencyInput className="transition-all focus:ring-2 focus:ring-green-100 focus:border-green-400" placeholder="VD: 30.000.000" {...field} onChange={(v) => field.onChange(v ?? 0)} />
                                                                         </FormControl>
                                                                         <FormMessage />
                                                                     </FormItem>
