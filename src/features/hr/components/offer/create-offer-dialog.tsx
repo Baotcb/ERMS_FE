@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -273,14 +274,13 @@ export function CreateOfferDialog({
                             <div className="flex flex-col gap-2">
                                 <Label>Mức lương <span className="text-red-500">*</span></Label>
                                 <div className="relative">
-                                    <Input
-                                        type="number"
-                                        placeholder="Nhập mức lương"
-                                        value={form.salary}
-                                        onChange={(e) => handleChange('salary', e.target.value)}
+                                    <CurrencyInput
+                                        placeholder="VD: 20.000.000"
+                                        value={form.salary === '' ? undefined : Number(form.salary)}
+                                        onChange={(v) => handleChange('salary', v === undefined ? '' : String(v))}
                                         className="pr-12"
                                     />
-                                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">VNĐ</span>
+                                    <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">VNĐ</span>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2">

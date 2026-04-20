@@ -8,6 +8,7 @@ import {
     Form, FormControl, FormField, FormItem, FormLabel,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -59,8 +60,8 @@ export function PlanDetailFormSection({ form, isAddingDetail, onSubmit }: PlanDe
 
                     <FormField control={form.control} name="salaryRangeMax" render={({ field }) => (
                         <FormItem className="col-span-2">
-                            <FormLabel className="text-xs">Lương Max</FormLabel>
-                            <FormControl><Input type="number" {...field} className="h-8" placeholder="0" /></FormControl>
+                            <FormLabel className="text-xs">Lương Max (VNĐ)</FormLabel>
+                            <FormControl><CurrencyInput {...field} onChange={(v) => field.onChange(v ?? 0)} className="h-8" placeholder="VD: 30.000.000" /></FormControl>
                         </FormItem>
                     )} />
 

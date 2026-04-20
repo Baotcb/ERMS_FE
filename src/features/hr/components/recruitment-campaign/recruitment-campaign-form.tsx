@@ -18,6 +18,7 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Textarea } from '@/components/ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
@@ -443,9 +444,9 @@ export function RecruitmentCampaignForm({
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 render={({ field }: { field: any }) => (
                                     <FormItem>
-                                        <FormLabel>Tổng ngân sách dự kiến</FormLabel>
+                                        <FormLabel>Tổng ngân sách dự kiến (VNĐ)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="0" {...field} value={field.value ?? ''} />
+                                            <CurrencyInput placeholder="VD: 500.000.000" {...field} value={field.value ?? ''} onChange={(v) => field.onChange(v)} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
