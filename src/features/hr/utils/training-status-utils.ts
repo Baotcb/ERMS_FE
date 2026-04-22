@@ -25,7 +25,7 @@ export const STATUS_LABELS: Record<string, string> = {
     Active: 'Đang triển khai',
     Completed: 'Đã hoàn thành',
     Closed: 'Đã đóng',
-    AddedToPlan: 'Đã thêm vào KH',
+    AddedToPlan: 'Đã thêm vào kế hoạch',
     Published: 'Đã xuất bản',
     Archived: 'Đã lưu trữ',
 };

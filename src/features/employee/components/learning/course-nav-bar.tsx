@@ -70,7 +70,9 @@ export function CourseNavBar({
       icon: Star,
       badge: hasFeedback ? "✓" : undefined,
       matchExact: false,
-      disabled: hasFinalQuiz ? !hasQuizResult : (hasLessons && !isAllLessonsComplete),
+      disabled: hasFinalQuiz
+        ? !hasQuizResult
+        : hasLessons && !isAllLessonsComplete,
     },
   ];
 
@@ -104,7 +106,7 @@ export function CourseNavBar({
             <span className="hidden sm:inline">{label}</span>
             {badge && (
               <Badge
-                className={`text-[10px] px-1.5 py-0 border-0 font-semibold ${
+                className={`text-xs px-1.5 py-0 border-0 font-semibold ${
                   isActive
                     ? "bg-white/25 text-white"
                     : "bg-gray-200/80 text-gray-600"

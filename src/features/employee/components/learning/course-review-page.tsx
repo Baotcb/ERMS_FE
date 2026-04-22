@@ -107,7 +107,7 @@ export function CourseReviewPage({
       />
 
       {/* Hero Header */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F4C75] via-[#1B4F72] to-[#3282B8] p-8 text-white shadow-xl">
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-medium p-8 text-white shadow-xl">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -116,7 +116,7 @@ export function CourseReviewPage({
           }}
         />
         <div className="relative z-10">
-          <p className="text-[11px] font-bold uppercase tracking-[3px] text-[#BBE1FA]/70 mb-2">
+          <p className="text-xs font-bold uppercase tracking-[3px] text-brand-secondary/70 mb-2">
             Đánh giá khóa học
           </p>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight">
@@ -134,7 +134,7 @@ export function CourseReviewPage({
         <div className="lg:col-span-1 space-y-4">
           {/* Progress Stepper */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-[2px] text-gray-400 mb-4">
+            <p className="text-xs font-bold uppercase tracking-[2px] text-gray-400 mb-4">
               Lộ trình học
             </p>
             <div className="space-y-1">
@@ -162,7 +162,7 @@ export function CourseReviewPage({
                         isCompleted
                           ? "bg-green-100 text-green-600"
                           : isActive
-                            ? "bg-[#0F4C75] text-white shadow-md"
+                            ? "bg-brand-primary text-white shadow-md"
                             : "bg-gray-100 text-gray-400"
                       }`}
                     >
@@ -176,7 +176,7 @@ export function CourseReviewPage({
                     <span
                       className={`text-sm font-medium ${
                         isActive
-                          ? "text-[#0F4C75] font-bold"
+                          ? "text-brand-primary font-bold"
                           : isCompleted
                             ? "text-green-700"
                             : "text-gray-400"
@@ -192,20 +192,20 @@ export function CourseReviewPage({
 
           {/* Course Summary Card */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
-            <p className="text-[10px] font-bold uppercase tracking-[2px] text-gray-400">
+            <p className="text-xs font-bold uppercase tracking-[2px] text-gray-400">
               Thông tin khóa học
             </p>
             <div className="text-sm text-gray-600 space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-400">Mã khóa</span>
-                <span className="font-semibold text-[#0F4C75]">
+                <span className="font-semibold text-brand-primary">
                   {initialCourse.courseCode}
                 </span>
               </div>
               {totalLessons > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-400">Bài học</span>
-                  <span className="font-semibold text-[#0F4C75]">
+                  <span className="font-semibold text-brand-primary">
                     {completedLessons}/{totalLessons}
                   </span>
                 </div>
@@ -225,7 +225,7 @@ export function CourseReviewPage({
           <div className="rounded-2xl border border-gray-100 bg-white p-6 md:p-8 shadow-sm">
             {isChecking ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-6 h-6 animate-spin text-[#3282B8]" />
+                <Loader2 className="w-6 h-6 animate-spin text-brand-medium" />
                 <span className="ml-2 text-sm text-gray-500">
                   Đang kiểm tra...
                 </span>
@@ -235,7 +235,7 @@ export function CourseReviewPage({
                 <div className="w-20 h-20 rounded-full bg-amber-100 mx-auto flex items-center justify-center">
                   <AlertCircle className="w-10 h-10 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-black text-[#0F4C75]">
+                <h3 className="text-xl font-black text-brand-primary">
                   Không thể đánh giá
                 </h3>
                 <p className="text-sm text-gray-500 max-w-md mx-auto">
@@ -249,7 +249,7 @@ export function CourseReviewPage({
                 <div className="w-20 h-20 rounded-full bg-amber-100 mx-auto flex items-center justify-center">
                   <Star className="w-10 h-10 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-black text-[#0F4C75]">
+                <h3 className="text-xl font-black text-brand-primary">
                   Chưa đủ điều kiện đánh giá
                 </h3>
                 <p className="text-sm text-gray-500 max-w-md mx-auto">
@@ -260,7 +260,7 @@ export function CourseReviewPage({
                   onClick={() =>
                     router.push(`${currentBasePath}/${initialCourse.id}/quiz`)
                   }
-                  className="text-sm text-[#3282B8] hover:text-[#0F4C75] font-medium mt-4 inline-block transition"
+                  className="text-sm text-brand-medium hover:text-brand-primary font-medium mt-4 inline-block transition"
                 >
                   ← Đi đến bài kiểm tra
                 </button>
@@ -270,7 +270,7 @@ export function CourseReviewPage({
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
                   <div>
-                    <h3 className="text-xl font-black text-[#0F4C75]">
+                    <h3 className="text-xl font-black text-brand-primary">
                       Đánh giá của bạn
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">
@@ -348,7 +348,7 @@ export function CourseReviewPage({
                           : `${currentBasePath}/${initialCourse.id}`,
                       )
                     }
-                    className="text-sm text-[#3282B8] hover:text-[#0F4C75] font-medium inline-block transition"
+                    className="text-sm text-brand-medium hover:text-brand-primary font-medium inline-block transition"
                   >
                     ←{" "}
                     {initialCourse.hasFinalQuiz
@@ -361,7 +361,7 @@ export function CourseReviewPage({
               /* Feedback Form */
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-black text-[#0F4C75]">
+                  <h2 className="text-xl font-black text-brand-primary">
                     Chia sẻ trải nghiệm của bạn
                   </h2>
                   <p className="text-sm text-gray-500 mt-1">

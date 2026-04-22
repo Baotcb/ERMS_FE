@@ -126,7 +126,7 @@ export function TrainingPlansList({
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#0F4C75]">
+          <h2 className="text-2xl font-bold tracking-tight text-brand-primary">
             Kế hoạch đào tạo năm
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -135,7 +135,7 @@ export function TrainingPlansList({
         </div>
         <Button
           onClick={() => router.push("/enterprise/hr/training/requests")}
-          className="bg-[#0F4C75] hover:bg-[#1A5F8C] text-white shadow-lg shadow-blue-900/10 transition-all"
+          className="bg-brand-primary hover:bg-brand-primary/90 text-white shadow-lg shadow-blue-900/10 transition-all"
         >
           <Plus className="mr-2 h-4 w-4" /> Tổng hợp & Lập kế hoạch
         </Button>
@@ -146,7 +146,7 @@ export function TrainingPlansList({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Tìm kiếm kế hoạch..."
-            className="pl-10 border-gray-200 focus:border-[#3282B8]"
+            className="pl-10 border-gray-200 focus:border-brand-medium"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
           />
@@ -177,23 +177,25 @@ export function TrainingPlansList({
           <Table>
             <TableHeader className="bg-gray-50">
               <TableRow>
-                <TableHead className="font-bold text-[#0F4C75]">
+                <TableHead className="font-bold text-brand-primary">
                   Tên kế hoạch
                 </TableHead>
-                <TableHead className="font-bold text-[#0F4C75]">Năm</TableHead>
-                <TableHead className="font-bold text-[#0F4C75]">
+                <TableHead className="font-bold text-brand-primary">
+                  Năm
+                </TableHead>
+                <TableHead className="font-bold text-brand-primary">
                   Tổng ngân sách
                 </TableHead>
-                <TableHead className="font-bold text-[#0F4C75]">
+                <TableHead className="font-bold text-brand-primary">
                   Ngày tạo
                 </TableHead>
-                <TableHead className="font-bold text-[#0F4C75]">
+                <TableHead className="font-bold text-brand-primary">
                   Trạng thái
                 </TableHead>
-                <TableHead className="font-bold text-[#0F4C75]">
+                <TableHead className="font-bold text-brand-primary">
                   Ghi chú duyệt
                 </TableHead>
-                <TableHead className="text-right font-bold text-[#0F4C75]">
+                <TableHead className="text-right font-bold text-brand-primary">
                   Thao tác
                 </TableHead>
               </TableRow>
@@ -219,105 +221,108 @@ export function TrainingPlansList({
                 </TableRow>
               ) : (
                 plans?.map((plan: TrainingPlan) => {
-                  const isClosed = plan.status === 'Closed';
+                  const isClosed = plan.status === "Closed";
                   return (
-                  <TableRow
-                    key={plan.id}
-                    className={`hover:bg-gray-50/50 transition-colors ${isClosed ? 'opacity-60' : ''}`}
-                  >
-                    <TableCell className="font-medium text-gray-900">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className={`w-4 h-4 ${isClosed ? 'text-slate-400' : 'text-blue-500'}`} />
-                        <span>{plan.planName}</span>
-                        {isClosed && (
-                          <Badge className="ml-1 bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-1.5 py-0">
-                            <Lock className="w-3 h-3 mr-0.5" /> Đã đóng
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0"
-                      >
-                        {plan.year}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-900 font-semibold">
-                      {formatVND(plan.totalBudget)}
-                    </TableCell>
-                    <TableCell className="text-gray-500 text-sm">
-                      {format(new Date(plan.createdAt), "dd/MM/yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[plan.status] || "bg-gray-100"}`}
-                      >
-                        {getStatusLabel(plan)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[300px] text-sm text-gray-600">
-                      {plan.reviewNote ? (
-                        <p
-                          className="line-clamp-2"
-                          title={getDisplayReviewNote(plan.reviewNote)}
+                    <TableRow
+                      key={plan.id}
+                      className={`hover:bg-gray-50/50 transition-colors ${isClosed ? "opacity-60" : ""}`}
+                    >
+                      <TableCell className="font-medium text-gray-900">
+                        <div className="flex items-center gap-2">
+                          <BookOpen
+                            className={`w-4 h-4 ${isClosed ? "text-slate-400" : "text-blue-500"}`}
+                          />
+                          <span>{plan.planName}</span>
+                          {isClosed && (
+                            <Badge className="ml-1 bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-1.5 py-0">
+                              <Lock className="w-3 h-3 mr-0.5" /> Đã đóng
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0"
                         >
-                          {getDisplayReviewNote(plan.reviewNote)}
-                        </p>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                          {plan.year}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-900 font-semibold">
+                        {formatVND(plan.totalBudget)}
+                      </TableCell>
+                      <TableCell className="text-gray-500 text-sm">
+                        {format(new Date(plan.createdAt), "dd/MM/yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`border-0 font-semibold px-2.5 py-0.5 ${STATUS_COLORS[plan.status] || "bg-gray-100"}`}
+                        >
+                          {getStatusLabel(plan)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[300px] text-sm text-gray-600">
+                        {plan.reviewNote ? (
+                          <p
+                            className="line-clamp-2"
+                            title={getDisplayReviewNote(plan.reviewNote)}
                           >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            className="cursor-pointer"
-                            onClick={() => {
-                              setSelectedPlan(plan);
-                              setIsDetailOpen(true);
-                            }}
-                          >
-                            <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
-                          </DropdownMenuItem>
-                          {!isClosed && ["Pending", "Rejected"].includes(plan.status) && (
+                            {getDisplayReviewNote(plan.reviewNote)}
+                          </p>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                             <DropdownMenuItem
-                              className="cursor-pointer text-[#0F4C75]"
+                              className="cursor-pointer"
                               onClick={() => {
                                 setSelectedPlan(plan);
-                                setIsEditOpen(true);
+                                setIsDetailOpen(true);
                               }}
                             >
-                              <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa kế
-                              hoạch
+                              <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
                             </DropdownMenuItem>
-                          )}
-                          {!isClosed && plan.status === "Approved" && (
-                            <DropdownMenuItem
-                              className="cursor-pointer text-slate-600"
-                              onClick={() => {
-                                setSelectedPlan(plan);
-                                setIsCloseOpen(true);
-                              }}
-                            >
-                              <Lock className="mr-2 h-4 w-4" /> Đóng kế hoạch
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                            {!isClosed &&
+                              ["Pending", "Rejected"].includes(plan.status) && (
+                                <DropdownMenuItem
+                                  className="cursor-pointer text-brand-primary"
+                                  onClick={() => {
+                                    setSelectedPlan(plan);
+                                    setIsEditOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
+                                  kế hoạch
+                                </DropdownMenuItem>
+                              )}
+                            {!isClosed && plan.status === "Approved" && (
+                              <DropdownMenuItem
+                                className="cursor-pointer text-slate-600"
+                                onClick={() => {
+                                  setSelectedPlan(plan);
+                                  setIsCloseOpen(true);
+                                }}
+                              >
+                                <Lock className="mr-2 h-4 w-4" /> Đóng kế hoạch
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}

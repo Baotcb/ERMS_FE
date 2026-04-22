@@ -71,7 +71,7 @@ const STATUSES: Record<string, { label: string; color: string }> = {
     color: "bg-blue-100 text-blue-800 border-blue-200",
   },
   AddedToPlan: {
-    label: "Đã thêm vào KH",
+    label: "Đã thêm vào kế hoạch",
     color: "bg-indigo-100 text-indigo-800 border-indigo-200",
   },
 };

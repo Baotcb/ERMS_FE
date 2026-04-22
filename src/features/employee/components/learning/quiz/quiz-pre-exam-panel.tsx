@@ -92,12 +92,12 @@ export function QuizPreExamPanel({
   return (
     <div className="flex justify-center flex-1 w-full bg-white rounded-xl shadow-sm border border-slate-100 p-8 sm:p-12">
       <div className="quiz-confirm-panel space-y-6 w-full max-w-lg mx-auto">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0F4C75] to-[#3282B8] flex items-center justify-center mx-auto shadow-lg">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-medium flex items-center justify-center mx-auto shadow-lg">
           <ShieldCheck className="w-8 h-8 text-white" />
         </div>
 
         <div>
-          <h2 className="text-2xl font-black text-[#0F3B64]">
+          <h2 className="text-2xl font-black text-brand-primary">
             Kiểm tra cuối khóa
           </h2>
           <p className="text-sm text-gray-500 mt-1">{course.courseName}</p>
@@ -105,28 +105,28 @@ export function QuizPreExamPanel({
 
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-[#0F4C75] font-bold mb-0.5">
+            <div className="flex items-center justify-center gap-1.5 text-brand-primary font-bold mb-0.5">
               <Clock className="w-4 h-4" />{" "}
               {config.timeLimitMinutes
                 ? `${config.timeLimitMinutes} phút`
                 : "Không giới hạn"}
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">Thời gian</p>
+            <p className="text-xs text-gray-400 font-medium">Thời gian</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-[#0F4C75] font-bold mb-0.5">
+            <div className="flex items-center justify-center gap-1.5 text-brand-primary font-bold mb-0.5">
               <Target className="w-4 h-4" /> {config.passScore ?? 80}%
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">Điểm đạt</p>
+            <p className="text-xs text-gray-400 font-medium">Điểm đạt</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center">
-            <div className="text-[#0F4C75] font-bold mb-0.5">
+            <div className="text-brand-primary font-bold mb-0.5">
               {config.totalQuestions ?? "—"} câu
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">Số câu hỏi</p>
+            <p className="text-xs text-gray-400 font-medium">Số câu hỏi</p>
           </div>
           <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-center">
-            <div className="text-[#0F4C75] font-bold mb-0.5">
+            <div className="text-brand-primary font-bold mb-0.5">
               {isCooldownActive ? (
                 <span className="text-red-500 tabular-nums">
                   {cdMin}:{cdSec}
@@ -137,7 +137,7 @@ export function QuizPreExamPanel({
                 "Không giới hạn"
               )}
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">
+            <p className="text-xs text-gray-400 font-medium">
               {isCooldownActive ? "Thử lại sau" : "Lượt còn lại"}
             </p>
           </div>
@@ -171,12 +171,12 @@ export function QuizPreExamPanel({
         {result && (
           <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-4 flex flex-col items-center justify-center space-y-3">
             <div>
-              <p className="text-sm font-bold text-blue-900 text-center">
+              <p className="text-sm font-bold text-brand-primary text-center">
                 Lần thi trước: {result.score ?? 0} điểm (
                 {result.correctAnswers ?? 0}/{result.totalQuestions ?? 0} câu
                 đúng)
               </p>
-              <p className="text-[11px] text-blue-700 font-medium text-center mt-0.5">
+              <p className="text-xs text-brand-medium font-medium text-center mt-0.5">
                 {result.isPassed ? "🎉 Đạt yêu cầu" : "❌ Chưa đạt yêu cầu"}
               </p>
             </div>
@@ -203,7 +203,7 @@ export function QuizPreExamPanel({
                 isCooldownActive ||
                 isAttemptsExhausted
               }
-              className="w-full bg-gradient-to-r from-[#0F4C75] to-[#3282B8] hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-brand-primary to-brand-medium hover:opacity-90 text-white rounded-xl px-8 py-6 font-bold text-base shadow-lg transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isStarting ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -215,7 +215,7 @@ export function QuizPreExamPanel({
           </DialogTrigger>
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
-              <DialogTitle className="text-[#0F4C75] font-bold">
+              <DialogTitle className="text-brand-primary font-bold">
                 Xác nhận bắt đầu thi
               </DialogTitle>
               <DialogDescription className="text-gray-500">
@@ -232,7 +232,7 @@ export function QuizPreExamPanel({
               <Button
                 onClick={onStartQuiz}
                 disabled={isStarting}
-                className="bg-[#0F4C75] text-white rounded-xl shadow-lg font-bold"
+                className="bg-brand-primary text-white rounded-xl shadow-lg font-bold"
               >
                 {isStarting ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />

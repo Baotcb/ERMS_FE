@@ -56,7 +56,7 @@ export function TrainingPlanDetail({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-white border-none shadow-2xl">
-        <div className="bg-gradient-to-r from-[#0F4C75] to-[#3282B8] px-6 py-8 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-r from-brand-primary to-brand-medium px-6 py-8 text-white relative overflow-hidden">
           <div className="absolute right-0 top-0 opacity-10 translate-x-1/4 -translate-y-1/4">
             <BarChart3 size={200} />
           </div>
@@ -102,16 +102,16 @@ export function TrainingPlanDetail({
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex flex-col items-center text-center">
               <BookOpen className="w-5 h-5 text-blue-600 mb-2" />
-              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+              <span className="text-xs uppercase font-bold text-gray-400 tracking-wider">
                 Tổng khóa học
               </span>
-              <span className="text-xl font-bold text-[#0F4C75]">
+              <span className="text-xl font-bold text-brand-primary">
                 {plan.totalCourses}
               </span>
             </div>
             <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100/50 flex flex-col items-center text-center">
               <DollarSign className="w-5 h-5 text-green-600 mb-2" />
-              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+              <span className="text-xs uppercase font-bold text-gray-400 tracking-wider">
                 Tổng ngân sách
               </span>
               <span className="text-lg font-bold text-green-700">
@@ -120,10 +120,10 @@ export function TrainingPlanDetail({
             </div>
             <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50 flex flex-col items-center text-center">
               <TrendingUp className="w-5 h-5 text-purple-600 mb-2" />
-              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+              <span className="text-xs uppercase font-bold text-gray-400 tracking-wider">
                 Năm thực hiện
               </span>
-              <span className="text-xl font-bold text-[#0F4C75]">
+              <span className="text-xl font-bold text-brand-primary">
                 {plan.year}
               </span>
             </div>
@@ -132,7 +132,7 @@ export function TrainingPlanDetail({
           <div className="grid grid-cols-2 gap-8">
             {/* Timeframe section */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5" /> Thời gian triển khai
               </h3>
               <div className="space-y-3">
@@ -153,7 +153,7 @@ export function TrainingPlanDetail({
 
             {/* Creation Info */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <User className="w-3.5 h-3.5" /> Thông tin khởi tạo
               </h3>
               <div className="space-y-3">
@@ -177,7 +177,7 @@ export function TrainingPlanDetail({
           <div className="space-y-3 pt-2">
             {plan.reviewNote ? (
               <>
-                <h3 className="text-[11px] font-bold text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-xs font-bold text-orange-500 uppercase tracking-widest flex items-center gap-2">
                   <Info className="w-3.5 h-3.5" />{" "}
                   {getReviewNoteHeading(plan.reviewNote)}
                 </h3>
@@ -187,7 +187,7 @@ export function TrainingPlanDetail({
               </>
             ) : (
               <>
-                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <ClipboardList className="w-3.5 h-3.5" /> Mô tả chi tiết
                 </h3>
                 <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl border border-gray-100 min-h-[80px]">
@@ -200,14 +200,14 @@ export function TrainingPlanDetail({
 
           {/* Danh sách Request */}
           <div className="space-y-3 pt-4 border-t border-gray-100">
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
               <Layers className="w-3.5 h-3.5" /> Các yêu cầu đào tạo (
               {detailData?.trainingRequests?.length || 0})
             </h3>
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {isLoading ? (
                 <div className="p-8 text-center text-sm text-gray-500 flex flex-col items-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#3282B8]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-brand-medium" />
                   Đang tải dữ liệu...
                 </div>
               ) : !detailData?.trainingRequests ||
@@ -248,7 +248,7 @@ export function TrainingPlanDetail({
                           <td className="px-4 py-3 text-gray-500 text-right">
                             {req.estimatedParticipants} hv
                           </td>
-                          <td className="px-4 py-3 font-medium text-[#0F4C75] text-right">
+                          <td className="px-4 py-3 font-medium text-brand-primary text-right">
                             {formatVND(req.estimatedBudget || 0)}
                           </td>
                         </tr>
