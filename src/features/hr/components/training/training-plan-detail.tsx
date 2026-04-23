@@ -223,10 +223,10 @@ export function TrainingPlanDetail({
                         <th className="px-4 py-3 font-semibold">Phòng ban</th>
                         <th className="px-4 py-3 font-semibold">Chủ đề</th>
                         <th className="px-4 py-3 font-semibold text-right">
-                          Dự kiến
+                          Đối tượng
                         </th>
                         <th className="px-4 py-3 font-semibold text-right">
-                          Ngân sách
+                          Số lượng
                         </th>
                       </tr>
                     </thead>
@@ -246,10 +246,10 @@ export function TrainingPlanDetail({
                             {req.subject}
                           </td>
                           <td className="px-4 py-3 text-gray-500 text-right">
-                            {req.estimatedParticipants} hv
+                            {req.targetAudience}
                           </td>
                           <td className="px-4 py-3 font-medium text-brand-primary text-right">
-                            {formatVND(req.estimatedBudget || 0)}
+                            {req.estimatedParticipants}
                           </td>
                         </tr>
                       ))}

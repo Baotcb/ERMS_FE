@@ -37,7 +37,6 @@ import {
 import { TrainingRequestForm } from "./training-request-form";
 import { trainingService } from "../../api/training-service";
 import type { TrainingRequestsResult } from "../../types/training-types";
-import { formatVND } from "@/lib/utils";
 import {
   STATUS_COLORS,
   STATUS_LABELS,
