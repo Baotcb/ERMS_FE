@@ -3,7 +3,7 @@
 import { memo } from "react";
 import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
-import { FileBarChart2, Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 // Dummy type for report response
 interface RecruitmentReportData {

@@ -138,8 +138,6 @@ const CHART_COLORS = [
 ];
 
 export const DirectorDashboard = memo(function DirectorDashboard() {
-  const router = useRouter();
-
   // Fetch Pending plans
   const { data: pendingPlansData } = useSWR<PlanListResponse>(
     "/RecruitmentPlans/pending-dashboard",
@@ -264,10 +262,8 @@ export const DirectorDashboard = memo(function DirectorDashboard() {
 
     const planMap = new Map<string, number>();
     for (const plan of allRelevantItems) {
-      // Handle both camelCase and PascalCase from API for robustness
-      const label = (plan as any).planName || (plan as any).PlanName || "Khác";
-      const budget =
-        (plan as any).totalBudget || (plan as any).TotalBudget || 0;
+      const label = plan.planName || "Khác";
+      const budget = plan.totalBudget || 0;
       planMap.set(label, (planMap.get(label) || 0) + budget);
     }
     return Array.from(planMap.entries())

@@ -49,7 +49,7 @@ export function QuizPreExamPanel({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    Promise.resolve().then(() => setMounted(true));
   }, []);
 
   const isWorkshop = course.isOnline === false;
