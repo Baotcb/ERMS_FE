@@ -59,6 +59,6 @@ export function useDeleteJobPosting() {
 export function useGenerateJD() {
     return useSWRMutation(
         'generate-jd',
-        (_, { arg: planDetailId }: { arg: string }) => service.generateJD(planDetailId)
+        (_, { arg }: { arg: { planDetailId: string, userPrompt?: string } }) => service.generateJD(arg.planDetailId, arg.userPrompt)
     )
 }

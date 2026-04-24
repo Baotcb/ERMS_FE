@@ -111,8 +111,8 @@ export async function deleteJobPosting(id: string) {
 }
 
 // POST /api/job-postings/generate-jd - Generate JD bằng AI
-export async function generateJD(planDetailId: string): Promise<GenerateJDResult> {
-    const response = await apiClient.post('/api/job-postings/generate-jd', { planDetailId })
+export async function generateJD(planDetailId: string, userPrompt?: string): Promise<GenerateJDResult> {
+    const response = await apiClient.post('/api/job-postings/generate-jd', { planDetailId, userPrompt })
     if (!response.ok) {
         const errorText = await response.text()
         try {

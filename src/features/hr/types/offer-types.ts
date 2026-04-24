@@ -13,6 +13,7 @@ export type OfferStatus =
 export interface HROfferDto {
     id: string
     applicationId: string
+    candidateName: string
     offerCode: string | null
     position: string
     departmentName: string

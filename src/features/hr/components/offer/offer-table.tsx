@@ -1,235 +1,265 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { UserCheck, XCircle, MoreVertical, Eye } from 'lucide-react'
+import { useState } from "react";
+import { UserCheck, XCircle, MoreVertical, Eye } from "lucide-react";
 
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-import type { HROfferDto } from '../../types/offer-types'
-import { OfferStatusBadge } from './offer-status-badge'
-import { ConfirmHireDialog } from './confirm-hire-dialog'
-import { CancelOfferDialog } from './cancel-offer-dialog'
-import { OfferDetailDialog } from './offer-detail-dialog'
+import type { HROfferDto } from "../../types/offer-types";
+import { OfferStatusBadge } from "./offer-status-badge";
+import { ConfirmHireDialog } from "./confirm-hire-dialog";
+import { CancelOfferDialog } from "./cancel-offer-dialog";
+import { OfferDetailDialog } from "./offer-detail-dialog";
 
 interface OfferTableProps {
-    data: HROfferDto[]
+  data: HROfferDto[];
 }
 
 function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('vi-VN').format(amount)
+  return new Intl.NumberFormat("vi-VN").format(amount);
 }
 
 function formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    })
+  return new Date(dateStr).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export function OfferTable({ data }: OfferTableProps) {
-    const [hireDialog, setHireDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
-        open: false,
-        offer: null,
-    })
-    const [cancelDialog, setCancelDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
-        open: false,
-        offer: null,
-    })
-    const [detailDialog, setDetailDialog] = useState<{ open: boolean; offer: HROfferDto | null }>({
-        open: false,
-        offer: null,
-    })
+  const [hireDialog, setHireDialog] = useState<{
+    open: boolean;
+    offer: HROfferDto | null;
+  }>({
+    open: false,
+    offer: null,
+  });
+  const [cancelDialog, setCancelDialog] = useState<{
+    open: boolean;
+    offer: HROfferDto | null;
+  }>({
+    open: false,
+    offer: null,
+  });
+  const [detailDialog, setDetailDialog] = useState<{
+    open: boolean;
+    offer: HROfferDto | null;
+  }>({
+    open: false,
+    offer: null,
+  });
 
-    if (data.length === 0) {
-        return (
-            <div className="p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
-                <div className="p-4 rounded-full bg-sky-50 mb-4">
-                    <UserCheck className="w-8 h-8 text-[#0EA5E9]" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-600">Chưa có offer nào</h3>
-                <p className="text-slate-400 mt-2 max-w-sm">
-                    Tạo offer mới cho ứng viên từ danh sách đơn ứng tuyển.
-                </p>
-            </div>
-        )
-    }
-
+  if (data.length === 0) {
     return (
-        <>
-            <Table>
-                <TableHeader>
-                    <TableRow className="border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50/50">
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Vị trí & Phòng ban
-                        </TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                            Lương
-                        </TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Ngày bắt đầu
-                        </TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            Hết hạn
-                        </TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
-                            Trạng thái
-                        </TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                            Hành động
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-slate-50">
-                    {data.map((offer) => {
-                        const isExpired = new Date(offer.expirationDate) < new Date()
+      <div className="p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+        <div className="p-4 rounded-full bg-sky-50 mb-4">
+          <UserCheck className="w-8 h-8 text-[#0EA5E9]" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-600">
+          Chưa có offer nào
+        </h3>
+        <p className="text-slate-400 mt-2 max-w-sm">
+          Tạo offer mới cho ứng viên từ danh sách đơn ứng tuyển.
+        </p>
+      </div>
+    );
+  }
 
-                        return (
-                            <TableRow key={offer.id} className="hover:bg-sky-50/30 transition-colors group">
-                                {/* Position & Department */}
-                                <TableCell className="px-6 py-4 align-middle">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-semibold text-[#0C4A6E] text-sm">
-                                                {offer.position}
-                                            </span>
-                                            {offer.offerCode && (
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-mono">
-                                                    {offer.offerCode}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className="text-xs text-slate-400 mt-0.5">
-                                            {offer.departmentName}
-                                        </span>
-                                    </div>
-                                </TableCell>
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50/50">
+            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Tên & Vị trí & Phòng ban
+            </TableHead>
+            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+              Lương
+            </TableHead>
+            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Ngày bắt đầu
+            </TableHead>
+            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Hết hạn
+            </TableHead>
+            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
+              Trạng thái
+            </TableHead>
+            <TableHead className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+              Hành động
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="divide-y divide-slate-50">
+          {data.map((offer) => {
+            const isExpired = new Date(offer.expirationDate) < new Date();
 
-                                {/* Salary */}
-                                <TableCell className="px-6 py-4 align-middle text-right whitespace-nowrap">
-                                    <div>
-                                        <span className="text-[#0EA5E9] font-semibold text-sm">
-                                            {formatCurrency(offer.salary)} VND
-                                        </span>
-                                        <div className="text-[10px] text-slate-400 uppercase mt-0.5">
-                                            {offer.salaryFrequency === 'Monthly' ? 'Hàng tháng' : 'Hàng năm'} (Gross)
-                                        </div>
-                                    </div>
-                                </TableCell>
+            return (
+              <TableRow
+                key={offer.id}
+                className="hover:bg-sky-50/30 transition-colors group"
+              >
+                {/* Position & Department */}
+                <TableCell className="px-6 py-4 align-middle">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-[#0C4A6E] text-sm">
+                        {offer.candidateName}
+                      </span>
+                      {offer.position && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                          {offer.position}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-slate-400 mt-0.5">
+                      {offer.departmentName}
+                    </span>
+                  </div>
+                </TableCell>
 
-                                {/* Start Date */}
-                                <TableCell className="px-6 py-4 align-middle text-sm text-slate-600 whitespace-nowrap">
-                                    {formatDate(offer.startDate)}
-                                </TableCell>
+                {/* Salary */}
+                <TableCell className="px-6 py-4 align-middle text-right whitespace-nowrap">
+                  <div>
+                    <span className="text-[#0EA5E9] font-semibold text-sm">
+                      {formatCurrency(offer.salary)} VND
+                    </span>
+                    <div className="text-[10px] text-slate-400 uppercase mt-0.5">
+                      {offer.salaryFrequency === "Monthly"
+                        ? "Hàng tháng"
+                        : "Hàng năm"}{" "}
+                      (Gross)
+                    </div>
+                  </div>
+                </TableCell>
 
-                                {/* Expiration Date */}
-                                <TableCell className="px-6 py-4 align-middle whitespace-nowrap">
-                                    <span className={`text-sm ${isExpired ? 'text-red-500 font-medium' : 'text-slate-500'}`}>
-                                        {formatDate(offer.expirationDate)}
-                                    </span>
-                                </TableCell>
+                {/* Start Date */}
+                <TableCell className="px-6 py-4 align-middle text-sm text-slate-600 whitespace-nowrap">
+                  {formatDate(offer.startDate)}
+                </TableCell>
 
-                                {/* Status */}
-                                <TableCell className="px-6 py-4 align-middle text-center">
-                                    {offer.applicationStage === 'Hired' ? (
-                                        <span className="inline-flex items-center justify-center min-w-[120px] px-2.5 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-700">
-                                            <span className="size-1.5 rounded-full bg-teal-500 mr-2 flex-shrink-0" />
-                                            Đã tuyển
-                                        </span>
-                                    ) : (
-                                        <OfferStatusBadge status={offer.status} />
-                                    )}
-                                </TableCell>
+                {/* Expiration Date */}
+                <TableCell className="px-6 py-4 align-middle whitespace-nowrap">
+                  <span
+                    className={`text-sm ${isExpired ? "text-red-500 font-medium" : "text-slate-500"}`}
+                  >
+                    {formatDate(offer.expirationDate)}
+                  </span>
+                </TableCell>
 
-                                {/* Actions */}
-                                <TableCell className="px-6 py-4 align-middle text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <button
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                                                title="Hành động"
-                                            >
-                                                <MoreVertical className="w-4 h-4" />
-                                            </button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuItem
-                                                onClick={() => setDetailDialog({ open: true, offer })}
-                                                className="flex items-center gap-2 cursor-pointer"
-                                            >
-                                                <Eye className="w-4 h-4 text-sky-500" />
-                                                <span>Xem chi tiết</span>
-                                            </DropdownMenuItem>
+                {/* Status */}
+                <TableCell className="px-6 py-4 align-middle text-center">
+                  {offer.applicationStage === "Hired" ? (
+                    <span className="inline-flex items-center justify-center min-w-[120px] px-2.5 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-700">
+                      <span className="size-1.5 rounded-full bg-teal-500 mr-2 flex-shrink-0" />
+                      Đã tuyển
+                    </span>
+                  ) : (
+                    <OfferStatusBadge status={offer.status} />
+                  )}
+                </TableCell>
 
-                                            {(offer.status === 'Accepted' && offer.applicationStage !== 'Hired') || (offer.status === 'Sent' || offer.status === 'Accepted') && offer.applicationStage !== 'Hired' ? (
-                                                <DropdownMenuSeparator />
-                                            ) : null}
+                {/* Actions */}
+                <TableCell className="px-6 py-4 align-middle text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                        title="Hành động"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => setDetailDialog({ open: true, offer })}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <Eye className="w-4 h-4 text-sky-500" />
+                        <span>Xem chi tiết</span>
+                      </DropdownMenuItem>
 
-                                            {offer.status === 'Accepted' && offer.applicationStage !== 'Hired' && (
-                                                <DropdownMenuItem
-                                                    onClick={() => setHireDialog({ open: true, offer })}
-                                                    className="flex items-center gap-2 cursor-pointer text-emerald-700 focus:text-emerald-700 focus:bg-emerald-50"
-                                                >
-                                                    <UserCheck className="w-4 h-4" />
-                                                    <span>Xác nhận tuyển</span>
-                                                </DropdownMenuItem>
-                                            )}
+                      {(offer.status === "Accepted" &&
+                        offer.applicationStage !== "Hired") ||
+                      ((offer.status === "Sent" ||
+                        offer.status === "Accepted") &&
+                        offer.applicationStage !== "Hired") ? (
+                        <DropdownMenuSeparator />
+                      ) : null}
 
-                                            {(offer.status === 'Sent' || offer.status === 'Accepted') && offer.applicationStage !== 'Hired' && (
-                                                <DropdownMenuItem
-                                                    onClick={() => setCancelDialog({ open: true, offer })}
-                                                    className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                    <span>Hủy offer</span>
-                                                </DropdownMenuItem>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        )
-                    })}
-                </TableBody>
-            </Table>
+                      {offer.status === "Accepted" &&
+                        offer.applicationStage !== "Hired" && (
+                          <DropdownMenuItem
+                            onClick={() => setHireDialog({ open: true, offer })}
+                            className="flex items-center gap-2 cursor-pointer text-emerald-700 focus:text-emerald-700 focus:bg-emerald-50"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                            <span>Xác nhận tuyển</span>
+                          </DropdownMenuItem>
+                        )}
 
-            {hireDialog.offer && (
-                <ConfirmHireDialog
-                    open={hireDialog.open}
-                    onOpenChange={(open) => setHireDialog((prev) => ({ ...prev, open }))}
-                    applicationId={hireDialog.offer.applicationId}
-                    candidateName={hireDialog.offer.position}
-                    position={hireDialog.offer.position}
-                />
-            )}
+                      {(offer.status === "Sent" ||
+                        offer.status === "Accepted") &&
+                        offer.applicationStage !== "Hired" && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setCancelDialog({ open: true, offer })
+                            }
+                            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span>Hủy offer</span>
+                          </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
 
-            {cancelDialog.offer && (
-                <CancelOfferDialog
-                    open={cancelDialog.open}
-                    onOpenChange={(open) => setCancelDialog((prev) => ({ ...prev, open }))}
-                    offer={cancelDialog.offer}
-                />
-            )}
+      {hireDialog.offer && (
+        <ConfirmHireDialog
+          open={hireDialog.open}
+          onOpenChange={(open) => setHireDialog((prev) => ({ ...prev, open }))}
+          applicationId={hireDialog.offer.applicationId}
+          candidateName={hireDialog.offer.candidateName}
+          position={hireDialog.offer.position}
+        />
+      )}
 
-            <OfferDetailDialog
-                open={detailDialog.open}
-                onOpenChange={(open) => setDetailDialog((prev) => ({ ...prev, open }))}
-                offer={detailDialog.offer}
-            />
-        </>
-    )
+      {cancelDialog.offer && (
+        <CancelOfferDialog
+          open={cancelDialog.open}
+          onOpenChange={(open) =>
+            setCancelDialog((prev) => ({ ...prev, open }))
+          }
+          offer={cancelDialog.offer}
+        />
+      )}
+
+      <OfferDetailDialog
+        open={detailDialog.open}
+        onOpenChange={(open) => setDetailDialog((prev) => ({ ...prev, open }))}
+        offer={detailDialog.offer}
+      />
+    </>
+  );
 }
