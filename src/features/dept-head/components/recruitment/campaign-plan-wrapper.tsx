@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import useSWR, { useSWRConfig } from 'swr'
 import {
     Plus, Send, MoreVertical, Eye, Pencil, Trash2,
-    FolderOpen, Clock, CheckCircle2, Banknote, TrendingUp, Users, ListFilter
+    FolderOpen, Clock, CheckCircle2, Banknote, Users, ListFilter
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { apiClient } from '@/lib/api-client'
@@ -340,10 +340,6 @@ export default function CampaignPlanWrapper({ campaignId }: { campaignId: string
                         <FolderOpen className="h-5 w-5 text-gray-400" />
                     </div>
                     <p className="mt-2 text-3xl font-bold text-gray-900">{stats.total}</p>
-                    <div className="mt-2 flex items-center text-xs text-green-600">
-                        <TrendingUp className="h-3.5 w-3.5 mr-1" />
-                        <span>+2 so với tháng trước</span>
-                    </div>
                 </div>
 
                 {/* Pending */}

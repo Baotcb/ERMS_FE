@@ -25,7 +25,7 @@ import { ApplicationDetailModal } from './application-detail-modal'
 import { ForwardApplicationDialog } from './forward-application-dialog'
 import { ConfirmScheduleDialog } from '../interview/confirm-schedule-dialog'
 import { RejectApplicationDialog } from './reject-application-dialog'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 
 interface ApplicationTableProps {
@@ -98,8 +98,9 @@ export function ApplicationTable({ applications, isLoading, onRefresh }: Applica
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-9 w-9 border border-slate-200">
-                                                <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(app.candidateName)}&background=random`} />
-                                                <AvatarFallback>{app.candidateName.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback className="bg-[#BBE1FA]/40 text-[#0F4C75] font-semibold text-sm">
+                                                    {app.candidateName.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
                                                 <div className="flex items-center gap-1.5">
