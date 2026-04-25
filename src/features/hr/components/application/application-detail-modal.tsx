@@ -12,7 +12,7 @@ import { AIScoreBadge } from './ai-score-badge'
 import { StageBadge } from './stage-badge'
 import { Calendar, Download, Mail, Phone, CheckCircle, AlertTriangle, XCircle, FileText, Send } from 'lucide-react'
 import { format } from 'date-fns'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 interface ApplicationDetailModalProps {
     application: ApplicationDto | null
@@ -46,8 +46,9 @@ export function ApplicationDetailModal({
                     <div className="relative z-10 flex items-start justify-between">
                         <div className="flex items-center gap-6">
                             <Avatar className="h-20 w-20 border-4 border-white/10 shadow-xl">
-                                <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(application.candidateName)}&background=random`} />
-                                <AvatarFallback className="text-slate-900 font-bold text-xl">{application.candidateName.charAt(0)}</AvatarFallback>
+                                <AvatarFallback className="bg-[#BBE1FA] text-[#0F4C75] font-bold text-2xl">
+                                    {application.candidateName.charAt(0).toUpperCase()}
+                                </AvatarFallback>
                             </Avatar>
 
                             <div>
