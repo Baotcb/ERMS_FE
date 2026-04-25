@@ -252,7 +252,7 @@ function MyInterviewTable({ data, onFeedback }: MyInterviewTableProps) {
                                     </span>
                                 </div>
                             ) : interview.status === 'PendingSchedule' ? (
-                                <span className="text-slate-400 text-sm">Chưa xếp lịch</span>
+                                <span className="text-slate-400 text-sm italic">HR chưa xếp lịch phỏng vấn</span>
                             ) : (
                                 <span className="text-slate-400 text-sm">—</span>
                             )}

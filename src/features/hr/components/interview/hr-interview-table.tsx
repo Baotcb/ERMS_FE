@@ -22,6 +22,14 @@ interface HRInterviewTableProps {
     onSchedule: (item: InterviewDto) => void
 }
 
+/** Backend C# có thể trả DateTime.MinValue ("0001-01-01...") khi chưa xếp lịch. */
+function hasValidSchedule(scheduledAt: string | null | undefined): boolean {
+    if (!scheduledAt) return false
+    if (scheduledAt.startsWith('0001-01-01')) return false
+    const d = new Date(scheduledAt)
+    return !isNaN(d.getTime()) && d.getFullYear() > 1
+}
+
 function StatusBadge({ status }: { status: string }) {
     const config: Record<string, { label: string; bg: string; text: string; dot: string }> = {
         PendingSchedule: { label: 'Chờ xếp lịch', bg: 'bg-yellow-100 border-yellow-200/50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
@@ -114,9 +122,9 @@ export function HRInterviewTable({ data, onSchedule }: HRInterviewTableProps) {
 
                         {/* Schedule Info */}
                         <TableCell className="px-6 py-4 align-middle whitespace-nowrap">
-                            {item.scheduledAt ? (
+                            {hasValidSchedule(item.scheduledAt) ? (
                                 <div className="flex flex-col gap-0.5 text-sm text-slate-600">
-                                    <span>{format(new Date(item.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
+                                    <span>{format(new Date(item.scheduledAt!), 'dd/MM/yyyy HH:mm', { locale: vi })}</span>
                                     <span className="text-xs text-slate-400 flex items-center gap-1">
                                         {item.interviewFormat === 'Online'
                                             ? <><Video className="w-3 h-3" /> Online</>
@@ -126,7 +134,7 @@ export function HRInterviewTable({ data, onSchedule }: HRInterviewTableProps) {
                                     </span>
                                 </div>
                             ) : (
-                                <span className="text-slate-400 text-sm">Chưa xếp lịch</span>
+                                <span className="text-slate-400 text-sm italic">Chưa xếp lịch phỏng vấn</span>
                             )}
                         </TableCell>
 
